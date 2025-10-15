@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIMAP - Cadastro</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <!-- MOBILE VERSION -->
+        <div class="mobile-view">
+            <div class="login-header">
+                <h1>Cadastre-se</h1>
+            </div>
+            
+            <form class="login-form" id="registerForm">
+                <div class="input-group">
+                    <input type="text" placeholder="Nome Completo" required>
+                </div>
+                
+                <div class="input-group">
+                    <input type="email" placeholder="E-mail" required>
+                </div>
+                
+                <div class="input-group">
+                    <input type="text" placeholder="Usuário" required>
+                </div>
+                
+                <div class="input-group">
+                    <input type="password" placeholder="Senha" required>
+                </div>
+                
+                <div class="input-group">
+                    <input type="password" placeholder="Confirmar senha" required>
+                </div>
+
+                <div class="divider">
+                    <span></span>
+                </div>
+                
+                <button type="submit" class="btn-primary">Cadastrar</button>
+                
+                <div class="divider">
+                    <span>OU</span>
+                </div>
+                
+                <button type="button" class="btn-google">
+                    Cadastre-se com o Google
+                </button>
+
+                <div class="divider">
+                    <span></span>
+                </div>
+                
+                <button type="button" class="btn-secondary" onclick="window.location.href='login.html'">
+                    Fazer Login
+                </button>
+            </form>
+        </div>
+
+        <!-- DESKTOP VERSION -->
+        <div class="desktop-view">
+            <div class="login-header">
+                <h1>Cadastre-se</h1>
+            </div>
+            
+            <form class="login-form" id="registerFormDesktop">
+                <div class="input-group">
+                    <input type="text" placeholder="Nome Completo" required>
+                </div>
+                
+                <div class="input-group">
+                    <input type="email" placeholder="E-mail" required>
+                </div>
+                
+                <div class="input-group">
+                    <input type="text" placeholder="Usuário" required>
+                </div>
+                
+                <div class="input-group">
+                    <input type="password" placeholder="Senha" required>
+                </div>
+                
+                <div class="input-group">
+                    <input type="password" placeholder="Confirmar senha" required>
+                </div>
+                
+                <button type="submit" class="btn-primary">Cadastrar</button>
+                
+                <div class="login-options">
+                    <span>OU</span>
+                    <button type="button" class="btn-google">
+                        Cadastre-se com o Google
+                    </button>
+                </div>
+
+                <div class="login-options">
+                    <button type="button" class="btn-link" onclick="window.location.href='login.html'">
+                        Fazer Login
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>

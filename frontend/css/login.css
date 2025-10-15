@@ -1,0 +1,323 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+    font-family: 'Inter', Arial, sans-serif;
+    background: url('../images/background.webp') center/cover no-repeat;
+    min-height: 100vh;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0;
+}
+
+.login-container {
+    width: 400px;
+    height: 100vh;
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.login-header {
+    background: #00427C;
+    padding: 40px 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo-text {
+    color: #FFFFFF;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+.form-logo {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.form-logo img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 50%; /* Ajuste conforme sua logo */
+}
+.login-form::before {
+    display: block;
+    width: 80px;
+    height: 80px;
+    background: url('../images/logo-unipam.png') center/contain no-repeat;
+    margin: 0 auto 30px auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+    border-radius: 50%; 
+}
+
+.login-form::after {
+    display: none;
+}
+
+.login-form {
+    padding: 50px 40px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+}
+
+.input-group {
+    margin-bottom: 25px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 16px;
+    border: 1px solid #000000;
+    background: rgba(217, 217, 217, 0.5);
+    font-size: 16px;
+    color: #000000;
+    outline: none;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra adicionada */
+}
+
+.input-group input:focus {
+    border-color: #000000;
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Sombra mais intensa no foco */
+}
+
+.input-group input::placeholder {
+    color: #000000;
+    opacity: 0.6;
+    font-family: 'Inter', sans-serif;
+}
+
+.password-group {
+    margin-bottom: 25px;
+}
+
+.password-group input {
+    width: 100%;
+    padding: 16px;
+    border: 1px solid #000000;
+    background: rgba(217, 217, 217, 0.5);
+    font-size: 16px;
+    color: #000000;
+    outline: none;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra adicionada */
+}
+
+.password-group input:focus {
+    border-color: #000000;
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Sombra mais intensa no foco */
+}
+
+.google-forgot-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 25px;
+}
+
+.google-icon-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid #000000;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.google-icon-btn:hover {
+    transform: scale(1.05);
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.google-icon-btn img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.forgot-password {
+    text-align: right;
+}
+
+.forgot-password a {
+    color: #00427C;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.forgot-password a:hover {
+    color: #00598A;
+    text-decoration: underline;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 16px;
+    background: #00427C; /* Azul forte */
+    color: #FFFFFF;
+    border: none;
+    font-size: 16px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+    font-family: 'Inter', sans-serif;
+    border-radius: 10px;
+}
+
+.btn-primary:hover {
+    background: #003366; /* Azul mais escuro no hover */
+    transform: scale(1.02);
+}
+
+/* Garantir que o botão não mude de cor */
+.btn-primary:disabled {
+    background: #00427C; /* Mantém o azul forte mesmo desabilitado */
+    cursor: pointer;
+    opacity: 1;
+}
+
+.divider {
+    text-align: center;
+    margin: 25px 0;
+    position: relative;
+    color: #000000;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #000000;
+}
+
+.divider span {
+    background: #FFFFFF;
+    padding: 0 10px;
+    position: relative;
+}
+
+.btn-secondary {
+    width: 100%;
+    padding: 16px;
+    background: rgba(217, 217, 217, 0.5);
+    color: rgba(0, 0, 0, 0.5); /* Opacidade 50% nas letras */
+    border: 1px solid #000000;
+    font-size: 16px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+    margin-bottom: 20px;
+    border-radius: 10px;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.8);
+    color: #000000; /* Volta ao normal no hover */
+    transform: scale(1.02);
+}
+
+.error-message {
+    background: #fdf2f2;
+    color: #e74c3c;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: none;
+    text-align: center;
+    border: 1px solid #e74c3c;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Esconder mobile view */
+.mobile-view {
+    display: none;
+}
+
+/* Desktop version */
+.desktop-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    body {
+        justify-content: center;
+        padding: 20px;
+        background: url('../images/background.webp') center/cover no-repeat;
+    }
+    
+    .login-container {
+        width: 100%;
+        max-width: 400px;
+        height: auto;
+        border-radius: 8px;
+        margin: 20px;
+    }
+    
+    .login-form {
+        padding: 40px 30px;
+    }
+    
+    .login-form::before {
+        margin-bottom: 20px;
+    }
+    
+    .login-form::after {
+        top: 165px;
+    }
+    
+    .google-forgot-row {
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .forgot-password {
+        text-align: center;
+    }
+}

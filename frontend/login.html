@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIMAP - Login</title>
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="desktop-view">
+            <div class="login-header">
+                <div class="logo-container">
+                    <div class="logo-text">Unimap</div>
+                </div>
+            </div>
+            
+            <form class="login-form" id="loginFormDesktop">
+            <div class="form-logo">
+                <img src="../frontend/images/logo-unipam.png" alt="UNIMAP Logo">
+            </div>
+            
+            <div id="loginErrorDesktop" class="error-message"></div>
+            
+            <div class="input-group">
+                <input type="text" id="emailDesktop" placeholder="Usuário" required>
+            </div>
+                
+                <div class="password-group">
+                    <input type="password" id="passwordDesktop" placeholder="Senha" required>
+                </div>
+                
+                <div class="google-forgot-row">
+                    <button type="button" class="google-icon-btn" onclick="loginWithGoogle()" title="Entrar com Google">
+                        <img src="/Unimap/frontend/images/Logo-Google-G.png" alt="Google">
+                    </button>
+                    
+                    <div class="forgot-password">
+                        <a href="#" onclick="forgotPassword()">Esqueceu a senha?</a>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-primary" id="loginBtnDesktop">Entrar</button>
+                
+                <div class="divider">
+                    <span>OU</span>
+                </div>
+                
+                <button type="button" class="btn-secondary" onclick="window.location.href='cadastro.html'">
+                    Cadastre-se
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+   <script>
+    // Inicialização do login
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('UNIMAP Login carregado');
+        
+        // Botão sempre habilitado e com azul forte
+        const loginBtn = document.getElementById('loginBtnDesktop');
+        loginBtn.disabled = false;
+        
+        // Remover qualquer validação que mude a cor do botão
+        const emailInput = document.getElementById('emailDesktop');
+        const passwordInput = document.getElementById('passwordDesktop');
+        
+        // Se quiser manter a validação mas sem mudar a cor:
+        function validateForm() {
+            const isValid = emailInput.value && passwordInput.value && passwordInput.value.length >= 6;}
+        
+        emailInput.addEventListener('input', validateForm);
+        passwordInput.addEventListener('input', validateForm);
+        
+        // Validar estado inicial
+        validateForm();
+    });
+
+    // Função para Esqueci a Senha
+    function forgotPassword() {
+        const email = document.getElementById('emailDesktop').value;
+        if (email) {
+            alert(`Link de recuperação enviado para: ${email}`);
+        } else {
+            alert('Por favor, digite seu email para recuperar a senha');
+            document.getElementById('emailDesktop').focus();
+        }
+    }
+
+    // Função para Login com Google
+    function loginWithGoogle() {
+        alert('Login com Google - Em desenvolvimento');
+    }
+</script>
+</body>
+</html>

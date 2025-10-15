@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIMAP - Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <header class="desktop-header">
+        <div class="header-content">
+            <h1>UNIMAP - Admin</h1>
+            <nav class="desktop-nav">
+                <a href="admin.html" class="nav-link active">Dashboard</a>
+                <a href="admin-cursos.html">Cursos</a>
+                <a href="admin-salas.html">Salas</a>
+                <a href="admin-usuarios.html">Usuários</a>
+                <span class="user-info" data-user="nome"></span>
+                <button data-logout class="btn-sair">Sair</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="admin-dashboard">
+        <div class="container">
+            <h2>Dashboard Administrativo</h2>
+            
+            <!-- ESTATÍSTICAS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total de Usuários</h3>
+                    <div class="stat-number" id="total-usuarios">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Professores</h3>
+                    <div class="stat-number" id="total-professores">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Salas</h3>
+                    <div class="stat-number" id="total-salas">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Aulas Ativas</h3>
+                    <div class="stat-number" id="total-aulas">0</div>
+                </div>
+            </div>
+
+            <!-- AÇÕES RÁPIDAS -->
+            <div class="quick-actions">
+                <h3>Ações Rápidas</h3>
+                <div class="actions-grid">
+                    <button class="action-btn" onclick="window.location.href='admin-cursos.html'">
+                        <span>📚</span>
+                        Gerenciar Cursos
+                    </button>
+                    <button class="action-btn" onclick="window.location.href='admin-salas.html'">
+                        <span>🏫</span>
+                        Gerenciar Salas
+                    </button>
+                    <button class="action-btn" onclick="window.location.href='admin-usuarios.html'">
+                        <span>👥</span>
+                        Gerenciar Usuários
+                    </button>
+                    <button class="action-btn" onclick="window.location.href='admin-professores.html'">
+                        <span>👨‍🏫</span>
+                        Gerenciar Professores
+                    </button>
+                </div>
+            </div>
+
+            <!-- ÚLTIMOS USUÁRIOS -->
+            <div class="recent-section">
+                <h3>Últimos Usuários Cadastrados</h3>
+                <div class="table-container">
+                    <table id="usuarios-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Tipo</th>
+                                <th>Data Cadastro</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usuarios-body">
+                            <!-- Preenchido via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIMAP - Meu Perfil</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="desktop-header">
+        <div class="header-content">
+            <h1>UNIMAP</h1>
+            <nav class="desktop-nav">
+                <a href="index.html">Dashboard</a>
+                <a href="professores.html">Professores</a>
+                <a href="perfil.html" class="nav-link active">Meu Perfil</a>
+                <span class="user-info" data-user="nome"></span>
+                <button data-logout class="btn-sair">Sair</button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <h2>Meu Perfil</h2>
+            
+            <div class="profile-container">
+                <div class="profile-info">
+                    <h3>Informações Pessoais</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Nome:</label>
+                            <span id="profile-nome">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Email:</label>
+                            <span id="profile-email">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Matrícula:</label>
+                            <span id="profile-matricula">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Curso:</label>
+                            <span id="profile-curso">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Período:</label>
+                            <span id="profile-periodo">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Tipo:</label>
+                            <span id="profile-tipo">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-stats">
+                    <h3>Estatísticas</h3>
+                    <div class="stats-mini">
+                        <div class="stat-mini">
+                            <h4>Professores Favoritos</h4>
+                            <span id="stat-favoritos">0</span>
+                        </div>
+                        <div class="stat-mini">
+                            <h4>Aulas Esta Semana</h4>
+                            <span id="stat-aulas">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/perfil.js"></script>
+</body>
+</html>

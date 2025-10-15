@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIMAP - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 2em;
+        }
+        
+        .user-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .user-info h3 {
+            color: #555;
+            margin-bottom: 10px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card p {
+            opacity: 0.9;
+        }
+        
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+        
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .menu-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>🏫 UNIMAP - Dashboard</h1>
+            <button class="logout-btn" onclick="authManager.logout()">🚪 Sair</button>
+        </div>
+        
+        <div class="user-info">
+            <h3>👤 Informações do Usuário</h3>
+            <div id="userData">Carregando...</div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3 id="totalUsuarios">0</h3>
+                <p>Usuários</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="totalProfessores">0</h3>
+                <p>Professores</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="totalSalas">0</h3>
+                <p>Salas</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="totalAulas">0</h3>
+                <p>Aulas</p>
+            </div>
+        </div>
+        
+        <div class="menu-grid">
+            <div class="menu-item" onclick="alert('Horários em desenvolvimento')">
+                <h3>📅 Horários</h3>
+                <p>Ver grade horária</p>
+            </div>
+            <div class="menu-item" onclick="alert('Salas em desenvolvimento')">
+                <h3>🏢 Salas</h3>
+                <p>Localizar salas</p>
+            </div>
+            <div class="menu-item" onclick="alert('Professores em desenvolvimento')">
+                <h3>👨‍🏫 Professores</h3>
+                <p>Lista de professores</p>
+            </div>
+            <div class="menu-item" onclick="alert('Mapa em desenvolvimento')">
+                <h3>🗺️ Mapa</h3>
+                <p>Mapa do campus</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Carregar dados do usuário quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            const user = authManager.getCurrentUser();
+            const token = authManager.getToken();
+            
+            if (!user || !token) {
+                alert('Usuário não autenticado!');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Mostrar informações do usuário
+            document.getElementById('userData').innerHTML = `
+                <p><strong>Nome:</strong> ${user.nome}</p>
+                <p><strong>Email:</strong> ${user.email}</p>
+                <p><strong>Tipo:</strong> ${user.tipo}</p>
+                ${user.curso ? `<p><strong>Curso:</strong> ${user.curso}</p>` : ''}
+                ${user.periodo ? `<p><strong>Período:</strong> ${user.periodo}º</p>` : ''}
+            `;
+            
+            // Carregar estatísticas (apenas para admin)
+            if (user.tipo === 'admin') {
+                loadDashboardStats(token);
+            }
+        });
+        
+        async function loadDashboardStats(token) {
+            try {
+                const stats = await api.getDashboardStats(token);
+                document.getElementById('totalUsuarios').textContent = stats.total_usuarios || '0';
+                document.getElementById('totalProfessores').textContent = stats.total_professores || '0';
+                document.getElementById('totalSalas').textContent = stats.total_salas || '0';
+                document.getElementById('totalAulas').textContent = stats.total_aulas || '0';
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+            }
+        }
+    </script>
+</body>
+</html>

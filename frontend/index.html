@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIMAP - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- MOBILE HEADER -->
+    <header class="mobile-header">
+        <div class="header-top">
+            <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
+            <h1>UNIMAP</h1>
+            <span class="user-name" id="mobileUserName">Kaique Lucas</span>
+        </div>
+
+        <!-- MENU HAMBURGER -->
+        <nav class="mobile-nav" id="mobileNav">
+            <div class="nav-user">Kaique Lucas</div>
+            <a href="#" onclick="showSection('aulas')">Aulas</a>
+            <a href="#" onclick="showSection('professores')">Professores</a>
+            <a href="#" onclick="showSection('mapa')">Mapa</a>
+            <a href="#" onclick="logout()">Sair</a>
+        </nav>
+    </header>
+
+    <!-- DESKTOP HEADER -->
+    <header class="desktop-header">
+        <div class="header-content">
+            <h1>UNIMAP</h1>
+            <nav class="desktop-nav">
+                <a href="#" onclick="showSection('aulas')" class="nav-link">Minhas Aulas</a>
+                <a href="#" onclick="showSection('mapa')" class="nav-link">Mapa Salas</a>
+                <a href="#" onclick="showSection('professores')" class="nav-link">Professores</a>
+                <span class="user-info" id="desktopUserName">Kaique Lucas</span>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- SEÇÃO MINHAS AULAS (MOBILE) -->
+        <section id="aulas-mobile" class="section mobile-section">
+            <h2>Minhas Aulas</h2>
+            <div class="aulas-list">
+                <div class="aula-card">
+                    <div class="aula-info">
+                        <p><strong>Horario:</strong> 08:00-10:00</p>
+                        <p><strong>Sala:</strong> 101</p>
+                        <p><strong>Professor:</strong> João Silva</p>
+                        <p><strong>Disciplina:</strong> Programação Web</p>
+                    </div>
+                </div>
+                <div class="aula-card">
+                    <div class="aula-info">
+                        <p><strong>Horario:</strong> 10:00-12:00</p>
+                        <p><strong>Sala:</strong> LAB1</p>
+                        <p><strong>Professor:</strong> Maria Santos</p>
+                        <p><strong>Disciplina:</strong> Banco de Dados</p>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-criar-aula" onclick="showSection('criar-aula-mobile')">Criar Aula</button>
+        </section>
+
+        <!-- SEÇÃO MINHAS AULAS (DESKTOP) -->
+        <section id="aulas-desktop" class="section desktop-section">
+            <h2>Minhas Aulas</h2>
+            <div class="aulas-grid">
+                <div class="aula-item">
+                    <h4>Turma: SI3N</h4>
+                    <p><strong>Horario:</strong> 08:00-10:00</p>
+                    <p><strong>Sala:</strong> 101</p>
+                </div>
+                <div class="aula-item">
+                    <h4>Turma: SI3N</h4>
+                    <p><strong>Horario:</strong> 10:00-12:00</p>
+                    <p><strong>Sala:</strong> LAB1</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO MAPA DE BLOCOS -->
+        <section id="mapa-blocos" class="section">
+            <h2>Mapa Salas</h2>
+            <div class="blocos-grid">
+                <div class="bloco-card" onclick="showAndares('A')">
+                    <h3>Bloco A</h3>
+                </div>
+                <div class="bloco-card" onclick="showAndares('B')">
+                    <h3>Bloco B</h3>
+                </div>
+                <div class="bloco-card" onclick="showAndares('C')">
+                    <h3>Bloco C</h3>
+                </div>
+                <div class="bloco-card" onclick="showAndares('D')">
+                    <h3>Bloco D</h3>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO ANDARES -->
+        <section id="mapa-andares" class="section" style="display: none;">
+            <h2 id="bloco-title">Bloco A</h2>
+            <div class="andares-list">
+                <div class="andar-card" onclick="showSalas(1)">1° Andar</div>
+                <div class="andar-card" onclick="showSalas(2)">2° Andar</div>
+                <div class="andar-card" onclick="showSalas(3)">3° Andar</div>
+                <div class="andar-card" onclick="showSalas(4)">4° Andar</div>
+            </div>
+            <button class="btn-voltar" onclick="showSection('mapa-blocos')">← Voltar</button>
+        </section>
+
+        <!-- SEÇÃO SALAS -->
+        <section id="mapa-salas" class="section" style="display: none;">
+            <h3 id="sala-title">Bloco A > 1° Andar</h3>
+            <div class="salas-grid">
+                <div class="sala-card">
+                    <h4>Sala 101</h4>
+                    <p><strong>Professor:</strong> João Silva</p>
+                    <p><strong>Disciplina:</strong> Programação Web</p>
+                    <p><strong>Turma:</strong> SI3N</p>
+                </div>
+                <div class="sala-card">
+                    <h4>Sala 102</h4>
+                    <p><strong>Professor:</strong> Maria Santos</p>
+                    <p><strong>Disciplina:</strong> Banco de Dados</p>
+                    <p><strong>Turma:</strong> SI3N</p>
+                </div>
+            </div>
+            <button class="btn-voltar" onclick="showSection('mapa-andares')">← Voltar</button>
+        </section>
+
+        <!-- SEÇÃO PROFESSORES -->
+        <section id="professores" class="section">
+            <h2>Professores</h2>
+            <div class="professores-tabs">
+                <button class="tab-btn active" onclick="openTab('meus-professores')">Meus Professores</button>
+                <button class="tab-btn" onclick="openTab('adicionar-professor')">Adicionar Professor</button>
+            </div>
+
+            <div id="meus-professores" class="tab-content active">
+                <div class="professores-list">
+                    <div class="professor-card">
+                        <p><strong>Professor:</strong> João Silva</p>
+                        <p><strong>Periodo:</strong> 3°</p>
+                        <p><strong>Curso:</strong> Sistemas de Informação</p>
+                    </div>
+                    <div class="professor-card">
+                        <p><strong>Professor:</strong> Maria Santos</p>
+                        <p><strong>Periodo:</strong> 2°</p>
+                        <p><strong>Curso:</strong> Sistemas de Informação</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="adicionar-professor" class="tab-content">
+                <form class="add-professor-form">
+                    <div class="form-group">
+                        <label>Curso:</label>
+                        <select>
+                            <option>Selecione o curso</option>
+                            <option>Sistemas de Informação</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Período:</label>
+                        <select>
+                            <option>Selecione o período</option>
+                            <option>1° Periodo</option>
+                            <option>2° Periodo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Professor:</label>
+                        <select>
+                            <option>Selecione o professor</option>
+                            <option>João Silva</option>
+                            <option>Maria Santos</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Adicionar</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- SEÇÃO CRIAR AULA (MOBILE) -->
+        <section id="criar-aula-mobile" class="section mobile-section" style="display: none;">
+            <h2>Criar Aula</h2>
+            <form class="criar-aula-form">
+                <div class="form-group">
+                    <label>Curso:</label>
+                    <select>
+                        <option>Selecione o curso</option>
+                        <option>Sistemas de Informação</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Período:</label>
+                    <select>
+                        <option>Selecione o período</option>
+                        <option>3° Periodo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Turma:</label>
+                    <select>
+                        <option>Selecione a turma</option>
+                        <option>SI3N</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Sala:</label>
+                    <select>
+                        <option>Selecione a sala</option>
+                        <option>Sala 101</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Horario:</label>
+                    <select>
+                        <option>Selecione o horário</option>
+                        <option>08:00-10:00</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Criar</button>
+            </form>
+            <button class="btn-voltar" onclick="showSection('aulas-mobile')">← Voltar</button>
+        </section>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
