@@ -579,3 +579,15 @@ app.listen(PORT, () => {
     console.log(`🔍 Teste: http://localhost:${PORT}/api/test`);
     console.log(`📈 Status: http://localhost:${PORT}/api/status`);
 });
+// Rota para ver usuários em tempo real (APENAS DESENVOLVIMENTO)
+app.get('/api/debug/usuarios', (req, res) => {
+    db.all('SELECT id, nome, email, matricula, tipo, curso, periodo, data_cadastro FROM usuarios WHERE ativo = 1', [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json({
+            total: rows.length,
+            usuarios: rows
+        });
+    });
+});

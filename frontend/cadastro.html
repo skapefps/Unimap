@@ -3,55 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UNIMAP - Cadastro</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>UNIMAP - Cadastre-se</title>
+    <link rel="stylesheet" href="css/cadastro.css">
 </head>
-<body class="login-page">
-    <div class="login-container">
-        <!-- MOBILE VERSION -->
-        <div class="mobile-view">
-            <div class="login-header">
-                <h1>Cadastre-se</h1>
-            </div>
+<body>
+    <div class="register-container">
+        <!-- Desktop View -->
+        <div class="desktop-view">
+            <!-- Header removido conforme solicitado -->
+            <div class="register-header" style="display: none;"></div>
             
-            <form class="login-form" id="registerForm">
+            <form class="register-form" id="registerFormDesktop">
+                <div class="form-logo">
+                    <img src="images/logo-unipam.png" alt="UNIMAP Logo">
+                </div>
+                
+                <div class="form-title">Criar Conta</div>
+                
+                <div id="registerErrorDesktop" class="error-message"></div>
+                
                 <div class="input-group">
-                    <input type="text" placeholder="Nome Completo" required>
+                    <input type="text" id="fullNameDesktop" placeholder="Nome Completo" required>
                 </div>
                 
                 <div class="input-group">
-                    <input type="email" placeholder="E-mail" required>
+                    <input type="email" id="emailDesktop" placeholder="E-mail" required>
                 </div>
                 
                 <div class="input-group">
-                    <input type="text" placeholder="Usuário" required>
+                    <input type="text" id="usernameDesktop" placeholder="Usuario" required>
                 </div>
                 
                 <div class="input-group">
-                    <input type="password" placeholder="Senha" required>
+                    <input type="password" id="passwordDesktop" placeholder="Senha" required>
                 </div>
                 
                 <div class="input-group">
-                    <input type="password" placeholder="Confirmar senha" required>
-                </div>
-
-                <div class="divider">
-                    <span></span>
+                    <input type="password" id="confirmPasswordDesktop" placeholder="Confirmar senha" required>
                 </div>
                 
-                <button type="submit" class="btn-primary">Cadastrar</button>
+                <button type="submit" class="btn-primary" id="registerBtnDesktop">Cadastrar</button>
                 
                 <div class="divider">
                     <span>OU</span>
                 </div>
                 
-                <button type="button" class="btn-google">
+                <button type="button" class="btn-google" onclick="registerWithGoogle()">
+                    <img src="images/Logo-Google-G.png" alt="Google">
                     Cadastre-se com o Google
                 </button>
-
-                <div class="divider">
-                    <span></span>
-                </div>
                 
                 <button type="button" class="btn-secondary" onclick="window.location.href='login.html'">
                     Fazer Login
@@ -59,52 +59,80 @@
             </form>
         </div>
 
-        <!-- DESKTOP VERSION -->
-        <div class="desktop-view">
-            <div class="login-header">
-                <h1>Cadastre-se</h1>
-            </div>
+        <!-- Mobile View -->
+        <div class="mobile-view">
+            <!-- Header removido do mobile também -->
+            <div class="mobile-header" style="display: none;"></div>
             
-            <form class="login-form" id="registerFormDesktop">
-                <div class="input-group">
-                    <input type="text" placeholder="Nome Completo" required>
+            <form class="mobile-register-form" id="registerFormMobile">
+                <!-- Logo adicionada no mobile -->
+                <div class="form-logo">
+                    <img src="images/logo-unipam.png" alt="UNIMAP Logo">
                 </div>
                 
-                <div class="input-group">
-                    <input type="email" placeholder="E-mail" required>
+                <div class="mobile-form-title">Criar Conta</div>
+                
+                <div id="registerErrorMobile" class="error-message"></div>
+                
+                <div class="mobile-input-group">
+                    <input type="text" id="fullNameMobile" placeholder="Nome Completo" required>
                 </div>
                 
-                <div class="input-group">
-                    <input type="text" placeholder="Usuário" required>
+                <div class="mobile-input-group">
+                    <input type="email" id="emailMobile" placeholder="E-mail" required>
                 </div>
                 
-                <div class="input-group">
-                    <input type="password" placeholder="Senha" required>
+                <div class="mobile-input-group">
+                    <input type="text" id="usernameMobile" placeholder="Usuario" required>
                 </div>
                 
-                <div class="input-group">
-                    <input type="password" placeholder="Confirmar senha" required>
+                <div class="mobile-input-group">
+                    <input type="password" id="passwordMobile" placeholder="Senha" required>
                 </div>
                 
-                <button type="submit" class="btn-primary">Cadastrar</button>
+                <div class="mobile-input-group">
+                    <input type="password" id="confirmPasswordMobile" placeholder="Confirmar senha" required>
+                </div>
                 
-                <div class="login-options">
+                <button type="submit" class="mobile-btn-primary" id="registerBtnMobile">Cadastrar</button>
+                
+                <div class="mobile-divider">
                     <span>OU</span>
-                    <button type="button" class="btn-google">
-                        Cadastre-se com o Google
-                    </button>
                 </div>
-
-                <div class="login-options">
-                    <button type="button" class="btn-link" onclick="window.location.href='login.html'">
-                        Fazer Login
-                    </button>
-                </div>
+                
+                <button type="button" class="mobile-btn-google" onclick="registerWithGoogle()">
+                    <img src="images/Logo-Google-G.png" alt="Google">
+                    Cadastre-se com o Google
+                </button>
+                
+                <button type="button" class="mobile-btn-secondary" onclick="window.location.href='login.html'">
+                    Fazer Login
+                </button>
             </form>
         </div>
     </div>
 
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('UNIMAP Cadastro carregado');
+            
+            // Validação do formulário desktop
+            const registerBtnDesktop = document.getElementById('registerBtnDesktop');
+            registerBtnDesktop.disabled = false;
+            
+            // Validação do formulário mobile
+            const registerBtnMobile = document.getElementById('registerBtnMobile');
+            registerBtnMobile.disabled = false;
+        });
+
+        function registerWithGoogle() {
+            alert('Cadastro com Google - Em desenvolvimento');
+        }
+    </script>
+    <!-- No final do cadastro.html, antes do </body> -->
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script> <!-- Já tem o RegisterManager agora -->
 </body>
 </html>
