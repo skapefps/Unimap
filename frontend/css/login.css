@@ -46,9 +46,10 @@ body {
     font-weight: 700;
     letter-spacing: -0.5px;
 }
+
 .form-logo {
     text-align: center;
-    margin-bottom: 60px;
+    margin-bottom: 30px;
 }
 
 .form-logo img {
@@ -56,21 +57,7 @@ body {
     height: 80px;
     object-fit: contain;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    border-radius: 50%; /* Ajuste conforme sua logo */
-}
-.login-form::before {
-    display: block;
-    width: 80px;
-    height: 80px;
-    background: url('../images/logo-unipam.png') center/contain no-repeat;
-    margin: 0 auto 30px auto;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    position: relative;
-    border-radius: 50%; 
-}
-
-.login-form::after {
-    display: none;
+    border-radius: 50%;
 }
 
 .login-form {
@@ -79,7 +66,6 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    position: relative;
 }
 
 .input-group {
@@ -96,13 +82,13 @@ body {
     outline: none;
     border-radius: 10px;
     font-family: 'Inter', sans-serif;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra adicionada */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .input-group input:focus {
     border-color: #000000;
     background: rgba(255, 255, 255, 0.8);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Sombra mais intensa no foco */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .input-group input::placeholder {
@@ -126,13 +112,13 @@ body {
     border-radius: 10px;
     font-family: 'Inter', sans-serif;
     margin-bottom: 15px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra adicionada */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .password-group input:focus {
     border-color: #000000;
     background: rgba(255, 255, 255, 0.8);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Sombra mais intensa no foco */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .google-forgot-row {
@@ -187,7 +173,7 @@ body {
 .btn-primary {
     width: 100%;
     padding: 16px;
-    background: #00427C; /* Azul forte */
+    background: #00427C;
     color: #FFFFFF;
     border: none;
     font-size: 16px;
@@ -200,13 +186,12 @@ body {
 }
 
 .btn-primary:hover {
-    background: #003366; /* Azul mais escuro no hover */
+    background: #003366;
     transform: scale(1.02);
 }
 
-/* Garantir que o botão não mude de cor */
 .btn-primary:disabled {
-    background: #00427C; /* Mantém o azul forte mesmo desabilitado */
+    background: #00427C;
     cursor: pointer;
     opacity: 1;
 }
@@ -240,7 +225,7 @@ body {
     width: 100%;
     padding: 16px;
     background: rgba(217, 217, 217, 0.5);
-    color: rgba(0, 0, 0, 0.5); /* Opacidade 50% nas letras */
+    color: rgba(0, 0, 0, 0.5);
     border: 1px solid #000000;
     font-size: 16px;
     font-weight: 400;
@@ -253,7 +238,7 @@ body {
 
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.8);
-    color: #000000; /* Volta ao normal no hover */
+    color: #000000;
     transform: scale(1.02);
 }
 
@@ -282,6 +267,7 @@ body {
     height: 100%;
     width: 100%;
 }
+
 /* ===== MOBILE STYLES ===== */
 @media (max-width: 768px) {
     body {
@@ -289,7 +275,6 @@ body {
         align-items: flex-start;
         padding: 0;
         background: #00427C;
-        min-height: 100vh;
     }
     
     .login-container {
@@ -516,14 +501,6 @@ body {
     
     .login-form {
         padding: 40px 30px;
-    }
-    
-    .login-form::before {
-        margin-bottom: 20px;
-    }
-    
-    .login-form::after {
-        top: 165px;
     }
     
     .google-forgot-row {

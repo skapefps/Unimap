@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UNIMAP - Login</title>
     <link rel="stylesheet" href="css/login.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="shortcut icon" type="imagex/png" href="../frontend/images/logo-unipam 2.png">
 </head>
 <body>
     <div class="login-container">
@@ -16,16 +18,16 @@
             </div>
             
             <form class="login-form" id="loginFormDesktop">
-            <div class="form-logo">
-                <img src="../frontend/images/logo-unipam.png" alt="UNIMAP Logo">
-            </div>
-            
-            <div id="loginErrorDesktop" class="error-message"></div>
-            
-            <div class="input-group">
-                <input type="text" id="emailDesktop" placeholder="E-mail" required>
-            </div>
+                <div class="form-logo">
+                    <img src="images/logo-unipam.png" alt="UNIMAP Logo">
+                </div>
                 
+                <div id="loginErrorDesktop" class="error-message"></div>
+                
+                <div class="input-group">
+                    <input type="text" id="emailDesktop" placeholder="E-mail ou Login" required>
+                </div>
+                    
                 <div class="password-group">
                     <input type="password" id="passwordDesktop" placeholder="Senha" required>
                 </div>
@@ -55,28 +57,66 @@
 
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
-   <script>
-    // Inicialização do login
+<script>
+    
+    // Inicialização do login - SIMPLIFICADA
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('UNIMAP Login carregado');
+        console.log('🔧 UNIMAP Login carregado - Inicializando...');
         
-        // Botão sempre habilitado e com azul forte
+        // Verificar se authManager existe
+        if (typeof authManager !== 'undefined') {
+            console.log('✅ AuthManager encontrado');
+            authManager.init();
+        } else {
+            console.error('❌ AuthManager NÃO encontrado!');
+        }
+        
+        // Configurar formulário manualmente como fallback
+        const loginForm = document.getElementById('loginFormDesktop');
         const loginBtn = document.getElementById('loginBtnDesktop');
-        loginBtn.disabled = false;
         
-        // Remover qualquer validação que mude a cor do botão
-        const emailInput = document.getElementById('emailDesktop');
-        const passwordInput = document.getElementById('passwordDesktop');
-        
-        // Se quiser manter a validação mas sem mudar a cor:
-        function validateForm() {
-            const isValid = emailInput.value && passwordInput.value && passwordInput.value.length >= 6;}
-        
-        emailInput.addEventListener('input', validateForm);
-        passwordInput.addEventListener('input', validateForm);
-        
-        // Validar estado inicial
-        validateForm();
+        if (loginForm) {
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                console.log('📝 Formulário submetido manualmente');
+                
+                const email = document.getElementById('emailDesktop').value;
+                const password = document.getElementById('passwordDesktop').value;
+                
+                if (!email || !password) {
+                    showMessage('❌ Email e senha são obrigatórios', 'error');
+                    return;
+                }
+                
+                // Mostrar loading
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '🔄 Entrando...';
+                
+                try {
+                    console.log('📤 Enviando login manual...');
+                    const result = await api.login(email, password);
+                    console.log('📥 Resposta:', result);
+                    
+                    if (result.success) {
+                        showMessage('✅ Login realizado! Redirecionando...', 'success');
+                        localStorage.setItem('authToken', result.token);
+                        localStorage.setItem('userData', JSON.stringify(result.user));
+                        
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1000);
+                    } else {
+                        throw new Error(result.error);
+                    }
+                } catch (error) {
+                    console.error('❌ Erro no login:', error);
+                    showMessage('❌ ' + error.message, 'error');
+                } finally {
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = 'Entrar';
+                }
+            });
+        }
     });
 
     // Função para Esqueci a Senha
@@ -90,10 +130,172 @@
         }
     }
 
-    // Função para Login com Google
-    function loginWithGoogle() {
-        alert('Login com Google - Em desenvolvimento');
+    // Função de login com Google - CORRIGIDA
+    async function loginWithGoogle() {
+        try {
+            console.log('🔐 Iniciando login com Google...');
+            
+            // Verificar se Google API está carregada
+            if (typeof google === 'undefined') {
+                throw new Error('Google Identity Services não carregada');
+            }
+            
+            const token = await new Promise((resolve, reject) => {
+                const client = google.accounts.oauth2.initTokenClient({
+                    client_id: "432080672502-ba91tog3jvoc6c0mac01iq2b5k5q3mb1.apps.googleusercontent.com",
+                    scope: "email profile openid",
+                    callback: (response) => {
+                        if (response.access_token) {
+                            resolve(response.access_token);
+                        } else {
+                            reject(new Error('Usuário cancelou o login'));
+                        }
+                    },
+                });
+                client.requestAccessToken();
+            });
+
+            console.log('✅ Token Google obtido:', token ? 'SIM' : 'NÃO');
+            
+            const response = await fetch("http://localhost:3000/api/auth/google", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ token }),
+            });
+
+            const data = await response.json();
+            console.log('📥 Resposta da API Google:', data);
+
+            if (data.success) {
+                localStorage.setItem("authToken", data.token);
+                localStorage.setItem("userData", JSON.stringify(data.user));
+                showMessage(`✅ Bem-vindo(a), ${data.user.nome}!`, 'success');
+                
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 1000);
+            } else {
+                throw new Error(data.error || 'Erro no login Google');
+            }
+
+        } catch (error) {
+            console.error("❌ Erro no login Google:", error);
+            showMessage('❌ ' + error.message, 'error');
+        }
     }
+
+    // Função para mostrar mensagens
+    function showMessage(message, type = 'info') {
+        // Remover mensagens anteriores
+        const existingMessage = document.querySelector('.custom-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        
+        // Criar nova mensagem
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `custom-message custom-message-${type}`;
+        messageDiv.innerHTML = `
+            <span>${message}</span>
+            <button onclick="this.parentElement.remove()">×</button>
+        `;
+        
+        // Adicionar ao formulário
+        const form = document.querySelector('.login-form');
+        if (form) {
+            form.insertBefore(messageDiv, form.firstChild);
+        } else {
+            alert(message);
+        }
+        
+        // Auto-remover após 5 segundos
+        setTimeout(() => {
+            if (messageDiv.parentElement) {
+                messageDiv.remove();
+            }
+        }, 5000);
+    }
+
+    // Adicionar CSS para as mensagens
+    const style = document.createElement('style');
+    style.textContent = `
+        .custom-message {
+            padding: 12px 16px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .custom-message-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .custom-message-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .custom-message-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .custom-message-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .custom-message button {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 10px;
+            color: inherit;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+    // DEBUG - Verificar se scripts carregaram
+setTimeout(() => {
+    console.log('🔍 DEBUG - Scripts carregados:');
+    console.log('- api:', typeof api);
+    console.log('- authManager:', typeof authManager);
+    console.log('- ApiService:', typeof ApiService);
+    
+    // Tentar carregar manualmente se não carregou
+    if (typeof authManager === 'undefined') {
+        console.log('🔄 Tentando carregar auth.js manualmente...');
+        const script = document.createElement('script');
+        script.src = '/js/auth.js';
+        script.onload = function() {
+            console.log('✅ auth.js carregado manualmente!');
+            if (typeof authManager !== 'undefined') {
+                authManager.init();
+            }
+        };
+        script.onerror = function() {
+            console.error('❌ Erro ao carregar auth.js manualmente');
+        };
+        document.head.appendChild(script);
+    }
+}, 1000);
 </script>
 </body>
 </html>
