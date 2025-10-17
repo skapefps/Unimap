@@ -632,12 +632,15 @@ app.get('/api/professores/favoritos/:aluno_id', authenticateToken, (req, res) =>
 });
 
 // ==================== ROTAS DE AULAS ====================
+// ==================== ROTAS DE AULAS ====================
 app.get('/api/aulas', authenticateToken, (req, res) => {
     const query = `
-        SELECT a.*, p.nome as professor_nome, s.numero as sala_numero, s.bloco as sala_bloco
+        SELECT a.*, p.nome as professor_nome, s.numero as sala_numero, s.bloco as sala_bloco,
+               d.nome as disciplina_nome
         FROM aulas a
         LEFT JOIN professores p ON a.professor_id = p.id
         LEFT JOIN salas s ON a.sala_id = s.id
+        LEFT JOIN disciplinas d ON a.disciplina_id = d.id
         WHERE a.ativa = 1
         ORDER BY a.dia_semana, a.horario_inicio
     `;
@@ -648,6 +651,68 @@ app.get('/api/aulas', authenticateToken, (req, res) => {
             return res.status(500).json({ error: err.message });
         }
         res.json(rows);
+    });
+});
+
+app.get('/api/aulas/usuario/:usuario_id', authenticateToken, (req, res) => {
+    const { usuario_id } = req.params;
+    
+    db.get('SELECT curso, tipo FROM usuarios WHERE id = ?', [usuario_id], (err, user) => {
+        if (err || !user) {
+            console.error('❌ Usuário não encontrado:', usuario_id);
+            return res.status(404).json({ error: 'Usuário não encontrado' });
+        }
+        
+        let query, params;
+        
+        if (user.tipo === 'aluno') {
+            // Aluno: vê apenas aulas do seu curso
+            query = `
+                SELECT a.*, p.nome as professor_nome, s.numero as sala_numero, s.bloco as sala_bloco,
+                       d.nome as disciplina_nome
+                FROM aulas a
+                LEFT JOIN professores p ON a.professor_id = p.id
+                LEFT JOIN salas s ON a.sala_id = s.id
+                LEFT JOIN disciplinas d ON a.disciplina_id = d.id
+                WHERE a.curso = ? AND a.ativa = 1
+                ORDER BY a.dia_semana, a.horario_inicio
+            `;
+            params = [user.curso];
+        } else if (user.tipo === 'professor') {
+            // Professor: vê apenas suas próprias aulas
+            query = `
+                SELECT a.*, p.nome as professor_nome, s.numero as sala_numero, s.bloco as sala_bloco,
+                       d.nome as disciplina_nome
+                FROM aulas a
+                LEFT JOIN professores p ON a.professor_id = p.id
+                LEFT JOIN salas s ON a.sala_id = s.id
+                LEFT JOIN disciplinas d ON a.disciplina_id = d.id
+                WHERE a.professor_id = (SELECT id FROM professores WHERE email = ?) AND a.ativa = 1
+                ORDER BY a.dia_semana, a.horario_inicio
+            `;
+            params = [user.email];
+        } else {
+            // Admin: vê todas as aulas
+            query = `
+                SELECT a.*, p.nome as professor_nome, s.numero as sala_numero, s.bloco as sala_bloco,
+                       d.nome as disciplina_nome
+                FROM aulas a
+                LEFT JOIN professores p ON a.professor_id = p.id
+                LEFT JOIN salas s ON a.sala_id = s.id
+                LEFT JOIN disciplinas d ON a.disciplina_id = d.id
+                WHERE a.ativa = 1
+                ORDER BY a.dia_semana, a.horario_inicio
+            `;
+            params = [];
+        }
+        
+        db.all(query, params, (err, rows) => {
+            if (err) {
+                console.error('❌ Erro ao buscar aulas do usuário:', err);
+                return res.status(500).json({ error: err.message });
+            }
+            res.json(rows);
+        });
     });
 });
 
@@ -844,4 +909,25 @@ app.get('/api/auth/check-credentials/:credential', (req, res) => {
             user: user
         });
     });
+});
+// Rota para remover professor dos favoritos
+app.delete('/api/professores/favoritos/:aluno_id/:professor_id', authenticateToken, (req, res) => {
+    const { aluno_id, professor_id } = req.params;
+    
+    db.run(
+        'DELETE FROM professores_favoritos WHERE aluno_id = ? AND professor_id = ?',
+        [aluno_id, professor_id],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao remover favorito:', err);
+                return res.status(400).json({ error: err.message });
+            }
+            
+            if (this.changes === 0) {
+                return res.status(404).json({ error: 'Favorito não encontrado' });
+            }
+            
+            res.json({ success: true, message: 'Professor removido dos favoritos!' });
+        }
+    );
 });

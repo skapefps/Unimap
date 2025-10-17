@@ -10,12 +10,10 @@ body {
     font-family: 'Inter', Arial, sans-serif;
     background: url('../images/background.webp') center/cover no-repeat;
     height: 100vh;
-    overflow: hidden;
     display: flex;
     justify-content: flex-end;
     align-items: center;
     padding: 0;
-    /*abb*/
 }
 
 .login-container {

@@ -158,11 +158,11 @@ async function loginWithGoogle() {
 
         console.log('✅ Token Google obtido:', token ? 'SIM' : 'NÃO');
         
-        const response = await fetch("http://localhost:3000/api/auth/google", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token }),
-        });
+        const response = await fetch(`${window.location.origin}/api/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+    });
 
         const data = await response.json();
         console.log('📥 Resposta da API Google:', data);

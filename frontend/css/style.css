@@ -467,3 +467,521 @@ main {
 .fade-in {
     animation: fadeIn 0.5s ease-in;
 }
+/* ===== SEÇÃO MINHAS AULAS MELHORADA ===== */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.semestre-tag {
+    background: #3498db;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.aulas-filters {
+    margin-bottom: 20px;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ecf0f1;
+    border-radius: 8px;
+    font-size: 16px;
+    background: white;
+}
+
+/* Cartões de aula melhorados */
+.aula-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border-left: 4px solid #3498db;
+}
+
+.aula-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+}
+
+.aula-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.aula-header h3 {
+    color: #2c3e50;
+    font-size: 18px;
+    margin: 0;
+    flex: 1;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 10px;
+}
+
+.status-badge.em-andamento {
+    background: #e8f5e8;
+    color: #27ae60;
+    border: 1px solid #27ae60;
+}
+
+.status-badge.proxima {
+    background: #e3f2fd;
+    color: #3498db;
+    border: 1px solid #3498db;
+}
+
+.status-badge.futura {
+    background: #f5f5f5;
+    color: #7f8c8d;
+    border: 1px solid #bdc3c7;
+}
+
+.aula-info {
+    margin-bottom: 15px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    color: #555;
+}
+
+.info-item .icon {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+.aula-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.3s;
+    flex: 1;
+    text-align: center;
+}
+
+.btn-action.secundario {
+    background: transparent;
+    color: #3498db;
+    border: 1px solid #3498db;
+}
+
+.btn-action:hover {
+    background: #2980b9;
+}
+
+.btn-action.secundario:hover {
+    background: #3498db;
+    color: white;
+}
+
+.btn-action.small {
+    padding: 6px 12px;
+    font-size: 12px;
+    flex: none;
+}
+
+/* Grid desktop melhorado */
+.header-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.aula-item {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #3498db;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+}
+
+.aula-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+}
+
+.aula-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.aula-badge.em-andamento {
+    background: #e8f5e8;
+    color: #27ae60;
+}
+
+.aula-badge.proxima {
+    background: #e3f2fd;
+    color: #3498db;
+}
+
+.aula-badge.futura {
+    background: #f5f5f5;
+    color: #7f8c8d;
+}
+
+.aula-item h4 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.aula-meta {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.aula-meta span {
+    font-size: 14px;
+    color: #555;
+}
+
+.professor, .dias {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+/* Botão criar aula melhorado */
+.btn-criar-aula {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 16px 24px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.btn-criar-aula:hover {
+    background: #219653;
+}
+
+/* Responsividade adicional */
+@media (max-width: 480px) {
+    .aula-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .status-badge {
+        margin-left: 0;
+        margin-top: 5px;
+    }
+    
+    .aula-actions {
+        flex-direction: column;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .header-actions .filter-select {
+        margin-bottom: 10px;
+    }
+}
+/* Botões sem estrelas - mais limpos */
+.btn-favorito {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position:relative;
+    right: 5px;
+}
+
+.btn-favorito:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.favorito-badge {
+    background: linear-gradient(135deg, #27ae60, #229954);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+/* 🔥 MODAL MODERNO E BONITO */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 24px;
+    max-height: calc(80vh - 80px);
+    overflow-y: auto;
+}
+
+.professor-detalhes p {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.professor-detalhes strong {
+    color: #2c3e50;
+    display: inline-block;
+    min-width: 100px;
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0;
+        transform: translateY(30px) scale(0.9);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .modal-header {
+        padding: 16px 20px;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+}
+/* 🔔 NOTIFICAÇÕES ESTILIZADAS */
+.custom-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    padding: 16px 20px;
+    min-width: 300px;
+    max-width: 400px;
+    z-index: 1001;
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left: 4px solid #3498db;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.custom-notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.custom-notification.success {
+    border-left-color: #27ae60;
+    background: linear-gradient(135deg, #f8fff9, #ffffff);
+}
+
+.custom-notification.error {
+    border-left-color: #e74c3c;
+    background: linear-gradient(135deg, #fff8f8, #ffffff);
+}
+
+.custom-notification.info {
+    border-left-color: #3498db;
+    background: linear-gradient(135deg, #f8fbff, #ffffff);
+}
+
+.custom-notification.warning {
+    border-left-color: #f39c12;
+    background: linear-gradient(135deg, #fffbf0, #ffffff);
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.notification-content i {
+    font-size: 1.2rem;
+    width: 20px;
+}
+
+.custom-notification.success .notification-content i {
+    color: #27ae60;
+}
+
+.custom-notification.error .notification-content i {
+    color: #e74c3c;
+}
+
+.custom-notification.info .notification-content i {
+    color: #3498db;
+}
+
+.custom-notification.warning .notification-content i {
+    color: #f39c12;
+}
+
+.notification-content span {
+    color: #2c3e50;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: #7f8c8d;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    margin-left: 10px;
+}
+
+.notification-close:hover {
+    background: #f8f9fa;
+    color: #e74c3c;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .custom-notification {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        max-width: none;
+        transform: translateY(-100px);
+    }
+    
+    .custom-notification.show {
+        transform: translateY(0);
+    }
+}
