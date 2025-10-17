@@ -399,7 +399,7 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/google', async (req, res) => {
     const { token } = req.body;
 
-    console.log('🔐 Processando cadastro Google...');
+    console.log('🔐 Processando login Google...');
     
     if (!token) {
         return res.status(400).json({ error: 'Token não fornecido' });
@@ -424,7 +424,7 @@ app.post('/api/auth/google', async (req, res) => {
 
         console.log('✅ Informações do usuário Google obtidas:', email);
 
-        // VERIFICAÇÃO: Se email já existe, NÃO criar e avisar para fazer login
+        // VERIFICAÇÃO: Se email já existe, FAZER LOGIN (não cadastrar)
         db.get('SELECT * FROM usuarios WHERE email = ? AND ativo = 1', [email], async (err, user) => {
             if (err) {
                 console.error('❌ Erro ao buscar usuário:', err);
@@ -432,11 +432,23 @@ app.post('/api/auth/google', async (req, res) => {
             }
 
             if (user) {
-                console.log('❌ Email já cadastrado:', email);
-                return res.status(400).json({ 
-                    success: false,
-                    error: 'Este email já está cadastrado no sistema. Por favor, faça login em vez de cadastrar.' 
+                console.log('✅ Usuário já cadastrado - Fazendo LOGIN:', user.nome);
+                
+                // USUÁRIO EXISTE - FAZER LOGIN
+                res.json({
+                    success: true,
+                    user: {
+                        id: user.id,
+                        nome: user.nome,
+                        email: user.email,
+                        matricula: user.matricula,
+                        tipo: user.tipo,
+                        curso: user.curso,
+                        periodo: user.periodo
+                    },
+                    token: user.id.toString()
                 });
+                
             } else {
                 // Criar novo usuário APENAS se não existir
                 console.log('👤 Criando novo usuário Google:', name);
@@ -452,7 +464,7 @@ app.post('/api/auth/google', async (req, res) => {
                             if (err.message.includes('UNIQUE constraint failed')) {
                                 return res.status(400).json({ 
                                     success: false,
-                                    error: 'Este email já está cadastrado. Por favor, faça login em vez de cadastrar.' 
+                                    error: 'Este email já está cadastrado.' 
                                 });
                             }
                             
@@ -489,7 +501,6 @@ app.post('/api/auth/google', async (req, res) => {
         });
     }
 });
-
 // ==================== ROTAS DE DASHBOARD ====================
 app.get('/api/dashboard/estatisticas', authenticateToken, (req, res) => {
     const queries = [
