@@ -1,38 +1,49 @@
+// admin.js - Versão simplificada
 class AdminManager {
     constructor() {
         this.init();
     }
 
     async init() {
-        await this.checkAdminAccess();
+        // A verificação já é feita pelo app.js - protegeAdminPages()
         await this.loadDashboardData();
         this.setupEventListeners();
+        this.updateUserInfo();
     }
 
-    async checkAdminAccess() {
-        const userData = localStorage.getItem('unimap_user');
-        if (!userData) {
-            window.location.href = 'login.html';
-            return;
-        }
-
-        const user = JSON.parse(userData);
-        if (user.tipo !== 'admin') {
-            alert('Acesso restrito a administradores!');
-            window.location.href = 'index.html';
-            return;
+    updateUserInfo() {
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+            const user = JSON.parse(userData);
+            const userElement = document.querySelector('[data-user="nome"]');
+            if (userElement) {
+                userElement.innerHTML = `${user.nome} <span class="user-type-badge admin">ADMIN</span>`;
+            }
         }
     }
 
+    // ... resto do código permanece igual
     async loadDashboardData() {
         try {
-            // Carregar estatísticas
-            const stats = await api.getEstatisticas();
-            this.updateStats(stats);
+            const token = localStorage.getItem('authToken');
+            
+            const statsResponse = await fetch('/api/dashboard/estatisticas', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (statsResponse.ok) {
+                const stats = await statsResponse.json();
+                this.updateStats(stats);
+            }
 
-            // Carregar últimos usuários
-            const usuarios = await api.getUsuarios();
-            this.renderUsuarios(usuarios.slice(0, 5)); // Últimos 5
+            const usersResponse = await fetch('/api/usuarios', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (usersResponse.ok) {
+                const usuarios = await usersResponse.json();
+                this.renderUsuarios(usuarios.slice(0, 5));
+            }
 
         } catch (error) {
             console.error('Erro ao carregar dashboard:', error);
@@ -40,10 +51,17 @@ class AdminManager {
     }
 
     updateStats(stats) {
-        document.getElementById('total-usuarios').textContent = stats.total_usuarios || '0';
-        document.getElementById('total-professores').textContent = stats.total_professores || '0';
-        document.getElementById('total-salas').textContent = stats.total_salas || '0';
-        document.getElementById('total-aulas').textContent = stats.total_aulas || '0';
+        const elements = {
+            'total-usuarios': stats.total_usuarios || '0',
+            'total-professores': stats.total_professores || '0',
+            'total-salas': stats.total_salas || '0',
+            'total-aulas': stats.total_aulas || '0'
+        };
+        
+        Object.entries(elements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = value;
+        });
     }
 
     renderUsuarios(usuarios) {
@@ -66,11 +84,21 @@ class AdminManager {
     }
 
     setupEventListeners() {
-        // Configurar eventos específicos do admin
+        const logoutBtn = document.querySelector('[data-logout]');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                if (typeof authManager !== 'undefined') {
+                    authManager.logout();
+                } else {
+                    localStorage.clear();
+                    window.location.href = 'login.html';
+                }
+            });
+        }
     }
 }
 
 // Inicializar admin
-window.addEventListener('load', () => {
+document.addEventListener('DOMContentLoaded', () => {
     window.adminManager = new AdminManager();
 });

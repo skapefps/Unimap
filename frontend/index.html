@@ -9,36 +9,52 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- MOBILE HEADER -->
-    <header class="mobile-header">
-        <div class="header-top">
-            <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
-            <h1>UNIMAP</h1>
-            <span class="user-name" id="mobileUserName">Kaique Lucas</span>
-        </div>
+   <!-- MOBILE HEADER -->
+<header class="mobile-header">
+    <div class="header-top">
+        <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
+        <h1>UNIMAP</h1>
+        <span class="user-name" id="mobileUserName">Kaique Lucas</span>
+    </div>
 
-        <!-- MENU HAMBURGER -->
-        <nav class="mobile-nav" id="mobileNav">
-            <div class="nav-user">Kaique Lucas</div>
-            <a href="#" onclick="showSection('aulas-mobile')">Aulas</a>
-            <a href="#" onclick="showSection('professores')">Professores</a>
-            <a href="#" onclick="showSection('mapa-blocos')">Mapa</a>
-            <a href="#" onclick="logout()">Sair</a>
+    <!-- MENU HAMBURGER -->
+    <nav class="mobile-nav" id="mobileNav">
+        <div class="nav-user" id="mobileNavUser">Kaique Lucas</div>
+        <a href="#" onclick="showSection('aulas-mobile')">Aulas</a>
+        <a href="#" onclick="showSection('professores')">Professores</a>
+        <a href="#" onclick="showSection('mapa')">Mapa</a>
+        
+        <!-- ✅ DASHBOARD APENAS PARA ADMIN (MOBILE) -->
+        <a href="admin.html" class="admin-only" id="admin-dashboard-mobile" style="display: none;">
+            <i class="fas fa-cog"></i> Dashboard
+        </a>
+        
+        <a href="#" onclick="logout()">Sair</a>
+    </nav>
+</header>
+
+<!-- DESKTOP HEADER -->
+<header class="desktop-header">
+    <div class="header-content">
+        <h1>UNIMAP</h1>
+        <nav class="desktop-nav">
+            <a href="index.html" onclick="showSection('aulas')" class="nav-link">Minhas Aulas</a>
+            <a href="#" onclick="showSection('mapa-blocos')" class="nav-link">Mapa Salas</a>
+            <a href="#" onclick="showSection('professores')" class="nav-link">Professores</a>
+            
+            <!-- ✅ DASHBOARD APENAS PARA ADMIN (DESKTOP) -->
+            <a href="admin.html" class="nav-link admin-only" id="admin-dashboard-link" style="display: none;">
+                <i class="fas fa-cog"></i> Dashboard
+            </a>
+            
+            <span class="user-info" id="desktopUserName">Kaique Lucas</span>
+         <!-- BOTÃO SAIR -->
+        <button class="btn-sair-desktop-texto" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Sair
+        </button>
         </nav>
-    </header>
-
-    <!-- DESKTOP HEADER -->
-    <header class="desktop-header">
-        <div class="header-content">
-            <h1>UNIMAP</h1>
-            <nav class="desktop-nav">
-                <a href="index.html" onclick="showSection('aulas')" class="nav-link">Minhas Aulas</a>
-                <a href="#" onclick="showSection('mapa-blocos')" class="nav-link">Mapa Salas</a>
-                <a href="#" onclick="showSection('professores')" class="nav-link">Professores</a>
-                <span class="user-info" id="desktopUserName">Kaique Lucas</span>
-            </nav>
-        </div>
-    </header>
+    </div>
+</header>
 
     <main>
         <!-- SEÇÃO MINHAS AULAS (MOBILE) -->

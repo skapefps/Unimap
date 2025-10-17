@@ -310,3 +310,165 @@ window.addEventListener('resize', () => {
         }
     }
 });
+// 🔐 FUNÇÃO PARA VERIFICAR E MOSTRAR OPÇÕES DE ADMIN
+function checkAndShowAdminOptions() {
+    console.log('🔍 Verificando permissões de admin...');
+    
+    const userData = localStorage.getItem('userData');
+    
+    if (!userData) {
+        console.log('⚠️ Nenhum usuário logado');
+        hideAdminOptions();
+        return false;
+    }
+    
+    try {
+        const user = JSON.parse(userData);
+        console.log('👤 Usuário:', user.nome, '- Tipo:', user.tipo);
+        
+        const isAdmin = user.tipo === 'admin';
+        
+        if (isAdmin) {
+            showAdminOptions();
+            updateUserBadge(user);
+            console.log('✅ Admin detectado - Mostrando dashboard');
+        } else {
+            hideAdminOptions();
+            console.log('ℹ️ Usuário normal - Ocultando dashboard');
+        }
+        
+        return isAdmin;
+        
+    } catch (error) {
+        console.error('❌ Erro ao verificar permissões:', error);
+        hideAdminOptions();
+        return false;
+    }
+}
+
+// 👑 MOSTRAR OPÇÕES DE ADMIN
+function showAdminOptions() {
+    const adminLinks = document.querySelectorAll('.admin-only');
+    adminLinks.forEach(link => {
+        link.style.display = 'block';
+    });
+}
+
+// 🚫 OCULTAR OPÇÕES DE ADMIN
+function hideAdminOptions() {
+    const adminLinks = document.querySelectorAll('.admin-only');
+    adminLinks.forEach(link => {
+        link.style.display = 'none';
+    });
+}
+
+// 🏷️ ATUALIZAR BADGE DO USUÁRIO
+function updateUserBadge(user) {
+    const desktopUser = document.getElementById('desktopUserName');
+    const mobileUser = document.querySelector('.nav-user');
+    
+    if (user.tipo === 'admin') {
+        if (desktopUser) {
+            desktopUser.innerHTML = `${user.nome} <span class="user-type-badge admin">ADMIN</span>`;
+        }
+        if (mobileUser) {
+            mobileUser.innerHTML = `${user.nome} <span class="user-type-badge admin">ADMIN</span>`;
+        }
+    } else {
+        if (desktopUser) {
+            desktopUser.textContent = user.nome;
+        }
+        if (mobileUser) {
+            mobileUser.textContent = user.nome;
+        }
+    }
+}
+
+// 🔒 PROTEGER PÁGINAS ADMIN
+function protectAdminPages() {
+    if (!window.location.pathname.includes('admin')) return;
+    
+    const userData = localStorage.getItem('userData');
+    
+    if (!userData) {
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    try {
+        const user = JSON.parse(userData);
+        
+        if (user.tipo !== 'admin') {
+            alert('❌ Acesso restrito a administradores!');
+            window.location.href = 'index.html';
+        }
+    } catch (error) {
+        console.error('Erro ao verificar permissões:', error);
+        window.location.href = 'login.html';
+    }
+}
+
+// 📄 ATUALIZAR A INICIALIZAÇÃO DO APP
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM carregado, inicializando app...');
+    
+    // 🔐 Verificar autenticação e permissões
+    const userData = localStorage.getItem('userData');
+    const token = localStorage.getItem('authToken');
+    
+    if (userData && token) {
+        try {
+            const user = JSON.parse(userData);
+            console.log('👋 Usuário logado:', user.nome);
+            
+            // ✅ ATUALIZAR NOME DO USUÁRIO NA INTERFACE
+            updateUserInterface(user);
+            
+            // ✅ VERIFICAR SE É ADMIN E MOSTRAR DASHBOARD
+            checkAndShowAdminOptions();
+            
+        } catch (error) {
+            console.error('❌ Erro ao carregar usuário:', error);
+        }
+    } else {
+        console.log('👤 Usuário não autenticado');
+    }
+    
+    // 🔒 PROTEGER PÁGINAS ADMIN (se estiver em uma)
+    protectAdminPages();
+    
+    // 🚀 INICIALIZAR MANAGERS
+    if (typeof aulasManager !== 'undefined') {
+        aulasManager.init();
+    }
+    
+    if (typeof professoresManager !== 'undefined') {
+        setTimeout(() => {
+            professoresManager.init();
+        }, 100);
+    }
+});
+
+// 👤 ATUALIZAR INTERFACE COM DADOS DO USUÁRIO
+function updateUserInterface(user) {
+    // Desktop
+    const desktopUserName = document.getElementById('desktopUserName');
+    const mobileUserName = document.getElementById('mobileUserName');
+    const navUser = document.querySelector('.nav-user');
+    
+    if (desktopUserName) desktopUserName.textContent = user.nome;
+    if (mobileUserName) mobileUserName.textContent = user.nome;
+    if (navUser) navUser.textContent = user.nome;
+}
+
+// 🚪 FUNÇÃO LOGOUT (se não existir)
+function logout() {
+    if (typeof authManager !== 'undefined') {
+        authManager.logout();
+    } else {
+        // Fallback simples
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+        window.location.href = 'login.html';
+    }
+}
