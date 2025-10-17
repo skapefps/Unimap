@@ -9,7 +9,8 @@
 body {
     font-family: 'Inter', Arial, sans-serif;
     background: url('../images/background.webp') center/cover no-repeat;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
     display: flex;
     justify-content: flex-end;
     align-items: center;
