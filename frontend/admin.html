@@ -7,41 +7,97 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin.css">
     <link rel="shortcut icon" type="imagex/png" href="../frontend/images/logo-unipam 2.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- MOBILE HEADER -->
+    <header class="mobile-header">
+        <div class="header-top">
+            <button class="menu-hamburger" onclick="toggleAdminMenu()">☰</button>
+            <h1>UNIMAP - Admin</h1>
+            <span class="user-name" id="mobileUserName">Admin</span>
+        </div>
+
+        <!-- MENU HAMBURGER MOBILE -->
+        <nav class="mobile-nav" id="mobileNavAdmin">
+            <div class="nav-user" id="mobileNavUser">Admin</div>
+             <a href="index.html" class="nav-link btn-voltar-app-mobile" onclick="closeAdminMenu()">
+        <i class="fas fa-arrow-left"></i> Voltar para o App</a>
+    
+    <a href="admin.html" class="nav-link active" onclick="closeAdminMenu()">
+        <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+            <a href="admin.html" class="nav-link active" onclick="closeAdminMenu()">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="admin-professores.html" class="nav-link" onclick="closeAdminMenu()">
+                <i class="fas fa-chalkboard-teacher"></i> Professores
+            </a>
+            <a href="admin-salas.html" class="nav-link" onclick="closeAdminMenu()">
+                <i class="fas fa-door-open"></i> Salas
+            </a>
+            <a href="admin-usuarios.html" class="nav-link" onclick="closeAdminMenu()">
+                <i class="fas fa-users-cog"></i> Usuários
+            </a>
+            <a href="#" onclick="logout()" class="logout-mobile">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </a>
+        </nav>
+    </header>
+
+    <!-- DESKTOP HEADER -->
     <header class="desktop-header">
         <div class="header-content">
             <h1>UNIMAP - Admin</h1>
             <nav class="desktop-nav">
+                <a href="index.html" class="btn-flutuante-voltar" title="Voltar para o App">
+                <i class="fas fa-arrow-left"></i>
+                <span>Voltar para o App</span></a>
                 <a href="admin.html" class="nav-link active">Dashboard</a>
-                <a href="admin-cursos.html">Cursos</a>
-                <a href="admin-salas.html">Salas</a>
-                <a href="admin-usuarios.html">Usuários</a>
-                <span class="user-info" data-user="nome"></span>
-                <button data-logout class="btn-sair">Sair</button>
+                <a href="admin-professores.html" class="nav-link">Professores</a>
+                <a href="admin-salas.html" class="nav-link">Salas</a>
+                <a href="admin-usuarios.html" class="nav-link">Usuários</a>
+                <span class="user-info" id="desktopUserName">Admin</span>
+                <button class="btn-sair-desktop" onclick="logout()" title="Sair">
+                <i class="fas fa-sign-out-alt"></i>
+                </button>
             </nav>
         </div>
     </header>
 
     <main class="admin-dashboard">
         <div class="container">
-            <h2>Dashboard Administrativo</h2>
+            <div class="page-header">
+                <h2>Dashboard Administrativo</h2>
+            </div>
             
             <!-- ESTATÍSTICAS -->
             <div class="stats-grid">
                 <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
                     <h3>Total de Usuários</h3>
                     <div class="stat-number" id="total-usuarios">0</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
                     <h3>Professores</h3>
                     <div class="stat-number" id="total-professores">0</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-door-open"></i>
+                    </div>
                     <h3>Salas</h3>
                     <div class="stat-number" id="total-salas">0</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
                     <h3>Aulas Ativas</h3>
                     <div class="stat-number" id="total-aulas">0</div>
                 </div>
@@ -51,22 +107,30 @@
             <div class="quick-actions">
                 <h3>Ações Rápidas</h3>
                 <div class="actions-grid">
-                    <button class="action-btn" onclick="window.location.href='admin-cursos.html'">
-                        <span>📚</span>
-                        Gerenciar Cursos
-                    </button>
-                    <button class="action-btn" onclick="window.location.href='admin-salas.html'">
-                        <span>🏫</span>
-                        Gerenciar Salas
-                    </button>
-                    <button class="action-btn" onclick="window.location.href='admin-usuarios.html'">
-                        <span>👥</span>
-                        Gerenciar Usuários
-                    </button>
-                    <button class="action-btn" onclick="window.location.href='admin-professores.html'">
-                        <span>👨‍🏫</span>
-                        Gerenciar Professores
-                    </button>
+                    <a href="admin-professores.html" class="action-btn">
+                        <div class="action-icon">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </div>
+                        <span>Gerenciar Professores</span>
+                    </a>
+                    <a href="admin-salas.html" class="action-btn">
+                        <div class="action-icon">
+                            <i class="fas fa-door-open"></i>
+                        </div>
+                        <span>Gerenciar Salas</span>
+                    </a>
+                    <a href="admin-usuarios.html" class="action-btn">
+                        <div class="action-icon">
+                            <i class="fas fa-users-cog"></i>
+                        </div>
+                        <span>Gerenciar Usuários</span>
+                    </a>
+                    <a href="admin-cursos.html" class="action-btn">
+                        <div class="action-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <span>Gerenciar Cursos</span>
+                    </a>
                 </div>
             </div>
 
@@ -84,7 +148,12 @@
                             </tr>
                         </thead>
                         <tbody id="usuarios-body">
-                            <!-- Preenchido via JavaScript -->
+                            <tr>
+                                <td colspan="4" class="empty-state">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <p>Carregando usuários...</p>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -95,5 +164,52 @@
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/admin.js"></script>
+    
+    <script>
+        // 🔧 FUNÇÕES PARA MENU HAMBURGER DO ADMIN
+        function toggleAdminMenu() {
+            const nav = document.getElementById('mobileNavAdmin');
+            nav.classList.toggle('active');
+        }
+
+        function closeAdminMenu() {
+            const nav = document.getElementById('mobileNavAdmin');
+            nav.classList.remove('active');
+        }
+
+        // Fechar menu ao clicar fora
+        document.addEventListener('click', function(event) {
+            const nav = document.getElementById('mobileNavAdmin');
+            const hamburger = document.querySelector('.menu-hamburger');
+            
+            if (nav.classList.contains('active') && 
+                !nav.contains(event.target) && 
+                !hamburger.contains(event.target)) {
+                nav.classList.remove('active');
+            }
+        });
+
+        // 🔧 ATUALIZAR NOME DO USUÁRIO
+        document.addEventListener('DOMContentLoaded', function() {
+            const userData = localStorage.getItem('userData');
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    // Desktop
+                    const desktopUser = document.getElementById('desktopUserName');
+                    if (desktopUser) {
+                        desktopUser.innerHTML = `${user.nome} <span class="user-type-badge admin">ADMIN</span>`;
+                    }
+                    // Mobile
+                    const mobileUser = document.getElementById('mobileUserName');
+                    const navUser = document.getElementById('mobileNavUser');
+                    if (mobileUser) mobileUser.textContent = user.nome;
+                    if (navUser) navUser.textContent = user.nome;
+                } catch (error) {
+                    console.error('Erro ao carregar usuário:', error);
+                }
+            }
+        });
+    </script>
 </body>
 </html>
