@@ -6,6 +6,7 @@
     <title>UNIMAP - Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="shortcut icon" type="imagex/png" href="../frontend/images/logo-unipam 2.png">
+    <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -36,7 +37,10 @@
 <!-- DESKTOP HEADER -->
 <header class="desktop-header">
     <div class="header-content">
-        <h1>UNIMAP</h1>
+        <a href="index.html" class="logo-link">
+            <img src="images/unipam png.png" alt="UNIPAM" class="navbar-logo">
+            <h1>UNIMAP</h1>
+        </a>
         <nav class="desktop-nav">
             <a href="index.html" onclick="showSection('aulas')" class="nav-link">Minhas Aulas</a>
             <a href="#" onclick="showSection('mapa-blocos')" class="nav-link">Mapa Salas</a>
@@ -137,24 +141,18 @@
         </section>
 
         <!-- SEÇÃO SALAS -->
-        <section id="mapa-salas" class="section" style="display: none;">
-            <h3 id="sala-title">Bloco A > 1° Andar</h3>
-            <div class="salas-grid">
-                <div class="sala-card">
-                    <h4>Sala 101</h4>
-                    <p><strong>Professor:</strong> João Silva</p>
-                    <p><strong>Disciplina:</strong> Programação Web</p>
-                    <p><strong>Turma:</strong> SI3N</p>
-                </div>
-                <div class="sala-card">
-                    <h4>Sala 102</h4>
-                    <p><strong>Professor:</strong> Maria Santos</p>
-                    <p><strong>Disciplina:</strong> Banco de Dados</p>
-                    <p><strong>Turma:</strong> SI3N</p>
-                </div>
-            </div>
-            <button class="btn-voltar" onclick="showSection('mapa-andares')">← Voltar</button>
-        </section>
+        <!-- SEÇÃO SALAS - AGORA DINÂMICA -->
+<section id="mapa-salas" class="section" style="display: none;">
+    <h3 id="sala-title">Carregando...</h3>
+    <div class="salas-grid">
+        <!-- 🎯 AGORA É CARREGADO DINAMICAMENTE DO BANCO -->
+        <div class="empty-state">
+            <i class="fas fa-spinner fa-spin fa-3x"></i>
+            <p>Carregando salas...</p>
+        </div>
+    </div>
+    <button class="btn-voltar" onclick="showSection('mapa-andares')">← Voltar</button>
+</section>
 
         <!-- SEÇÃO PROFESSORES -->
         <section id="professores" class="section">
@@ -264,13 +262,12 @@
             <button class="btn-voltar" onclick="showSection('aulas-mobile')">← Voltar</button>
         </section>
     </main>
-
     <script src="js/auth.js"></script>
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
     <script src="js/aulas.js"></script>
     <script src="js/professores.js"></script>
-
+    <script src="js/mapa.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Verificar se usuário está logado

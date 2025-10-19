@@ -721,6 +721,7 @@ if (document.readyState === 'loading') {
     registerManager.init();
 }
 
+
 // Para debug
 window.authManager = authManager;
 window.registerManager = registerManager;

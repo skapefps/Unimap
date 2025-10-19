@@ -13,10 +13,8 @@ const db = new sqlite3.Database(dbPath);
 // Configurar Google OAuth
 const GOOGLE_CLIENT_ID = '432080672502-ba91tog3jvoc6c0mac01iq2b5k5q3mb1.apps.googleusercontent.com';
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
-
 app.use(cors());
 app.use(express.json());
-
 // ==================== INICIALIZAR BANCO COMPLETO ====================
 function initializeDatabase() {
     db.serialize(() => {
@@ -560,7 +558,7 @@ app.post('/api/cursos', authenticateToken, requireAdmin, (req, res) => {
 });
 
 // ==================== ROTAS DE SALAS ====================
-app.get('/api/salas', authenticateToken, (req, res) => {
+app.get('/api/salas', (req, res) => {
     db.all('SELECT * FROM salas WHERE ativa = 1 ORDER BY bloco, andar, numero', [], (err, rows) => {
         if (err) {
             console.error('❌ Erro ao buscar salas:', err);
@@ -570,7 +568,8 @@ app.get('/api/salas', authenticateToken, (req, res) => {
     });
 });
 
-app.get('/api/salas/bloco/:bloco', authenticateToken, (req, res) => {
+// ✅ ROTA PÚBLICA PARA SALAS POR BLOCO
+app.get('/api/salas/bloco/:bloco', (req, res) => {
     const { bloco } = req.params;
     
     db.all(

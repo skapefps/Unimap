@@ -36,6 +36,7 @@ class UnimapApp {
         
         this.user = JSON.parse(userData);
         this.updateUserInfo();
+        this.checkAdminPermissions(); // ✅ ADICIONADO: Verificar permissões de admin
     }
 
     updateUserInfo() {
@@ -46,6 +47,40 @@ class UnimapApp {
         if (mobileUser) mobileUser.textContent = this.user.nome;
         if (desktopUser) desktopUser.textContent = this.user.nome;
         if (navUser) navUser.textContent = this.user.nome;
+    }
+
+    // ✅ ADICIONADO: Método para verificar permissões de admin
+    checkAdminPermissions() {
+        console.log('🔍 Verificando permissões de admin...');
+        
+        if (!this.user) {
+            console.log('⚠️ Nenhum usuário para verificar permissões');
+            return;
+        }
+        
+        console.log('👤 Usuário:', this.user.nome, '- Tipo:', this.user.tipo);
+        
+        const isAdmin = this.user.tipo === 'admin' || this.user.tipo === 'professor';
+        console.log(`🎯 É admin/professor: ${isAdmin}`);
+        
+        // Mostrar/ocultar elementos admin
+        const adminElements = document.querySelectorAll('.admin-only');
+        adminElements.forEach(element => {
+            element.style.display = isAdmin ? 'block' : 'none';
+        });
+        
+        // 🔥 CORREÇÃO ESPECÍFICA PARA OS LINKS DO DASHBOARD
+        const adminDashboardMobile = document.getElementById('admin-dashboard-mobile');
+        const adminDashboardLink = document.getElementById('admin-dashboard-link');
+        
+        if (adminDashboardMobile) {
+            adminDashboardMobile.style.display = isAdmin ? 'block' : 'none';
+            console.log('📱 Dashboard mobile:', isAdmin ? 'visível' : 'oculto');
+        }
+        if (adminDashboardLink) {
+            adminDashboardLink.style.display = isAdmin ? 'block' : 'none';
+            console.log('💻 Dashboard desktop:', isAdmin ? 'visível' : 'oculto');
+        }
     }
 
     setupEventListeners() {
@@ -106,8 +141,15 @@ class UnimapApp {
         return null;
     }
 
+    // 🔥 CORREÇÃO: Método showAndares atualizado
     showAndares(bloco) {
+        console.log('🏢 Mostrando andares do bloco:', bloco);
+        
+        // Salvar bloco selecionado
         this.currentBloco = bloco;
+        sessionStorage.setItem('blocoSelecionado', bloco);
+        
+        // Atualizar título
         const blocoTitle = document.getElementById('bloco-title');
         if (blocoTitle) {
             blocoTitle.textContent = `Bloco ${bloco}`;
@@ -115,13 +157,74 @@ class UnimapApp {
         this.showSection('mapa-andares');
     }
 
-    showSalas(andar) {
+    // 🔥 CORREÇÃO COMPLETA: Método showSalas atualizado para funcionar com MapaManager
+    async showSalas(andar) {
+        console.log('🚪 Mostrando salas do andar:', andar);
+        
+        const bloco = this.currentBloco || sessionStorage.getItem('blocoSelecionado') || 'A';
         this.currentAndar = andar;
-        const salaTitle = document.getElementById('sala-title');
-        if (salaTitle && this.currentBloco) {
-            salaTitle.textContent = `Bloco ${this.currentBloco} > ${andar}° Andar`;
+        
+        // Mostrar loading
+        this.showLoadingSalas(bloco, andar);
+        
+        // 🔥 AGUARDAR O MAPA MANAGER CARREGAR
+        if (typeof mapaManager !== 'undefined') {
+            try {
+                // Se não tem salas carregadas, força carregar
+                if (mapaManager.salas.length === 0) {
+                    console.log('🔄 Forçando carregamento de salas...');
+                    await mapaManager.carregarSalas();
+                }
+                
+                // Usar o mapaManager para mostrar as salas
+                await mapaManager.mostrarSalas(bloco, andar);
+                this.showSection('mapa-salas');
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar salas:', error);
+                this.showErrorSalas('Erro ao carregar salas: ' + error.message);
+            }
+        } else {
+            console.error('❌ MapaManager não encontrado');
+            this.showErrorSalas('Sistema de mapa não carregado');
         }
+    }
+
+    // 🔥 ADICIONADO: Método para mostrar loading das salas
+    showLoadingSalas(bloco, andar) {
+        const container = document.querySelector('#mapa-salas .salas-grid');
+        const title = document.getElementById('sala-title');
+        
+        if (title) {
+            title.innerHTML = `Bloco ${bloco} > ${andar}° Andar <span class="salas-counter">carregando...</span>`;
+        }
+        
+        if (container) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                    <p>Carregando salas...</p>
+                </div>
+            `;
+        }
+        
         this.showSection('mapa-salas');
+    }
+
+    // 🔥 ADICIONADO: Método para mostrar erro das salas
+    showErrorSalas(message) {
+        const container = document.querySelector('#mapa-salas .salas-grid');
+        if (container) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle fa-3x"></i>
+                    <p>${message}</p>
+                    <button class="btn-primary" onclick="recarregarMapa()">
+                        <i class="fas fa-redo"></i> Tentar Novamente
+                    </button>
+                </div>
+            `;
+        }
     }
 
     openTab(tabId) {
@@ -310,6 +413,29 @@ window.addEventListener('resize', () => {
         }
     }
 });
+
+// 🔧 ADICIONADO: Funções de debug para o mapa
+window.debugApp = function() {
+    console.log('🔍 DEBUG App:');
+    console.log('- Seção atual:', window.app?.currentSection);
+    console.log('- Bloco atual:', window.app?.currentBloco);
+    console.log('- Andar atual:', window.app?.currentAndar);
+    console.log('- MapaManager:', typeof mapaManager !== 'undefined' ? '✅ Carregado' : '❌ Não carregado');
+    if (typeof mapaManager !== 'undefined') {
+        console.log('- Salas carregadas:', mapaManager.salas.length);
+    }
+};
+
+window.testarMapa = function(bloco = 'A', andar = 1) {
+    console.log(`🧪 Testando mapa: Bloco ${bloco}, Andar ${andar}`);
+    if (window.app) {
+        window.app.showAndares(bloco);
+        setTimeout(() => {
+            window.app.showSalas(andar);
+        }, 300);
+    }
+};
+
 // 🔐 FUNÇÃO PARA VERIFICAR E MOSTRAR OPÇÕES DE ADMIN
 function checkAndShowAdminOptions() {
     console.log('🔍 Verificando permissões de admin...');

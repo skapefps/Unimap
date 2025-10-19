@@ -1150,3 +1150,592 @@ main {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
 }
+/* 🔥 LOGO NA NAVBAR - DESKTOP */
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    margin-right: auto; 
+}
+
+.logo-link:hover {
+    transform: translateY(-1px);
+}
+
+.navbar-logo {
+    height: 40px;
+    width: auto;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.logo-link:hover .navbar-logo {
+    transform: scale(1.05);
+}
+
+.logo-link h1 {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.desktop-header {
+    position: relative; /* Necessário para o absolute funcionar */
+}
+
+.logo-link {
+    position: absolute;
+    left: 20px; /* Distância da borda esquerda */
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+}
+
+.header-content {
+    display: flex;
+    justify-content: center; /* Centraliza o menu */
+    width: 100%;
+}
+
+/* Ajuste para o hover */
+.logo-link:hover {
+    transform: translateY(-51%);
+}
+/* 🔥 VERSÃO MAIS SEGURA COM FLEXBOX */
+@media (min-width: 769px) {
+    .desktop-header {
+        position: relative;
+        padding: 0 20px;
+    }
+    
+    .logo-link {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1000;
+    }
+    
+    .header-content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        padding-left: 180px; /* Espaço reservado para a logo */
+        padding-right: 20px;
+        min-height: 70px;
+    }
+}
+
+/* Mobile - Volta ao layout normal */
+@media (max-width: 768px) {
+    .desktop-header {
+        padding: 10px 15px;
+    }
+    
+    .logo-link {
+        position: static;
+        transform: none;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        padding: 0 !important;
+    }
+}
+/* ===== HOVERS MODERNOS PARA NAV LINKS ===== */
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    font-weight: 500;
+    background: transparent;
+}
+
+/* 🔥 OPÇÃO 1: HOVER COM GRADIENTE E ELEVAÇÃO */
+.nav-link:hover {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.9), rgba(41, 128, 185, 0.9));
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 
+        0 4px 15px rgba(52, 152, 219, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 🔥 OPÇÃO 2: HOVER COM BORDA ANIMADA */
+.nav-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.nav-link:hover::before {
+    left: 100%;
+}
+
+/* 🔥 OPÇÃO 3: EFEITO DE "SLIDE" INFERIOR */
+.nav-link {
+    border-bottom: 2px solid transparent;
+}
+
+.nav-link:hover {
+    border-bottom-color: #3498db;
+    background: rgba(52, 152, 219, 0.1);
+}
+
+/* 🔥 OPÇÃO 4: HOVER COM PULSO SUAVE */
+@keyframes pulse-glow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(52, 152, 219, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(52, 152, 219, 0);
+    }
+}
+
+.nav-link:hover {
+    animation: pulse-glow 1.5s infinite;
+}
+
+/* 🔥 OPÇÃO 5: HOVER ELEGANTE COM TRANSFORMAÇÃO */
+.nav-link {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-link:hover {
+    background: rgba(52, 152, 219, 0.8);
+    border-color: rgba(52, 152, 219, 0.5);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 
+        0 8px 25px rgba(52, 152, 219, 0.25),
+        0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 🔥 OPÇÃO 6: HOVER COM ÍCONE ANIMADO (se usar ícones) */
+.nav-link i {
+    transition: transform 0.3s ease;
+}
+
+.nav-link:hover i {
+    transform: translateX(3px) scale(1.1);
+}
+
+/* 🔥 OPÇÃO 7: GRADIENTE ANIMADO */
+.nav-link {
+    background: linear-gradient(135deg, transparent, transparent);
+    background-size: 200% 200%;
+}
+
+.nav-link:hover {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    background-position: 100% 100%;
+}
+
+/* ===== VERSÃO FINAL RECOMENDADA ===== */
+
+/* 🔥 HOVER DEFINITIVO - MODERNO E ELEGANTE */
+.nav-link {
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+    overflow: hidden;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+/* Efeito de brilho que passa por baixo */
+.nav-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.2), 
+        transparent
+    );
+    transition: left 0.6s ease;
+}
+
+.nav-link:hover::before {
+    left: 100%;
+}
+
+/* Transformação principal no hover */
+.nav-link:hover {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 
+        0 8px 25px rgba(52, 152, 219, 0.35),
+        0 4px 8px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Efeito de pulso sutil */
+.nav-link:hover {
+    animation: gentle-pulse 2s infinite;
+}
+
+@keyframes gentle-pulse {
+    0%, 100% {
+        box-shadow: 
+            0 8px 25px rgba(52, 152, 219, 0.35),
+            0 4px 8px rgba(0, 0, 0, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    50% {
+        box-shadow: 
+            0 8px 30px rgba(52, 152, 219, 0.5),
+            0 6px 12px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+}
+
+/* ===== ESTADO ATIVO (QUANDO A PÁGINA ESTÁ SELECIONADA) ===== */
+.nav-link.active {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    box-shadow: 
+        0 4px 15px rgba(52, 152, 219, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 768px) {
+    .nav-link {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+    }
+    
+    .nav-link:hover {
+        transform: translateY(-2px);
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-link {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+}
+/* 🔥 LAYOUT MELHORADO PARA MUITAS SALAS */
+.salas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 1rem;
+    border: 1px solid #e1e8ed;
+    border-radius: 12px;
+    background: #f8f9fa;
+}
+
+.sala-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid #3498db;
+    transition: all 0.3s ease;
+    min-height: 120px;
+}
+
+.sala-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.sala-card h4 {
+    margin: 0 0 0.5rem 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.sala-card p {
+    margin: 0.3rem 0;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.sala-status {
+    margin-top: 0.5rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.sala-status.disponivel {
+    background: #d4edda;
+    color: #155724;
+}
+
+.sala-status.ocupada {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* 🔥 CONTADOR DE SALAS */
+.salas-counter {
+    background: #3498db;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: inline-block;
+}
+
+/* 🔥 FILTROS RÁPIDOS */
+.salas-filters {
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    background: white;
+    border: 2px solid #e1e8ed;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.filter-btn.active {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.filter-btn:hover {
+    border-color: #3498db;
+}
+/* 🔥 PAGINAÇÃO */
+.paginacao {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e1e8ed;
+}
+
+.btn-pagina {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-pagina:hover:not(:disabled) {
+    background: #2980b9;
+}
+
+.btn-pagina:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+}
+
+.info-pagina {
+    font-weight: 600;
+    color: #2c3e50;
+}
+/* 🔥 LAYOUT MELHORADO PARA MUITAS SALAS */
+.salas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 1rem;
+    border: 1px solid #e1e8ed;
+    border-radius: 12px;
+    background: #f8f9fa;
+}
+
+.sala-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid #3498db;
+    transition: all 0.3s ease;
+    min-height: 120px;
+}
+
+.sala-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.sala-card h4 {
+    margin: 0 0 0.5rem 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.sala-card p {
+    margin: 0.3rem 0;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.sala-status {
+    margin-top: 0.5rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.sala-status.disponivel {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* 🔥 CONTADOR DE SALAS */
+.salas-counter {
+    background: #3498db;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-left: 1rem;
+}
+
+/* 🔥 FILTROS RÁPIDOS */
+.salas-filters {
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding: 1rem;
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e1e8ed;
+}
+
+.filter-btn {
+    background: white;
+    border: 2px solid #e1e8ed;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.filter-btn.active {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.filter-btn:hover {
+    border-color: #3498db;
+}
+
+/* 🔥 PAGINAÇÃO */
+.paginacao {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e1e8ed;
+    grid-column: 1 / -1;
+}
+
+.btn-pagina {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.btn-pagina:hover:not(:disabled) {
+    background: #2980b9;
+    transform: translateY(-1px);
+}
+
+.btn-pagina:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.info-pagina {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.9rem;
+}
+
+/* 🔥 RESPONSIVO */
+@media (max-width: 768px) {
+    .salas-grid {
+        grid-template-columns: 1fr;
+        max-height: 50vh;
+    }
+    
+    .salas-filters {
+        flex-direction: column;
+    }
+    
+    .paginacao {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
