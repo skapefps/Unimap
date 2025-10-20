@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIMAP - Gerenciar Usuários</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Antes dos outros scripts -->
+</head>
+<body>
+
+<script src="js/notifications.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/admin-usuarios.js"></script>
+
+    <!-- MOBILE HEADER -->
+    <header class="mobile-header">
+        <div class="header-top">
+            <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
+            <h1>UNIMAP - Admin</h1>
+            <span class="user-name" id="mobileUserName">Admin</span>
+        </div>
+
+        <nav class="mobile-nav" id="mobileNav">
+            <div class="nav-user" id="mobileNavUser">Administrador</div>
+            <a href="admin.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="admin-cursos.html"><i class="fas fa-graduation-cap"></i> Cursos</a>
+            <a href="admin-salas.html"><i class="fas fa-door-open"></i> Salas</a>
+            <a href="admin-professores.html"><i class="fas fa-chalkboard-teacher"></i> Professores</a>
+            <a href="admin-usuarios.html" class="active"><i class="fas fa-users"></i> Usuários</a>
+             <a href="index.html" class="btn-voltar-app-mobile">
+                <i class="fas fa-arrow-left"></i> Voltar para o App
+            </a>
+            <a href="#" onclick="authManager.logout()" ><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </nav>
+    </header>
+
+    <!-- DESKTOP HEADER -->
+    <header class="desktop-header">
+        <div class="header-content">
+            <a href="admin.html" class="logo-link">
+                <img src="images/unipam png.png" alt="UNIPAM" class="navbar-logo">
+                <h1>UNIMAP - Admin</h1>
+            </a>
+            <nav class="desktop-nav">
+                <a href="index.html" class="btn-flutuante-voltar" title="Voltar para o App">
+                <i class="fas fa-arrow-left"></i>
+                <span>Voltar para o App</span></a>
+                <a href="admin.html" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="admin-cursos.html" class="nav-link"><i class="fas fa-graduation-cap"></i> Cursos</a>
+                <a href="admin-salas.html" class="nav-link"><i class="fas fa-door-open"></i> Salas</a>
+                <a href="admin-professores.html" class="nav-link"><i class="fas fa-chalkboard-teacher"></i> Professores</a>
+                <a href="admin-usuarios.html" class="nav-link active"><i class="fas fa-users"></i> Usuários</a>
+                <span class="user-info" id="desktopUserName">Administrador</span>
+                <button class="btn-sair-desktop-texto" onclick="authManager.logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="admin-dashboard">
+        <div class="container">
+            <div class="page-header">
+                <h2><i class="fas fa-users"></i> Gerenciar Usuários</h2>
+                <div class="header-actions">
+                    <input type="text" id="searchUsers" placeholder="Buscar usuários..." class="filter-select">
+                </div>
+            </div>
+
+            <!-- ESTATÍSTICAS RÁPIDAS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Total de Usuários</h3>
+                    <div class="stat-number" id="totalUsuarios">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <h3>Alunos</h3>
+                    <div class="stat-number" id="totalAlunos">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <h3>Professores</h3>
+                    <div class="stat-number" id="totalProfessores">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h3>Administradores</h3>
+                    <div class="stat-number" id="totalAdmins">0</div>
+                </div>
+            </div>
+
+            <!-- LISTA DE USUÁRIOS -->
+            <div class="recent-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-list"></i> Lista de Usuários</h3>
+                    <div class="header-actions">
+                        <select id="filterType" class="filter-select">
+                            <option value="">Todos os tipos</option>
+                            <option value="aluno">Alunos</option>
+                            <option value="professor">Professores</option>
+                            <option value="admin">Administradores</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="usuarios-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Matrícula</th>
+                                <th>Tipo</th>
+                                <th>Curso</th>
+                                <th>Data Cadastro</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usuarios-body">
+                            <!-- Preenchido via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- PAGINAÇÃO -->
+                <div class="paginacao">
+                    <button class="btn-pagina" id="prevPage" disabled>
+                        <i class="fas fa-chevron-left"></i> Anterior
+                    </button>
+                    <span class="info-pagina" id="pageInfo">Página 1 de 1</span>
+                    <button class="btn-pagina" id="nextPage" disabled>
+                        Próxima <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DE EDIÇÃO DE USUÁRIO -->
+    <div class="modal-overlay" id="editUserModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Editar Usuário</h3>
+                <button class="modal-close" onclick="adminUsuarios.fecharModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="editUserId">
+                    
+                    <div class="form-group">
+                        <label>Nome:</label>
+                        <input type="text" id="editUserName" required class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="editUserEmail" required class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Matrícula:</label>
+                        <input type="text" id="editUserMatricula" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Tipo de Usuário:</label>
+                        <select id="editUserType" required class="form-control">
+                            <option value="aluno">Aluno</option>
+                            <option value="professor">Professor</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Curso:</label>
+                        <input type="text" id="editUserCurso" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Período:</label>
+                        <select id="editUserPeriodo" class="form-control">
+                            <option value="">Selecione</option>
+                            <option value="1">1° Período</option>
+                            <option value="2">2° Período</option>
+                            <option value="3">3° Período</option>
+                            <option value="4">4° Período</option>
+                            <option value="5">5° Período</option>
+                            <option value="6">6° Período</option>
+                            <option value="7">7° Período</option>
+                            <option value="8">8° Período</option>
+                        </select>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i> Salvar Alterações
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="adminUsuarios.fecharModal()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 🔧 VERIFICAR SE É ADMIN
+        document.addEventListener('DOMContentLoaded', function() {
+            const user = authManager.getCurrentUser();
+            
+            if (!user || user.tipo !== 'admin') {
+                alert('Acesso restrito a administradores!');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Atualizar nome do usuário
+            document.getElementById('desktopUserName').innerHTML = 
+                `${user.nome} <span class="user-type-badge admin">ADMIN</span>`;
+            document.getElementById('mobileUserName').textContent = user.nome;
+            document.getElementById('mobileNavUser').textContent = user.nome;
+
+            // Carregar usuários
+            adminUsuarios.carregarUsuarios();
+            
+            // Configurar busca
+            document.getElementById('searchUsers').addEventListener('input', (e) => {
+                adminUsuarios.filtrarUsuarios(e.target.value);
+            });
+            
+            // Configurar filtro por tipo
+            document.getElementById('filterType').addEventListener('change', (e) => {
+                adminUsuarios.filtrarPorTipo(e.target.value);
+            });
+            
+            // Configurar formulário de edição
+            document.getElementById('editUserForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                adminUsuarios.salvarEdicao();
+            });
+        });
+         function toggleMenu() {
+        const nav = document.getElementById('mobileNav');
+        nav.classList.toggle('active');
+    }
+
+    function closeMenu() {
+        const nav = document.getElementById('mobileNav');
+        nav.classList.remove('active');
+    }
+
+    // Fechar menu ao clicar fora
+    document.addEventListener('click', function(event) {
+        const nav = document.getElementById('mobileNav');
+        const hamburger = document.querySelector('.menu-hamburger');
+        
+        if (nav.classList.contains('active') && 
+            !nav.contains(event.target) && 
+            !hamburger.contains(event.target)) {
+            nav.classList.remove('active');
+        }
+    });
+
+    // Fechar menu ao clicar em um link
+    document.querySelectorAll('.mobile-nav a').forEach(link => {
+        link.addEventListener('click', closeMenu);
+    });
+    </script>
+</body>
+</html>

@@ -1739,3 +1739,358 @@ main {
         gap: 0.5rem;
     }
 }
+/* 🔥 CORREÇÕES PARA MOBILE - SALAS */
+@media (max-width: 768px) {
+    .sala-card {
+        padding: 1rem;
+        min-height: auto;
+        margin-bottom: 0.5rem;
+    }
+
+    .sala-card h4 {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .sala-card p {
+        font-size: 0.85rem;
+        margin: 0.2rem 0;
+        line-height: 1.3;
+    }
+
+    .sala-card p strong {
+        display: inline-block;
+        min-width: 80px;
+    }
+
+    /* Garantir que todas as informações caibam */
+    .sala-card > * {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Layout mais compacto para mobile */
+    .salas-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        max-height: 65vh;
+        padding: 0.5rem;
+    }
+
+    /* Ajuste no título para mobile */
+    #sala-title {
+        font-size: 1.1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .salas-counter {
+        margin-left: 0;
+        margin-top: 0.5rem;
+        align-self: flex-start;
+    }
+}
+
+/* 🔥 CORREÇÕES ESPECÍFICAS PARA TELAS MUITO PEQUENAS */
+@media (max-width: 480px) {
+    .sala-card {
+        padding: 0.8rem;
+    }
+
+    .sala-card p {
+        font-size: 0.8rem;
+    }
+
+    .sala-card p strong {
+        min-width: 70px;
+        font-size: 0.8rem;
+    }
+
+    .sala-status {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.6rem;
+    }
+
+    /* Garantir que o texto não quebre o layout */
+    .sala-card {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+}
+
+/* 🔥 MELHORIAS GERAIS PARA AS CARDS DE SALA */
+.sala-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.sala-card h4 {
+    color: #2c3e50;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.sala-card p {
+    display: flex;
+    align-items: flex-start;
+}
+
+.sala-card p strong {
+    color: #34495e;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+}
+
+.sala-status {
+    align-self: flex-start;
+    margin-top: 0.5rem;
+}
+/* 🔥 LAYOUT MOBILE OTIMIZADO */
+.sala-info-mobile {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.sala-info-mobile p {
+    margin: 0;
+    font-size: 0.8rem;
+}
+
+.recursos-mobile {
+    font-size: 0.8rem !important;
+    background: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+}
+
+/* 🔥 GARANTIR QUE O SCROLL FUNCIONE BEM NO MOBILE */
+@media (max-width: 768px) {
+    #mapa-salas .section {
+        padding: 1rem;
+    }
+    
+    .salas-grid {
+        -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
+    }
+    
+    /* Botão voltar mais acessível no mobile */
+    .btn-voltar {
+        position: sticky;
+        bottom: 1rem;
+        z-index: 10;
+        width: calc(100% - 2rem);
+        margin: 1rem;
+    }
+}
+/* 🔥 CORREÇÕES PARA A ZONA CRÍTICA (770px - 981px) */
+@media (min-width: 769px) and (max-width: 981px) {
+    /* HEADER DESKTOP COMPACTO */
+    .desktop-header {
+        padding: 0 15px;
+    }
+    
+    .header-content {
+        padding-left: 160px; /* Reduz espaço da logo */
+        padding-right: 15px;
+    }
+    
+    .logo-link {
+        left: 15px;
+    }
+    
+    .navbar-logo {
+        height: 35px; /* Logo menor */
+    }
+    
+    .logo-link h1 {
+        font-size: 1.3rem;
+    }
+    
+    /* NAV COMPACTA */
+    .desktop-nav {
+        gap: 15px;
+    }
+    
+    .nav-link {
+        padding: 8px 14px;
+        font-size: 0.9rem;
+    }
+    
+    .user-info {
+        font-size: 0.85rem;
+        padding: 6px 12px;
+    }
+    
+    .btn-sair-desktop-texto {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+    
+    /* SEÇÕES PRINCIPAIS */
+    main {
+        padding: 15px;
+        margin-top: 65px; /* Ajusta margem superior */
+    }
+    
+    .section {
+        padding: 20px;
+    }
+    
+    /* GRIDS COMPACTOS */
+    .blocos-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 colunas em vez de 4 */
+        gap: 15px;
+    }
+    
+    .andares-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .salas-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 15px;
+    }
+    
+    /* AULAS GRID COMPACTO */
+    .aulas-grid {
+        grid-template-columns: 1fr; /* Uma coluna apenas */
+        gap: 15px;
+    }
+    
+    /* HEADER DAS SEÇÕES */
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .filter-select {
+        min-width: 180px;
+    }
+}
+
+/* 🔥 CORREÇÃO LIMPA PARA 769px - 850px */
+@media (min-width: 769px) and (max-width: 850px) {
+    /* HEADER COMPACTO MAS CENTRALIZADO */
+    .desktop-header {
+        padding: 0 15px;
+    }
+    
+    .header-content {
+        padding: 0;
+        justify-content: space-between !important;
+        min-height: 60px;
+    }
+    
+    /* LOGO COMPACTA */
+    .logo-link {
+        position: static;
+        transform: none;
+        margin-right: 0;
+    }
+    
+    .navbar-logo {
+        height: 32px;
+    }
+    
+    .logo-link h1 {
+        font-size: 1.3rem;
+    }
+    
+    /* NAV COMPACTA MAS VISÍVEL */
+    .desktop-nav {
+        gap: 8px;
+        margin-left: auto;
+    }
+    
+    .nav-link {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+    
+    /* USER INFO COMPACTO */
+    .user-info {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+        white-space: nowrap;
+    }
+    
+    /* BOTÃO SAIR COMPACTO */
+    .btn-sair-desktop-texto {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+    
+    /* MAIN CONTENT */
+    main {
+        margin-top: 65px;
+        padding: 15px;
+    }
+}
+
+/* 🔥 REMOVER REGRAS CONFLITANTES */
+@media (min-width: 769px) and (max-width: 850px) {
+    /* Remove regras que empurram para a direita */
+    .header-content {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    
+    .logo-link {
+        left: auto !important;
+        position: static !important;
+        transform: none !important;
+    }
+    
+    /* Remove debug colors */
+    .desktop-header {
+        background: #2c3e50 !important;
+        border: none !important;
+    }
+    
+    .desktop-nav {
+        background: transparent !important;
+        border: none !important;
+    }
+    
+    .nav-link {
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: white !important;
+    }
+}
+
+/* 🔥 CORREÇÃO ESPECÍFICA PARA O LAYOUT FLEX */
+@media (min-width: 769px) and (max-width: 850px) {
+    .header-content {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+    
+    .logo-link {
+        flex-shrink: 0;
+    }
+    
+    .desktop-nav {
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+        justify-content: flex-end !important;
+    }
+}

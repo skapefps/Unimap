@@ -6,7 +6,6 @@
     <title>UNIMAP - Admin</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin.css">
-    <link rel="shortcut icon" type="imagex/png" href="../frontend/images/logo-unipam 2.png">
     <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -14,33 +13,22 @@
     <!-- MOBILE HEADER -->
     <header class="mobile-header">
         <div class="header-top">
-            <button class="menu-hamburger" onclick="toggleAdminMenu()">☰</button>
+            <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
             <h1>UNIMAP - Admin</h1>
             <span class="user-name" id="mobileUserName">Admin</span>
         </div>
 
-        <!-- MENU HAMBURGER MOBILE -->
-        <nav class="mobile-nav" id="mobileNavAdmin">
-            <div class="nav-user" id="mobileNavUser">Admin</div>
-             <a href="index.html" class="nav-link btn-voltar-app-mobile" onclick="closeAdminMenu()">
-        <i class="fas fa-arrow-left"></i> Voltar para o App</a>
-    
-    <a href="admin.html" class="nav-link active" onclick="closeAdminMenu()">
-        <i class="fas fa-tachometer-alt"></i> Dashboard
-    </a>
-            <a href="admin.html" class="nav-link active" onclick="closeAdminMenu()">
-                <i class="fas fa-tachometer-alt"></i> Dashboard
+        <nav class="mobile-nav" id="mobileNav">
+            <div class="nav-user" id="mobileNavUser">Administrador</div>
+            <a href="admin.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="admin-cursos.html"><i class="fas fa-graduation-cap"></i> Cursos</a>
+            <a href="admin-salas.html"><i class="fas fa-door-open"></i> Salas</a>
+            <a href="admin-professores.html"><i class="fas fa-chalkboard-teacher"></i> Professores</a>
+            <a href="admin-usuarios.html"><i class="fas fa-users"></i> Usuários</a>
+            <a href="index.html" class="btn-voltar-app-mobile">
+                <i class="fas fa-arrow-left"></i> Voltar para o App
             </a>
-            <a href="admin-professores.html" class="nav-link" onclick="closeAdminMenu()">
-                <i class="fas fa-chalkboard-teacher"></i> Professores
-            </a>
-            <a href="admin-salas.html" class="nav-link" onclick="closeAdminMenu()">
-                <i class="fas fa-door-open"></i> Salas
-            </a>
-            <a href="admin-usuarios.html" class="nav-link" onclick="closeAdminMenu()">
-                <i class="fas fa-users-cog"></i> Usuários
-            </a>
-            <a href="#" onclick="authManager.logout()" class="logout-mobile">
+            <a href="#" onclick="authManager.logout()">
                 <i class="fas fa-sign-out-alt"></i> Sair
             </a>
         </nav>
@@ -49,18 +37,22 @@
     <!-- DESKTOP HEADER -->
     <header class="desktop-header">
         <div class="header-content">
-            <h1>UNIMAP - Admin</h1>
+            <a href="admin.html" class="logo-link">
+                <img src="images/unipam png.png" alt="UNIPAM" class="navbar-logo">
+                <h1>UNIMAP - Admin</h1>
+            </a>
             <nav class="desktop-nav">
-                <a href="index.html" class="btn-flutuante-voltar" title="Voltar para o App">
+                 <a href="index.html" class="btn-flutuante-voltar" title="Voltar para o App">
                 <i class="fas fa-arrow-left"></i>
                 <span>Voltar para o App</span></a>
-                <a href="admin.html" class="nav-link active">Dashboard</a>
-                <a href="admin-professores.html" class="nav-link">Professores</a>
-                <a href="admin-salas.html" class="nav-link">Salas</a>
-                <a href="admin-usuarios.html" class="nav-link">Usuários</a>
-                <span class="user-info" id="desktopUserName">Admin</span>
-                <button class="btn-sair-desktop" onclick="logout()" title="Sair">
-                <i class="fas fa-sign-out-alt"></i>
+                <a href="admin.html" class="nav-link active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="admin-cursos.html" class="nav-link"><i class="fas fa-graduation-cap"></i> Cursos</a>
+                <a href="admin-salas.html" class="nav-link"><i class="fas fa-door-open"></i> Salas</a>
+                <a href="admin-professores.html" class="nav-link"><i class="fas fa-chalkboard-teacher"></i> Professores</a>
+                <a href="admin-usuarios.html" class="nav-link"><i class="fas fa-users"></i> Usuários</a>
+                <span class="user-info" id="desktopUserName">Administrador</span>
+                <button class="btn-sair-desktop-texto" onclick="authManager.logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
                 </button>
             </nav>
         </div>
@@ -167,20 +159,20 @@
     <script src="js/admin.js"></script>
     
     <script>
-        // 🔧 FUNÇÕES PARA MENU HAMBURGER DO ADMIN
-        function toggleAdminMenu() {
-            const nav = document.getElementById('mobileNavAdmin');
+        // 🔧 FUNÇÕES PARA MENU HAMBURGER
+        function toggleMenu() {
+            const nav = document.getElementById('mobileNav');
             nav.classList.toggle('active');
         }
 
-        function closeAdminMenu() {
-            const nav = document.getElementById('mobileNavAdmin');
+        function closeMenu() {
+            const nav = document.getElementById('mobileNav');
             nav.classList.remove('active');
         }
 
         // Fechar menu ao clicar fora
         document.addEventListener('click', function(event) {
-            const nav = document.getElementById('mobileNavAdmin');
+            const nav = document.getElementById('mobileNav');
             const hamburger = document.querySelector('.menu-hamburger');
             
             if (nav.classList.contains('active') && 

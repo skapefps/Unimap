@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIMAP - Professor</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- MOBILE HEADER -->
+    <header class="mobile-header">
+        <div class="header-top">
+            <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
+            <h1>UNIMAP - Professor</h1>
+            <span class="user-name" id="mobileUserName">Professor</span>
+        </div>
+
+        <nav class="mobile-nav" id="mobileNav">
+            <div class="nav-user" id="mobileNavUser">Professor</div>
+            <a href="#" onclick="showSection('minhas-aulas-professor')">Minhas Aulas</a>
+            <a href="#" onclick="showSection('criar-aula')">Criar Nova Aula</a>
+            <a href="#" onclick="showSection('mapa-blocos')">Mapa de Salas</a>
+            <a href="#" onclick="authManager.logout()">Sair</a>
+        </nav>
+    </header>
+
+    <!-- DESKTOP HEADER -->
+    <header class="desktop-header">
+        <div class="header-content">
+            <a href="professor-dashboard.html" class="logo-link">
+                <img src="images/unipam png.png" alt="UNIPAM" class="navbar-logo">
+                <h1>UNIMAP - Professor</h1>
+            </a>
+            <nav class="desktop-nav">
+                <a href="#" onclick="showSection('minhas-aulas-professor')" class="nav-link">Minhas Aulas</a>
+                <a href="#" onclick="showSection('criar-aula')" class="nav-link">Criar Aula</a>
+                <a href="#" onclick="showSection('mapa-blocos')" class="nav-link">Mapa Salas</a>
+                <span class="user-info">
+                <i class="fas fa-chalkboard-teacher"></i>
+                Prof. <span id="professorUserName">Carregando...</span>
+            </span>
+                <button class="btn-sair-desktop-texto" onclick="authManager.logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- SEÇÃO MINHAS AULAS (PROFESSOR) -->
+        <section id="minhas-aulas-professor" class="section active">
+            <div class="section-header">
+                <h2><i class="fas fa-chalkboard-teacher"></i> Minhas Aulas</h2>
+                <button class="btn-primary" onclick="showSection('criar-aula')">
+                    <i class="fas fa-plus-circle"></i> Nova Aula
+                </button>
+            </div>
+            <div class="aulas-grid" id="aulas-professor-grid">
+                <!-- Aulas do professor serão carregadas aqui -->
+            </div>
+        </section>
+
+        <!-- SEÇÃO CRIAR AULA -->
+        <section id="criar-aula" class="section">
+            <h2><i class="fas fa-plus-circle"></i> Criar Nova Aula</h2>
+            <form class="criar-aula-form" id="formCriarAula">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Curso:</label>
+                        <select id="cursoSelect" required>
+                            <option value="">Selecione o curso</option>
+                            <option value="si">Sistemas de Informação</option>
+                            <option value="adm">Administração</option>
+                            <option value="dir">Direito</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Período:</label>
+                        <select id="periodoSelect" required>
+                            <option value="">Selecione o período</option>
+                            <option value="1">1° Período</option>
+                            <option value="2">2° Período</option>
+                            <option value="3">3° Período</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Turma:</label>
+                        <select id="turmaSelect" required>
+                            <option value="">Selecione a turma</option>
+                            <option value="si3n">SI3N</option>
+                            <option value="si4n">SI4N</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Disciplina:</label>
+                        <input type="text" id="disciplinaInput" required 
+                               placeholder="Nome da disciplina">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Sala:</label>
+                        <select id="salaSelect" required>
+                            <option value="">Selecione a sala</option>
+                            <!-- Salas serão carregadas dinamicamente -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Horário:</label>
+                        <select id="horarioSelect" required>
+                            <option value="">Selecione o horário</option>
+                            <option value="08:00-10:00">08:00 - 10:00</option>
+                            <option value="10:00-12:00">10:00 - 12:00</option>
+                            <option value="14:00-16:00">14:00 - 16:00</option>
+                            <option value="16:00-18:00">16:00 - 18:00</option>
+                            <option value="19:00-21:00">19:00 - 21:00</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Dias da Semana:</label>
+                    <div class="dias-checkbox">
+                        <label><input type="checkbox" name="dias" value="seg"> Segunda</label>
+                        <label><input type="checkbox" name="dias" value="ter"> Terça</label>
+                        <label><input type="checkbox" name="dias" value="qua"> Quarta</label>
+                        <label><input type="checkbox" name="dias" value="qui"> Quinta</label>
+                        <label><input type="checkbox" name="dias" value="sex"> Sexta</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-save"></i> Criar Aula
+                </button>
+            </form>
+            <button class="btn-voltar" onclick="showSection('minhas-aulas-professor')">
+                ← Voltar
+            </button>
+        </section>
+
+        <!-- SEÇÃO MAPA (MESMA DO ALUNO) -->
+        <section id="mapa-blocos" class="section">
+            <h2>Mapa Salas</h2>
+            <div class="blocos-grid">
+                <div class="bloco-card" onclick="showAndares('A')">
+                    <h3>Bloco A</h3>
+                </div>
+                <div class="bloco-card" onclick="showAndares('B')">
+                    <h3>Bloco B</h3>
+                </div>
+                <div class="bloco-card" onclick="showAndares('C')">
+                    <h3>Bloco C</h3>
+                </div>
+                <div class="bloco-card" onclick="showAndares('D')">
+                    <h3>Bloco D</h3>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/professor.js"></script>
+    <script src="js/professores.js"></script>
+    <script src="js/mapa.js"></script>
+
+    
+    <!-- No professor-dashboard.html, atualize o script -->
+<script>
+    // 🔧 VERIFICAR SE É PROFESSOR
+    document.addEventListener('DOMContentLoaded', function() {
+        const user = authManager.getCurrentUser();
+        
+        if (!user || user.tipo !== 'professor') {
+            alert('Acesso restrito para professores!');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        // Atualizar nome do usuário
+        document.getElementById('desktopUserName').innerHTML = 
+            `${user.nome} <span class="user-type-badge professor">PROFESSOR</span>`;
+        document.getElementById('mobileUserName').textContent = user.nome;
+        document.getElementById('mobileNavUser').textContent = user.nome;
+
+        // Carregar aulas do professor
+        professorManager.carregarMinhasAulas();
+        
+        // Configurar formulário de criação de aula
+        configurarFormularioAula();
+    });
+
+    function configurarFormularioAula() {
+        const formCriarAula = document.getElementById('formCriarAula');
+        if (formCriarAula) {
+            formCriarAula.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const diasSelecionados = Array.from(document.querySelectorAll('input[name="dias"]:checked'))
+                    .map(cb => cb.value);
+                
+                if (diasSelecionados.length === 0) {
+                    showNotification('Selecione pelo menos um dia da semana', 'error');
+                    return;
+                }
+
+                const horario = document.getElementById('horarioSelect').value;
+                const [horario_inicio, horario_fim] = horario.split('-');
+
+                const dadosAula = {
+                    disciplina: document.getElementById('disciplinaInput').value,
+                    sala_id: document.getElementById('salaSelect').value,
+                    curso: document.getElementById('cursoSelect').value,
+                    turma: document.getElementById('turmaSelect').value,
+                    horario_inicio: horario_inicio.trim(),
+                    horario_fim: horario_fim.trim(),
+                    dia_semana: diasSelecionados.join(',')
+                };
+
+                await professorManager.criarAula(dadosAula);
+            });
+        }
+
+        // Carregar salas disponíveis
+        carregarSalas();
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎓 Inicializando Dashboard do Professor...');
+    
+    // Aguardar o authManager carregar
+    const checkAuth = setInterval(() => {
+        if (window.authManager && authManager.getCurrentUser) {
+            clearInterval(checkAuth);
+            initializeProfessorDashboard();
+        }
+    }, 100);
+    
+    function initializeProfessorDashboard() {
+        const user = authManager.getCurrentUser();
+        
+        if (!user) {
+            console.error('❌ Nenhum usuário encontrado');
+            return;
+        }
+        
+        console.log('👤 Professor carregado:', user);
+        
+        // Atualizar interface com informações do professor
+        updateProfessorUI(user);
+        
+        // Inicializar funcionalidades do professor
+        initializeProfessorFeatures();
+    }
+    
+    function updateProfessorUI(user) {
+        // Atualizar nome do professor
+        const desktopName = document.getElementById('professorUserName');
+        const mobileName = document.getElementById('mobileProfessorUserName');
+        
+        if (desktopName) desktopName.textContent = user.nome;
+        if (mobileName) mobileName.textContent = user.nome;
+        
+        // Adicionar badge de professor se não existir
+        addProfessorBadge();
+        
+        // Mostrar informações de debug
+        console.log('🎯 Interface atualizada para professor:', user.nome);
+        console.log('📊 Tipo:', user.tipo);
+        console.log('📧 Email:', user.email);
+    }
+    
+    function addProfessorBadge() {
+        // Adicionar badge de professor no header
+        const header = document.querySelector('.desktop-header .user-info');
+        if (header && !header.querySelector('.professor-badge')) {
+            const badge = document.createElement('span');
+            badge.className = 'professor-badge';
+            badge.innerHTML = '<i class="fas fa-chalkboard-teacher"></i> Professor';
+            badge.style.background = '#e74c3c';
+            badge.style.color = 'white';
+            badge.style.padding = '4px 8px';
+            badge.style.borderRadius = '12px';
+            badge.style.fontSize = '12px';
+            badge.style.marginLeft = '10px';
+            header.appendChild(badge);
+        }
+    }
+    
+    function initializeProfessorFeatures() {
+        console.log('🚀 Inicializando funcionalidades do professor...');
+        
+        // Aqui você pode inicializar outras funcionalidades específicas do professor
+        // Por exemplo: carregar aulas, estatísticas, etc.
+        
+        // Mostrar mensagem de boas-vindas
+        showWelcomeMessage();
+    }
+    
+    function showWelcomeMessage() {
+        const user = authManager.getCurrentUser();
+        setTimeout(() => {
+            console.log('👋 Bem-vindo, Professor', user.nome + '!');
+            // Você pode adicionar um toast/notificação aqui
+        }, 1000);
+    }
+});
+    
+</script>
+</body>
+</html>

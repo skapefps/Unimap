@@ -205,6 +205,7 @@ function initializeDatabase() {
 
 // Inicializar banco
 initializeDatabase();
+console.log('✅ Professores inseridos - Senha padrão: prof123');
 
 // ==================== MIDDLEWARE DE AUTENTICAÇÃO ====================
 function authenticateToken(req, res, next) {
@@ -232,63 +233,30 @@ function requireAdmin(req, res, next) {
 }
 
 // ==================== ROTAS DE AUTENTICAÇÃO ====================
-app.post('/api/auth/login', (req, res) => {
-    const { email, senha } = req.body;
+app.post('/api/auth/google', async (req, res) => {
+    // ... código anterior ...
     
-    console.log('🔐 Tentativa de login:', email);
-    
-    if (!email || !senha) {
-        return res.status(400).json({ error: 'Email/matrícula e senha são obrigatórios' });
+    if (user) {
+        console.log('✅ Usuário já cadastrado - Fazendo LOGIN:', user.nome, '- Tipo:', user.tipo);
+        
+        // USUÁRIO EXISTE - FAZER LOGIN
+        res.json({
+            success: true,
+            user: {
+                id: user.id,
+                nome: user.nome,
+                email: user.email,
+                matricula: user.matricula,
+                tipo: user.tipo, // ← GARANTIR QUE ESTÁ AQUI
+                curso: user.curso,
+                periodo: user.periodo
+            },
+            token: user.id.toString()
+        });
+        
+    } else {
+        // ... resto do código para novo usuário
     }
-    
-    // VERIFICAR SE É EMAIL OU MATRÍCULA
-    const isEmail = email.includes('@');
-    const query = isEmail 
-        ? 'SELECT * FROM usuarios WHERE email = ? AND ativo = 1'
-        : 'SELECT * FROM usuarios WHERE matricula = ? AND ativo = 1';
-    
-    db.get(query, [email], async (err, user) => {
-        if (err) {
-            console.error('❌ Erro no banco:', err);
-            return res.status(500).json({ error: 'Erro interno do servidor' });
-        }
-        
-        if (!user) {
-            console.log('❌ Usuário não encontrado:', email);
-            const errorMsg = isEmail 
-                ? 'Email não encontrado' 
-                : 'Matrícula não encontrada';
-            return res.status(401).json({ error: errorMsg });
-        }
-        
-        try {
-            const senhaValida = await bcrypt.compare(senha, user.senha_hash);
-            if (!senhaValida) {
-                console.log('❌ Senha incorreta para:', email);
-                return res.status(401).json({ error: 'Senha incorreta' });
-            }
-            
-            console.log('✅ Login bem-sucedido:', user.nome);
-            
-            res.json({
-                success: true,
-                user: {
-                    id: user.id,
-                    nome: user.nome,
-                    email: user.email,
-                    matricula: user.matricula,
-                    tipo: user.tipo,
-                    curso: user.curso,
-                    periodo: user.periodo
-                },
-                token: user.id.toString()
-            });
-            
-        } catch (error) {
-            console.error('❌ Erro ao comparar senha:', error);
-            res.status(500).json({ error: 'Erro interno do servidor' });
-        }
-    });
 });
 
 app.post('/api/auth/register', async (req, res) => {
@@ -992,4 +960,203 @@ app.put('/api/professores/:id/status', authenticateToken, requireAdmin, (req, re
             res.json({ success: true, message: 'Status atualizado com sucesso!' });
         }
     );
+});
+// ==================== ROTA DE LOGIN PARA PROFESSORES ====================
+app.post('/api/auth/login-professor', (req, res) => {
+    const { email, senha } = req.body;
+    
+    console.log('🔐 Tentativa de login professor:', email);
+    
+    if (!email || !senha) {
+        return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+    }
+    
+    // Buscar professor por email
+    db.get('SELECT * FROM professores WHERE email = ? AND ativo = 1', [email], async (err, professor) => {
+        if (err) {
+            console.error('❌ Erro no banco:', err);
+            return res.status(500).json({ error: 'Erro interno do servidor' });
+        }
+        
+        if (!professor) {
+            console.log('❌ Professor não encontrado:', email);
+            return res.status(401).json({ error: 'Email não encontrado' });
+        }
+        
+        try {
+            // Para professores, vamos usar uma senha simples por enquanto
+            // Você pode implementar bcrypt depois se quiser
+            if (senha !== 'prof123') { // Senha padrão para professores
+                console.log('❌ Senha incorreta para professor:', email);
+                return res.status(401).json({ error: 'Senha incorreta' });
+            }
+            
+            console.log('✅ Login professor bem-sucedido:', professor.nome);
+            
+            // Criar um usuário temporário para o professor no sistema
+            const professorUser = {
+                id: `prof_${professor.id}`,
+                nome: professor.nome,
+                email: professor.email,
+                tipo: 'professor',
+                professor_id: professor.id
+            };
+            
+            res.json({
+                success: true,
+                user: professorUser,
+                token: professorUser.id
+            });
+            
+        } catch (error) {
+            console.error('❌ Erro ao verificar senha:', error);
+            res.status(500).json({ error: 'Erro interno do servidor' });
+        }
+    });
+});
+// ==================== ROTA PARA CRIAR AULAS ====================
+// ==================== ROTA PARA CRIAR AULAS (PROFESSORES) ====================
+app.post('/api/aulas', authenticateToken, (req, res) => {
+    const { disciplina, sala_id, curso, turma, horario_inicio, horario_fim, dia_semana } = req.body;
+    
+    console.log('📝 Tentativa de criar aula:', { disciplina, curso, turma });
+
+    // Verificar se é professor
+    if (req.user.tipo !== 'professor') {
+        return res.status(403).json({ error: 'Apenas professores podem criar aulas' });
+    }
+
+    // Buscar professor_id baseado no email do usuário logado
+    db.get('SELECT id FROM professores WHERE email = ?', [req.user.email], (err, professor) => {
+        if (err) {
+            console.error('❌ Erro ao buscar professor:', err);
+            return res.status(500).json({ error: 'Erro interno do servidor' });
+        }
+
+        if (!professor) {
+            console.error('❌ Professor não encontrado para email:', req.user.email);
+            return res.status(404).json({ error: 'Professor não encontrado' });
+        }
+
+        // Inserir a aula
+        db.run(
+            `INSERT INTO aulas (disciplina, professor_id, sala_id, curso, turma, horario_inicio, horario_fim, dia_semana) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [disciplina, professor.id, sala_id, curso, turma, horario_inicio, horario_fim, dia_semana],
+            function(err) {
+                if (err) {
+                    console.error('❌ Erro ao criar aula:', err);
+                    return res.status(400).json({ error: err.message });
+                }
+                
+                console.log('✅ Aula criada com ID:', this.lastID);
+                res.json({ 
+                    success: true, 
+                    message: 'Aula criada com sucesso!', 
+                    id: this.lastID 
+                });
+            }
+        );
+    });
+});
+// ==================== ROTA PARA ATUALIZAR TIPO DE USUÁRIO (APENAS ADMIN) ====================
+app.put('/api/usuarios/:id/tipo', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+    const { tipo } = req.body;
+
+    if (!['aluno', 'professor', 'admin'].includes(tipo)) {
+        return res.status(400).json({ error: 'Tipo de usuário inválido' });
+    }
+
+    db.run(
+        'UPDATE usuarios SET tipo = ? WHERE id = ?',
+        [tipo, id],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao atualizar tipo de usuário:', err);
+                return res.status(400).json({ error: err.message });
+            }
+            
+            if (this.changes === 0) {
+                return res.status(404).json({ error: 'Usuário não encontrado' });
+            }
+
+            res.json({ 
+                success: true, 
+                message: `Usuário atualizado para ${tipo} com sucesso!` 
+            });
+        }
+    );
+});
+// ==================== ROTA PARA EXCLUIR AULAS ====================
+app.delete('/api/aulas/:id', authenticateToken, (req, res) => {
+    const { id } = req.params;
+
+    // Verificar se é professor
+    if (req.user.tipo !== 'professor') {
+        return res.status(403).json({ error: 'Apenas professores podem excluir aulas' });
+    }
+
+    db.run('DELETE FROM aulas WHERE id = ?', [id], function(err) {
+        if (err) {
+            console.error('❌ Erro ao excluir aula:', err);
+            return res.status(400).json({ error: err.message });
+        }
+        
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Aula não encontrada' });
+        }
+
+        res.json({ 
+            success: true, 
+            message: 'Aula excluída com sucesso!' 
+        });
+    });
+});
+// ==================== ROTAS DE USUÁRIOS (ADMIN) ====================
+
+// Rota para atualizar usuário completo
+app.put('/api/usuarios/:id', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+    const { nome, email, matricula, tipo, curso, periodo } = req.body;
+
+    db.run(
+        `UPDATE usuarios 
+         SET nome = ?, email = ?, matricula = ?, tipo = ?, curso = ?, periodo = ?
+         WHERE id = ?`,
+        [nome, email, matricula, tipo, curso, periodo, id],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao atualizar usuário:', err);
+                return res.status(400).json({ error: err.message });
+            }
+            
+            if (this.changes === 0) {
+                return res.status(404).json({ error: 'Usuário não encontrado' });
+            }
+
+            res.json({ 
+                success: true, 
+                message: 'Usuário atualizado com sucesso!' 
+            });
+        }
+    );
+});
+
+// Rota para buscar usuários (apenas admin)
+app.get('/api/usuarios', authenticateToken, requireAdmin, (req, res) => {
+    const query = `
+        SELECT id, nome, email, matricula, tipo, curso, periodo, data_cadastro 
+        FROM usuarios 
+        WHERE ativo = 1 
+        ORDER BY nome
+    `;
+    
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar usuários:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json({ success: true, data: rows });
+    });
 });

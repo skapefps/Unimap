@@ -140,7 +140,6 @@
             <button class="btn-voltar" onclick="showSection('mapa-blocos')">← Voltar</button>
         </section>
 
-        <!-- SEÇÃO SALAS -->
         <!-- SEÇÃO SALAS - AGORA DINÂMICA -->
 <section id="mapa-salas" class="section" style="display: none;">
     <h3 id="sala-title">Carregando...</h3>
@@ -278,6 +277,17 @@
             console.log('👋 Visitante não logado');
         }
     });
+    document.addEventListener('DOMContentLoaded', function() {
+    const user = authManager ? authManager.getCurrentUser() : null;
+    
+    if (user && user.tipo === 'professor') {
+        console.log('🎯 Professor detectado na página de aluno. Redirecionando...');
+        setTimeout(() => {
+            window.location.href = 'professor-dashboard.html';
+        }, 1000);
+    }
+});
+    
 </script>
 </body>
 </html>

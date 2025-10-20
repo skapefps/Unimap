@@ -172,7 +172,26 @@ class AdminManager {
             });
         }
     }
+    // js/admin-usuarios.js - Adicione esta função
+async alterarTipoUsuario(usuarioId, novoTipo) {
+    try {
+        const response = await apiClient.put(`/api/usuarios/${usuarioId}/tipo`, {
+            tipo: novoTipo
+        });
+
+        if (response.success) {
+            showNotification(response.message, 'success');
+            this.carregarUsuarios(); // Recarregar lista
+        } else {
+            throw new Error(response.error);
+        }
+    } catch (error) {
+        console.error('Erro ao alterar tipo de usuário:', error);
+        showNotification(error.message, 'error');
+    }
 }
+}
+
 
 // Inicializar admin
 document.addEventListener('DOMContentLoaded', () => {

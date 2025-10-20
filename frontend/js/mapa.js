@@ -155,17 +155,26 @@ class MapaManager {
         const totalPaginas = Math.ceil(salasFiltradas.length / this.salasPorPagina);
 
         // ✅ RENDERIZAR SALAS
+      // No método renderizarSalas do mapa.js, atualize para:
         const salasHTML = salasPagina.map(sala => `
-            <div class="sala-card" data-sala-id="${sala.id}">
-                <h4>Sala ${sala.numero}</h4>
-                <p><strong>Tipo:</strong> ${sala.tipo}</p>
-                <p><strong>Capacidade:</strong> ${sala.capacidade} pessoas</p>
-                <p><strong>Recursos:</strong> ${sala.recursos || 'Nenhum'}</p>
-                <div class="sala-status disponivel">
-                    🟢 Disponível
-                </div>
+        <div class="sala-card" data-sala-id="${sala.id}">
+            <h4>Sala ${sala.numero}</h4>
+            <p><strong>Tipo:</strong> ${sala.tipo}</p>
+            <p><strong>Capacidade:</strong> ${sala.capacidade} pessoas</p>
+            
+            ${sala.campus ? `<p><strong>Campus:</strong> Campus ${sala.campus}</p>` : ''}
+            
+            ${sala.recursos ? `<p><strong>Recursos:</strong> ${sala.recursos}</p>` : ''}
+            
+            ${sala.telefone ? `<p><strong>Telefone:</strong> ${sala.telefone}</p>` : ''}
+            
+            ${sala.email ? `<p><strong>Email:</strong> ${sala.email}</p>` : ''}
+            
+            <div class="sala-status disponivel">
+                🟢 Disponível
             </div>
-        `).join('');
+        </div>
+    `).join('');
 
         // ✅ PAGINAÇÃO (se necessário)
         let paginacaoHTML = '';
