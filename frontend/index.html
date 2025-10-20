@@ -109,48 +109,67 @@
     </div>
 </section>
 
-        <!-- SEÇÃO MAPA DE BLOCOS -->
-        <section id="mapa-blocos" class="section">
-            <h2>Mapa Salas</h2>
-            <div class="blocos-grid">
-                <div class="bloco-card" onclick="showAndares('A')">
-                    <h3>Bloco A</h3>
-                </div>
-                <div class="bloco-card" onclick="showAndares('B')">
-                    <h3>Bloco B</h3>
-                </div>
-                <div class="bloco-card" onclick="showAndares('C')">
-                    <h3>Bloco C</h3>
-                </div>
-                <div class="bloco-card" onclick="showAndares('D')">
-                    <h3>Bloco D</h3>
-                </div>
-            </div>
-        </section>
+        <!-- SEÇÃO MAPA DE BLOCOS (ALUNO) -->
+<section id="mapa-blocos" class="section">
+    <div class="section-header">
+        <h2><i class="fas fa-map-marked-alt"></i> Mapa</h2>
+        <p>Encontre salas, laboratórios e auditórios</p>
+    </div>
 
-        <!-- SEÇÃO ANDARES -->
-        <section id="mapa-andares" class="section" style="display: none;">
-            <h2 id="bloco-title">Bloco A</h2>
-            <div class="andares-list">
-                <div class="andar-card" onclick="showSalas(1)">1° Andar</div>
-                <div class="andar-card" onclick="showSalas(2)">2° Andar</div>
-                <div class="andar-card" onclick="showSalas(3)">3° Andar</div>
-                <div class="andar-card" onclick="showSalas(4)">4° Andar</div>
-            </div>
-            <button class="btn-voltar" onclick="showSection('mapa-blocos')">← Voltar</button>
-        </section>
-
-        <!-- SEÇÃO SALAS - AGORA DINÂMICA -->
-<section id="mapa-salas" class="section" style="display: none;">
-    <h3 id="sala-title">Carregando...</h3>
-    <div class="salas-grid">
-        <!-- 🎯 AGORA É CARREGADO DINAMICAMENTE DO BANCO -->
+    <!-- Blocos - AGORA DINÂMICO -->
+    <div class="blocos-grid" id="blocos-grid-aluno">
         <div class="empty-state">
             <i class="fas fa-spinner fa-spin fa-3x"></i>
-            <p>Carregando salas...</p>
+            <p>Carregando blocos...</p>
         </div>
     </div>
-    <button class="btn-voltar" onclick="showSection('mapa-andares')">← Voltar</button>
+</section>
+
+<!-- SEÇÃO ANDARES (ALUNO) -->
+<section id="mapa-andares" class="section" style="display: none;">
+    <div class="section-header">
+        <button class="btn-voltar" onclick="voltarParaBlocosAluno()">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+        <h2 id="bloco-title-aluno">Bloco </h2>
+        <p>Selecione o andar</p>
+    </div>
+
+    <div class="andares-grid" id="andares-grid-aluno">
+        <!-- Andares carregados dinamicamente -->
+    </div>
+</section>
+
+<!-- SEÇÃO SALAS (ALUNO) -->
+<section id="mapa-salas" class="section" style="display: none;">
+    <div class="section-header">
+        <button class="btn-voltar" onclick="voltarParaAndaresAluno()">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+        <h2 id="sala-title">Bloco A > 1° Andar</h2>
+        <p class="salas-counter">0 salas</p>
+    </div>
+
+    <!-- Filtros -->
+    <div class="salas-filters" id="salas-filters" style="display: none;">
+        <div class="filter-group">
+            <input type="text" id="searchSalaAluno" placeholder="Pesquisar sala..." class="search-input">
+            <i class="fas fa-search"></i>
+        </div>
+        <div class="filter-group">
+            <select id="filterTipoSalaAluno" class="filter-select">
+                <option value="">Todos os tipos</option>
+                <option value="Sala de Aula">Sala de Aula</option>
+                <option value="Laboratório">Laboratório</option>
+                <option value="Auditório">Auditório</option>
+                <option value="Sala de Reunião">Sala de Reunião</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="salas-grid" id="salas-grid-aluno">
+        <!-- Salas carregadas dinamicamente -->
+    </div>
 </section>
 
         <!-- SEÇÃO PROFESSORES -->

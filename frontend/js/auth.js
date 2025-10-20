@@ -1,5 +1,3 @@
-
-
 // AuthManager - Gerenciador de Autenticação
 class AuthManager {
     constructor() {
@@ -11,27 +9,28 @@ class AuthManager {
         
         this.bindMethods();
     }
-redirectByUserType(user) {
-    console.log('🔀 Redirecionando usuário tipo:', user.tipo);
-    console.log('👤 Dados do usuário:', user);
-    
-    // ✅ REDIRECIONAMENTO IMEDIATO - BLOQUEIA CARREGAMENTO DA PÁGINA ERRADA
-    switch(user.tipo) {
-        case 'admin':
-            console.log('➡️ Redirecionando IMEDIATAMENTE para admin.html');
-            window.location.replace('admin.html'); // ← Use replace() para não ficar no histórico
-            break;
-        case 'professor':
-            console.log('➡️ Redirecionando IMEDIATAMENTE para professor-dashboard.html');
-            window.location.replace('professor-dashboard.html'); // ← Use replace()
-            break;
-        case 'aluno':
-        default:
-            console.log('➡️ Redirecionando IMEDIATAMENTE para index.html');
-            window.location.replace('index.html'); // ← Use replace()
-            break;
+
+    redirectByUserType(user) {
+        console.log('🔀 Redirecionando usuário tipo:', user.tipo);
+        console.log('👤 Dados do usuário:', user);
+        
+        // ✅ REDIRECIONAMENTO IMEDIATO - BLOQUEIA CARREGAMENTO DA PÁGINA ERRADA
+        switch(user.tipo) {
+            case 'admin':
+                console.log('➡️ Redirecionando IMEDIATAMENTE para admin.html');
+                window.location.replace('admin.html');
+                break;
+            case 'professor':
+                console.log('➡️ Redirecionando IMEDIATAMENTE para professor-dashboard.html');
+                window.location.replace('professor-dashboard.html');
+                break;
+            case 'aluno':
+            default:
+                console.log('➡️ Redirecionando IMEDIATAMENTE para index.html');
+                window.location.replace('index.html');
+                break;
+        }
     }
-}
 
     bindMethods() {
         this.init = this.init.bind(this);
@@ -48,6 +47,7 @@ redirectByUserType(user) {
         this.checkExistingAuth = this.checkExistingAuth.bind(this);
         this.logout = this.logout.bind(this);
         this.redirectByUserType = this.redirectByUserType.bind(this);
+        this.validarEmail = this.validarEmail.bind(this); // 🔥 NOVO MÉTODO
     }
 
     init() {
@@ -60,58 +60,64 @@ redirectByUserType(user) {
         console.log('✅ INIT: AuthManager inicializado com sucesso');
     }
 
-checkExistingAuth() {
-    const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('userData');
-    
-    if (token && userData) {
-        try {
-            this.token = token;
-            this.currentUser = JSON.parse(userData);
-            this.isAuthenticated = true;
-            console.log('🔐 Usuário já autenticado:', this.currentUser.nome, '- Tipo:', this.currentUser.tipo);
-            
-            // ✅ CORREÇÃO: Sempre verificar redirecionamento
-            setTimeout(() => {
-                this.verifyPageAccess();
-            }, 1000);
-            
-        } catch (error) {
-            console.error('❌ Erro ao verificar autenticação:', error);
-            this.clearAuth();
+    checkExistingAuth() {
+        const token = localStorage.getItem('authToken');
+        const userData = localStorage.getItem('userData');
+        
+        if (token && userData) {
+            try {
+                this.token = token;
+                this.currentUser = JSON.parse(userData);
+                this.isAuthenticated = true;
+                console.log('🔐 Usuário já autenticado:', this.currentUser.nome, '- Tipo:', this.currentUser.tipo);
+                
+                // ✅ CORREÇÃO: Sempre verificar redirecionamento
+                setTimeout(() => {
+                    this.verifyPageAccess();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('❌ Erro ao verificar autenticação:', error);
+                this.clearAuth();
+            }
+        } else {
+            console.log('🔐 Nenhum usuário autenticado encontrado');
         }
-    } else {
-        console.log('🔐 Nenhum usuário autenticado encontrado');
     }
-}
 
-// Adicione este método ao AuthManager
-// VERSÃO CORRIGIDA - se precisar usar no futuro
-verifyPageAccess() {
-    if (!this.currentUser) return;
-    
-    const currentPage = window.location.pathname;
-    const currentPageName = currentPage.split('/').pop() || 'index.html';
-    
-    console.log('🔍 Verificando acesso à página:', currentPageName);
-    
-    // Páginas PROIBIDAS para cada tipo (em vez de permitidas)
-    const forbiddenPages = {
-        'aluno': ['admin.html', 'professor-dashboard.html', 'gerenciar-usuarios'],
-        'professor': ['admin.html', 'gerenciar-usuarios'],
-        'admin': [] // Admin pode acessar tudo
-    };
-    
-    const userForbidden = forbiddenPages[this.currentUser.tipo] || forbiddenPages.aluno;
-    const isForbidden = userForbidden.some(page => currentPageName.includes(page));
-    
-    if (isForbidden) {
-        console.log('🚫 Acesso proibido. Redirecionando...');
-        this.redirectByUserType(this.currentUser);
-    } else {
-        console.log('✅ Acesso permitido');
+    // 🔥 NOVO MÉTODO: Validar se é email
+    validarEmail(credencial) {
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return regex.test(credencial);
     }
-}
+
+    // VERSÃO CORRIGIDA - se precisar usar no futuro
+    verifyPageAccess() {
+        if (!this.currentUser) return;
+        
+        const currentPage = window.location.pathname;
+        const currentPageName = currentPage.split('/').pop() || 'index.html';
+        
+        console.log('🔍 Verificando acesso à página:', currentPageName);
+        
+        // Páginas PROIBIDAS para cada tipo (em vez de permitidas)
+        const forbiddenPages = {
+            'aluno': ['admin.html', 'professor-dashboard.html', 'gerenciar-usuarios'],
+            'professor': ['admin.html', 'gerenciar-usuarios'],
+            'admin': [] // Admin pode acessar tudo
+        };
+        
+        const userForbidden = forbiddenPages[this.currentUser.tipo] || forbiddenPages.aluno;
+        const isForbidden = userForbidden.some(page => currentPageName.includes(page));
+        
+        if (isForbidden) {
+            console.log('🚫 Acesso proibido. Redirecionando...');
+            this.redirectByUserType(this.currentUser);
+        } else {
+            console.log('✅ Acesso permitido');
+        }
+    }
+
     setupLoginForm() {
         console.log('🔧 SETUP: Configurando formulários de login...');
         
@@ -187,24 +193,48 @@ verifyPageAccess() {
 
     }
 
-  async handleLogin(event, version = 'desktop') {
+    // 🔥 MÉTODO handleLogin MODIFICADO para aceitar email ou matrícula
+    async handleLogin(event, version = 'desktop') {
     event.preventDefault();
     console.log(`🎯 HANDLELOGIN: Processando login (${version})...`);
     
-    const email = document.getElementById('emailDesktop')?.value;
-    const password = document.getElementById('passwordDesktop')?.value;
-    const loginBtn = document.getElementById('loginBtnDesktop');
+    const credencial = version === 'mobile'
+        ? document.getElementById('email')?.value
+        : document.getElementById('emailDesktop')?.value;
+        
+    const password = version === 'mobile'
+        ? document.getElementById('password')?.value
+        : document.getElementById('passwordDesktop')?.value;
+        
+    const loginBtn = version === 'mobile'
+        ? document.getElementById('loginBtn')
+        : document.getElementById('loginBtnDesktop');
 
-    // ... código de validação ...
+    // Validação básica
+    if (!credencial || !password) {
+        this.showError('Por favor, preencha todos os campos', version);
+        return;
+    }
 
     this.showLoading(loginBtn);
     this.hideError(version);
 
     try {
-        // ... código de verificação ...
+        // 🔥 DETERMINAR SE É EMAIL OU MATRÍCULA
+        let dadosLogin = { senha: password };
+        
+        if (this.validarEmail(credencial)) {
+            dadosLogin.email = credencial;
+            console.log('📧 Login com email detectado');
+        } else {
+            dadosLogin.matricula = credencial;
+            console.log('🔢 Login com matrícula detectado');
+        }
 
-        // CHAMADA REAL PARA A API
-        const result = await api.login(email, password);
+        console.log(`📤 Enviando dados de login:`, dadosLogin);
+
+        // 🔥 CHAMADA ÚNICA PARA A API
+        const result = await api.login(dadosLogin);
         
         if (result.success) {
             console.log('✅ LOGIN BEM-SUCEDIDO via API!', result);
@@ -218,15 +248,14 @@ verifyPageAccess() {
             localStorage.setItem('authToken', result.token);
             localStorage.setItem('userData', JSON.stringify(result.user));
             
-            
             console.log('🔄 Redirecionando IMEDIATAMENTE...');
             
-            // ✅✅✅ REDIRECIONAMENTO IMEDIATO - SEM DELAY ✅✅✅
+            // ✅✅✅ REDIRECIONAMENTO IMEDIATO
             this.redirectByUserType(result.user);
             
         } else {
             // MOSTRAR ERRO ESPECÍFICO DA API
-            throw new Error(result.error || 'Erro no login');
+            throw new Error(result.error || 'Email/matrícula ou senha inválidos');
         }
         
     } catch (error) {
@@ -240,6 +269,10 @@ verifyPageAccess() {
             errorMessage = 'Senha incorreta. Tente novamente.';
         } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
             errorMessage = 'Erro de conexão. Verifique se o servidor está rodando.';
+        } else if (error.message.includes('Email/matrícula')) {
+            errorMessage = 'Email/matrícula ou senha inválidos. Verifique suas credenciais.';
+        } else if (error.message.includes('obrigatórios')) {
+            errorMessage = 'Por favor, preencha todos os campos.';
         } else {
             errorMessage = error.message;
         }
@@ -299,51 +332,52 @@ verifyPageAccess() {
     }
 
     async processGoogleToken(accessToken, version) {
-    console.log('🔄 Processando token Google...');
-    
-    try {
-        // ... código anterior ...
-
-        // Enviar para nossa API
-        console.log('🔄 Enviando para API UNIMAP...');
-        const result = await api.googleLogin(accessToken);
+        console.log('🔄 Processando token Google...');
         
-        if (result.success) {
-            console.log('✅ LOGIN GOOGLE BEM-SUCEDIDO!', result.user);
-            console.log('🔍 TIPO DE USUÁRIO RECEBIDO:', result.user.tipo);
+        try {
+            // ... código anterior do processGoogleToken (mantenha igual) ...
+
+            // Enviar para nossa API
+            console.log('🔄 Enviando para API UNIMAP...');
+            const result = await api.googleLogin(accessToken);
             
-            // Salvar dados de autenticação
-            this.isAuthenticated = true;
-            this.currentUser = result.user;
-            this.token = result.token;
-            
-            localStorage.setItem('authToken', result.token);
-            localStorage.setItem('userData', JSON.stringify(result.user));
-            
-            // Feedback visual RÁPIDO
-            const loginBtn = version === 'mobile' 
-                ? document.getElementById('loginBtn')
-                : document.getElementById('loginBtnDesktop');
+            if (result.success) {
+                console.log('✅ LOGIN GOOGLE BEM-SUCEDIDO!', result.user);
+                console.log('🔍 TIPO DE USUÁRIO RECEBIDO:', result.user.tipo);
                 
-            if (loginBtn) {
-                loginBtn.innerHTML = '<i class="fas fa-check"></i> Login Google realizado!';
-                loginBtn.style.backgroundColor = '#28a745';
+                // Salvar dados de autenticação
+                this.isAuthenticated = true;
+                this.currentUser = result.user;
+                this.token = result.token;
+                
+                localStorage.setItem('authToken', result.token);
+                localStorage.setItem('userData', JSON.stringify(result.user));
+                
+                // Feedback visual RÁPIDO
+                const loginBtn = version === 'mobile' 
+                    ? document.getElementById('loginBtn')
+                    : document.getElementById('loginBtnDesktop');
+                    
+                if (loginBtn) {
+                    loginBtn.innerHTML = '<i class="fas fa-check"></i> Login Google realizado!';
+                    loginBtn.style.backgroundColor = '#28a745';
+                }
+                
+                console.log('🔄 Redirecionando IMEDIATAMENTE...');
+                
+                // ✅✅✅ REDIRECIONAMENTO IMEDIATO - SEM DELAY ✅✅✅
+                this.redirectByUserType(result.user);
+                
+            } else {
+                throw new Error(result.error || 'Erro no login Google');
             }
             
-            console.log('🔄 Redirecionando IMEDIATAMENTE...');
-            
-            // ✅✅✅ REDIRECIONAMENTO IMEDIATO - SEM DELAY ✅✅✅
-            this.redirectByUserType(result.user);
-            
-        } else {
-            throw new Error(result.error || 'Erro no login Google');
+        } catch (error) {
+            console.error('❌ ERRO NO LOGIN GOOGLE:', error);
+            this.showError('Erro no login com Google: ' + error.message, version);
         }
-        
-    } catch (error) {
-        console.error('❌ ERRO NO LOGIN GOOGLE:', error);
-        this.showError('Erro no login com Google: ' + error.message, version);
     }
-}
+
     showLoading(button) {
         if (button) {
             const originalText = button.textContent;
@@ -397,10 +431,10 @@ verifyPageAccess() {
         console.log('🔓 Auth limpo - usuário deslogado');
     }
 
-  redirectToDashboard() {
-    console.log('🔄 Redirecionando para página principal...');
-    window.location.href = 'index.html'; // Mude de dashboard.html para index.html
-}
+    redirectToDashboard() {
+        console.log('🔄 Redirecionando para página principal...');
+        window.location.href = 'index.html';
+    }
 
     logout() {
         console.log('🚪 Executando logout...');
@@ -420,12 +454,33 @@ verifyPageAccess() {
     isUserAuthenticated() {
         return this.isAuthenticated;
     }
+
+    // 🔥 NOVO MÉTODO: Redirecionar se autenticado
+    redirectIfAuthenticated() {
+        if (this.isAuthenticated && this.currentUser) {
+            console.log('🔄 Redirecionando usuário autenticado...', this.currentUser.tipo);
+            
+            // Não redirecionar se já estiver na página correta
+            const currentPage = window.location.pathname;
+            const shouldRedirect = 
+                currentPage.includes('login.html') || 
+                currentPage === '/' || 
+                currentPage.includes('/login') ||
+                (this.currentUser.tipo === 'professor' && !currentPage.includes('professor-dashboard')) ||
+                (this.currentUser.tipo === 'aluno' && !currentPage.includes('index.html')) ||
+                (this.currentUser.tipo === 'admin' && !currentPage.includes('admin.html'));
+            
+            if (shouldRedirect) {
+                console.log('🎯 Redirecionando para página correta...');
+                setTimeout(() => {
+                    this.redirectByUserType(this.currentUser);
+                }, 1000);
+            }
+        }
+    }
 }
 
-// Instância global do AuthManager
-const authManager = new AuthManager();
-
-// RegisterManager - Gerenciador de Cadastro
+// RegisterManager - Gerenciador de Cadastro (MANTIDO IGUAL)
 class RegisterManager {
     constructor() {
         console.log('🔧 CONSTRUCTOR: RegisterManager sendo construído...');
@@ -572,11 +627,11 @@ class RegisterManager {
                 // Mostrar mensagem de sucesso
                 this.showSuccess(registerBtn);
                 
-                // No handleRegister, mudar redirecionamento
-            console.log('🔄 Redirecionando para login em 2 segundos...');
-            setTimeout(() => {
-                window.location.href = 'login.html'; // Mantém para login
-            }, 2000);
+                // Redirecionar para login
+                console.log('🔄 Redirecionando para login em 2 segundos...');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
                 
             } else {
                 throw new Error(result.error || 'Erro no cadastro');
@@ -606,37 +661,38 @@ class RegisterManager {
         console.log(`🔐 Iniciando cadastro com Google (${version})...`);
         await authManager.handleGoogleLogin(version);
     }
+
     async loginProfessor(email, senha) {
-    try {
-        this.showLoading(true);
-        
-        const response = await fetch('/api/auth/login-professor', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, senha })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            // Salvar dados do usuário
-            localStorage.setItem('user', JSON.stringify(data.user));
-            localStorage.setItem('token', data.token);
+        try {
+            this.showLoading(true);
             
-            // Redirecionar para dashboard do professor
-            window.location.href = 'professor-dashboard.html';
-        } else {
-            throw new Error(data.error || 'Erro no login');
+            const response = await fetch('/api/auth/login-professor', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, senha })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Salvar dados do usuário
+                localStorage.setItem('user', JSON.stringify(data.user));
+                localStorage.setItem('token', data.token);
+                
+                // Redirecionar para dashboard do professor
+                window.location.href = 'professor-dashboard.html';
+            } else {
+                throw new Error(data.error || 'Erro no login');
+            }
+        } catch (error) {
+            console.error('Erro no login professor:', error);
+            throw error;
+        } finally {
+            this.showLoading(false);
         }
-    } catch (error) {
-        console.error('Erro no login professor:', error);
-        throw error;
-    } finally {
-        this.showLoading(false);
     }
-}
 
     validateData(inputs) {
         // Verificar se todos os campos estão preenchidos
@@ -736,59 +792,11 @@ class RegisterManager {
             button.innerHTML = '<i class="fas fa-check"></i> Cadastro realizado!';
             button.style.backgroundColor = '#28a745';
         }
-        
-    }
-    // Adicione este método à classe AuthManager
-redirectIfAuthenticated() {
-    if (this.isAuthenticated && this.currentUser) {
-        console.log('🔄 Redirecionando usuário autenticado...', this.currentUser.tipo);
-        
-        // Não redirecionar se já estiver na página correta
-        const currentPage = window.location.pathname;
-        const shouldRedirect = 
-            currentPage.includes('login.html') || 
-            currentPage === '/' || 
-            currentPage.includes('/login') ||
-            (this.currentUser.tipo === 'professor' && !currentPage.includes('professor-dashboard')) ||
-            (this.currentUser.tipo === 'aluno' && !currentPage.includes('index.html')) ||
-            (this.currentUser.tipo === 'admin' && !currentPage.includes('admin.html'));
-        
-        if (shouldRedirect) {
-            console.log('🎯 Redirecionando para página correta...');
-            setTimeout(() => {
-                this.redirectByUserType(this.currentUser);
-            }, 1000);
-        }
-    }
-    
-}
-redirectByUserType(user) {
-    const currentPage = window.location.pathname;
-    const currentPageName = currentPage.split('/').pop() || 'index.html';
-    
-    console.log('🔀 Verificando redirecionamento para:', user.tipo);
-    console.log('📄 Página atual:', currentPageName);
-    
-    // Páginas de destino para cada tipo
-    const targetPages = {
-        'admin': 'admin.html',
-        'professor': 'professor-dashboard.html', 
-        'aluno': 'index.html'
-    };
-    
-    const targetPage = targetPages[user.tipo] || targetPages.aluno;
-    
-    // ✅ CORREÇÃO: Só redirecionar se NÃO estiver já na página correta
-    if (!currentPage.includes(targetPage)) {
-        console.log('➡️ Redirecionando para:', targetPage);
-        window.location.href = targetPage;
-    } else {
-        console.log('✅ Já está na página correta:', targetPage);
     }
 }
 
-    
-}
+// Instância global do AuthManager
+const authManager = new AuthManager();
 
 // Instância global do RegisterManager
 const registerManager = new RegisterManager();
@@ -814,8 +822,6 @@ if (document.readyState === 'loading') {
     console.log('📄 DOM já carregado, inicializando RegisterManager...');
     registerManager.init();
 }
-
-
 
 // Para debug
 window.authManager = authManager;

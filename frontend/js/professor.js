@@ -1,195 +1,213 @@
-// js/professor.js
+// professor.js - Versão corrigida com autenticação
 class ProfessorManager {
     constructor() {
-        this.currentProfessor = null;
+        this.currentUser = null;
+        this.minhasAulas = [];
+        this.init();
     }
 
-    // Carregar aulas do professor
+    async init() {
+        console.log('👨‍🏫 Inicializando ProfessorManager...');
+        
+        // Verificar autenticação
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+            this.currentUser = JSON.parse(userData);
+            console.log('✅ Professor carregado:', this.currentUser);
+        } else {
+            console.error('❌ Professor não autenticado');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        await this.carregarMinhasAulas();
+    }
+
     async carregarMinhasAulas() {
         try {
-            const user = authManager.getCurrentUser();
-            if (!user || user.tipo !== 'professor') return;
-
-            const response = await apiClient.get(`/api/aulas/usuario/${user.id}`);
+            console.log('📚 Carregando aulas do professor...');
             
-            if (response.success && response.data) {
-                this.exibirAulasProfessor(response.data);
+            // 🔧 USAR A NOVA API COM AUTENTICAÇÃO
+            const result = await api.getMinhasAulas();
+            
+            if (result && result.success) {
+                this.minhasAulas = result.data;
+                console.log(`✅ ${this.minhasAulas.length} aulas carregadas`);
+                this.renderizarAulas();
             } else {
-                this.exibirAulasProfessor([]);
+                console.error('❌ Erro ao carregar aulas:', result?.error);
+                this.mostrarErro('Erro ao carregar aulas: ' + (result?.error || 'Erro desconhecido'));
             }
         } catch (error) {
-            console.error('Erro ao carregar aulas:', error);
-            this.exibirAulasProfessor([]);
+            console.error('❌ Erro ao carregar aulas:', error);
+            this.mostrarErro('Erro de conexão ao carregar aulas');
         }
     }
 
-    // Exibir aulas do professor
-    exibirAulasProfessor(aulas) {
+    renderizarAulas() {
         const container = document.getElementById('aulas-professor-grid');
         if (!container) return;
 
-        if (!aulas || aulas.length === 0) {
+        if (this.minhasAulas.length === 0) {
             container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                    <h3>Nenhuma aula cadastrada</h3>
-                    <p>Comece criando sua primeira aula</p>
-                    <button class="btn-primary" onclick="showSection('criar-aula')">
-                        <i class="fas fa-plus-circle"></i> Criar Primeira Aula
-                    </button>
+                <div class="professor-empty-state">
+                    <i class="fas fa-chalkboard-teacher fa-3x"></i>
+                    <p>Nenhuma aula encontrada</p>
+                    <p class="empty-subtitle">Crie sua primeira aula usando o botão acima</p>
                 </div>
             `;
             return;
         }
 
-        container.innerHTML = aulas.map(aula => `
-            <div class="aula-card">
-                <div class="aula-header">
-                    <h3>${aula.disciplina_nome || aula.disciplina || 'Disciplina'}</h3>
-                    <span class="status-badge ${this.getStatusAula(aula)}">
-                        ${this.getTextoStatus(aula)}
+        container.innerHTML = this.minhasAulas.map(aula => this.criarCardAula(aula)).join('');
+    }
+
+    criarCardAula(aula) {
+        const status = this.getStatusAula(aula);
+        const dias = this.formatarDiasSemana(aula.dia_semana);
+        
+        return `
+            <div class="professor-aula-card" data-aula-id="${aula.id}">
+                <div class="professor-aula-header">
+                    <h3>${aula.disciplina || aula.disciplina_nome || 'Disciplina'}</h3>
+                    <span class="professor-status-badge ${status.classe}">
+                        <i class="fas ${status.icone}"></i> ${status.texto}
                     </span>
                 </div>
-                <div class="aula-info">
-                    <div class="info-item">
-                        <span class="icon"><i class="fas fa-users"></i></span>
-                        <strong>Turma:</strong> ${aula.turma || 'N/A'} | ${aula.curso || ''}
+                <div class="professor-aula-info">
+                    <div class="professor-info-item">
+                        <span class="professor-icon"><i class="fas fa-clock"></i></span>
+                        <span>${aula.horario_inicio} - ${aula.horario_fim} | ${dias}</span>
                     </div>
-                    <div class="info-item">
-                        <span class="icon"><i class="fas fa-map-marker-alt"></i></span>
-                        <strong>Sala:</strong> ${aula.sala_bloco || ''} ${aula.sala_numero || 'N/A'}
+                    <div class="professor-info-item">
+                        <span class="professor-icon"><i class="fas fa-door-open"></i></span>
+                        <span>Sala ${aula.sala_numero} - Bloco ${aula.sala_bloco}</span>
                     </div>
-                    <div class="info-item">
-                        <span class="icon"><i class="fas fa-clock"></i></span>
-                        <strong>Horário:</strong> ${aula.horario_inicio} - ${aula.horario_fim}
-                    </div>
-                    <div class="info-item">
-                        <span class="icon"><i class="fas fa-calendar"></i></span>
-                        <strong>Dias:</strong> ${this.formatarDiasSemana(aula.dia_semana)}
+                    <div class="professor-info-item">
+                        <span class="professor-icon"><i class="fas fa-users"></i></span>
+                        <span>Turma: ${aula.turma || 'N/A'} | Curso: ${aula.curso || 'N/A'}</span>
                     </div>
                 </div>
-                <div class="aula-actions">
-                    <button class="btn-action" onclick="professorManager.editarAula(${aula.id})">
-                        <i class="fas fa-edit"></i> Editar
+                <div class="professor-aula-actions">
+                    <button class="professor-btn-action" onclick="professorManager.verDetalhesAula(${aula.id})">
+                        <i class="fas fa-info-circle"></i> Detalhes
                     </button>
-                    <button class="btn-action secundario" onclick="professorManager.excluirAula(${aula.id})">
+                    <button class="professor-btn-action secundario" onclick="professorManager.abrirMapaSala('${aula.sala_bloco}', ${aula.sala_andar || 1}, '${aula.sala_numero}')">
+                        <i class="fas fa-map-marker-alt"></i> Localizar
+                    </button>
+                    <button class="professor-btn-action perigo" onclick="professorManager.excluirAula(${aula.id})">
                         <i class="fas fa-trash"></i> Excluir
                     </button>
                 </div>
             </div>
-        `).join('');
+        `;
     }
 
-    // Criar nova aula
     async criarAula(dadosAula) {
         try {
-            const user = authManager.getCurrentUser();
-            if (!user || user.tipo !== 'professor') {
-                throw new Error('Acesso negado. Apenas professores podem criar aulas.');
-            }
-
-            // Validar dados obrigatórios
-            if (!dadosAula.disciplina || !dadosAula.sala_id || !dadosAula.curso || 
-                !dadosAula.turma || !dadosAula.horario_inicio || !dadosAula.horario_fim || 
-                !dadosAula.dia_semana) {
-                throw new Error('Preencha todos os campos obrigatórios');
-            }
-
-            const response = await apiClient.post('/api/aulas', dadosAula);
+            console.log('📝 Criando nova aula:', dadosAula);
             
-            if (response.success) {
-                showNotification('Aula criada com sucesso!', 'success');
+            // 🔧 USAR A NOVA API COM AUTENTICAÇÃO
+            const result = await api.criarAula(dadosAula);
+            
+            if (result && result.success) {
+                console.log('✅ Aula criada com sucesso!');
+                this.mostrarSucesso('Aula criada com sucesso!');
+                
+                // Recarregar aulas
+                await this.carregarMinhasAulas();
+                
+                // Voltar para a lista de aulas
+                showSection('minhas-aulas-professor');
+                
                 // Limpar formulário
-                document.getElementById('formCriarAula').reset();
-                // Recarregar lista de aulas
-                this.carregarMinhasAulas();
-                return true;
+                document.getElementById('formCriarAula')?.reset();
+                
             } else {
-                throw new Error(response.error || 'Erro ao criar aula');
+                throw new Error(result?.error || 'Erro ao criar aula');
             }
         } catch (error) {
-            console.error('Erro ao criar aula:', error);
-            showNotification(error.message, 'error');
-            return false;
+            console.error('❌ Erro ao criar aula:', error);
+            this.mostrarErro('Erro ao criar aula: ' + error.message);
         }
     }
 
-    // Editar aula
-    async editarAula(aulaId) {
-        showNotification('Funcionalidade de edição em desenvolvimento', 'info');
-        // Implementar edição posteriormente
-    }
-
-    // Excluir aula
     async excluirAula(aulaId) {
-        if (confirm('Tem certeza que deseja excluir esta aula?')) {
-            try {
-                const response = await apiClient.delete(`/api/aulas/${aulaId}`);
-                if (response.success) {
-                    showNotification('Aula excluída com sucesso!', 'success');
-                    this.carregarMinhasAulas();
-                } else {
-                    throw new Error(response.error || 'Erro ao excluir aula');
-                }
-            } catch (error) {
-                console.error('Erro ao excluir aula:', error);
-                showNotification(error.message, 'error');
+        if (!confirm('Tem certeza que deseja excluir esta aula?')) {
+            return;
+        }
+
+        try {
+            console.log('🗑️ Excluindo aula:', aulaId);
+            
+            // 🔧 USAR A NOVA API COM AUTENTICAÇÃO
+            const result = await api.excluirAula(aulaId);
+            
+            if (result && result.success) {
+                console.log('✅ Aula excluída com sucesso!');
+                this.mostrarSucesso('Aula excluída com sucesso!');
+                
+                // Recarregar aulas
+                await this.carregarMinhasAulas();
+            } else {
+                throw new Error(result?.error || 'Erro ao excluir aula');
             }
+        } catch (error) {
+            console.error('❌ Erro ao excluir aula:', error);
+            this.mostrarErro('Erro ao excluir aula: ' + error.message);
         }
     }
 
-    // Helper methods
+    // 🔧 MÉTODOS AUXILIARES
     getStatusAula(aula) {
-        const agora = new Date();
-        const horaAtual = agora.getHours() + ':' + (agora.getMinutes() < 10 ? '0' : '') + agora.getMinutes();
-        
-        // Lógica simples para status (pode ser melhorada)
-        if (horaAtual >= aula.horario_inicio && horaAtual <= aula.horario_fim) {
-            return 'em-andamento';
-        } else if (horaAtual < aula.horario_inicio) {
-            return 'proxima';
-        } else {
-            return 'concluida';
-        }
+        // Lógica para determinar status da aula
+        return { classe: 'ativa', texto: 'Ativa', icone: 'fa-check-circle' };
     }
 
-    getTextoStatus(aula) {
-        const status = this.getStatusAula(aula);
-        const textos = {
-            'em-andamento': 'Em Andamento',
-            'proxima': 'Próxima',
-            'concluida': 'Concluída'
-        };
-        return textos[status] || 'Agendada';
-    }
-
-    formatarDiasSemana(dias) {
+    formatarDiasSemana(diaSemana) {
         const diasMap = {
-            'seg': 'Segunda',
-            'ter': 'Terça', 
-            'qua': 'Quarta',
-            'qui': 'Quinta',
-            'sex': 'Sexta'
+            'segunda': 'Segunda',
+            'terca': 'Terça', 
+            'quarta': 'Quarta',
+            'quinta': 'Quinta',
+            'sexta': 'Sexta'
         };
+        return diasMap[diaSemana] || diaSemana;
+    }
+
+    verDetalhesAula(aulaId) {
+        console.log('📖 Ver detalhes da aula:', aulaId);
+        // Implementar modal de detalhes
+        alert(`Detalhes da aula ${aulaId}\n\nEm desenvolvimento...`);
+    }
+
+    abrirMapaSala(bloco, andar, sala) {
+        console.log('🗺️ Abrindo mapa para:', bloco, andar, sala);
+        showSection('mapa-blocos');
         
-        return dias.split(',').map(dia => diasMap[dia] || dia).join(', ');
+        setTimeout(() => {
+            if (window.mapaManager) {
+                window.mapaManager.mostrarSalas(bloco, andar);
+            }
+        }, 300);
     }
-async carregarSalas() {
-    try {
-        const response = await apiClient.get('/api/salas');
-        if (response.success && response.data) {
-            const select = document.getElementById('salaSelect');
-            select.innerHTML = '<option value="">Selecione a sala</option>' +
-                response.data.map(sala => 
-                    `<option value="${sala.id}">${sala.bloco} ${sala.numero} - ${sala.tipo} (Capacidade: ${sala.capacidade})</option>`
-                ).join('');
+
+    mostrarSucesso(mensagem) {
+        if (window.showNotification) {
+            showNotification(mensagem, 'success');
+        } else {
+            alert('✅ ' + mensagem);
         }
-    } catch (error) {
-        console.error('Erro ao carregar salas:', error);
+    }
+
+    mostrarErro(mensagem) {
+        if (window.showNotification) {
+            showNotification(mensagem, 'error');
+        } else {
+            alert('❌ ' + mensagem);
+        }
     }
 }
-}
 
-
-// Instância global
+// ✅ INSTÂNCIA GLOBAL
 const professorManager = new ProfessorManager();

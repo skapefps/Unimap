@@ -1,4 +1,4 @@
-// mapa.js - Versão completa e corrigida
+// mapa.js - Versão corrigida com autenticação
 class MapaManager {
     constructor() {
         this.salas = [];
@@ -26,17 +26,17 @@ class MapaManager {
         try {
             console.log('📡 Carregando salas da API...');
             
-            const response = await fetch('/api/salas');
+            // 🔧 USAR A NOVA API COM AUTENTICAÇÃO
+            const result = await api.getSalas();
             
-            if (response.ok) {
-                this.salas = await response.json();
+            if (result && result.success) {
+                this.salas = result.data;
                 console.log(`✅ ${this.salas.length} salas carregadas do banco`);
                 
-                // ✅ DEBUG: Mostrar resumo das salas
                 this.mostrarResumoSalas();
                 
             } else {
-                console.error('❌ Erro na API:', response.status);
+                console.error('❌ Erro ao carregar salas:', result?.error);
                 this.usarDadosExemplo();
             }
         } catch (error) {
@@ -49,12 +49,11 @@ class MapaManager {
 
     mostrarResumoSalas() {
         console.log('📊 RESUMO DAS SALAS CARREGADAS:');
-        const blocos = ['A', 'B', 'C', 'D'];
+        const blocos = [...new Set(this.salas.map(s => s.bloco))].sort();
         blocos.forEach(bloco => {
             const salasBloco = this.salas.filter(s => s.bloco === bloco);
             console.log(`   Bloco ${bloco}: ${salasBloco.length} salas`);
             
-            // Mostrar por andar também
             const andares = [...new Set(salasBloco.map(s => s.andar))].sort();
             andares.forEach(andar => {
                 const salasAndar = salasBloco.filter(s => s.andar === andar);
@@ -155,26 +154,25 @@ class MapaManager {
         const totalPaginas = Math.ceil(salasFiltradas.length / this.salasPorPagina);
 
         // ✅ RENDERIZAR SALAS
-      // No método renderizarSalas do mapa.js, atualize para:
         const salasHTML = salasPagina.map(sala => `
-        <div class="sala-card" data-sala-id="${sala.id}">
-            <h4>Sala ${sala.numero}</h4>
-            <p><strong>Tipo:</strong> ${sala.tipo}</p>
-            <p><strong>Capacidade:</strong> ${sala.capacidade} pessoas</p>
-            
-            ${sala.campus ? `<p><strong>Campus:</strong> Campus ${sala.campus}</p>` : ''}
-            
-            ${sala.recursos ? `<p><strong>Recursos:</strong> ${sala.recursos}</p>` : ''}
-            
-            ${sala.telefone ? `<p><strong>Telefone:</strong> ${sala.telefone}</p>` : ''}
-            
-            ${sala.email ? `<p><strong>Email:</strong> ${sala.email}</p>` : ''}
-            
-            <div class="sala-status disponivel">
-                🟢 Disponível
+            <div class="sala-card" data-sala-id="${sala.id}">
+                <h4>Sala ${sala.numero}</h4>
+                <p><strong>Tipo:</strong> ${sala.tipo}</p>
+                <p><strong>Capacidade:</strong> ${sala.capacidade} pessoas</p>
+                
+                ${sala.campus ? `<p><strong>Campus:</strong> Campus ${sala.campus}</p>` : ''}
+                
+                ${sala.recursos ? `<p><strong>Recursos:</strong> ${sala.recursos}</p>` : ''}
+                
+                ${sala.telefone ? `<p><strong>Telefone:</strong> ${sala.telefone}</p>` : ''}
+                
+                ${sala.email ? `<p><strong>Email:</strong> ${sala.email}</p>` : ''}
+                
+                <div class="sala-status disponivel">
+                    🟢 Disponível
+                </div>
             </div>
-        </div>
-    `).join('');
+        `).join('');
 
         // ✅ PAGINAÇÃO (se necessário)
         let paginacaoHTML = '';
@@ -260,6 +258,16 @@ window.debugMapa = function() {
     console.log('- Filtro atual:', mapaManager.filtroTipo);
     console.log('- Bloco selecionado:', sessionStorage.getItem('blocoSelecionado'));
     console.log('- Andar selecionado:', sessionStorage.getItem('andarSelecionado'));
+    
+    // 🔧 VERIFICAR AUTENTICAÇÃO
+    const token = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('userData');
+    console.log('- Token presente:', !!token);
+    console.log('- User data presente:', !!userData);
+    if (userData) {
+        const user = JSON.parse(userData);
+        console.log('- Usuário:', user.nome, '- Tipo:', user.tipo);
+    }
 };
 
 window.recarregarMapa = function() {
@@ -272,4 +280,4 @@ window.testarBloco = function(bloco = 'A', andar = 1) {
     mapaManager.mostrarSalas(bloco, andar);
 };
 
-window.mapaManager = mapaManager; // ✅ Torna global para acesso fácil
+window.mapaManager = mapaManager;

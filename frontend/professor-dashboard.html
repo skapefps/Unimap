@@ -5,11 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UNIMAP - Professor</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/professor-dashboard.css">
     <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/professor-dashboard.css">
 </head>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/professor.js"></script>
+    <script src="js/professores.js"></script>
+    <script src="js/professor-mapa.js"></script>    
 <body>
-    <!-- MOBILE HEADER -->
+    <!-- MOBILE HEADER - IDÊNTICO AO ADMIN -->
     <header class="mobile-header">
         <div class="header-top">
             <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
@@ -18,15 +25,25 @@
         </div>
 
         <nav class="mobile-nav" id="mobileNav">
-            <div class="nav-user" id="mobileNavUser">Professor</div>
-            <a href="#" onclick="showSection('minhas-aulas-professor')">Minhas Aulas</a>
-            <a href="#" onclick="showSection('criar-aula')">Criar Nova Aula</a>
-            <a href="#" onclick="showSection('mapa-blocos')">Mapa de Salas</a>
-            <a href="#" onclick="authManager.logout()">Sair</a>
+            <div class="nav-user" id="mobileNavUser">
+                <i class="fas fa-chalkboard-teacher"></i> Professor
+            </div>
+            <a href="#" onclick="showSection('minhas-aulas-professor')" class="active">
+                <i class="fas fa-chalkboard-teacher"></i> Minhas Aulas
+            </a>
+            <a href="#" onclick="showSection('criar-aula')">
+                <i class="fas fa-plus-circle"></i> Criar Nova Aula
+            </a>
+            <a href="#" onclick="showSection('mapa-blocos')">
+                <i class="fas fa-door-open"></i> Mapa de Salas
+            </a>
+            <a href="#" onclick="authManager.logout()" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </a>
         </nav>
     </header>
 
-    <!-- DESKTOP HEADER -->
+    <!-- DESKTOP HEADER - IDÊNTICO AO ADMIN -->
     <header class="desktop-header">
         <div class="header-content">
             <a href="professor-dashboard.html" class="logo-link">
@@ -34,13 +51,18 @@
                 <h1>UNIMAP - Professor</h1>
             </a>
             <nav class="desktop-nav">
-                <a href="#" onclick="showSection('minhas-aulas-professor')" class="nav-link">Minhas Aulas</a>
-                <a href="#" onclick="showSection('criar-aula')" class="nav-link">Criar Aula</a>
-                <a href="#" onclick="showSection('mapa-blocos')" class="nav-link">Mapa Salas</a>
-                <span class="user-info">
-                <i class="fas fa-chalkboard-teacher"></i>
-                Prof. <span id="professorUserName">Carregando...</span>
-            </span>
+                <a href="#" onclick="showSection('minhas-aulas-professor')" class="nav-link active">
+                    <i class="fas fa-chalkboard-teacher"></i> Minhas Aulas
+                </a>
+                <a href="#" onclick="showSection('criar-aula')" class="nav-link">
+                    <i class="fas fa-plus-circle"></i> Criar Aula
+                </a>
+                <a href="#" onclick="showSection('mapa-blocos')" class="nav-link">
+                    <i class="fas fa-door-open"></i> Mapa Salas
+                </a>
+                <span class="user-info" id="desktopUserName">
+                    <i class="fas fa-user"></i> Professor
+                </span>
                 <button class="btn-sair-desktop-texto" onclick="authManager.logout()">
                     <i class="fas fa-sign-out-alt"></i> Sair
                 </button>
@@ -51,266 +73,818 @@
     <main>
         <!-- SEÇÃO MINHAS AULAS (PROFESSOR) -->
         <section id="minhas-aulas-professor" class="section active">
-            <div class="section-header">
+            <div class="professor-page-header">
                 <h2><i class="fas fa-chalkboard-teacher"></i> Minhas Aulas</h2>
                 <button class="btn-primary" onclick="showSection('criar-aula')">
                     <i class="fas fa-plus-circle"></i> Nova Aula
                 </button>
             </div>
-            <div class="aulas-grid" id="aulas-professor-grid">
-                <!-- Aulas do professor serão carregadas aqui -->
+
+            <!-- FILTROS -->
+            <div class="professor-filters-container">
+                <div class="professor-filter-group">
+                    <label for="filterCurso">Curso:</label>
+                    <select id="filterCurso" class="professor-filter-select">
+                        <option value="">Todos os cursos</option>
+                        <option value="si">Sistemas de Informação</option>
+                        <option value="adm">Administração</option>
+                        <option value="dir">Direito</option>
+                    </select>
+                </div>
+                <div class="professor-filter-group">
+                    <label for="filterStatus">Status:</label>
+                    <select id="filterStatus" class="professor-filter-select">
+                        <option value="">Todas</option>
+                        <option value="ativa">Ativas</option>
+                        <option value="inativa">Inativas</option>
+                    </select>
+                </div>
+                <div class="professor-filter-group">
+                    <label for="searchAula">Pesquisar:</label>
+                    <input type="text" id="searchAula" class="professor-filter-input" placeholder="Disciplina, turma...">
+                </div>
+            </div>
+
+            <!-- GRID DE AULAS -->
+            <div class="professor-aulas-grid" id="aulas-professor-grid">
+                <div class="professor-empty-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Carregando suas aulas...</p>
+                </div>
             </div>
         </section>
 
         <!-- SEÇÃO CRIAR AULA -->
         <section id="criar-aula" class="section">
-            <h2><i class="fas fa-plus-circle"></i> Criar Nova Aula</h2>
-            <form class="criar-aula-form" id="formCriarAula">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Curso:</label>
-                        <select id="cursoSelect" required>
-                            <option value="">Selecione o curso</option>
-                            <option value="si">Sistemas de Informação</option>
-                            <option value="adm">Administração</option>
-                            <option value="dir">Direito</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Período:</label>
-                        <select id="periodoSelect" required>
-                            <option value="">Selecione o período</option>
-                            <option value="1">1° Período</option>
-                            <option value="2">2° Período</option>
-                            <option value="3">3° Período</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Turma:</label>
-                        <select id="turmaSelect" required>
-                            <option value="">Selecione a turma</option>
-                            <option value="si3n">SI3N</option>
-                            <option value="si4n">SI4N</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Disciplina:</label>
-                        <input type="text" id="disciplinaInput" required 
-                               placeholder="Nome da disciplina">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Sala:</label>
-                        <select id="salaSelect" required>
-                            <option value="">Selecione a sala</option>
-                            <!-- Salas serão carregadas dinamicamente -->
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Horário:</label>
-                        <select id="horarioSelect" required>
-                            <option value="">Selecione o horário</option>
-                            <option value="08:00-10:00">08:00 - 10:00</option>
-                            <option value="10:00-12:00">10:00 - 12:00</option>
-                            <option value="14:00-16:00">14:00 - 16:00</option>
-                            <option value="16:00-18:00">16:00 - 18:00</option>
-                            <option value="19:00-21:00">19:00 - 21:00</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Dias da Semana:</label>
-                    <div class="dias-checkbox">
-                        <label><input type="checkbox" name="dias" value="seg"> Segunda</label>
-                        <label><input type="checkbox" name="dias" value="ter"> Terça</label>
-                        <label><input type="checkbox" name="dias" value="qua"> Quarta</label>
-                        <label><input type="checkbox" name="dias" value="qui"> Quinta</label>
-                        <label><input type="checkbox" name="dias" value="sex"> Sexta</label>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-primary">
-                    <i class="fas fa-save"></i> Criar Aula
+            <div class="professor-page-header">
+                <h2><i class="fas fa-plus-circle"></i> Criar Nova Aula</h2>
+                <button class="btn-voltar" onclick="showSection('minhas-aulas-professor')">
+                    <i class="fas fa-arrow-left"></i> Voltar
                 </button>
-            </form>
-            <button class="btn-voltar" onclick="showSection('minhas-aulas-professor')">
-                ← Voltar
-            </button>
-        </section>
+            </div>
 
-        <!-- SEÇÃO MAPA (MESMA DO ALUNO) -->
-        <section id="mapa-blocos" class="section">
-            <h2>Mapa Salas</h2>
-            <div class="blocos-grid">
-                <div class="bloco-card" onclick="showAndares('A')">
-                    <h3>Bloco A</h3>
-                </div>
-                <div class="bloco-card" onclick="showAndares('B')">
-                    <h3>Bloco B</h3>
-                </div>
-                <div class="bloco-card" onclick="showAndares('C')">
-                    <h3>Bloco C</h3>
-                </div>
-                <div class="bloco-card" onclick="showAndares('D')">
-                    <h3>Bloco D</h3>
-                </div>
+            <div class="professor-form-container">
+                <form class="professor-criar-aula-form" id="formCriarAula">
+                    <div class="professor-form-row">
+                        <div class="professor-form-group">
+                            <label for="cursoSelect">Curso:</label>
+                            <select id="cursoSelect" class="professor-form-control" required>
+                                <option value="">Selecione o curso</option>
+                                <option value="si">Sistemas de Informação</option>
+                                <option value="adm">Administração</option>
+                                <option value="dir">Direito</option>
+                            </select>
+                        </div>
+                        <div class="professor-form-group">
+                            <label for="periodoSelect">Período:</label>
+                            <select id="periodoSelect" class="professor-form-control" required>
+                                <option value="">Selecione o período</option>
+                                <option value="1">1° Período</option>
+                                <option value="2">2° Período</option>
+                                <option value="3">3° Período</option>
+                                <option value="4">4° Período</option>
+                                <option value="5">5° Período</option>
+                                <option value="6">6° Período</option>
+                                <option value="7">7° Período</option>
+                                <option value="8">8° Período</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="professor-form-row">
+                        <div class="professor-form-group">
+                            <label for="turmaSelect">Turma:</label>
+                            <select id="turmaSelect" class="professor-form-control" required>
+                                <option value="">Selecione a turma</option>
+                                <option value="si1n">SI1N</option>
+                                <option value="si2n">SI2N</option>
+                                <option value="si3n">SI3N</option>
+                                <option value="si4n">SI4N</option>
+                                <option value="si5n">SI5N</option>
+                                <option value="si6n">SI6N</option>
+                                <option value="si7n">SI7N</option>
+                                <option value="si8n">SI8N</option>
+                            </select>
+                        </div>
+                        <div class="professor-form-group">
+                            <label for="disciplinaInput">Disciplina:</label>
+                            <input type="text" id="disciplinaInput" class="professor-form-control" required 
+                                   placeholder="Nome da disciplina">
+                        </div>
+                    </div>
+
+                    <div class="professor-form-row">
+                        <div class="professor-form-group">
+                            <label for="salaSelect">Sala:</label>
+                            <div class="professor-search-container">
+                                <input type="text" id="searchSala" class="professor-search-input" 
+                                       placeholder="Pesquisar sala...">
+                                <i class="fas fa-search professor-search-icon"></i>
+                            </div>
+                            <select id="salaSelect" class="professor-form-control" required size="5">
+                                <option value="">Selecione a sala</option>
+                                <!-- Salas serão carregadas dinamicamente -->
+                            </select>
+                        </div>
+                        <div class="professor-form-group">
+                            <label for="horarioSelect">Horário:</label>
+                            <select id="horarioSelect" class="professor-form-control" required>
+                                <option value="">Selecione o horário</option>
+                                <option value="08:00-10:00">08:00 - 10:00</option>
+                                <option value="10:00-12:00">10:00 - 12:00</option>
+                                <option value="14:00-16:00">14:00 - 16:00</option>
+                                <option value="16:00-18:00">16:00 - 18:00</option>
+                                <option value="19:00-21:00">19:00 - 21:00</option>
+                                <option value="21:00-23:00">21:00 - 23:00</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="professor-form-group">
+                        <label>Dias da Semana:</label>
+                        <div class="professor-dias-checkbox">
+                            <label class="professor-checkbox-label">
+                                <input type="checkbox" name="dias" value="seg">
+                                <span class="professor-checkmark"></span>
+                                Segunda
+                            </label>
+                            <label class="professor-checkbox-label">
+                                <input type="checkbox" name="dias" value="ter">
+                                <span class="professor-checkmark"></span>
+                                Terça
+                            </label>
+                            <label class="professor-checkbox-label">
+                                <input type="checkbox" name="dias" value="qua">
+                                <span class="professor-checkmark"></span>
+                                Quarta
+                            </label>
+                            <label class="professor-checkbox-label">
+                                <input type="checkbox" name="dias" value="qui">
+                                <span class="professor-checkmark"></span>
+                                Quinta
+                            </label>
+                            <label class="professor-checkbox-label">
+                                <input type="checkbox" name="dias" value="sex">
+                                <span class="professor-checkmark"></span>
+                                Sexta
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="professor-form-actions">
+                        <button type="submit" class="btn-primary professor-btn-large">
+                            <i class="fas fa-save"></i> Criar Aula
+                        </button>
+                        <button type="button" class="professor-btn-secondary" onclick="showSection('minhas-aulas-professor')">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
             </div>
         </section>
-    </main>
 
-    <script src="js/api.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/professor.js"></script>
-    <script src="js/professores.js"></script>
-    <script src="js/mapa.js"></script>
-
+       <!-- SEÇÃO MAPA DE SALAS COMPLETO -->
+<section id="mapa-blocos" class="section">
+    <div class="professor-page-header">
+        <h2><i class="fas fa-door-open"></i> Mapa de Salas</h2>
+        <button class="btn-voltar" onclick="showSection('minhas-aulas-professor')">
+            <i class="fas fa-arrow-left"></i> Voltar para Minhas Aulas
+        </button>
+    </div>
     
-    <!-- No professor-dashboard.html, atualize o script -->
-<script>
-    // 🔧 VERIFICAR SE É PROFESSOR
-    document.addEventListener('DOMContentLoaded', function() {
-        const user = authManager.getCurrentUser();
+    <!-- Blocos - AGORA DINÂMICO -->
+    <div class="professor-blocos-grid" id="blocos-grid">
+        <div class="professor-empty-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Carregando blocos...</p>
+        </div>
+    </div>
+
+    <!-- Seção de Andares (inicialmente escondida) -->
+    <div id="andares-section" class="andares-section" style="display: none;">
+        <div class="professor-andares-header">
+            <button class="professor-btn-voltar-andar" onclick="voltarParaBlocos()">
+                <i class="fas fa-arrow-left"></i> Voltar para Blocos
+            </button>
+            <h3 id="bloco-selecionado-title">Bloco </h3>
+        </div>
         
-        if (!user || user.tipo !== 'professor') {
-            alert('Acesso restrito para professores!');
-            window.location.href = 'login.html';
+        <div class="professor-andares-grid" id="andares-grid">
+            <!-- Andares serão carregados dinamicamente -->
+        </div>
+    </div>
+
+    <!-- Seção de Salas (inicialmente escondida) -->
+    <div id="salas-section" class="salas-section" style="display: none;">
+        <div class="professor-salas-header">
+            <button class="professor-btn-voltar-sala" onclick="voltarParaAndares()">
+                <i class="fas fa-arrow-left"></i> Voltar para Andares
+            </button>
+            <h3 id="andar-selecionado-title">Andar </h3>
+        </div>
+        
+        <div class="professor-salas-filters">
+            <div class="professor-filter-group">
+                <input type="text" id="searchSalaMapa" class="professor-search-input" placeholder="Pesquisar sala...">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="professor-filter-group">
+                <select id="filterTipoSala" class="professor-filter-select">
+                    <option value="">Todos os tipos</option>
+                    <option value="aula">Sala de Aula</option>
+                    <option value="laboratorio">Laboratório</option>
+                    <option value="auditorio">Auditório</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="professor-salas-grid" id="salas-grid">
+            <!-- Salas serão carregadas dinamicamente -->
+        </div>
+    </div>
+</section>
+
+
+    <script>
+        // 🔧 FUNÇÕES PARA MENU HAMBURGER
+        function toggleMenu() {
+            const nav = document.getElementById('mobileNav');
+            nav.classList.toggle('active');
+        }
+
+        function closeMenu() {
+            const nav = document.getElementById('mobileNav');
+            nav.classList.remove('active');
+        }
+
+        // Fechar menu ao clicar fora
+        document.addEventListener('click', function(event) {
+            const nav = document.getElementById('mobileNav');
+            const hamburger = document.querySelector('.menu-hamburger');
+            
+            if (nav.classList.contains('active') && 
+                !nav.contains(event.target) && 
+                !hamburger.contains(event.target)) {
+                nav.classList.remove('active');
+            }
+        });
+
+        // 🔧 ATUALIZAR NOME DO USUÁRIO COM BADGE PROFESSOR
+        document.addEventListener('DOMContentLoaded', function() {
+            const userData = localStorage.getItem('userData');
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    
+                    // Desktop - Adicionar badge PROFESSOR
+                    const desktopUser = document.getElementById('desktopUserName');
+                    if (desktopUser) {
+                        desktopUser.innerHTML = `
+                            <i class="fas fa-user"></i> ${user.nome} 
+                            <span class="user-type-badge professor" style="
+                                background: #3498db;
+                                color: white;
+                                padding: 2px 8px;
+                                border-radius: 12px;
+                                font-size: 0.7rem;
+                                margin-left: 8px;
+                                font-weight: 600;
+                            ">PROFESSOR</span>
+                        `;
+                    }
+                    
+                    // Mobile
+                    const mobileUser = document.getElementById('mobileUserName');
+                    const navUser = document.getElementById('mobileNavUser');
+                    if (mobileUser) mobileUser.textContent = user.nome;
+                    if (navUser) navUser.innerHTML = `<i class="fas fa-chalkboard-teacher"></i> ${user.nome} <span style="background: #3498db; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.6rem; margin-left: 5px;">PROF</span>`;
+                    
+                } catch (error) {
+                    console.error('Erro ao carregar usuário:', error);
+                }
+            }
+
+            // Verificar autenticação e inicializar dashboard
+            initializeProfessorDashboard();
+        });
+
+        // 🔧 INICIALIZAÇÃO DO DASHBOARD
+        function initializeProfessorDashboard() {
+            const user = authManager.getCurrentUser();
+            
+            if (!user || user.tipo !== 'professor') {
+                alert('Acesso restrito para professores!');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            console.log('👤 Professor carregado:', user);
+            
+            // Carregar aulas do professor
+            if (window.professorManager && professorManager.carregarMinhasAulas) {
+                professorManager.carregarMinhasAulas();
+            }
+            
+            // Configurar formulário de criação de aula
+            configurarFormularioAula();
+            
+            // Configurar filtro de salas
+            configurarFiltroSalas();
+        }
+
+        function configurarFormularioAula() {
+            const formCriarAula = document.getElementById('formCriarAula');
+            if (formCriarAula) {
+                formCriarAula.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const diasSelecionados = Array.from(document.querySelectorAll('input[name="dias"]:checked'))
+                        .map(cb => cb.value);
+                    
+                    if (diasSelecionados.length === 0) {
+                        showNotification('Selecione pelo menos um dia da semana', 'error');
+                        return;
+                    }
+
+                    const horario = document.getElementById('horarioSelect').value;
+                    const [horario_inicio, horario_fim] = horario.split('-');
+
+                    const dadosAula = {
+                        disciplina: document.getElementById('disciplinaInput').value,
+                        sala_id: document.getElementById('salaSelect').value,
+                        curso: document.getElementById('cursoSelect').value,
+                        turma: document.getElementById('turmaSelect').value,
+                        horario_inicio: horario_inicio.trim(),
+                        horario_fim: horario_fim.trim(),
+                        dia_semana: diasSelecionados.join(',')
+                    };
+
+                    await professorManager.criarAula(dadosAula);
+                });
+            }
+
+            // Carregar salas disponíveis
+            carregarSalas();
+        }
+
+        function configurarFiltroSalas() {
+            const searchSala = document.getElementById('searchSala');
+            const salaSelect = document.getElementById('salaSelect');
+            
+            if (searchSala && salaSelect) {
+                searchSala.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    const options = salaSelect.getElementsByTagName('option');
+                    
+                    for (let option of options) {
+                        const text = option.textContent.toLowerCase();
+                        option.style.display = text.includes(searchTerm) ? '' : 'none';
+                    }
+                });
+            }
+        }
+
+        async function carregarSalas() {
+            try {
+                // Simulação de carregamento de salas - substitua pela sua API
+                const salas = [
+                    { id: 1, numero: 'A101', bloco: 'A', tipo: 'Sala de Aula' },
+                    { id: 2, numero: 'A102', bloco: 'A', tipo: 'Sala de Aula' },
+                    { id: 3, numero: 'A201', bloco: 'A', tipo: 'Sala de Aula' },
+                    { id: 4, numero: 'A202', bloco: 'A', tipo: 'Sala de Aula' },
+                    { id: 5, numero: 'B101', bloco: 'B', tipo: 'Laboratório' },
+                    { id: 6, numero: 'B102', bloco: 'B', tipo: 'Laboratório' },
+                    { id: 7, numero: 'C101', bloco: 'C', tipo: 'Auditório' },
+                    { id: 8, numero: 'C201', bloco: 'C', tipo: 'Auditório' },
+                    { id: 9, numero: 'D101', bloco: 'D', tipo: 'Sala Reunião' },
+                    { id: 10, numero: 'D102', bloco: 'D', tipo: 'Sala Reunião' }
+                ];
+                
+                const select = document.getElementById('salaSelect');
+                if (select && salas.length > 0) {
+                    select.innerHTML = '<option value="">Selecione a sala</option>' +
+                        salas.map(sala => 
+                            `<option value="${sala.id}">${sala.numero} - Bloco ${sala.bloco} (${sala.tipo})</option>`
+                        ).join('');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar salas:', error);
+            }
+        }
+
+        function showSection(sectionId) {
+            // Fechar menu mobile ao clicar em um link
+            closeMenu();
+            
+            // Remover classe active de todos os links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Remover classe active de todos os mobile links
+            document.querySelectorAll('.mobile-nav a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Adicionar classe active ao link clicado (desktop)
+            const clickedDesktopLink = document.querySelector(`.desktop-nav [onclick="showSection('${sectionId}')"]`);
+            if (clickedDesktopLink) {
+                clickedDesktopLink.classList.add('active');
+            }
+            
+            // Adicionar classe active ao link clicado (mobile)
+            const clickedMobileLink = document.querySelector(`.mobile-nav [onclick="showSection('${sectionId}')"]`);
+            if (clickedMobileLink) {
+                clickedMobileLink.classList.add('active');
+            }
+            
+            // Esconder todas as seções
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Mostrar seção selecionada
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+            
+            // Scroll para o topo
+            window.scrollTo(0, 0);
+        }
+
+        // 🔧 FUNÇÃO DE NOTIFICAÇÃO
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `custom-notification ${type}`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}"></i>
+                    <span>${message}</span>
+                </div>
+                <button class="notification-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+    // 🔥 VARIÁVEIS GLOBAIS PARA O MAPA
+    let blocosData = [];
+    let currentBloco = null;
+    let currentAndar = null;
+
+    // 🔥 INICIALIZAR MAPA QUANDO A PÁGINA CARREGAR
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🗺️ Inicializando sistema de mapa...');
+        carregarBlocos();
+        
+        // Configurar eventos
+        configurarEventosMapa();
+    });
+
+    // 🔥 CARREGAR BLOCOS DA API
+    async function carregarBlocos() {
+        try {
+            console.log('📡 Carregando blocos da API...');
+            
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('/api/salas/blocos', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                blocosData = await response.json();
+                console.log('✅ Blocos carregados:', blocosData);
+                renderizarBlocos(blocosData);
+            } else {
+                throw new Error('Erro ao carregar blocos');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar blocos:', error);
+            // Fallback: usar blocos padrão
+            usarBlocosPadrao();
+        }
+    }
+
+    // 🔥 RENDERIZAR BLOCOS NA TELA
+    function renderizarBlocos(blocos) {
+        const container = document.getElementById('blocos-grid');
+        if (!container) return;
+
+        if (!blocos || blocos.length === 0) {
+            container.innerHTML = `
+                <div class="professor-empty-state">
+                    <i class="fas fa-building fa-3x"></i>
+                    <p>Nenhum bloco encontrado</p>
+                </div>
+            `;
             return;
         }
 
-        // Atualizar nome do usuário
-        document.getElementById('desktopUserName').innerHTML = 
-            `${user.nome} <span class="user-type-badge professor">PROFESSOR</span>`;
-        document.getElementById('mobileUserName').textContent = user.nome;
-        document.getElementById('mobileNavUser').textContent = user.nome;
+        container.innerHTML = blocos.map(bloco => `
+            <div class="professor-bloco-card" data-bloco="${bloco.letra}" onclick="selecionarBloco('${bloco.letra}')">
+                <div class="professor-bloco-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <h3>Bloco ${bloco.letra}</h3>
+                <div class="professor-bloco-stats">
+                    <span class="professor-stat">${bloco.total_salas} salas</span>
+                    <span class="professor-stat">${bloco.total_andares} andares</span>
+                </div>
+                <div class="professor-bloco-badge">
+                    ${bloco.total_salas} salas
+                </div>
+            </div>
+        `).join('');
 
-        // Carregar aulas do professor
-        professorManager.carregarMinhasAulas();
+        console.log(`✅ ${blocos.length} blocos renderizados`);
+    }
+
+    // 🔥 FALLBACK SE A API FALHAR
+    function usarBlocosPadrao() {
+        console.log('🔄 Usando blocos padrão...');
+        const blocosPadrao = [
+            { letra: 'A', total_salas: 58, total_andares: 4 },
+            { letra: 'B', total_salas: 46, total_andares: 4 },
+            { letra: 'C', total_salas: 45, total_andares: 4 },
+            { letra: 'D', total_salas: 48, total_andares: 4 },
+            { letra: 'E', total_salas: 84, total_andares: 4 },
+            { letra: 'F', total_salas: 87, total_andares: 4 },
+            { letra: 'G', total_salas: 87, total_andares: 4 },
+            { letra: 'H', total_salas: 81, total_andares: 4 },
+            { letra: 'I', total_salas: 82, total_andares: 4 },
+            { letra: 'J', total_salas: 82, total_andares: 4 },
+            { letra: 'K', total_salas: 82, total_andares: 4 },
+            { letra: 'L', total_salas: 79, total_andares: 4 },
+            { letra: 'M', total_salas: 84, total_andares: 4 },
+            { letra: 'N', total_salas: 83, total_andares: 4 }
+        ];
+        renderizarBlocos(blocosPadrao);
+    }
+
+    // 🔥 SELECIONAR BLOCO
+    async function selecionarBloco(bloco) {
+        console.log(`🏢 Selecionando bloco: ${bloco}`);
+        currentBloco = bloco;
         
-        // Configurar formulário de criação de aula
-        configurarFormularioAula();
-    });
+        // Atualizar título
+        document.getElementById('bloco-selecionado-title').textContent = `Bloco ${bloco}`;
+        
+        // Mostrar loading
+        document.getElementById('andares-grid').innerHTML = `
+            <div class="professor-empty-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Carregando andares...</p>
+            </div>
+        `;
+        
+        // Mostrar seção de andares
+        document.getElementById('blocos-grid').style.display = 'none';
+        document.getElementById('andares-section').style.display = 'block';
+        document.getElementById('salas-section').style.display = 'none';
+        
+        // Carregar andares
+        await carregarAndares(bloco);
+    }
 
-    function configurarFormularioAula() {
-        const formCriarAula = document.getElementById('formCriarAula');
-        if (formCriarAula) {
-            formCriarAula.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const diasSelecionados = Array.from(document.querySelectorAll('input[name="dias"]:checked'))
-                    .map(cb => cb.value);
-                
-                if (diasSelecionados.length === 0) {
-                    showNotification('Selecione pelo menos um dia da semana', 'error');
-                    return;
+    // 🔥 CARREGAR ANDARES DO BLOCO
+    async function carregarAndares(bloco) {
+        try {
+            console.log(`📡 Carregando andares do bloco ${bloco}...`);
+            
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(`/api/salas/bloco/${bloco}/andares`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
                 }
+            });
 
-                const horario = document.getElementById('horarioSelect').value;
-                const [horario_inicio, horario_fim] = horario.split('-');
+            if (response.ok) {
+                const andares = await response.json();
+                console.log(`✅ Andares carregados:`, andares);
+                renderizarAndares(andares);
+            } else {
+                throw new Error('Erro ao carregar andares');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar andares:', error);
+            // Fallback: andares padrão
+            usarAndaresPadrao();
+        }
+    }
 
-                const dadosAula = {
-                    disciplina: document.getElementById('disciplinaInput').value,
-                    sala_id: document.getElementById('salaSelect').value,
-                    curso: document.getElementById('cursoSelect').value,
-                    turma: document.getElementById('turmaSelect').value,
-                    horario_inicio: horario_inicio.trim(),
-                    horario_fim: horario_fim.trim(),
-                    dia_semana: diasSelecionados.join(',')
-                };
+    // 🔥 RENDERIZAR ANDARES
+    function renderizarAndares(andares) {
+        const container = document.getElementById('andares-grid');
+        if (!container) return;
 
-                await professorManager.criarAula(dadosAula);
+        if (!andares || andares.length === 0) {
+            container.innerHTML = `
+                <div class="professor-empty-state">
+                    <i class="fas fa-door-closed fa-3x"></i>
+                    <p>Nenhum andar encontrado</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = andares.map(andar => `
+            <div class="professor-andar-card" onclick="selecionarAndar('${andar}')">
+                <div class="professor-andar-icon">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <h4>${andar}</h4>
+                <p>Clique para ver as salas</p>
+            </div>
+        `).join('');
+
+        console.log(`✅ ${andares.length} andares renderizados`);
+    }
+
+    // 🔥 FALLBACK PARA ANDARES
+    function usarAndaresPadrao() {
+        const andaresPadrao = ['Térreo', '1º Andar', '2º Andar', '3º Andar'];
+        renderizarAndares(andaresPadrao);
+    }
+
+    // 🔥 SELECIONAR ANDAR
+    async function selecionarAndar(andar) {
+        console.log(`🚪 Selecionando andar: ${andar} do bloco ${currentBloco}`);
+        currentAndar = andar;
+        
+        // Atualizar título
+        document.getElementById('andar-selecionado-title').textContent = `Bloco ${currentBloco} > ${andar}`;
+        
+        // Mostrar loading
+        document.getElementById('salas-grid').innerHTML = `
+            <div class="professor-empty-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Carregando salas...</p>
+            </div>
+        `;
+        
+        // Mostrar seção de salas
+        document.getElementById('andares-section').style.display = 'none';
+        document.getElementById('salas-section').style.display = 'block';
+        
+        // Carregar salas
+        await carregarSalas(currentBloco, andar);
+    }
+
+    // 🔥 CARREGAR SALAS DO ANDAR
+    async function carregarSalas(bloco, andar) {
+        try {
+            console.log(`📡 Carregando salas: Bloco ${bloco}, Andar ${andar}`);
+            
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(`/api/salas/bloco/${bloco}/andar/${andar}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const salas = await response.json();
+                console.log(`✅ ${salas.length} salas carregadas`);
+                renderizarSalas(salas);
+            } else {
+                throw new Error('Erro ao carregar salas');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar salas:', error);
+            // Fallback: mostrar mensagem de erro
+            document.getElementById('salas-grid').innerHTML = `
+                <div class="professor-empty-state">
+                    <i class="fas fa-exclamation-triangle fa-3x"></i>
+                    <p>Erro ao carregar salas</p>
+                    <p class="empty-subtitle">${error.message}</p>
+                </div>
+            `;
+        }
+    }
+
+    // 🔥 RENDERIZAR SALAS
+    function renderizarSalas(salas) {
+        const container = document.getElementById('salas-grid');
+        if (!container) return;
+
+        if (!salas || salas.length === 0) {
+            container.innerHTML = `
+                <div class="professor-empty-state">
+                    <i class="fas fa-door-closed fa-3x"></i>
+                    <p>Nenhuma sala encontrada</p>
+                    <p class="empty-subtitle">Bloco ${currentBloco}, ${currentAndar}</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = salas.map(sala => `
+            <div class="professor-sala-card">
+                <div class="professor-sala-header">
+                    <h4>Sala ${sala.numero}</h4>
+                    <span class="professor-sala-status disponivel">🟢 Disponível</span>
+                </div>
+                <div class="professor-sala-info">
+                    <p><strong>Tipo:</strong> ${sala.tipo}</p>
+                    <p><strong>Capacidade:</strong> ${sala.capacidade} pessoas</p>
+                    ${sala.recursos ? `<p><strong>Recursos:</strong> ${sala.recursos}</p>` : ''}
+                    ${sala.telefone ? `<p><strong>Telefone:</strong> ${sala.telefone}</p>` : ''}
+                    ${sala.email ? `<p><strong>Email:</strong> ${sala.email}</p>` : ''}
+                </div>
+                <div class="professor-sala-actions">
+                    <button class="professor-btn-action small" onclick="verDetalhesSala(${sala.id})">
+                        <i class="fas fa-info-circle"></i> Detalhes
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        console.log(`✅ ${salas.length} salas renderizadas`);
+    }
+
+    // 🔥 FUNÇÕES DE NAVEGAÇÃO
+    function voltarParaBlocos() {
+        document.getElementById('andares-section').style.display = 'none';
+        document.getElementById('salas-section').style.display = 'none';
+        document.getElementById('blocos-grid').style.display = 'grid';
+        currentBloco = null;
+    }
+
+    function voltarParaAndares() {
+        document.getElementById('salas-section').style.display = 'none';
+        document.getElementById('andares-section').style.display = 'block';
+        currentAndar = null;
+    }
+
+    // 🔥 CONFIGURAR EVENTOS
+    function configurarEventosMapa() {
+        // Filtro de pesquisa de salas
+        const searchInput = document.getElementById('searchSalaMapa');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                filtrarSalas(this.value);
             });
         }
 
-        // Carregar salas disponíveis
-        carregarSalas();
-    }
-    document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎓 Inicializando Dashboard do Professor...');
-    
-    // Aguardar o authManager carregar
-    const checkAuth = setInterval(() => {
-        if (window.authManager && authManager.getCurrentUser) {
-            clearInterval(checkAuth);
-            initializeProfessorDashboard();
-        }
-    }, 100);
-    
-    function initializeProfessorDashboard() {
-        const user = authManager.getCurrentUser();
-        
-        if (!user) {
-            console.error('❌ Nenhum usuário encontrado');
-            return;
-        }
-        
-        console.log('👤 Professor carregado:', user);
-        
-        // Atualizar interface com informações do professor
-        updateProfessorUI(user);
-        
-        // Inicializar funcionalidades do professor
-        initializeProfessorFeatures();
-    }
-    
-    function updateProfessorUI(user) {
-        // Atualizar nome do professor
-        const desktopName = document.getElementById('professorUserName');
-        const mobileName = document.getElementById('mobileProfessorUserName');
-        
-        if (desktopName) desktopName.textContent = user.nome;
-        if (mobileName) mobileName.textContent = user.nome;
-        
-        // Adicionar badge de professor se não existir
-        addProfessorBadge();
-        
-        // Mostrar informações de debug
-        console.log('🎯 Interface atualizada para professor:', user.nome);
-        console.log('📊 Tipo:', user.tipo);
-        console.log('📧 Email:', user.email);
-    }
-    
-    function addProfessorBadge() {
-        // Adicionar badge de professor no header
-        const header = document.querySelector('.desktop-header .user-info');
-        if (header && !header.querySelector('.professor-badge')) {
-            const badge = document.createElement('span');
-            badge.className = 'professor-badge';
-            badge.innerHTML = '<i class="fas fa-chalkboard-teacher"></i> Professor';
-            badge.style.background = '#e74c3c';
-            badge.style.color = 'white';
-            badge.style.padding = '4px 8px';
-            badge.style.borderRadius = '12px';
-            badge.style.fontSize = '12px';
-            badge.style.marginLeft = '10px';
-            header.appendChild(badge);
+        // Filtro de tipo de sala
+        const tipoFilter = document.getElementById('filterTipoSala');
+        if (tipoFilter) {
+            tipoFilter.addEventListener('change', function() {
+                filtrarSalasPorTipo(this.value);
+            });
         }
     }
-    
-    function initializeProfessorFeatures() {
-        console.log('🚀 Inicializando funcionalidades do professor...');
+
+    // 🔥 FUNÇÕES DE FILTRO
+    function filtrarSalas(termo) {
+        const salas = document.querySelectorAll('.professor-sala-card');
+        const termoLower = termo.toLowerCase();
         
-        // Aqui você pode inicializar outras funcionalidades específicas do professor
-        // Por exemplo: carregar aulas, estatísticas, etc.
+        salas.forEach(sala => {
+            const texto = sala.textContent.toLowerCase();
+            sala.style.display = texto.includes(termoLower) ? 'block' : 'none';
+        });
+    }
+
+    function filtrarSalasPorTipo(tipo) {
+        const salas = document.querySelectorAll('.professor-sala-card');
         
-        // Mostrar mensagem de boas-vindas
-        showWelcomeMessage();
+        salas.forEach(sala => {
+            if (!tipo) {
+                sala.style.display = 'block';
+                return;
+            }
+            
+            const tipoTexto = sala.querySelector('p:nth-child(1)').textContent.toLowerCase();
+            sala.style.display = tipoTexto.includes(tipo.toLowerCase()) ? 'block' : 'none';
+        });
     }
-    
-    function showWelcomeMessage() {
-        const user = authManager.getCurrentUser();
-        setTimeout(() => {
-            console.log('👋 Bem-vindo, Professor', user.nome + '!');
-            // Você pode adicionar um toast/notificação aqui
-        }, 1000);
+
+    // 🔥 FUNÇÃO AUXILIAR
+    function verDetalhesSala(salaId) {
+        alert(`Detalhes da sala ${salaId}\n\nEm desenvolvimento...`);
     }
-});
-    
-</script>
+
+    // 🔥 DEBUG NO CONSOLE
+    window.debugMapaProfessor = function() {
+        console.log('🔍 DEBUG MAPA PROFESSOR:');
+        console.log('- Blocos carregados:', blocosData.length);
+        console.log('- Bloco atual:', currentBloco);
+        console.log('- Andar atual:', currentAndar);
+        console.log('- Token presente:', !!localStorage.getItem('authToken'));
+    };
+    </script>
 </body>
 </html>

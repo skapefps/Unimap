@@ -30,6 +30,12 @@ class AdminManager {
             console.log('📊 Carregando dados do dashboard...');
             const token = localStorage.getItem('authToken');
             
+            if (!token) {
+                console.error('❌ Token não encontrado');
+                this.showEmptyState();
+                return;
+            }
+
             // Carregar estatísticas
             const statsResponse = await fetch('/api/dashboard/estatisticas', {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -40,42 +46,99 @@ class AdminManager {
                 console.log('📈 Estatísticas carregadas:', stats);
                 this.updateStats(stats);
             } else {
-                console.error('❌ Erro ao carregar estatísticas');
+                console.error('❌ Erro ao carregar estatísticas:', statsResponse.status);
+                this.useFallbackStats();
             }
 
-            // Carregar últimos usuários
-            const usersResponse = await fetch('/api/usuarios', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            
-            if (usersResponse.ok) {
-                const usuarios = await usersResponse.json();
-                console.log('👥 Usuários carregados:', usuarios.length);
-                this.renderUsuarios(usuarios); 
-            } else {
-                console.error('❌ Erro ao carregar usuários');
-                this.showEmptyState();
-            }
+            // Carregar últimos usuários - CORREÇÃO PRINCIPAL
+            await this.carregarUsuarios();
 
         } catch (error) {
             console.error('❌ Erro ao carregar dashboard:', error);
+            this.useFallbackStats();
             this.showEmptyState();
         }
     }
 
+    // NOVO MÉTODO PARA CARREGAR USUÁRIOS
+    async carregarUsuarios() {
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('/api/usuarios', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            console.log('🔍 Status da resposta:', response.status);
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log('👥 Resposta da API:', result);
+                
+                let usuariosArray = [];
+                
+                // Diferentes estruturas de resposta possíveis
+                if (result.success && Array.isArray(result.data)) {
+                    usuariosArray = result.data;
+                } else if (Array.isArray(result)) {
+                    usuariosArray = result;
+                } else if (result.data && Array.isArray(result.data)) {
+                    usuariosArray = result.data;
+                } else if (result.usuarios && Array.isArray(result.usuarios)) {
+                    usuariosArray = result.usuarios;
+                } else {
+                    console.warn('⚠️ Estrutura inesperada, tentando usar resultado direto:', result);
+                    usuariosArray = result || [];
+                }
+                
+                console.log('👥 Usuários para renderizar:', usuariosArray);
+                this.renderUsuarios(usuariosArray);
+                
+            } else {
+                console.error('❌ Erro HTTP ao carregar usuários:', response.status);
+                this.showErrorState('Erro ao carregar usuários: ' + response.status);
+            }
+            
+        } catch (error) {
+            console.error('❌ Erro ao carregar usuários:', error);
+            this.showErrorState('Erro de conexão');
+        }
+    }
+
     updateStats(stats) {
-        const elements = {
-            'total-usuarios': stats.total_usuarios || '0',
-            'total-professores': stats.total_professores || '0',
-            'total-salas': stats.total_salas || '0',
-            'total-aulas': stats.total_aulas || '0'
+        try {
+            const elements = {
+                'total-usuarios': stats.total_usuarios || stats.totalUsuarios || '0',
+                'total-professores': stats.total_professores || stats.totalProfessores || '0',
+                'total-salas': stats.total_salas || stats.totalSalas || '0',
+                'total-aulas': stats.total_aulas || stats.totalAulas || '0'
+            };
+            
+            Object.entries(elements).forEach(([id, value]) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value;
+                    element.style.color = '#2c3e50';
+                }
+            });
+        } catch (error) {
+            console.error('Erro ao atualizar estatísticas:', error);
+        }
+    }
+
+    useFallbackStats() {
+        console.log('🔄 Usando estatísticas fallback...');
+        const fallbackStats = {
+            'total-usuarios': '0',
+            'total-professores': '0', 
+            'total-salas': '0',
+            'total-aulas': '0'
         };
         
-        Object.entries(elements).forEach(([id, value]) => {
+        Object.entries(fallbackStats).forEach(([id, value]) => {
             const element = document.getElementById(id);
             if (element) {
                 element.textContent = value;
-                element.style.color = '#2c3e50';
+                element.style.color = '#95a5a6';
             }
         });
     }
@@ -87,41 +150,69 @@ class AdminManager {
             return;
         }
 
-        if (!usuarios || usuarios.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="4" class="empty-state">
-                        <i class="fas fa-users-slash"></i>
-                        <p>Nenhum usuário cadastrado</p>
-                    </td>
-                </tr>
-            `;
+        // VERIFICAÇÃO ROBUSTA
+        if (!usuarios || !Array.isArray(usuarios) || usuarios.length === 0) {
+            this.showEmptyState();
             return;
         }
 
-        tbody.innerHTML = usuarios.map(usuario => `
-            <tr>
-                <td>
-                    <strong>${usuario.nome}</strong>
-                    ${usuario.tipo === 'admin' ? '<i class="fas fa-crown" style="color: #e74c3c; margin-left: 8px;"></i>' : ''}
-                </td>
-                <td>${usuario.email}</td>
-                <td>
-                    <span class="badge ${usuario.tipo}">
-                        ${usuario.tipo === 'admin' ? 'Administrador' : 
-                          usuario.tipo === 'professor' ? 'Professor' : 'Aluno'}
-                    </span>
-                </td>
-                <td>${this.formatarData(usuario.data_cadastro)}</td>
-            </tr>
-        `).join('');
+        try {
+            tbody.innerHTML = usuarios.map(usuario => `
+                <tr>
+                    <td>
+                        <strong>${this.escapeHtml(usuario.nome || 'N/A')}</strong>
+                        ${usuario.tipo === 'admin' ? '<i class="fas fa-crown" style="color: #e74c3c; margin-left: 8px;"></i>' : ''}
+                    </td>
+                    <td>${this.escapeHtml(usuario.email || 'N/A')}</td>
+                    <td>
+                        <span class="badge ${usuario.tipo || 'aluno'}">
+                            ${this.getTipoDisplay(usuario.tipo)}
+                        </span>
+                    </td>
+                    <td>${this.formatarData(usuario.data_cadastro || usuario.created_at)}</td>
+                </tr>
+            `).join('');
 
-        console.log('✅ Usuários renderizados:', usuarios.length);
+            console.log('✅ Usuários renderizados:', usuarios.length);
+            
+        } catch (error) {
+            console.error('❌ Erro ao renderizar usuários:', error);
+            this.showErrorState('Erro ao exibir usuários');
+        }
+    }
+
+    // NOVO MÉTODO PARA ESCAPAR HTML
+    escapeHtml(unsafe) {
+        if (unsafe === null || unsafe === undefined) return 'N/A';
+        return unsafe
+            .toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // NOVO MÉTODO PARA OBTER DISPLAY DO TIPO
+    getTipoDisplay(tipo) {
+        const tipos = {
+            'admin': 'Administrador',
+            'professor': 'Professor', 
+            'aluno': 'Aluno'
+        };
+        return tipos[tipo] || 'Aluno';
     }
 
     formatarData(dataString) {
         try {
+            if (!dataString) return 'N/A';
+            
+            // Tenta converter a data
             const data = new Date(dataString);
+            if (isNaN(data.getTime())) {
+                return 'Data inválida';
+            }
+            
             return data.toLocaleDateString('pt-BR', {
                 day: '2-digit',
                 month: '2-digit',
@@ -130,7 +221,8 @@ class AdminManager {
                 minute: '2-digit'
             });
         } catch (error) {
-            return 'Data inválida';
+            console.warn('⚠️ Erro ao formatar data:', dataString, error);
+            return 'N/A';
         }
     }
 
@@ -140,8 +232,25 @@ class AdminManager {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="4" class="empty-state">
+                        <i class="fas fa-users-slash"></i>
+                        <p>Nenhum usuário cadastrado</p>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    showErrorState(mensagem) {
+        const tbody = document.getElementById('usuarios-body');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="empty-state">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <p>Erro ao carregar usuários</p>
+                        <p>${mensagem}</p>
+                        <button onclick="adminManager.carregarUsuarios()" class="btn-primary" style="margin-top: 10px;">
+                            <i class="fas fa-redo"></i> Tentar Novamente
+                        </button>
                     </td>
                 </tr>
             `;
@@ -149,17 +258,22 @@ class AdminManager {
     }
 
     updateUserInfo() {
-        const userData = localStorage.getItem('userData');
-        if (userData) {
-            const user = JSON.parse(userData);
-            const userElement = document.querySelector('[data-user="nome"]');
-            if (userElement) {
-                userElement.innerHTML = `${user.nome} <span class="user-type-badge admin">ADMIN</span>`;
+        try {
+            const userData = localStorage.getItem('userData');
+            if (userData) {
+                const user = JSON.parse(userData);
+                const userElement = document.querySelector('[data-user="nome"]');
+                if (userElement) {
+                    userElement.innerHTML = `${user.nome} <span class="user-type-badge admin">ADMIN</span>`;
+                }
             }
+        } catch (error) {
+            console.error('Erro ao atualizar info do usuário:', error);
         }
     }
 
     setupEventListeners() {
+        // Logout
         const logoutBtn = document.querySelector('.btn-sair-desktop');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
@@ -171,30 +285,33 @@ class AdminManager {
                 }
             });
         }
-    }
-    // js/admin-usuarios.js - Adicione esta função
-async alterarTipoUsuario(usuarioId, novoTipo) {
-    try {
-        const response = await apiClient.put(`/api/usuarios/${usuarioId}/tipo`, {
-            tipo: novoTipo
-        });
 
-        if (response.success) {
-            showNotification(response.message, 'success');
-            this.carregarUsuarios(); // Recarregar lista
-        } else {
-            throw new Error(response.error);
+        // Botão de recarregar
+        const recarregarBtn = document.querySelector('#recarregarUsuarios');
+        if (recarregarBtn) {
+            recarregarBtn.addEventListener('click', () => {
+                this.carregarUsuarios();
+            });
         }
-    } catch (error) {
-        console.error('Erro ao alterar tipo de usuário:', error);
-        showNotification(error.message, 'error');
+    }
+
+    // NOVO MÉTODO PARA FORÇAR RECARREGAMENTO
+    async recarregarDashboard() {
+        console.log('🔄 Recarregando dashboard...');
+        await this.loadDashboardData();
     }
 }
-}
-
 
 // Inicializar admin
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Inicializando AdminManager...');
     window.adminManager = new AdminManager();
+    
+    // Adicionar botão de debug se necessário
+    window.debugAdmin = () => {
+        console.log('🔍 Debug AdminManager:');
+        console.log('- Token:', localStorage.getItem('authToken'));
+        console.log('- UserData:', localStorage.getItem('userData'));
+        adminManager.carregarUsuarios();
+    };
 });

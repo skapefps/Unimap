@@ -38,9 +38,12 @@
                         <img src="/Unimap/frontend/images/Logo-Google-G.png" alt="Google">
                     </button>
                     
-                    <div class="forgot-password">
-                        <a href="#" onclick="forgotPassword()">Esqueceu a senha?</a>
-                    </div>
+                   <!-- No formulário de login, adicione este link -->
+                <div style="text-align: center; margin-top: 1rem;">
+                    <a href="forgot-password.html" style="color: #3498db; text-decoration: none;">
+                        <i class="fas fa-key"></i> Esqueci minha senha
+                    </a>
+                </div>
                 </div>
                 
                 <button type="submit" class="btn-primary" id="loginBtnDesktop">Entrar</button>
@@ -61,7 +64,7 @@
 <script>
     
     // Inicialização do login - SIMPLIFICADA
-    document.addEventListener('DOMContentLoaded', function() {
+    /*document.addEventListener('DOMContentLoaded', function() {
         console.log('🔧 UNIMAP Login carregado - Inicializando...');
         
         // Verificar se authManager existe
@@ -118,7 +121,7 @@
                 }
             });
         }
-    });
+    });*/
 
     // Função para Esqueci a Senha
     function forgotPassword() {
@@ -131,7 +134,6 @@
         }
     }
 
-    // Função de login com Google - CORRIGIDA
     // Função de login com Google - CORRIGIDA
 async function loginWithGoogle() {
     try {

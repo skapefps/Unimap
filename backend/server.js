@@ -1,9 +1,12 @@
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const { OAuth2Client } = require('google-auth-library');
+
 
 const app = express();
 const PORT = 3000;
@@ -15,6 +18,7 @@ const GOOGLE_CLIENT_ID = '432080672502-ba91tog3jvoc6c0mac01iq2b5k5q3mb1.apps.goo
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 app.use(cors());
 app.use(express.json());
+
 // ==================== INICIALIZAR BANCO COMPLETO ====================
 function initializeDatabase() {
     db.serialize(() => {
@@ -62,6 +66,9 @@ function initializeDatabase() {
             tipo TEXT NOT NULL,
             capacidade INTEGER,
             recursos TEXT,
+            telefone TEXT,
+            email TEXT,
+            campus TEXT,
             ativa BOOLEAN DEFAULT 1
         )`);
 
@@ -157,20 +164,6 @@ function initializeDatabase() {
             }
         });
 
-        // Salas
-        db.run(`INSERT OR IGNORE INTO salas (numero, bloco, andar, tipo, capacidade, recursos) VALUES 
-            ('101', 'A', 1, 'Sala de Aula', 40, 'Projetor, Quadro'),
-            ('102', 'A', 1, 'Sala de Aula', 40, 'Projetor, Quadro'),
-            ('201', 'A', 2, 'Sala de Aula', 30, 'Projetor, Quadro'),
-            ('LAB1', 'B', 1, 'Laboratório', 20, 'Computadores, Projetor'),
-            ('AUD1', 'D', 1, 'Auditório', 100, 'Projetor, Som')`, function(err) {
-            if (err) {
-                console.error('❌ Erro ao inserir salas:', err);
-            } else {
-                console.log('✅ Salas inseridas');
-            }
-        });
-
         // Professores
         db.run(`INSERT OR IGNORE INTO professores (nome, email) VALUES 
             ('João Silva', 'joao.silva@unipam.edu.br'),
@@ -199,13 +192,313 @@ function initializeDatabase() {
             }
         });
 
+        // 🔥 ADICIONADO: CRIAR SALAS PARA TODOS OS BLOCOS A-N
+        criarSalasIniciais();
+
         console.log('✅ Banco COMPLETO criado!');
     });
+}
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'arthurroquemeloneiva@gmail.com', 
+        pass: 'ciuh jipe kfxq jkug'     
+    }
+});
+
+// 🔥 TABELA PARA TOKENS DE REDEFINIÇÃO DE SENHA
+db.run(`CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token TEXT UNIQUE NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES usuarios (id)
+)`);
+
+// ==================== ROTAS DE REDEFINIÇÃO DE SENHA ====================
+
+// 1. SOLICITAR REDEFINIÇÃO DE SENHA - VERSÃO MELHORADA
+app.post('/api/auth/forgot-password', (req, res) => {
+    const { email } = req.body;
+    
+    console.log('🔐 Solicitação de redefinição de senha para:', email);
+    
+    if (!email) {
+        return res.status(400).json({ 
+            success: false, 
+            error: 'Email é obrigatório' 
+        });
+    }
+    
+    // Buscar usuário pelo email
+    db.get('SELECT id, nome, email FROM usuarios WHERE email = ? AND ativo = 1', [email], (err, user) => {
+        if (err) {
+            console.error('❌ Erro ao buscar usuário:', err);
+            return res.status(500).json({ 
+                success: false, 
+                error: 'Erro interno do servidor' 
+            });
+        }
+        
+        if (!user) {
+            console.log('❌ Email não encontrado:', email);
+            // Por segurança, não revelamos se o email existe ou não
+            return res.json({ 
+                success: true, 
+                message: 'Se o email existir em nosso sistema, enviaremos instruções de redefinição.' 
+            });
+        }
+        
+        // Gerar token único
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hora
+        
+        // Salvar token no banco
+        db.run(
+            'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
+            [user.id, token, expiresAt.toISOString()],
+            function(err) {
+                if (err) {
+                    console.error('❌ Erro ao salvar token:', err);
+                    return res.status(500).json({ 
+                        success: false, 
+                        error: 'Erro interno do servidor' 
+                    });
+                }
+                
+                console.log('✅ Token gerado para:', user.email);
+                
+                // Enviar email
+                const resetLink = `http://localhost:3000/reset-password.html?token=${token}`;
+                
+                const mailOptions = {
+                    from: 'UNIMAP <noreply@unimap.edu.br>',
+                    to: user.email,
+                    subject: 'Redefinição de Senha - UNIMAP',
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                            <h2 style="color: #2c3e50;">Redefinição de Senha</h2>
+                            <p>Olá, <strong>${user.nome}</strong>!</p>
+                            <p>Recebemos uma solicitação para redefinir sua senha no UNIMAP.</p>
+                            <p>Clique no botão abaixo para redefinir sua senha:</p>
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="${resetLink}" 
+                                   style="background-color: #3498db; color: white; padding: 12px 24px; 
+                                          text-decoration: none; border-radius: 5px; font-weight: bold;">
+                                    Redefinir Senha
+                                </a>
+                            </div>
+                            <p><strong>Link direto:</strong> ${resetLink}</p>
+                            <p>Este link expira em 1 hora.</p>
+                            <p>Se você não solicitou esta redefinição, ignore este email.</p>
+                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                            <p style="color: #7f8c8d; font-size: 12px;">
+                                UNIMAP - Sistema de Gerenciamento Acadêmico
+                            </p>
+                        </div>
+                    `
+                };
+                
+                console.log('📤 Tentando enviar email para:', user.email);
+                
+                transporter.sendMail(mailOptions, (error, info) => {
+                    if (error) {
+                        console.error('❌ Erro ao enviar email:', error);
+                        return res.status(500).json({ 
+                            success: false, 
+                            error: 'Erro ao enviar email de redefinição. Tente novamente em alguns minutos.' 
+                        });
+                    }
+                    
+                    console.log('✅ Email de redefinição enviado com sucesso!');
+                    console.log('📧 Message ID:', info.messageId);
+                    console.log('🔗 Preview URL:', nodemailer.getTestMessageUrl(info));
+                    
+                    res.json({ 
+                        success: true, 
+                        message: 'Enviamos um email com instruções para redefinir sua senha.' 
+                    });
+                });
+            }
+        );
+    });
+});
+// 2. VERIFICAR TOKEN DE REDEFINIÇÃO
+app.get('/api/auth/verify-reset-token/:token', (req, res) => {
+    const { token } = req.params;
+    
+    console.log('🔍 Verificando token:', token);
+    
+    db.get(
+        `SELECT pt.*, u.email, u.nome 
+         FROM password_reset_tokens pt 
+         JOIN usuarios u ON pt.user_id = u.id 
+         WHERE pt.token = ? AND pt.used = 0 AND pt.expires_at > datetime('now')`,
+        [token],
+        (err, tokenData) => {
+            if (err) {
+                console.error('❌ Erro ao verificar token:', err);
+                return res.status(500).json({ 
+                    success: false, 
+                    error: 'Erro interno do servidor' 
+                });
+            }
+            
+            if (!tokenData) {
+                console.log('❌ Token inválido ou expirado:', token);
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Token inválido ou expirado' 
+                });
+            }
+            
+            res.json({ 
+                success: true, 
+                email: tokenData.email,
+                nome: tokenData.nome
+            });
+        }
+    );
+});
+
+// 3. REDEFINIR SENHA
+app.post('/api/auth/reset-password', (req, res) => {
+    const { token, novaSenha } = req.body;
+    
+    console.log('🔄 Redefinindo senha para token:', token);
+    
+    if (!token || !novaSenha) {
+        return res.status(400).json({ 
+            success: false, 
+            error: 'Token e nova senha são obrigatórios' 
+        });
+    }
+    
+    if (novaSenha.length < 6) {
+        return res.status(400).json({ 
+            success: false, 
+            error: 'A senha deve ter pelo menos 6 caracteres' 
+        });
+    }
+    
+    // Verificar e usar o token
+    db.get(
+        `SELECT pt.*, u.id as user_id 
+         FROM password_reset_tokens pt 
+         JOIN usuarios u ON pt.user_id = u.id 
+         WHERE pt.token = ? AND pt.used = 0 AND pt.expires_at > datetime('now')`,
+        [token],
+        async (err, tokenData) => {
+            if (err) {
+                console.error('❌ Erro ao verificar token:', err);
+                return res.status(500).json({ 
+                    success: false, 
+                    error: 'Erro interno do servidor' 
+                });
+            }
+            
+            if (!tokenData) {
+                console.log('❌ Token inválido ou expirado:', token);
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Token inválido ou expirado' 
+                });
+            }
+            
+            try {
+                // Hash da nova senha
+                const senhaHash = await bcrypt.hash(novaSenha, 10);
+                
+                // Atualizar senha do usuário
+                db.run(
+                    'UPDATE usuarios SET senha_hash = ? WHERE id = ?',
+                    [senhaHash, tokenData.user_id],
+                    function(err) {
+                        if (err) {
+                            console.error('❌ Erro ao atualizar senha:', err);
+                            return res.status(500).json({ 
+                                success: false, 
+                                error: 'Erro interno do servidor' 
+                            });
+                        }
+                        
+                        // Marcar token como usado
+                        db.run(
+                            'UPDATE password_reset_tokens SET used = 1 WHERE token = ?',
+                            [token],
+                            function(err) {
+                                if (err) {
+                                    console.error('❌ Erro ao marcar token como usado:', err);
+                                }
+                                
+                                console.log('✅ Senha redefinida com sucesso para usuário:', tokenData.user_id);
+                                res.json({ 
+                                    success: true, 
+                                    message: 'Senha redefinida com sucesso!' 
+                                });
+                            }
+                        );
+                    }
+                );
+                
+            } catch (error) {
+                console.error('❌ Erro ao criar hash da senha:', error);
+                res.status(500).json({ 
+                    success: false, 
+                    error: 'Erro interno do servidor' 
+                });
+            }
+        }
+    );
+});
+
+// 🔥 FUNÇÃO PARA CRIAR SALAS DE A a N
+function criarSalasIniciais() {
+    console.log('🏗️ Criando salas para blocos A-N...');
+    
+    const blocos = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
+    const tiposSala = ['Sala de Aula', 'Laboratório', 'Auditório', 'Sala de Reunião'];
+    
+    blocos.forEach(bloco => {
+        // Cada bloco tem 4 andares (Térreo + 3 andares)
+        for (let andar = 0; andar <= 3; andar++) {
+            // Cada andar tem 8-12 salas
+            const numSalas = Math.floor(Math.random() * 5) + 8;
+            
+            for (let i = 1; i <= numSalas; i++) {
+                const capacidade = Math.floor(Math.random() * 40) + 20; // 20-60 lugares
+                const tipo = tiposSala[Math.floor(Math.random() * tiposSala.length)];
+                const numeroSala = `${bloco}${andar}${i.toString().padStart(2, '0')}`;
+                
+                db.run(
+                    `INSERT OR IGNORE INTO salas 
+                     (numero, bloco, andar, tipo, capacidade, recursos, campus, ativa) 
+                     VALUES (?, ?, ?, ?, ?, ?, 'Campus Principal', 1)`,
+                    [
+                        numeroSala,
+                        bloco,
+                        andar,
+                        tipo,
+                        capacidade,
+                        'Projetor, Ar-condicionado, Quadro branco',
+                    ],
+                    function(err) {
+                        if (err && !err.message.includes('UNIQUE')) {
+                            console.error(`❌ Erro ao criar sala ${numeroSala}:`, err);
+                        }
+                    }
+                );
+            }
+        }
+    });
+    
+    console.log('✅ Salas dos blocos A-N criadas!');
 }
 
 // Inicializar banco
 initializeDatabase();
-console.log('✅ Professores inseridos - Senha padrão: prof123');
 
 // ==================== MIDDLEWARE DE AUTENTICAÇÃO ====================
 function authenticateToken(req, res, next) {
@@ -216,7 +509,13 @@ function authenticateToken(req, res, next) {
         return res.status(401).json({ error: 'Token de acesso requerido' });
     }
 
-    db.get('SELECT * FROM usuarios WHERE id = ? AND ativo = 1', [token], (err, user) => {
+    // Verificar se é um token numérico (ID do usuário)
+    const userId = parseInt(token);
+    if (isNaN(userId)) {
+        return res.status(403).json({ error: 'Token inválido' });
+    }
+
+    db.get('SELECT * FROM usuarios WHERE id = ? AND ativo = 1', [userId], (err, user) => {
         if (err || !user) {
             return res.status(403).json({ error: 'Token inválido' });
         }
@@ -231,26 +530,63 @@ function requireAdmin(req, res, next) {
     }
     next();
 }
+
 // ==================== ROTA DE LOGIN ====================
+// ==================== ROTA DE LOGIN MODIFICADA ====================
 app.post('/api/auth/login', (req, res) => {
-    const { email, senha } = req.body;
+    const { email, matricula, senha } = req.body;
     
-    console.log('🔐 Tentativa de login:', email);
+    console.log('🔐 Tentativa de login:', { email, matricula, hasPassword: !!senha });
     
-    if (!email || !senha) {
-        return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+    // Validação robusta
+    if (!senha) {
+        console.log('❌ Senha não fornecida');
+        return res.status(400).json({ 
+            success: false,
+            error: 'Senha é obrigatória' 
+        });
     }
     
-    // Buscar usuário por email
-    db.get('SELECT * FROM usuarios WHERE email = ? AND ativo = 1', [email], async (err, user) => {
+    // Verificar se foi fornecido email OU matrícula
+    if (!email && !matricula) {
+        console.log('❌ Nenhuma credencial fornecida');
+        return res.status(400).json({ 
+            success: false,
+            error: 'Email ou matrícula são obrigatórios' 
+        });
+    }
+    
+    // Construir query baseada no que foi fornecido
+    let query, params, tipoCredencial;
+    
+    if (email) {
+        query = 'SELECT * FROM usuarios WHERE email = ? AND ativo = 1';
+        params = [email];
+        tipoCredencial = 'email';
+    } else {
+        query = 'SELECT * FROM usuarios WHERE matricula = ? AND ativo = 1';
+        params = [matricula];
+        tipoCredencial = 'matrícula';
+    }
+    
+    console.log(`🔍 Buscando usuário por ${tipoCredencial}:`, params[0]);
+    
+    // Buscar usuário por email ou matrícula
+    db.get(query, params, async (err, user) => {
         if (err) {
             console.error('❌ Erro no banco:', err);
-            return res.status(500).json({ error: 'Erro interno do servidor' });
+            return res.status(500).json({ 
+                success: false,
+                error: 'Erro interno do servidor' 
+            });
         }
         
         if (!user) {
-            console.log('❌ Usuário não encontrado:', email);
-            return res.status(401).json({ error: 'Email não cadastrado' });
+            console.log(`❌ ${tipoCredencial} não encontrado:`, params[0]);
+            return res.status(401).json({ 
+                success: false,
+                error: `${tipoCredencial} não cadastrado` 
+            });
         }
         
         try {
@@ -258,8 +594,11 @@ app.post('/api/auth/login', (req, res) => {
             const senhaValida = await bcrypt.compare(senha, user.senha_hash);
             
             if (!senhaValida) {
-                console.log('❌ Senha incorreta para:', email);
-                return res.status(401).json({ error: 'Senha incorreta' });
+                console.log('❌ Senha incorreta para:', params[0]);
+                return res.status(401).json({ 
+                    success: false,
+                    error: 'Senha incorreta' 
+                });
             }
             
             console.log('✅ Login bem-sucedido:', user.nome, '- Tipo:', user.tipo);
@@ -280,216 +619,12 @@ app.post('/api/auth/login', (req, res) => {
             
         } catch (error) {
             console.error('❌ Erro ao verificar senha:', error);
-            res.status(500).json({ error: 'Erro interno do servidor' });
+            res.status(500).json({ 
+                success: false,
+                error: 'Erro interno do servidor' 
+            });
         }
     });
-});
-app.post('/api/auth/google', async (req, res) => {
-    const { token } = req.body;
-
-    console.log('🔐 Processando login Google...');
-    
-    if (!token) {
-        return res.status(400).json({ error: 'Token não fornecido' });
-    }
-
-    try {
-        console.log('✅ Token recebido, obtendo informações do usuário...');
-        
-        // Obter informações do usuário
-        const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!userInfoResponse.ok) {
-            throw new Error('Falha ao obter informações do usuário do Google');
-        }
-
-        const userInfo = await userInfoResponse.json();
-        const { email, name, picture } = userInfo;
-
-        console.log('✅ Informações do usuário Google obtidas:', email);
-
-        // VERIFICAÇÃO: Se email já existe, FAZER LOGIN (não cadastrar)
-        db.get('SELECT * FROM usuarios WHERE email = ? AND ativo = 1', [email], async (err, user) => {
-            if (err) {
-                console.error('❌ Erro ao buscar usuário:', err);
-                return res.status(500).json({ error: 'Erro interno do servidor' });
-            }
-
-            if (user) {
-                console.log('✅ Usuário já cadastrado - Fazendo LOGIN:', user.nome);
-                
-                // USUÁRIO EXISTE - FAZER LOGIN
-                res.json({
-                    success: true,
-                    user: {
-                        id: user.id,
-                        nome: user.nome,
-                        email: user.email,
-                        matricula: user.matricula,
-                        tipo: user.tipo,
-                        curso: user.curso,
-                        periodo: user.periodo
-                    },
-                    token: user.id.toString()
-                });
-                
-            } else {
-                // Criar novo usuário APENAS se não existir
-                console.log('👤 Criando novo usuário Google:', name);
-                
-                db.run(
-                    `INSERT INTO usuarios (nome, email, tipo, senha_hash) 
-                     VALUES (?, ?, 'aluno', ?)`,
-                    [name, email, 'google_oauth'],
-                    function(err) {
-                        if (err) {
-                            console.error('❌ Erro ao criar usuário Google:', err);
-                            
-                            if (err.message.includes('UNIQUE constraint failed')) {
-                                return res.status(400).json({ 
-                                    success: false,
-                                    error: 'Este email já está cadastrado.' 
-                                });
-                            }
-                            
-                            return res.status(400).json({ 
-                                success: false,
-                                error: 'Erro ao criar usuário: ' + err.message 
-                            });
-                        }
-                        
-                        console.log('✅ Novo usuário Google criado com ID:', this.lastID);
-                        
-                        res.json({
-                            success: true,
-                            user: {
-                                id: this.lastID,
-                                nome: name,
-                                email: email,
-                                tipo: 'aluno',
-                                curso: null,
-                                periodo: null
-                            },
-                            token: this.lastID.toString()
-                        });
-                    }
-                );
-            }
-        });
-
-    } catch (error) {
-        console.error('❌ Erro na autenticação Google:', error);
-        res.status(401).json({ 
-            success: false,
-            error: 'Erro na autenticação Google: ' + error.message 
-        });
-    }
-});
-
-app.post('/api/auth/register', async (req, res) => {
-    const { nome, email, matricula, curso, periodo, senha } = req.body;
-    
-    console.log('👤 Tentativa de cadastro:', { email, nome });
-    
-    if (!nome || !email || !senha) {
-        return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' });
-    }
-    
-    try {
-        // VERIFICAÇÃO FORTE - Verificar se email já existe (incluindo Google OAuth)
-        db.get('SELECT * FROM usuarios WHERE email = ?', [email], async (err, existingUser) => {
-            if (err) {
-                console.error('❌ Erro ao verificar email:', err);
-                return res.status(500).json({ error: 'Erro interno do servidor' });
-            }
-            
-            if (existingUser) {
-                console.log('❌ Email já cadastrado:', email);
-                return res.status(400).json({ 
-                    error: 'Este email já está cadastrado no sistema. Use outro email ou faça login.' 
-                });
-            }
-            
-            // Verificar se matrícula já existe (se for fornecida)
-            if (matricula) {
-                db.get('SELECT * FROM usuarios WHERE matricula = ?', [matricula], async (err, existingMatricula) => {
-                    if (err) {
-                        console.error('❌ Erro ao verificar matrícula:', err);
-                        return res.status(500).json({ error: 'Erro interno do servidor' });
-                    }
-                    
-                    if (existingMatricula) {
-                        console.log('❌ Matrícula já cadastrada:', matricula);
-                        return res.status(400).json({ 
-                            error: 'Esta matrícula já está cadastrada no sistema.' 
-                        });
-                    }
-                    
-                    // Criar usuário após verificação da matrícula
-                    createUser();
-                });
-            } else {
-                // Criar usuário sem verificação de matrícula
-                createUser();
-            }
-            
-            function createUser() {
-                try {
-                    bcrypt.hash(senha, 10, (hashErr, senhaHash) => {
-                        if (hashErr) {
-                            console.error('❌ Erro ao criar hash:', hashErr);
-                            return res.status(500).json({ error: 'Erro interno do servidor' });
-                        }
-                        
-                        db.run(
-                            `INSERT INTO usuarios (nome, email, matricula, curso, periodo, senha_hash) 
-                             VALUES (?, ?, ?, ?, ?, ?)`,
-                            [nome, email, matricula || null, curso || null, periodo || null, senhaHash],
-                            function(err) {
-                                if (err) {
-                                    console.error('❌ Erro ao criar usuário:', err);
-                                    
-                                    // Verificar se é erro de duplicação
-                                    if (err.message.includes('UNIQUE constraint failed')) {
-                                        if (err.message.includes('email')) {
-                                            return res.status(400).json({ 
-                                                error: 'Este email já está cadastrado no sistema.' 
-                                            });
-                                        } else if (err.message.includes('matricula')) {
-                                            return res.status(400).json({ 
-                                                error: 'Esta matrícula já está cadastrada no sistema.' 
-                                            });
-                                        }
-                                    }
-                                    
-                                    return res.status(400).json({ error: 'Erro ao criar usuário: ' + err.message });
-                                }
-                                
-                                console.log('✅ Usuário criado com ID:', this.lastID);
-                                
-                                res.json({ 
-                                    success: true, 
-                                    message: 'Usuário criado com sucesso!',
-                                    userId: this.lastID 
-                                });
-                            }
-                        );
-                    });
-                } catch (error) {
-                    console.error('❌ Erro geral no cadastro:', error);
-                    res.status(500).json({ error: 'Erro interno do servidor' });
-                }
-            }
-        });
-        
-    } catch (error) {
-        console.error('❌ Erro geral no cadastro:', error);
-        res.status(500).json({ error: 'Erro interno do servidor' });
-    }
 });
 
 // ==================== GOOGLE OAUTH ====================
@@ -598,6 +733,110 @@ app.post('/api/auth/google', async (req, res) => {
         });
     }
 });
+
+// ==================== CADASTRO DE USUÁRIO ====================
+app.post('/api/auth/register', async (req, res) => {
+    const { nome, email, matricula, curso, periodo, senha } = req.body;
+    
+    console.log('👤 Tentativa de cadastro:', { email, nome });
+    
+    if (!nome || !email || !senha) {
+        return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' });
+    }
+    
+    try {
+        // VERIFICAÇÃO FORTE - Verificar se email já existe (incluindo Google OAuth)
+        db.get('SELECT * FROM usuarios WHERE email = ?', [email], async (err, existingUser) => {
+            if (err) {
+                console.error('❌ Erro ao verificar email:', err);
+                return res.status(500).json({ error: 'Erro interno do servidor' });
+            }
+            
+            if (existingUser) {
+                console.log('❌ Email já cadastrado:', email);
+                return res.status(400).json({ 
+                    error: 'Este email já está cadastrado no sistema. Use outro email ou faça login.' 
+                });
+            }
+            
+            // Verificar se matrícula já existe (se for fornecida)
+            if (matricula) {
+                db.get('SELECT * FROM usuarios WHERE matricula = ?', [matricula], async (err, existingMatricula) => {
+                    if (err) {
+                        console.error('❌ Erro ao verificar matrícula:', err);
+                        return res.status(500).json({ error: 'Erro interno do servidor' });
+                    }
+                    
+                    if (existingMatricula) {
+                        console.log('❌ Matrícula já cadastrada:', matricula);
+                        return res.status(400).json({ 
+                            error: 'Esta matrícula já está cadastrada no sistema.' 
+                        });
+                    }
+                    
+                    // Criar usuário após verificação da matrícula
+                    createUser();
+                });
+            } else {
+                // Criar usuário sem verificação de matrícula
+                createUser();
+            }
+            
+            function createUser() {
+                try {
+                    bcrypt.hash(senha, 10, (hashErr, senhaHash) => {
+                        if (hashErr) {
+                            console.error('❌ Erro ao criar hash:', hashErr);
+                            return res.status(500).json({ error: 'Erro interno do servidor' });
+                        }
+                        
+                        db.run(
+                            `INSERT INTO usuarios (nome, email, matricula, curso, periodo, senha_hash) 
+                             VALUES (?, ?, ?, ?, ?, ?)`,
+                            [nome, email, matricula || null, curso || null, periodo || null, senhaHash],
+                            function(err) {
+                                if (err) {
+                                    console.error('❌ Erro ao criar usuário:', err);
+                                    
+                                    // Verificar se é erro de duplicação
+                                    if (err.message.includes('UNIQUE constraint failed')) {
+                                        if (err.message.includes('email')) {
+                                            return res.status(400).json({ 
+                                                error: 'Este email já está cadastrado no sistema.' 
+                                            });
+                                        } else if (err.message.includes('matricula')) {
+                                            return res.status(400).json({ 
+                                                error: 'Esta matrícula já está cadastrada no sistema.' 
+                                            });
+                                        }
+                                    }
+                                    
+                                    return res.status(400).json({ error: 'Erro ao criar usuário: ' + err.message });
+                                }
+                                
+                                console.log('✅ Usuário criado com ID:', this.lastID);
+                                
+                                res.json({ 
+                                    success: true, 
+                                    message: 'Usuário criado com sucesso!',
+                                    userId: this.lastID 
+                                });
+                            }
+                        );
+                    });
+                } catch (error) {
+                    console.error('❌ Erro geral no cadastro:', error);
+                    res.status(500).json({ error: 'Erro interno do servidor' });
+                }
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Erro geral no cadastro:', error);
+        res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+});
+
 // ==================== ROTAS DE DASHBOARD ====================
 app.get('/api/dashboard/estatisticas', authenticateToken, (req, res) => {
     const queries = [
@@ -656,8 +895,10 @@ app.post('/api/cursos', authenticateToken, requireAdmin, (req, res) => {
     );
 });
 
-// ==================== ROTAS DE SALAS ====================
-app.get('/api/salas', (req, res) => {
+// ==================== ROTAS DE SALAS COMPLETAS ====================
+
+// GET /api/salas - Retorna todas as salas
+app.get('/api/salas', authenticateToken, (req, res) => {
     db.all('SELECT * FROM salas WHERE ativa = 1 ORDER BY bloco, andar, numero', [], (err, rows) => {
         if (err) {
             console.error('❌ Erro ao buscar salas:', err);
@@ -667,8 +908,121 @@ app.get('/api/salas', (req, res) => {
     });
 });
 
-// ✅ ROTA PÚBLICA PARA SALAS POR BLOCO
-app.get('/api/salas/bloco/:bloco', (req, res) => {
+// POST /api/salas - Criar nova sala
+app.post('/api/salas', authenticateToken, requireAdmin, (req, res) => {
+    const { numero, bloco, andar, tipo, capacidade, recursos, telefone, email, campus } = req.body;
+    
+    console.log('🏫 Criando nova sala:', { numero, bloco, andar });
+    
+    db.run(
+        `INSERT INTO salas 
+         (numero, bloco, andar, tipo, capacidade, recursos, telefone, email, campus, ativa) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+        [numero, bloco, andar, tipo, capacidade, recursos || '', telefone || '', email || '', campus || ''],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao criar sala:', err);
+                return res.status(400).json({ error: err.message });
+            }
+            
+            console.log('✅ Sala criada com ID:', this.lastID);
+            res.json({ 
+                success: true, 
+                message: 'Sala criada com sucesso!', 
+                id: this.lastID 
+            });
+        }
+    );
+});
+
+// GET /api/salas/blocos - Estatísticas dos blocos
+app.get('/api/salas/blocos', authenticateToken, (req, res) => {
+    const query = `
+        SELECT 
+            bloco as letra,
+            COUNT(*) as total_salas,
+            COUNT(DISTINCT andar) as total_andares
+        FROM salas 
+        WHERE ativa = 1
+        GROUP BY bloco 
+        ORDER BY bloco
+    `;
+    
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao carregar blocos:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+// GET /api/salas/bloco/:bloco/andares - Andares de um bloco
+app.get('/api/salas/bloco/:bloco/andares', authenticateToken, (req, res) => {
+    const { bloco } = req.params;
+    
+    const query = `
+        SELECT DISTINCT andar 
+        FROM salas 
+        WHERE bloco = ? AND ativa = 1
+        ORDER BY andar
+    `;
+    
+    db.all(query, [bloco], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao carregar andares:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        // Converter números para nomes de andares
+        const andaresFormatados = rows.map(row => {
+            switch(row.andar) {
+                case 0: return 'Térreo';
+                case 1: return '1º Andar';
+                case 2: return '2º Andar';
+                case 3: return '3º Andar';
+                default: return `${row.andar}º Andar`;
+            }
+        });
+        
+        res.json(andaresFormatados);
+    });
+});
+
+// GET /api/salas/bloco/:bloco/andar/:andar - Salas de um andar
+app.get('/api/salas/bloco/:bloco/andar/:andar', authenticateToken, (req, res) => {
+    const { bloco, andar } = req.params;
+    
+    // Converter nome do andar para número
+    let andarNumero;
+    switch(andar) {
+        case 'Térreo': andarNumero = 0; break;
+        case '1º Andar': andarNumero = 1; break;
+        case '2º Andar': andarNumero = 2; break;
+        case '3º Andar': andarNumero = 3; break;
+        default: andarNumero = parseInt(andar); // Caso já seja número
+    }
+    
+    const query = `
+        SELECT 
+            id, numero, bloco, andar, tipo, capacidade, recursos,
+            telefone, email, campus, ativa
+        FROM salas 
+        WHERE bloco = ? AND andar = ? AND ativa = 1
+        ORDER BY numero
+    `;
+    
+    db.all(query, [bloco, andarNumero], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao carregar salas:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+// GET /api/salas/bloco/:bloco - Salas de um bloco específico
+app.get('/api/salas/bloco/:bloco', authenticateToken, (req, res) => {
     const { bloco } = req.params;
     
     db.all(
@@ -680,6 +1034,54 @@ app.get('/api/salas/bloco/:bloco', (req, res) => {
                 return res.status(500).json({ error: err.message });
             }
             res.json(rows);
+        }
+    );
+});
+
+// PUT /api/salas/:id - Atualizar sala
+app.put('/api/salas/:id', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+    const { numero, bloco, andar, tipo, capacidade, recursos, telefone, email, campus } = req.body;
+    
+    db.run(
+        `UPDATE salas SET 
+            numero = ?, bloco = ?, andar = ?, tipo = ?, capacidade = ?, 
+            recursos = ?, telefone = ?, email = ?, campus = ?
+         WHERE id = ?`,
+        [numero, bloco, andar, tipo, capacidade, recursos || '', telefone || '', email || '', campus || '', id],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao atualizar sala:', err);
+                return res.status(400).json({ error: err.message });
+            }
+            
+            if (this.changes === 0) {
+                return res.status(404).json({ error: 'Sala não encontrada' });
+            }
+            
+            res.json({ success: true, message: 'Sala atualizada com sucesso!' });
+        }
+    );
+});
+
+// DELETE /api/salas/:id - Desativar sala
+app.delete('/api/salas/:id', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+    
+    db.run(
+        'UPDATE salas SET ativa = 0 WHERE id = ?',
+        [id],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao desativar sala:', err);
+                return res.status(400).json({ error: err.message });
+            }
+            
+            if (this.changes === 0) {
+                return res.status(404).json({ error: 'Sala não encontrada' });
+            }
+            
+            res.json({ success: true, message: 'Sala desativada com sucesso!' });
         }
     );
 });
@@ -729,7 +1131,146 @@ app.get('/api/professores/favoritos/:aluno_id', authenticateToken, (req, res) =>
     );
 });
 
-// ==================== ROTAS DE AULAS ====================
+// Rota para remover professor dos favoritos
+app.delete('/api/professores/favoritos/:aluno_id/:professor_id', authenticateToken, (req, res) => {
+    const { aluno_id, professor_id } = req.params;
+    
+    db.run(
+        'DELETE FROM professores_favoritos WHERE aluno_id = ? AND professor_id = ?',
+        [aluno_id, professor_id],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao remover favorito:', err);
+                return res.status(400).json({ error: err.message });
+            }
+            
+            if (this.changes === 0) {
+                return res.status(404).json({ error: 'Favorito não encontrado' });
+            }
+            
+            res.json({ success: true, message: 'Professor removido dos favoritos!' });
+        }
+    );
+});
+
+// Rota para adicionar/editar professor (apenas admin)
+app.post('/api/professores', authenticateToken, requireAdmin, (req, res) => {
+    const { nome, email } = req.body;
+    
+    if (!nome || !email) {
+        return res.status(400).json({ error: 'Nome e email são obrigatórios' });
+    }
+
+    db.run(
+        'INSERT INTO professores (nome, email) VALUES (?, ?)',
+        [nome, email],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao adicionar professor:', err);
+                if (err.message.includes('UNIQUE')) {
+                    return res.status(400).json({ error: 'Este email já está cadastrado' });
+                }
+                return res.status(400).json({ error: err.message });
+            }
+            res.json({ 
+                success: true, 
+                message: 'Professor cadastrado com sucesso!', 
+                id: this.lastID 
+            });
+        }
+    );
+});
+
+// Rota para editar professor
+app.put('/api/professores/:id', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+    const { nome, email } = req.body;
+
+    db.run(
+        'UPDATE professores SET nome = ?, email = ? WHERE id = ?',
+        [nome, email, id],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao editar professor:', err);
+                return res.status(400).json({ error: err.message });
+            }
+            res.json({ success: true, message: 'Professor atualizado com sucesso!' });
+        }
+    );
+});
+
+// Rota para alterar status do professor
+app.put('/api/professores/:id/status', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+    const { ativo } = req.body;
+
+    db.run(
+        'UPDATE professores SET ativo = ? WHERE id = ?',
+        [ativo, id],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao atualizar professor:', err);
+                return res.status(400).json({ error: err.message });
+            }
+            res.json({ success: true, message: 'Status atualizado com sucesso!' });
+        }
+    );
+});
+
+// ==================== ROTA DE LOGIN PARA PROFESSORES ====================
+app.post('/api/auth/login-professor', (req, res) => {
+    const { email, senha } = req.body;
+    
+    console.log('🔐 Tentativa de login professor:', email);
+    
+    if (!email || !senha) {
+        return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+    }
+    
+    // Buscar professor por email
+    db.get('SELECT * FROM professores WHERE email = ? AND ativo = 1', [email], async (err, professor) => {
+        if (err) {
+            console.error('❌ Erro no banco:', err);
+            return res.status(500).json({ error: 'Erro interno do servidor' });
+        }
+        
+        if (!professor) {
+            console.log('❌ Professor não encontrado:', email);
+            return res.status(401).json({ error: 'Email não encontrado' });
+        }
+        
+        try {
+            // Para professores, vamos usar uma senha simples por enquanto
+            // Você pode implementar bcrypt depois se quiser
+            if (senha !== 'prof123') { // Senha padrão para professores
+                console.log('❌ Senha incorreta para professor:', email);
+                return res.status(401).json({ error: 'Senha incorreta' });
+            }
+            
+            console.log('✅ Login professor bem-sucedido:', professor.nome);
+            
+            // Criar um usuário temporário para o professor no sistema
+            const professorUser = {
+                id: `prof_${professor.id}`,
+                nome: professor.nome,
+                email: professor.email,
+                tipo: 'professor',
+                professor_id: professor.id
+            };
+            
+            res.json({
+                success: true,
+                user: professorUser,
+                token: professorUser.id
+            });
+            
+        } catch (error) {
+            console.error('❌ Erro ao verificar senha:', error);
+            res.status(500).json({ error: 'Erro interno do servidor' });
+        }
+    });
+});
+
 // ==================== ROTAS DE AULAS ====================
 app.get('/api/aulas', authenticateToken, (req, res) => {
     const query = `
@@ -814,339 +1355,7 @@ app.get('/api/aulas/usuario/:usuario_id', authenticateToken, (req, res) => {
     });
 });
 
-app.get('/api/aulas/usuario/:usuario_id', authenticateToken, (req, res) => {
-    const { usuario_id } = req.params;
-    
-    db.get('SELECT curso FROM usuarios WHERE id = ?', [usuario_id], (err, user) => {
-        if (err || !user) {
-            console.error('❌ Usuário não encontrado:', usuario_id);
-            return res.status(404).json({ error: 'Usuário não encontrado' });
-        }
-        
-        const query = `
-            SELECT a.*, p.nome as professor_nome, s.numero as sala_numero, s.bloco as sala_bloco
-            FROM aulas a
-            LEFT JOIN professores p ON a.professor_id = p.id
-            LEFT JOIN salas s ON a.sala_id = s.id
-            WHERE a.curso = ? AND a.ativa = 1
-            ORDER BY a.dia_semana, a.horario_inicio
-        `;
-        
-        db.all(query, [user.curso], (err, rows) => {
-            if (err) {
-                console.error('❌ Erro ao buscar aulas do usuário:', err);
-                return res.status(500).json({ error: err.message });
-            }
-            res.json(rows);
-        });
-    });
-});
-
-// ==================== ROTAS DE USUÁRIOS ====================
-app.get('/api/usuarios', authenticateToken, requireAdmin, (req, res) => {
-    db.all('SELECT id, nome, email, tipo, curso, periodo, data_cadastro FROM usuarios WHERE ativo = 1', [], (err, rows) => {
-        if (err) {
-            console.error('❌ Erro ao buscar usuários:', err);
-            return res.status(500).json({ error: err.message });
-        }
-        res.json(rows);
-    });
-});
-
-app.get('/api/usuario/perfil', authenticateToken, (req, res) => {
-    db.get(
-        'SELECT id, nome, email, matricula, tipo, curso, periodo, data_cadastro FROM usuarios WHERE id = ?',
-        [req.user.id],
-        (err, user) => {
-            if (err || !user) {
-                console.error('❌ Erro ao buscar perfil:', err);
-                return res.status(404).json({ error: 'Usuário não encontrado' });
-            }
-            res.json(user);
-        }
-    );
-});
-
-// ==================== ROTAS GERAIS ====================
-app.get('/api/horarios', authenticateToken, (req, res) => {
-    db.all('SELECT * FROM horarios ORDER BY horario_inicio', [], (err, rows) => {
-        if (err) {
-            console.error('❌ Erro ao buscar horários:', err);
-            return res.status(500).json({ error: err.message });
-        }
-        res.json(rows);
-    });
-});
-
-// ==================== ROTA DE DEBUG ====================
-app.get('/api/debug/usuarios', (req, res) => {
-    db.all('SELECT id, nome, email, matricula, tipo, curso, periodo, data_cadastro FROM usuarios WHERE ativo = 1', [], (err, rows) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        res.json({
-            total: rows.length,
-            usuarios: rows
-        });
-    });
-});
-
-// ==================== ROTA DE TESTE SIMPLES ====================
-app.get('/api/test', (req, res) => {
-    res.json({ 
-        status: '✅ OK', 
-        message: 'Backend UNIMAP funcionando na porta 3000!',
-        timestamp: new Date().toISOString(),
-        versao: '2.0 - Completo com Google OAuth'
-    });
-});
-
-// Rota para verificar status do banco
-app.get('/api/status', (req, res) => {
-    db.get('SELECT COUNT(*) as total_tables FROM sqlite_master WHERE type="table"', [], (err, row) => {
-        if (err) {
-            return res.status(500).json({ error: 'Erro ao verificar banco' });
-        }
-        res.json({
-            status: '✅ Online',
-            porta: PORT,
-            total_tabelas: row.total_tables,
-            banco: 'SQLite (unimap.db)',
-            google_oauth: '✅ Configurado'
-        });
-    });
-});
-// ==================== SERVIR ARQUIVOS DO FRONTEND ====================
-// Serve arquivos estáticos (HTML, CSS, JS, imagens)
-
-// Rotas para as páginas principais - ADICIONE ISSO:
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/login.html'));
-});
-
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/login.html'));
-});
-
-app.get('/cadastro', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/cadastro.html'));
-});
-
-app.get('/index', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
-});
-
-// Rotas para arquivos específicos (caso precise acessar diretamente)
-app.get('/login.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/login.html'));
-});
-
-app.get('/cadastro.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/cadastro.html'));
-});
-
-app.get('/index.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
-});
-// ==================== SERVIR ARQUIVOS ESTÁTICOS ====================
-app.use(express.static(path.join(__dirname, '../frontend')));
-
-// Servir CSS específico
-app.use('/css', express.static(path.join(__dirname, '../frontend/css')));
-
-// Servir JS específico  
-app.use('/js', express.static(path.join(__dirname, '../frontend/js')));
-
-// Servir IMAGENS - ADICIONE ISSO:
-app.use('/images', express.static(path.join(__dirname, '../frontend/images')));
-app.use('/Unimap/frontend/images', express.static(path.join(__dirname, '../frontend/images')));
-
-// Servir arquivos da raiz também (caso precise)
-app.use(express.static(path.join(__dirname)));
-
-app.listen(PORT, () => {
-    console.log(`🚀 UNIMAP COMPLETO rodando: http://localhost:${PORT}`);
-    console.log(`📊 Banco: SQLite (unimap.db)`);
-    console.log(`🔐 Google OAuth: Configurado`);
-    console.log(`👤 Admin: admin@unipam.edu.br / admin123`);
-    console.log(`🔍 Teste: http://localhost:${PORT}/api/test`);
-    console.log(`📈 Status: http://localhost:${PORT}/api/status`);
-    console.log(`👥 Debug: http://localhost:${PORT}/api/debug/usuarios`);
-});
-// Rota para verificar se email existe
-app.get('/api/auth/check-email/:email', (req, res) => {
-    const { email } = req.params;
-    
-    db.get('SELECT id, nome, email, tipo FROM usuarios WHERE email = ?', [email], (err, user) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        
-        res.json({
-            exists: !!user,
-            user: user
-        });
-    });
-});
-app.get('/api/auth/check-credentials/:credential', (req, res) => {
-    const { credential } = req.params;
-    
-    const isEmail = credential.includes('@');
-    const query = isEmail 
-        ? 'SELECT id, nome, email, matricula FROM usuarios WHERE email = ?' 
-        : 'SELECT id, nome, email, matricula FROM usuarios WHERE matricula = ?';
-    
-    db.get(query, [credential], (err, user) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        
-        res.json({
-            exists: !!user,
-            isEmail: isEmail,
-            user: user
-        });
-    });
-});
-// Rota para remover professor dos favoritos
-app.delete('/api/professores/favoritos/:aluno_id/:professor_id', authenticateToken, (req, res) => {
-    const { aluno_id, professor_id } = req.params;
-    
-    db.run(
-        'DELETE FROM professores_favoritos WHERE aluno_id = ? AND professor_id = ?',
-        [aluno_id, professor_id],
-        function(err) {
-            if (err) {
-                console.error('❌ Erro ao remover favorito:', err);
-                return res.status(400).json({ error: err.message });
-            }
-            
-            if (this.changes === 0) {
-                return res.status(404).json({ error: 'Favorito não encontrado' });
-            }
-            
-            res.json({ success: true, message: 'Professor removido dos favoritos!' });
-        }
-    );
-});
-// Rota para adicionar/editar professor (apenas admin)
-app.post('/api/professores', authenticateToken, requireAdmin, (req, res) => {
-    const { nome, email } = req.body;
-    
-    if (!nome || !email) {
-        return res.status(400).json({ error: 'Nome e email são obrigatórios' });
-    }
-
-    db.run(
-        'INSERT INTO professores (nome, email) VALUES (?, ?)',
-        [nome, email],
-        function(err) {
-            if (err) {
-                console.error('❌ Erro ao adicionar professor:', err);
-                if (err.message.includes('UNIQUE')) {
-                    return res.status(400).json({ error: 'Este email já está cadastrado' });
-                }
-                return res.status(400).json({ error: err.message });
-            }
-            res.json({ 
-                success: true, 
-                message: 'Professor cadastrado com sucesso!', 
-                id: this.lastID 
-            });
-        }
-    );
-});
-
-// Rota para editar professor
-app.put('/api/professores/:id', authenticateToken, requireAdmin, (req, res) => {
-    const { id } = req.params;
-    const { nome, email } = req.body;
-
-    db.run(
-        'UPDATE professores SET nome = ?, email = ? WHERE id = ?',
-        [nome, email, id],
-        function(err) {
-            if (err) {
-                console.error('❌ Erro ao editar professor:', err);
-                return res.status(400).json({ error: err.message });
-            }
-            res.json({ success: true, message: 'Professor atualizado com sucesso!' });
-        }
-    );
-});
-
-// Rota para alterar status do professor
-app.put('/api/professores/:id/status', authenticateToken, requireAdmin, (req, res) => {
-    const { id } = req.params;
-    const { ativo } = req.body;
-
-    db.run(
-        'UPDATE professores SET ativo = ? WHERE id = ?',
-        [ativo, id],
-        function(err) {
-            if (err) {
-                console.error('❌ Erro ao atualizar professor:', err);
-                return res.status(400).json({ error: err.message });
-            }
-            res.json({ success: true, message: 'Status atualizado com sucesso!' });
-        }
-    );
-});
-// ==================== ROTA DE LOGIN PARA PROFESSORES ====================
-app.post('/api/auth/login-professor', (req, res) => {
-    const { email, senha } = req.body;
-    
-    console.log('🔐 Tentativa de login professor:', email);
-    
-    if (!email || !senha) {
-        return res.status(400).json({ error: 'Email e senha são obrigatórios' });
-    }
-    
-    // Buscar professor por email
-    db.get('SELECT * FROM professores WHERE email = ? AND ativo = 1', [email], async (err, professor) => {
-        if (err) {
-            console.error('❌ Erro no banco:', err);
-            return res.status(500).json({ error: 'Erro interno do servidor' });
-        }
-        
-        if (!professor) {
-            console.log('❌ Professor não encontrado:', email);
-            return res.status(401).json({ error: 'Email não encontrado' });
-        }
-        
-        try {
-            // Para professores, vamos usar uma senha simples por enquanto
-            // Você pode implementar bcrypt depois se quiser
-            if (senha !== 'prof123') { // Senha padrão para professores
-                console.log('❌ Senha incorreta para professor:', email);
-                return res.status(401).json({ error: 'Senha incorreta' });
-            }
-            
-            console.log('✅ Login professor bem-sucedido:', professor.nome);
-            
-            // Criar um usuário temporário para o professor no sistema
-            const professorUser = {
-                id: `prof_${professor.id}`,
-                nome: professor.nome,
-                email: professor.email,
-                tipo: 'professor',
-                professor_id: professor.id
-            };
-            
-            res.json({
-                success: true,
-                user: professorUser,
-                token: professorUser.id
-            });
-            
-        } catch (error) {
-            console.error('❌ Erro ao verificar senha:', error);
-            res.status(500).json({ error: 'Erro interno do servidor' });
-        }
-    });
-});
-// ==================== ROTA PARA CRIAR AULAS ====================
-// ==================== ROTA PARA CRIAR AULAS (PROFESSORES) ====================
+// ROTA PARA CRIAR AULAS (PROFESSORES)
 app.post('/api/aulas', authenticateToken, (req, res) => {
     const { disciplina, sala_id, curso, turma, horario_inicio, horario_fim, dia_semana } = req.body;
     
@@ -1190,36 +1399,8 @@ app.post('/api/aulas', authenticateToken, (req, res) => {
         );
     });
 });
-// ==================== ROTA PARA ATUALIZAR TIPO DE USUÁRIO (APENAS ADMIN) ====================
-app.put('/api/usuarios/:id/tipo', authenticateToken, requireAdmin, (req, res) => {
-    const { id } = req.params;
-    const { tipo } = req.body;
 
-    if (!['aluno', 'professor', 'admin'].includes(tipo)) {
-        return res.status(400).json({ error: 'Tipo de usuário inválido' });
-    }
-
-    db.run(
-        'UPDATE usuarios SET tipo = ? WHERE id = ?',
-        [tipo, id],
-        function(err) {
-            if (err) {
-                console.error('❌ Erro ao atualizar tipo de usuário:', err);
-                return res.status(400).json({ error: err.message });
-            }
-            
-            if (this.changes === 0) {
-                return res.status(404).json({ error: 'Usuário não encontrado' });
-            }
-
-            res.json({ 
-                success: true, 
-                message: `Usuário atualizado para ${tipo} com sucesso!` 
-            });
-        }
-    );
-});
-// ==================== ROTA PARA EXCLUIR AULAS ====================
+// ROTA PARA EXCLUIR AULAS
 app.delete('/api/aulas/:id', authenticateToken, (req, res) => {
     const { id } = req.params;
 
@@ -1244,7 +1425,38 @@ app.delete('/api/aulas/:id', authenticateToken, (req, res) => {
         });
     });
 });
-// ==================== ROTAS DE USUÁRIOS (ADMIN) ====================
+
+// ==================== ROTAS DE USUÁRIOS ====================
+app.get('/api/usuarios', authenticateToken, requireAdmin, (req, res) => {
+    const query = `
+        SELECT id, nome, email, matricula, tipo, curso, periodo, data_cadastro 
+        FROM usuarios 
+        WHERE ativo = 1 
+        ORDER BY nome
+    `;
+    
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar usuários:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json({ success: true, data: rows });
+    });
+});
+
+app.get('/api/usuario/perfil', authenticateToken, (req, res) => {
+    db.get(
+        'SELECT id, nome, email, matricula, tipo, curso, periodo, data_cadastro FROM usuarios WHERE id = ?',
+        [req.user.id],
+        (err, user) => {
+            if (err || !user) {
+                console.error('❌ Erro ao buscar perfil:', err);
+                return res.status(404).json({ error: 'Usuário não encontrado' });
+            }
+            res.json(user);
+        }
+    );
+});
 
 // Rota para atualizar usuário completo
 app.put('/api/usuarios/:id', authenticateToken, requireAdmin, (req, res) => {
@@ -1274,20 +1486,225 @@ app.put('/api/usuarios/:id', authenticateToken, requireAdmin, (req, res) => {
     );
 });
 
-// Rota para buscar usuários (apenas admin)
-app.get('/api/usuarios', authenticateToken, requireAdmin, (req, res) => {
+// Rota para atualizar tipo de usuário (apenas admin)
+app.put('/api/usuarios/:id/tipo', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+    const { tipo } = req.body;
+
+    if (!['aluno', 'professor', 'admin'].includes(tipo)) {
+        return res.status(400).json({ error: 'Tipo de usuário inválido' });
+    }
+
+    db.run(
+        'UPDATE usuarios SET tipo = ? WHERE id = ?',
+        [tipo, id],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao atualizar tipo de usuário:', err);
+                return res.status(400).json({ error: err.message });
+            }
+            
+            if (this.changes === 0) {
+                return res.status(404).json({ error: 'Usuário não encontrado' });
+            }
+
+            res.json({ 
+                success: true, 
+                message: `Usuário atualizado para ${tipo} com sucesso!` 
+            });
+        }
+    );
+});
+
+// ==================== ROTAS GERAIS ====================
+app.get('/api/horarios', authenticateToken, (req, res) => {
+    db.all('SELECT * FROM horarios ORDER BY horario_inicio', [], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar horários:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+// ==================== ROTAS DE DEBUG ====================
+app.get('/api/debug/usuarios', (req, res) => {
+    db.all('SELECT id, nome, email, matricula, tipo, curso, periodo, data_cadastro FROM usuarios WHERE ativo = 1', [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json({
+            total: rows.length,
+            usuarios: rows
+        });
+    });
+});
+
+app.get('/api/debug/salas', (req, res) => {
     const query = `
-        SELECT id, nome, email, matricula, tipo, curso, periodo, data_cadastro 
-        FROM usuarios 
-        WHERE ativo = 1 
-        ORDER BY nome
+        SELECT 
+            id, numero, bloco, andar, tipo, capacidade,
+            COUNT(*) OVER (PARTITION BY bloco) as total_bloco
+        FROM salas 
+        WHERE ativa = 1
+        ORDER BY bloco, andar, numero
     `;
     
     db.all(query, [], (err, rows) => {
         if (err) {
-            console.error('❌ Erro ao buscar usuários:', err);
             return res.status(500).json({ error: err.message });
         }
-        res.json({ success: true, data: rows });
+        
+        const resumo = rows.reduce((acc, sala) => {
+            acc[sala.bloco] = (acc[sala.bloco] || 0) + 1;
+            return acc;
+        }, {});
+        
+        res.json({
+            total_salas: rows.length,
+            salas_por_bloco: resumo,
+            salas: rows
+        });
     });
+});
+
+// ==================== ROTA DE TESTE SIMPLES ====================
+app.get('/api/test', (req, res) => {
+    res.json({ 
+        status: '✅ OK', 
+        message: 'Backend UNIMAP funcionando na porta 3000!',
+        timestamp: new Date().toISOString(),
+        versao: '2.0 - Completo com Google OAuth'
+    });
+});
+
+// Rota para verificar status do banco
+app.get('/api/status', (req, res) => {
+    db.get('SELECT COUNT(*) as total_tables FROM sqlite_master WHERE type="table"', [], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erro ao verificar banco' });
+        }
+        res.json({
+            status: '✅ Online',
+            porta: PORT,
+            total_tabelas: row.total_tables,
+            banco: 'SQLite (unimap.db)',
+            google_oauth: '✅ Configurado'
+        });
+    });
+});
+
+// Rota para verificar se email existe
+app.get('/api/auth/check-email/:email', (req, res) => {
+    const { email } = req.params;
+    
+    db.get('SELECT id, nome, email, tipo FROM usuarios WHERE email = ?', [email], (err, user) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        
+        res.json({
+            exists: !!user,
+            user: user
+        });
+    });
+});
+
+app.get('/api/auth/check-credentials/:credential', (req, res) => {
+    const { credential } = req.params;
+    
+    const isEmail = credential.includes('@');
+    const query = isEmail 
+        ? 'SELECT id, nome, email, matricula FROM usuarios WHERE email = ?' 
+        : 'SELECT id, nome, email, matricula FROM usuarios WHERE matricula = ?';
+    
+    db.get(query, [credential], (err, user) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        
+        res.json({
+            exists: !!user,
+            isEmail: isEmail,
+            user: user
+        });
+    });
+});
+
+// ==================== SERVIR ARQUIVOS DO FRONTEND ====================
+// Serve arquivos estáticos (HTML, CSS, JS, imagens)
+
+// Rotas para as páginas principais
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/login.html'));
+});
+
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/login.html'));
+});
+
+app.get('/cadastro', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/cadastro.html'));
+});
+
+app.get('/index', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+});
+
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/admin.html'));
+});
+
+app.get('/professor-dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/professor-dashboard.html'));
+});
+
+// Rotas para arquivos específicos (caso precise acessar diretamente)
+app.get('/login.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/login.html'));
+});
+
+app.get('/cadastro.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/cadastro.html'));
+});
+
+app.get('/index.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+});
+
+app.get('/admin.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/admin.html'));
+});
+
+app.get('/professor-dashboard.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/professor-dashboard.html'));
+});
+
+// ==================== SERVIR ARQUIVOS ESTÁTICOS ====================
+app.use(express.static(path.join(__dirname, '../frontend')));
+
+// Servir CSS específico
+app.use('/css', express.static(path.join(__dirname, '../frontend/css')));
+
+// Servir JS específico  
+app.use('/js', express.static(path.join(__dirname, '../frontend/js')));
+
+// Servir IMAGENS
+app.use('/images', express.static(path.join(__dirname, '../frontend/images')));
+app.use('/Unimap/frontend/images', express.static(path.join(__dirname, '../frontend/images')));
+
+// Servir arquivos da raiz também (caso precise)
+app.use(express.static(path.join(__dirname)));
+
+app.listen(PORT, () => {
+    console.log(`🚀 UNIMAP COMPLETO rodando: http://localhost:${PORT}`);
+    console.log(`📊 Banco: SQLite (unimap.db)`);
+    console.log(`🔐 Google OAuth: Configurado`);
+    console.log(`👤 Admin: admin@unipam.edu.br / admin123`);
+    console.log(`👨‍🏫 Professor: Use email do professor / prof123`);
+    console.log(`🔍 Teste: http://localhost:${PORT}/api/test`);
+    console.log(`📈 Status: http://localhost:${PORT}/api/status`);
+    console.log(`👥 Debug: http://localhost:${PORT}/api/debug/usuarios`);
+    console.log(`🏫 Debug Salas: http://localhost:${PORT}/api/debug/salas`);
+    console.log(`🏗️ Blocos disponíveis: A, B, C, D, E, F, G, H, I, J, K, L, M, N`);
 });
