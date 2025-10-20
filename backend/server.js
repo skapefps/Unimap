@@ -231,31 +231,162 @@ function requireAdmin(req, res, next) {
     }
     next();
 }
-
-// ==================== ROTAS DE AUTENTICAÇÃO ====================
-app.post('/api/auth/google', async (req, res) => {
-    // ... código anterior ...
+// ==================== ROTA DE LOGIN ====================
+app.post('/api/auth/login', (req, res) => {
+    const { email, senha } = req.body;
     
-    if (user) {
-        console.log('✅ Usuário já cadastrado - Fazendo LOGIN:', user.nome, '- Tipo:', user.tipo);
+    console.log('🔐 Tentativa de login:', email);
+    
+    if (!email || !senha) {
+        return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+    }
+    
+    // Buscar usuário por email
+    db.get('SELECT * FROM usuarios WHERE email = ? AND ativo = 1', [email], async (err, user) => {
+        if (err) {
+            console.error('❌ Erro no banco:', err);
+            return res.status(500).json({ error: 'Erro interno do servidor' });
+        }
         
-        // USUÁRIO EXISTE - FAZER LOGIN
-        res.json({
-            success: true,
-            user: {
-                id: user.id,
-                nome: user.nome,
-                email: user.email,
-                matricula: user.matricula,
-                tipo: user.tipo, // ← GARANTIR QUE ESTÁ AQUI
-                curso: user.curso,
-                periodo: user.periodo
-            },
-            token: user.id.toString()
+        if (!user) {
+            console.log('❌ Usuário não encontrado:', email);
+            return res.status(401).json({ error: 'Email não cadastrado' });
+        }
+        
+        try {
+            // Verificar senha
+            const senhaValida = await bcrypt.compare(senha, user.senha_hash);
+            
+            if (!senhaValida) {
+                console.log('❌ Senha incorreta para:', email);
+                return res.status(401).json({ error: 'Senha incorreta' });
+            }
+            
+            console.log('✅ Login bem-sucedido:', user.nome, '- Tipo:', user.tipo);
+            
+            res.json({
+                success: true,
+                user: {
+                    id: user.id,
+                    nome: user.nome,
+                    email: user.email,
+                    matricula: user.matricula,
+                    tipo: user.tipo,
+                    curso: user.curso,
+                    periodo: user.periodo
+                },
+                token: user.id.toString()
+            });
+            
+        } catch (error) {
+            console.error('❌ Erro ao verificar senha:', error);
+            res.status(500).json({ error: 'Erro interno do servidor' });
+        }
+    });
+});
+app.post('/api/auth/google', async (req, res) => {
+    const { token } = req.body;
+
+    console.log('🔐 Processando login Google...');
+    
+    if (!token) {
+        return res.status(400).json({ error: 'Token não fornecido' });
+    }
+
+    try {
+        console.log('✅ Token recebido, obtendo informações do usuário...');
+        
+        // Obter informações do usuário
+        const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
         });
-        
-    } else {
-        // ... resto do código para novo usuário
+
+        if (!userInfoResponse.ok) {
+            throw new Error('Falha ao obter informações do usuário do Google');
+        }
+
+        const userInfo = await userInfoResponse.json();
+        const { email, name, picture } = userInfo;
+
+        console.log('✅ Informações do usuário Google obtidas:', email);
+
+        // VERIFICAÇÃO: Se email já existe, FAZER LOGIN (não cadastrar)
+        db.get('SELECT * FROM usuarios WHERE email = ? AND ativo = 1', [email], async (err, user) => {
+            if (err) {
+                console.error('❌ Erro ao buscar usuário:', err);
+                return res.status(500).json({ error: 'Erro interno do servidor' });
+            }
+
+            if (user) {
+                console.log('✅ Usuário já cadastrado - Fazendo LOGIN:', user.nome);
+                
+                // USUÁRIO EXISTE - FAZER LOGIN
+                res.json({
+                    success: true,
+                    user: {
+                        id: user.id,
+                        nome: user.nome,
+                        email: user.email,
+                        matricula: user.matricula,
+                        tipo: user.tipo,
+                        curso: user.curso,
+                        periodo: user.periodo
+                    },
+                    token: user.id.toString()
+                });
+                
+            } else {
+                // Criar novo usuário APENAS se não existir
+                console.log('👤 Criando novo usuário Google:', name);
+                
+                db.run(
+                    `INSERT INTO usuarios (nome, email, tipo, senha_hash) 
+                     VALUES (?, ?, 'aluno', ?)`,
+                    [name, email, 'google_oauth'],
+                    function(err) {
+                        if (err) {
+                            console.error('❌ Erro ao criar usuário Google:', err);
+                            
+                            if (err.message.includes('UNIQUE constraint failed')) {
+                                return res.status(400).json({ 
+                                    success: false,
+                                    error: 'Este email já está cadastrado.' 
+                                });
+                            }
+                            
+                            return res.status(400).json({ 
+                                success: false,
+                                error: 'Erro ao criar usuário: ' + err.message 
+                            });
+                        }
+                        
+                        console.log('✅ Novo usuário Google criado com ID:', this.lastID);
+                        
+                        res.json({
+                            success: true,
+                            user: {
+                                id: this.lastID,
+                                nome: name,
+                                email: email,
+                                tipo: 'aluno',
+                                curso: null,
+                                periodo: null
+                            },
+                            token: this.lastID.toString()
+                        });
+                    }
+                );
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Erro na autenticação Google:', error);
+        res.status(401).json({ 
+            success: false,
+            error: 'Erro na autenticação Google: ' + error.message 
+        });
     }
 });
 
