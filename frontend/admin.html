@@ -126,7 +126,148 @@
                     </a>
                 </div>
             </div>
+<div class="recent-section">
+    <div class="section-header">
+        <h3><i class="fas fa-users-class"></i> Gerenciar Turmas</h3>
+        <div class="header-actions">
+            <button class="btn-primary" onclick="adminUsuarios.abrirModalCriarTurma()">
+                <i class="fas fa-plus"></i> Nova Turma
+            </button>
+        </div>
+    </div>
+    
 
+    <div class="table-container">
+        <table id="turmas-table">
+            <thead>
+                <tr>
+                    <th>Nome da Turma</th>
+                    <th>Curso</th>
+                    <th>Período</th>
+                    <th>Quantidade de Alunos</th>
+                    <th>Ano</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="turmas-body">
+                <!-- Preenchido via JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- MODAL DE CRIAÇÃO/EDIÇÃO DE TURMA -->
+<div class="modal-overlay" id="turmaModal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-users-class"></i> <span id="turmaModalTitle">Nova Turma</span></h3>
+            <button class="modal-close" onclick="adminUsuarios.fecharModalTurma()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="turmaForm">
+                <input type="hidden" id="turmaId">
+                
+                <div class="form-group">
+                    <label>Nome da Turma:</label>
+                    <input type="text" id="turmaNome" required class="form-control" placeholder="Ex: SI-2024-1A">
+                </div>
+                
+                <div class="form-group">
+                    <label>Curso:</label>
+                    <select id="turmaCurso" required class="form-control">
+                        <option value="">Selecione o curso</option>
+                        <option value="Sistemas de Informação">Sistemas de Informação</option>
+                        <option value="Administração">Administração</option>
+                        <option value="Direito">Direito</option>
+                        <option value="Engenharia Civil">Engenharia Civil</option>
+                        <option value="Medicina">Medicina</option>
+                        <!-- Adicione mais cursos conforme necessário -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Período:</label>
+                    <select id="turmaPeriodo" required class="form-control">
+                        <option value="">Selecione o período</option>
+                        <option value="1">1° Período</option>
+                        <option value="2">2° Período</option>
+                        <option value="3">3° Período</option>
+                        <option value="4">4° Período</option>
+                        <option value="5">5° Período</option>
+                        <option value="6">6° Período</option>
+                        <option value="7">7° Período</option>
+                        <option value="8">8° Período</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Ano:</label>
+                    <input type="number" id="turmaAno" required class="form-control" 
+                           min="2020" max="2030" value="2024">
+                </div>
+                
+                <div class="btn-group">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Salvar Turma
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="adminUsuarios.fecharModalTurma()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE VINCULAR ALUNOS À TURMA -->
+<div class="modal-overlay" id="vincularAlunosModal" style="display: none;">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-user-plus"></i> Vincular Alunos à Turma</h3>
+            <button class="modal-close" onclick="adminUsuarios.fecharModalVincularAlunos()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Turma: <strong id="turmaSelecionadaNome"></strong></label>
+            </div>
+            
+            <div class="form-group">
+                <label>Buscar Alunos:</label>
+                <input type="text" id="buscarAlunosTurma" class="form-control" 
+                       placeholder="Digite o nome ou matrícula do aluno...">
+            </div>
+            
+            <div class="alunos-list-container" style="max-height: 300px; overflow-y: auto;">
+                <table class="alunos-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selecionarTodosAlunos"></th>
+                            <th>Nome</th>
+                            <th>Matrícula</th>
+                            <th>Email</th>
+                            <th>Turma Atual</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaAlunosTurma">
+                        <!-- Preenchido via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="btn-group">
+                <button type="button" class="btn-primary" onclick="adminUsuarios.vincularAlunosSelecionados()">
+                    <i class="fas fa-link"></i> Vincular Alunos Selecionados
+                </button>
+                <button type="button" class="btn-secondary" onclick="adminUsuarios.fecharModalVincularAlunos()">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
             <!-- ÚLTIMOS USUÁRIOS -->
             <div class="recent-section">
                 <h3>Últimos Usuários Cadastrados</h3>
@@ -157,6 +298,7 @@
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/admin.js"></script>
+    <script src="js/admin-usuarios.js"></script>
     
     <script>
         // 🔧 FUNÇÕES PARA MENU HAMBURGER
@@ -203,6 +345,7 @@
                 }
             }
         });
+        
     </script>
 </body>
 </html>

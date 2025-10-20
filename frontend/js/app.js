@@ -119,29 +119,36 @@ class UnimapApp {
     }
 
     carregarDadosDaSecao(sectionId) {
-        switch(sectionId) {
-            case 'aulas-mobile':
-            case 'aulas-desktop':
-                if (typeof aulasManager !== 'undefined') {
-                    setTimeout(() => {
-                        aulasManager.carregarMinhasAulas().catch(error => {
-                            console.error('❌ Erro ao recarregar aulas:', error);
-                        });
-                    }, 150);
-                }
-                break;
-            case 'professores':
-                if (typeof professoresManager !== 'undefined') {
-                    setTimeout(() => {
+    switch(sectionId) {
+        case 'aulas-mobile':
+        case 'aulas-desktop':
+            if (typeof aulasManager !== 'undefined') {
+                setTimeout(() => {
+                    aulasManager.carregarMinhasAulas().catch(error => {
+                        console.error('❌ Erro ao recarregar aulas:', error);
+                    });
+                }, 150);
+            }
+            break;
+        case 'professores':
+            if (typeof professoresManager !== 'undefined') {
+                setTimeout(() => {
+                    // ✅ CORREÇÃO: Verificar se a função existe antes de chamar
+                    if (professoresManager.loadMeusProfessores) {
                         professoresManager.loadMeusProfessores();
-                    }, 150);
-                }
-                break;
-            case 'mapa-blocos':
-                // Já carregado pelo initMapaAluno()
-                break;
-        }
+                    } else {
+                        console.warn('⚠️ professoresManager.loadMeusProfessores não existe');
+                        // Tentar carregar de outra forma
+                        professoresManager.init();
+                    }
+                }, 150);
+            }
+            break;
+        case 'mapa-blocos':
+            // Já carregado pelo initMapaAluno()
+            break;
     }
+}
 
     updateActiveNav(sectionId) {
         document.querySelectorAll('.nav-link').forEach(link => {

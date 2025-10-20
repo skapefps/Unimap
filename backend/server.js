@@ -20,7 +20,9 @@ app.use(cors());
 app.use(express.json());
 
 // ==================== INICIALIZAR BANCO COMPLETO ====================
-function initializeDatabase() {
+
+
+    /*function initializeDatabase() {
     db.serialize(() => {
         console.log('🔄 Criando banco de dados COMPLETO...');
 
@@ -192,19 +194,12 @@ function initializeDatabase() {
             }
         });
 
-        // 🔥 ADICIONADO: CRIAR SALAS PARA TODOS OS BLOCOS A-N
+       
         criarSalasIniciais();
-
         console.log('✅ Banco COMPLETO criado!');
     });
 }
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'arthurroquemeloneiva@gmail.com', 
-        pass: 'ciuh jipe kfxq jkug'     
-    }
-});
+
 
 // 🔥 TABELA PARA TOKENS DE REDEFINIÇÃO DE SENHA
 db.run(`CREATE TABLE IF NOT EXISTS password_reset_tokens (
@@ -215,11 +210,20 @@ db.run(`CREATE TABLE IF NOT EXISTS password_reset_tokens (
     used BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES usuarios (id)
-)`);
+)`);*/
 
 // ==================== ROTAS DE REDEFINIÇÃO DE SENHA ====================
 
 // 1. SOLICITAR REDEFINIÇÃO DE SENHA - VERSÃO MELHORADA
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'arthurroquemeloneiva@gmail.com', 
+        pass: 'ciuh jipe kfxq jkug'     
+    }
+
+});
 app.post('/api/auth/forgot-password', (req, res) => {
     const { email } = req.body;
     
@@ -498,7 +502,7 @@ function criarSalasIniciais() {
 }
 
 // Inicializar banco
-initializeDatabase();
+ //initializeDatabase();
 
 // ==================== MIDDLEWARE DE AUTENTICAÇÃO ====================
 function authenticateToken(req, res, next) {
@@ -733,6 +737,299 @@ app.post('/api/auth/google', async (req, res) => {
         });
     }
 });
+app.get('/api/professores/:id/favoritos-count', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+    
+    console.log('⭐ Buscando favoritos do professor:', id);
+    
+    const query = `
+        SELECT 
+            COUNT(*) as count,
+            GROUP_CONCAT(u.nome) as nomes_alunos,
+            GROUP_CONCAT(u.curso) as cursos_alunos
+        FROM professores_favoritos pf
+        JOIN usuarios u ON pf.aluno_id = u.id
+        WHERE pf.professor_id = ? AND u.ativo = 1
+    `;
+    
+    db.get(query, [id], (err, result) => {
+        if (err) {
+            console.error('❌ Erro ao contar favoritos:', err);
+            return res.status(500).json({ error: 'Erro interno do servidor' });
+        }
+        
+        console.log('✅ Favoritos encontrados:', result);
+        
+        // Processar resultado
+        let alunos = [];
+        if (result && result.nomes_alunos) {
+            const nomes = result.nomes_alunos.split(',');
+            const cursos = result.cursos_alunos ? result.cursos_alunos.split(',') : [];
+            
+            alunos = nomes.map((nome, index) => ({
+                nome: nome.trim(),
+                curso: cursos[index] ? cursos[index].trim() : 'Sem curso'
+            }));
+        }
+        
+        res.json({
+            count: result ? (result.count || 0) : 0,
+            alunos: alunos
+        });
+    });
+});
+
+// GET /api/aulas/professor/:professor_id - Aulas de um professor específico
+app.post('/api/aulas', authenticateToken, (req, res) => {
+    const { disciplina, sala_id, turma_id, horario_inicio, horario_fim, dia_semana } = req.body;
+    
+    // Buscar informações da turma para preencher curso e turma automaticamente
+    db.get('SELECT * FROM turmas WHERE id = ?', [turma_id], (err, turma) => {
+        if (err || !turma) {
+            return res.status(400).json({ error: 'Turma não encontrada' });
+        }
+        
+        // Buscar curso da turma
+        db.get('SELECT nome FROM cursos WHERE id = ?', [turma.curso_id], (err, curso) => {
+            // Resto da lógica de criação de aula...
+            db.run(
+                `INSERT INTO aulas (disciplina_id, professor_id, sala_id, turma_id, curso, turma, horario_inicio, horario_fim, dia_semana, ativa) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+                [disciplinaId, professorId, sala_id, turma_id, curso.nome, turma.nome, horario_inicio, horario_fim, dia_semana],
+                function(err) {
+                    // ... tratamento de erros
+                }
+            );
+        });
+    });
+
+
+    // Função para buscar ou criar disciplina
+    const buscarOuCriarDisciplina = (nomeDisciplina, callback) => {
+        console.log('🔍 Buscando disciplina:', nomeDisciplina);
+        
+        // Primeiro, tentar buscar a disciplina pelo nome
+        db.get('SELECT id FROM disciplinas WHERE nome = ?', [nomeDisciplina], (err, disciplina) => {
+            if (err) {
+                console.error('❌ Erro ao buscar disciplina:', err);
+                return callback(err, null);
+            }
+
+            if (disciplina) {
+                console.log('✅ Disciplina encontrada:', disciplina.id);
+                return callback(null, disciplina.id);
+            } else {
+                // Disciplina não existe, criar uma nova
+                console.log('🔄 Criando nova disciplina...');
+                
+                // Para criar uma disciplina, precisamos de um curso_id
+                // Vamos usar o primeiro curso disponível como fallback
+                db.get('SELECT id FROM cursos LIMIT 1', [], (err, curso) => {
+                    if (err) {
+                        console.error('❌ Erro ao buscar curso para disciplina:', err);
+                        return callback(err, null);
+                    }
+
+                    const cursoId = curso ? curso.id : 1; // Fallback para curso 1
+                    
+                    db.run(
+                        'INSERT INTO disciplinas (nome, curso_id, periodo, carga_horaria, ativa) VALUES (?, ?, 1, 60, 1)',
+                        [nomeDisciplina, cursoId],
+                        function(insertErr) {
+                            if (insertErr) {
+                                console.error('❌ Erro ao criar disciplina:', insertErr);
+                                return callback(insertErr, null);
+                            }
+                            
+                            const novaDisciplinaId = this.lastID;
+                            console.log('✅ Disciplina criada com ID:', novaDisciplinaId);
+                            callback(null, novaDisciplinaId);
+                        }
+                    );
+                });
+            }
+        });
+    };
+
+    // Função para criar a aula
+    const criarAula = (professorId, disciplinaId) => {
+        console.log('🎯 Criando aula para:', { professorId, disciplinaId });
+        
+        // Validar dados obrigatórios
+        if (!disciplinaId || !sala_id || !curso || !turma || !horario_inicio || !horario_fim || !dia_semana) {
+            return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
+        }
+
+        // Inserir a aula usando a estrutura CORRETA da tabela
+        db.run(
+            `INSERT INTO aulas (disciplina_id, professor_id, sala_id, curso, turma, horario_inicio, horario_fim, dia_semana, ativa) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+            [disciplinaId, professorId, sala_id, curso, turma, horario_inicio, horario_fim, dia_semana],
+            function(err) {
+                if (err) {
+                    console.error('❌ Erro ao criar aula:', err);
+                    
+                    // Tratar erros específicos
+                    if (err.message.includes('FOREIGN KEY')) {
+                        if (err.message.includes('sala_id')) {
+                            return res.status(400).json({ error: 'Sala inválida ou não encontrada' });
+                        }
+                        if (err.message.includes('disciplina_id')) {
+                            return res.status(400).json({ error: 'Disciplina inválida' });
+                        }
+                    }
+                    if (err.message.includes('UNIQUE')) {
+                        return res.status(400).json({ error: 'Já existe uma aula com esses dados' });
+                    }
+                    
+                    return res.status(400).json({ error: 'Erro ao criar aula: ' + err.message });
+                }
+                
+                console.log('✅ Aula criada com ID:', this.lastID);
+                res.json({ 
+                    success: true, 
+                    message: 'Aula criada com sucesso!', 
+                    id: this.lastID 
+                });
+            }
+        );
+    };
+
+    // Executar o processo completo
+    criarOuBuscarProfessor((err, professorId) => {
+        if (err) {
+            console.error('❌ Erro no processo de professor:', err);
+            return res.status(500).json({ error: 'Erro interno do servidor' });
+        }
+        
+        if (!professorId) {
+            return res.status(500).json({ error: 'Não foi possível criar ou encontrar o professor' });
+        }
+        
+        // Agora buscar/criar a disciplina
+        buscarOuCriarDisciplina(disciplina, (err, disciplinaId) => {
+            if (err) {
+                console.error('❌ Erro no processo de disciplina:', err);
+                return res.status(500).json({ error: 'Erro ao processar disciplina' });
+            }
+            
+            if (!disciplinaId) {
+                return res.status(500).json({ error: 'Não foi possível criar ou encontrar a disciplina' });
+            }
+            
+            // Finalmente criar a aula
+            criarAula(professorId, disciplinaId);
+        });
+    });
+});
+
+// GET /api/professores/stats - Estatísticas gerais de professores
+app.get('/api/professores/stats', authenticateToken, requireAdmin, (req, res) => {
+    console.log('📊 Buscando estatísticas de professores...');
+    
+    const queries = [
+        'SELECT COUNT(*) as total FROM professores WHERE ativo = 1',
+        `SELECT COUNT(DISTINCT pf.professor_id) as total_com_favoritos 
+         FROM professores_favoritos pf 
+         JOIN professores p ON pf.professor_id = p.id 
+         WHERE p.ativo = 1`,
+        `SELECT p.id, p.nome, COUNT(pf.id) as total_favoritos
+         FROM professores p
+         LEFT JOIN professores_favoritos pf ON p.id = pf.professor_id
+         WHERE p.ativo = 1
+         GROUP BY p.id
+         ORDER BY total_favoritos DESC
+         LIMIT 5`
+    ];
+    
+    db.serialize(() => {
+        const results = {};
+        let completed = 0;
+        
+        // Total de professores
+        db.get(queries[0], [], (err, row) => {
+            if (err) {
+                console.error('❌ Erro ao buscar total de professores:', err);
+                results.total_professores = 0;
+            } else {
+                results.total_professores = row ? row.total : 0;
+            }
+            completed++;
+            checkComplete();
+        });
+        
+        // Professores com favoritos
+        db.get(queries[1], [], (err, row) => {
+            if (err) {
+                console.error('❌ Erro ao buscar professores com favoritos:', err);
+                results.professores_com_favoritos = 0;
+            } else {
+                results.professores_com_favoritos = row ? row.total_com_favoritos : 0;
+            }
+            completed++;
+            checkComplete();
+        });
+        
+        // Top professores
+        db.all(queries[2], [], (err, rows) => {
+            if (err) {
+                console.error('❌ Erro ao buscar top professores:', err);
+                results.top_professores = [];
+            } else {
+                results.top_professores = rows || [];
+            }
+            completed++;
+            checkComplete();
+        });
+        
+        function checkComplete() {
+            if (completed === queries.length) {
+                console.log('✅ Estatísticas carregadas:', results);
+                res.json(results);
+            }
+        }
+    });
+});
+
+// Rota alternativa para favoritos (caso a primeira não funcione)
+app.get('/api/professores/:id/favoritos', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+    
+    console.log('⭐ Buscando favoritos (rota alternativa) para professor:', id);
+    
+    const query = `
+        SELECT 
+            u.id as aluno_id,
+            u.nome as aluno_nome,
+            u.email as aluno_email,
+            u.curso as aluno_curso,
+            u.periodo as aluno_periodo
+        FROM professores_favoritos pf
+        JOIN usuarios u ON pf.aluno_id = u.id
+        WHERE pf.professor_id = ? AND u.ativo = 1
+        ORDER BY u.nome
+    `;
+    
+    db.all(query, [id], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar favoritos (alternativa):', err);
+            return res.status(500).json({ error: 'Erro interno do servidor' });
+        }
+        
+        console.log(`✅ ${rows.length} favoritos encontrados para professor ${id}`);
+        
+        res.json({
+            count: rows.length,
+            alunos: rows.map(row => ({
+                id: row.aluno_id,
+                nome: row.aluno_nome,
+                email: row.aluno_email,
+                curso: row.aluno_curso,
+                periodo: row.aluno_periodo
+            }))
+        });
+    });
+});
 
 // ==================== CADASTRO DE USUÁRIO ====================
 app.post('/api/auth/register', async (req, res) => {
@@ -869,12 +1166,16 @@ app.get('/api/dashboard/estatisticas', authenticateToken, (req, res) => {
 });
 
 // ==================== ROTAS DE CURSOS ====================
+// ROTA PARA CURSOS - Garantir que existe
 app.get('/api/cursos', authenticateToken, (req, res) => {
+    console.log('🎓 Buscando cursos...');
+    
     db.all('SELECT * FROM cursos WHERE ativo = 1 ORDER BY nome', [], (err, rows) => {
         if (err) {
             console.error('❌ Erro ao buscar cursos:', err);
             return res.status(500).json({ error: err.message });
         }
+        console.log(`✅ ${rows.length} cursos encontrados`);
         res.json(rows);
     });
 });
@@ -1272,66 +1573,146 @@ app.post('/api/auth/login-professor', (req, res) => {
 });
 
 // ==================== ROTAS DE AULAS ====================
-app.get('/api/aulas', authenticateToken, (req, res) => {
-    const query = `
-        SELECT a.*, p.nome as professor_nome, s.numero as sala_numero, s.bloco as sala_bloco,
-               d.nome as disciplina_nome
-        FROM aulas a
-        LEFT JOIN professores p ON a.professor_id = p.id
-        LEFT JOIN salas s ON a.sala_id = s.id
-        LEFT JOIN disciplinas d ON a.disciplina_id = d.id
-        WHERE a.ativa = 1
-        ORDER BY a.dia_semana, a.horario_inicio
-    `;
+// ROTA CORRIGIDA PARA CRIAR AULAS (PROFESSORES)
+app.post('/api/aulas', authenticateToken, (req, res) => {
+    const { disciplina, sala_id, curso, turma, horario_inicio, horario_fim, dia_semana } = req.body;
     
-    db.all(query, [], (err, rows) => {
+    console.log('📝 Tentativa de criar aula (ROTA CORRIGIDA):', { 
+        disciplina, 
+        sala_id, 
+        curso, 
+        turma, 
+        user: req.user 
+    });
+
+    // Verificar se é professor
+    if (req.user.tipo !== 'professor') {
+        return res.status(403).json({ error: 'Apenas professores podem criar aulas' });
+    }
+
+    // Buscar professor_id baseado no email do usuário logado
+    db.get('SELECT id FROM professores WHERE email = ?', [req.user.email], (err, professor) => {
         if (err) {
-            console.error('❌ Erro ao buscar aulas:', err);
-            return res.status(500).json({ error: err.message });
+            console.error('❌ Erro ao buscar professor:', err);
+            return res.status(500).json({ error: 'Erro interno do servidor' });
         }
-        res.json(rows);
+
+        if (!professor) {
+            console.error('❌ Professor não encontrado para email:', req.user.email);
+            return res.status(404).json({ error: 'Professor não encontrado. Contate o administrador.' });
+        }
+
+        console.log('✅ Professor encontrado:', professor.id);
+
+        // Buscar ou criar disciplina
+        db.get('SELECT id FROM disciplinas WHERE nome = ?', [disciplina], (err, disciplinaExistente) => {
+            if (err) {
+                console.error('❌ Erro ao buscar disciplina:', err);
+                return res.status(500).json({ error: 'Erro interno do servidor' });
+            }
+
+            let disciplinaId;
+            
+            if (disciplinaExistente) {
+                disciplinaId = disciplinaExistente.id;
+                console.log('✅ Disciplina encontrada:', disciplinaId);
+            } else {
+                // Criar disciplina se não existir
+                console.log('🔄 Criando nova disciplina:', disciplina);
+                db.run(
+                    'INSERT INTO disciplinas (nome, curso_id, periodo, carga_horaria, ativa) VALUES (?, 1, 1, 60, 1)',
+                    [disciplina],
+                    function(err) {
+                        if (err) {
+                            console.error('❌ Erro ao criar disciplina:', err);
+                            return res.status(500).json({ error: 'Erro ao criar disciplina' });
+                        }
+                        disciplinaId = this.lastID;
+                        console.log('✅ Nova disciplina criada:', disciplinaId);
+                        criarAula(disciplinaId);
+                    }
+                );
+                return;
+            }
+
+            // Se disciplina já existe, criar aula
+            criarAula(disciplinaId);
+        });
+
+        function criarAula(disciplinaId) {
+            // Inserir a aula
+            db.run(
+                `INSERT INTO aulas (disciplina_id, professor_id, sala_id, curso, turma, horario_inicio, horario_fim, dia_semana, ativa) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+                [disciplinaId, professor.id, sala_id, curso, turma, horario_inicio, horario_fim, dia_semana],
+                function(err) {
+                    if (err) {
+                        console.error('❌ Erro ao criar aula:', err);
+                        
+                        // Tratar erros específicos
+                        if (err.message.includes('FOREIGN KEY')) {
+                            if (err.message.includes('sala_id')) {
+                                return res.status(400).json({ error: 'Sala inválida ou não encontrada' });
+                            }
+                        }
+                        if (err.message.includes('UNIQUE')) {
+                            return res.status(400).json({ error: 'Já existe uma aula com esses dados' });
+                        }
+                        
+                        return res.status(400).json({ error: 'Erro ao criar aula: ' + err.message });
+                    }
+                    
+                    console.log('✅ Aula criada com ID:', this.lastID);
+                    res.json({ 
+                        success: true, 
+                        message: 'Aula criada com sucesso!', 
+                        id: this.lastID 
+                    });
+                }
+            );
+        }
     });
 });
 
+// ROTA PARA CARREGAR AULAS DO USUÁRIO - VERSÃO CORRIGIDA
 app.get('/api/aulas/usuario/:usuario_id', authenticateToken, (req, res) => {
     const { usuario_id } = req.params;
     
-    db.get('SELECT curso, tipo FROM usuarios WHERE id = ?', [usuario_id], (err, user) => {
+    console.log('📚 Buscando aulas para usuário:', usuario_id);
+    
+    // Buscar informações do usuário
+    db.get('SELECT * FROM usuarios WHERE id = ?', [usuario_id], (err, user) => {
         if (err || !user) {
             console.error('❌ Usuário não encontrado:', usuario_id);
             return res.status(404).json({ error: 'Usuário não encontrado' });
         }
         
+        console.log('👤 Usuário encontrado:', user.nome, '- Tipo:', user.tipo);
+        
         let query, params;
         
-        if (user.tipo === 'aluno') {
-            // Aluno: vê apenas aulas do seu curso
+        if (user.tipo === 'professor') {
+            // 🔥 CORREÇÃO: Buscar aulas pelo email do professor na tabela professores
+            console.log('🔍 Buscando aulas do professor pelo email:', user.email);
+            
             query = `
-                SELECT a.*, p.nome as professor_nome, s.numero as sala_numero, s.bloco as sala_bloco,
-                       d.nome as disciplina_nome
+                SELECT 
+                    a.*, 
+                    d.nome as disciplina_nome,
+                    s.numero as sala_numero, 
+                    s.bloco as sala_bloco,
+                    s.andar as sala_andar,
+                    p.nome as professor_nome
                 FROM aulas a
-                LEFT JOIN professores p ON a.professor_id = p.id
-                LEFT JOIN salas s ON a.sala_id = s.id
                 LEFT JOIN disciplinas d ON a.disciplina_id = d.id
-                WHERE a.curso = ? AND a.ativa = 1
-                ORDER BY a.dia_semana, a.horario_inicio
-            `;
-            params = [user.curso];
-        } else if (user.tipo === 'professor') {
-            // Professor: vê apenas suas próprias aulas
-            query = `
-                SELECT a.*, p.nome as professor_nome, s.numero as sala_numero, s.bloco as sala_bloco,
-                       d.nome as disciplina_nome
-                FROM aulas a
-                LEFT JOIN professores p ON a.professor_id = p.id
                 LEFT JOIN salas s ON a.sala_id = s.id
-                LEFT JOIN disciplinas d ON a.disciplina_id = d.id
-                WHERE a.professor_id = (SELECT id FROM professores WHERE email = ?) AND a.ativa = 1
+                LEFT JOIN professores p ON a.professor_id = p.id
+                WHERE p.email = ? AND a.ativa = 1
                 ORDER BY a.dia_semana, a.horario_inicio
             `;
             params = [user.email];
         } else {
-            // Admin: vê todas as aulas
+            // Para alunos e admin, usar a lógica existente
             query = `
                 SELECT a.*, p.nome as professor_nome, s.numero as sala_numero, s.bloco as sala_bloco,
                        d.nome as disciplina_nome
@@ -1345,11 +1726,16 @@ app.get('/api/aulas/usuario/:usuario_id', authenticateToken, (req, res) => {
             params = [];
         }
         
+        console.log('📊 Executando query:', query);
+        console.log('📋 Parâmetros:', params);
+        
         db.all(query, params, (err, rows) => {
             if (err) {
                 console.error('❌ Erro ao buscar aulas do usuário:', err);
                 return res.status(500).json({ error: err.message });
             }
+            
+            console.log(`✅ ${rows.length} aulas encontradas para o usuário`);
             res.json(rows);
         });
     });
@@ -1568,15 +1954,6 @@ app.get('/api/debug/salas', (req, res) => {
     });
 });
 
-// ==================== ROTA DE TESTE SIMPLES ====================
-app.get('/api/test', (req, res) => {
-    res.json({ 
-        status: '✅ OK', 
-        message: 'Backend UNIMAP funcionando na porta 3000!',
-        timestamp: new Date().toISOString(),
-        versao: '2.0 - Completo com Google OAuth'
-    });
-});
 
 // Rota para verificar status do banco
 app.get('/api/status', (req, res) => {
@@ -1707,4 +2084,848 @@ app.listen(PORT, () => {
     console.log(`👥 Debug: http://localhost:${PORT}/api/debug/usuarios`);
     console.log(`🏫 Debug Salas: http://localhost:${PORT}/api/debug/salas`);
     console.log(`🏗️ Blocos disponíveis: A, B, C, D, E, F, G, H, I, J, K, L, M, N`);
+});
+// ==================== NOVAS ROTAS PARA ESTATÍSTICAS DE PROFESSORES ====================
+
+// GET /api/professores/:id/favoritos-count - Contar favoritos de um professor
+app.get('/api/professores/:id/favoritos-count', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+    
+    const query = `
+        SELECT 
+            COUNT(*) as count,
+            GROUP_CONCAT(u.nome) as nomes_alunos,
+            GROUP_CONCAT(u.curso) as cursos_alunos
+        FROM professores_favoritos pf
+        JOIN usuarios u ON pf.aluno_id = u.id
+        WHERE pf.professor_id = ? AND u.ativo = 1
+    `;
+    
+    db.get(query, [id], (err, result) => {
+        if (err) {
+            console.error('❌ Erro ao contar favoritos:', err);
+            return res.status(500).json({ error: 'Erro interno do servidor' });
+        }
+        
+        // Processar resultado
+        const alunos = result.nomes_alunos ? result.nomes_alunos.split(',').map((nome, index) => ({
+            nome: nome,
+            curso: result.cursos_alunos ? result.cursos_alunos.split(',')[index] : null
+        })) : [];
+        
+        res.json({
+            count: result.count || 0,
+            alunos: alunos
+        });
+    });
+});
+
+// GET /api/aulas/professor/:professor_id - Aulas de um professor específico
+app.get('/api/aulas/professor/:professor_id', authenticateToken, requireAdmin, (req, res) => {
+    const { professor_id } = req.params;
+    
+    const query = `
+        SELECT 
+            a.*, 
+            d.nome as disciplina_nome,
+            s.numero as sala_numero, 
+            s.bloco as sala_bloco
+        FROM aulas a
+        LEFT JOIN disciplinas d ON a.disciplina_id = d.id
+        LEFT JOIN salas s ON a.sala_id = s.id
+        WHERE a.professor_id = ? AND a.ativa = 1
+        ORDER BY a.dia_semana, a.horario_inicio
+    `;
+    
+    db.all(query, [professor_id], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar aulas do professor:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+// GET /api/professores/stats - Estatísticas gerais de professores
+app.get('/api/professores/stats', authenticateToken, requireAdmin, (req, res) => {
+    const queries = [
+        'SELECT COUNT(*) as total FROM professores WHERE ativo = 1',
+        `SELECT COUNT(DISTINCT pf.professor_id) as total_com_favoritos 
+         FROM professores_favoritos pf 
+         JOIN professores p ON pf.professor_id = p.id 
+         WHERE p.ativo = 1`,
+        `SELECT p.nome, COUNT(pf.id) as total_favoritos
+         FROM professores p
+         LEFT JOIN professores_favoritos pf ON p.id = pf.professor_id
+         WHERE p.ativo = 1
+         GROUP BY p.id
+         ORDER BY total_favoritos DESC
+         LIMIT 5`
+    ];
+    
+    db.serialize(() => {
+        const results = {};
+        let completed = 0;
+        
+        // Total de professores
+        db.get(queries[0], [], (err, row) => {
+            if (err) console.error(err);
+            results.total_professores = row ? row.total : 0;
+            completed++;
+            checkComplete();
+        });
+        
+        // Professores com favoritos
+        db.get(queries[1], [], (err, row) => {
+            if (err) console.error(err);
+            results.professores_com_favoritos = row ? row.total_com_favoritos : 0;
+            completed++;
+            checkComplete();
+        });
+        
+        // Top professores
+        db.all(queries[2], [], (err, rows) => {
+            if (err) console.error(err);
+            results.top_professores = rows || [];
+            completed++;
+            checkComplete();
+        });
+        
+        function checkComplete() {
+            if (completed === queries.length) {
+                res.json(results);
+            }
+        }
+    });
+});
+// ROTA PARA DISCIPLINAS - Adicione esta rota
+app.get('/api/disciplinas', authenticateToken, (req, res) => {
+    db.all('SELECT * FROM disciplinas WHERE ativa = 1 ORDER BY nome', [], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar disciplinas:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+// ROTA ESPECÍFICA PARA MINHAS AULAS (PROFESSOR) - MAIS SIMPLES E CONFIÁVEL
+app.get('/api/professor/minhas-aulas', authenticateToken, (req, res) => {
+    console.log('📚 Buscando aulas do professor:', req.user.email);
+    
+    // Verificar se é professor
+    if (req.user.tipo !== 'professor') {
+        return res.status(403).json({ error: 'Acesso restrito a professores' });
+    }
+
+    const query = `
+        SELECT 
+            a.*, 
+            d.nome as disciplina_nome,
+            s.numero as sala_numero, 
+            s.bloco as sala_bloco,
+            s.andar as sala_andar
+        FROM aulas a
+        LEFT JOIN disciplinas d ON a.disciplina_id = d.id
+        LEFT JOIN salas s ON a.sala_id = s.id
+        LEFT JOIN professores p ON a.professor_id = p.id
+        WHERE p.email = ? AND a.ativa = 1
+        ORDER BY a.dia_semana, a.horario_inicio
+    `;
+    
+    db.all(query, [req.user.email], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar aulas do professor:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        console.log(`✅ ${rows.length} aulas encontradas para o professor ${req.user.email}`);
+        res.json(rows);
+    });
+});
+// ROTA DE DEBUG PARA AULAS DO PROFESSOR
+app.get('/api/debug/aulas-professor', authenticateToken, (req, res) => {
+    console.log('🔍 DEBUG: Buscando todas as aulas do professor:', req.user.email);
+    
+    const query = `
+        SELECT 
+            a.*, 
+            p.nome as professor_nome,
+            p.email as professor_email,
+            d.nome as disciplina_nome,
+            s.numero as sala_numero
+        FROM aulas a
+        LEFT JOIN professores p ON a.professor_id = p.id
+        LEFT JOIN disciplinas d ON a.disciplina_id = d.id
+        LEFT JOIN salas s ON a.sala_id = s.id
+        WHERE p.email = ?
+        ORDER BY a.id DESC
+    `;
+    
+    db.all(query, [req.user.email], (err, aulas) => {
+        if (err) {
+            console.error('❌ Erro no debug:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        res.json({
+            professor: req.user.email,
+            total_aulas: aulas.length,
+            aulas: aulas
+        });
+    });
+});
+// ROTA PARA AULAS DO ALUNO (COM MATCHING AUTOMÁTICO)
+app.get('/api/aulas/aluno/:aluno_id', authenticateToken, (req, res) => {
+    const { aluno_id } = req.params;
+    
+    console.log('🎓 Buscando aulas para aluno:', aluno_id);
+    
+    // Buscar informações do aluno
+    db.get('SELECT curso, periodo FROM usuarios WHERE id = ?', [aluno_id], (err, aluno) => {
+        if (err || !aluno) {
+            console.error('❌ Aluno não encontrado:', aluno_id);
+            return res.status(404).json({ error: 'Aluno não encontrado' });
+        }
+        
+        console.log('👤 Dados do aluno para filtro:', aluno);
+        
+        // 🔥 FILTRO MELHORADO - Aulas que batem com curso E turma do aluno
+        const query = `
+            SELECT 
+                a.*, 
+                p.nome as professor_nome, 
+                s.numero as sala_numero, 
+                s.bloco as sala_bloco,
+                s.andar as sala_andar,
+                d.nome as disciplina_nome
+            FROM aulas a
+            LEFT JOIN professores p ON a.professor_id = p.id
+            LEFT JOIN salas s ON a.sala_id = s.id
+            LEFT JOIN disciplinas d ON a.disciplina_id = d.id
+            WHERE a.ativa = 1 
+            AND (a.curso = ? OR a.curso IS NULL OR a.curso = '') -- 🔥 Filtro por curso
+            AND (a.turma LIKE '%' || ? || '%' OR a.turma IS NULL OR a.turma = '') -- 🔥 Filtro por turma
+            ORDER BY a.dia_semana, a.horario_inicio
+        `;
+        
+        // Se o aluno não tem curso definido, mostrar todas as aulas
+        const cursoFiltro = aluno.curso || '';
+        const turmaFiltro = aluno.periodo ? `T${aluno.periodo}` : '';
+        
+        console.log('🔍 Aplicando filtros:', { curso: cursoFiltro, turma: turmaFiltro });
+        
+        db.all(query, [cursoFiltro, turmaFiltro], (err, rows) => {
+            if (err) {
+                console.error('❌ Erro ao buscar aulas do aluno:', err);
+                return res.status(500).json({ error: err.message });
+            }
+            
+            console.log(`✅ ${rows.length} aulas encontradas após filtro`);
+            res.json(rows);
+        });
+    });
+});
+app.get('/api/professores', authenticateToken, (req, res) => {
+    console.log('📚 Buscando lista de professores...');
+    
+    db.all('SELECT * FROM professores WHERE ativo = 1 ORDER BY nome', [], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar professores:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        console.log(`✅ ${rows.length} professores encontrados`);
+        res.json(rows);
+    });
+});
+
+// GET /api/professores/stats - Estatísticas (apenas admin)
+app.get('/api/professores/stats', authenticateToken, requireAdmin, (req, res) => {
+    console.log('📊 Buscando estatísticas de professores...');
+    
+    const queries = [
+        'SELECT COUNT(*) as total FROM professores WHERE ativo = 1',
+        `SELECT COUNT(DISTINCT pf.professor_id) as total_com_favoritos 
+         FROM professores_favoritos pf 
+         JOIN professores p ON pf.professor_id = p.id 
+         WHERE p.ativo = 1`,
+        `SELECT p.id, p.nome, COUNT(pf.id) as total_favoritos
+         FROM professores p
+         LEFT JOIN professores_favoritos pf ON p.id = pf.professor_id
+         WHERE p.ativo = 1
+         GROUP BY p.id
+         ORDER BY total_favoritos DESC
+         LIMIT 5`
+    ];
+    
+    db.serialize(() => {
+        const results = {};
+        let completed = 0;
+        
+        // Total de professores
+        db.get(queries[0], [], (err, row) => {
+            if (err) {
+                console.error('❌ Erro ao buscar total de professores:', err);
+                results.total_professores = 0;
+            } else {
+                results.total_professores = row ? row.total : 0;
+            }
+            completed++;
+            checkComplete();
+        });
+        
+        // Professores com favoritos
+        db.get(queries[1], [], (err, row) => {
+            if (err) {
+                console.error('❌ Erro ao buscar professores com favoritos:', err);
+                results.professores_com_favoritos = 0;
+            } else {
+                results.professores_com_favoritos = row ? row.total_com_favoritos : 0;
+            }
+            completed++;
+            checkComplete();
+        });
+        
+        // Top professores
+        db.all(queries[2], [], (err, rows) => {
+            if (err) {
+                console.error('❌ Erro ao buscar top professores:', err);
+                results.top_professores = [];
+            } else {
+                results.top_professores = rows || [];
+            }
+            completed++;
+            checkComplete();
+        });
+        
+        function checkComplete() {
+            if (completed === queries.length) {
+                console.log('✅ Estatísticas carregadas:', results);
+                res.json(results);
+            }
+        }
+    });
+});
+
+// Rota para debug de professores
+app.get('/api/debug/professores', authenticateToken, (req, res) => {
+    console.log('🔍 DEBUG: Buscando todos os dados de professores...');
+    
+    const query = `
+        SELECT 
+            p.*,
+            COUNT(pf.id) as total_favoritos,
+            GROUP_CONCAT(u.nome) as alunos_favoritos
+        FROM professores p
+        LEFT JOIN professores_favoritos pf ON p.id = pf.professor_id
+        LEFT JOIN usuarios u ON pf.aluno_id = u.id
+        WHERE p.ativo = 1
+        GROUP BY p.id
+        ORDER BY p.nome
+    `;
+    
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro no debug:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        res.json({
+            total_professores: rows.length,
+            professores: rows
+        });
+    });
+});
+// ==================== SISTEMA DE TURMAS E ASSOCIAÇÕES ====================
+
+
+
+
+
+app.get('/api/aluno/:id/aulas', authenticateToken, (req, res) => {
+    const { id } = req.params;
+    
+    const query = `
+        SELECT 
+            a.*, 
+            p.nome as professor_nome,
+            d.nome as disciplina_nome,
+            s.numero as sala_numero,
+            s.bloco as sala_bloco,
+            s.andar as sala_andar,
+            t.nome as turma_nome,
+            c.nome as curso_nome
+        FROM aulas a
+        LEFT JOIN professores p ON a.professor_id = p.id
+        LEFT JOIN disciplinas d ON a.disciplina_id = d.id
+        LEFT JOIN salas s ON a.sala_id = s.id
+        LEFT JOIN turmas t ON a.turma_id = t.id
+        LEFT JOIN cursos c ON t.curso_id = c.id
+        WHERE a.turma_id IN (
+            SELECT turma_id FROM aluno_turmas 
+            WHERE aluno_id = ? AND status = 'cursando'
+        )
+        AND a.ativa = 1
+        ORDER BY a.dia_semana, a.horario_inicio
+    `;
+    
+    db.all(query, [id], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar aulas do aluno:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+// ==================== ROTAS DE TURMAS COMPLETAS ====================
+
+// GET /api/turmas - Listar todas as turmas (VERSÃO CORRIGIDA)
+app.get('/api/turmas', authenticateToken, (req, res) => {
+    console.log('📚 Buscando turmas...');
+    
+    // Query corrigida - busca básica primeiro
+    const query = `SELECT * FROM turmas WHERE ativa = 1 ORDER BY nome`;
+    
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar turmas:', err);
+            
+            // Se a tabela não existe, criar
+            if (err.message.includes('no such table')) {
+                console.log('🔄 Criando tabela turmas...');
+                db.run(`CREATE TABLE IF NOT EXISTS turmas (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nome TEXT NOT NULL,
+                    curso TEXT NOT NULL,
+                    periodo INTEGER NOT NULL,
+                    ano INTEGER DEFAULT 2024,
+                    ativa BOOLEAN DEFAULT 1,
+                    data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
+                )`, (createErr) => {
+                    if (createErr) {
+                        console.error('❌ Erro ao criar tabela turmas:', createErr);
+                        return res.status(500).json({ error: 'Erro no banco de dados' });
+                    }
+                    
+                    // Inserir algumas turmas de exemplo
+                    console.log('✅ Tabela criada, inserindo turmas exemplo...');
+                    db.run(`INSERT INTO turmas (nome, curso, periodo, ano) VALUES 
+                        ('SI-2024-1A', 'Sistemas de Informação', 1, 2024),
+                        ('ADM-2024-1A', 'Administração', 1, 2024),
+                        ('DIR-2024-1A', 'Direito', 1, 2024)
+                    `, (insertErr) => {
+                        if (insertErr) {
+                            console.error('❌ Erro ao inserir turmas exemplo:', insertErr);
+                        }
+                        // Retornar array vazio inicialmente
+                        res.json([]);
+                    });
+                });
+                return;
+            }
+            
+            return res.status(500).json({ error: err.message });
+        }
+        
+        console.log(`✅ ${rows.length} turmas encontradas`);
+        
+        // Processar resultado para garantir estrutura consistente
+        const turmasProcessadas = rows.map(turma => ({
+            id: turma.id,
+            nome: turma.nome,
+            curso: turma.curso,
+            periodo: turma.periodo,
+            ano: turma.ano,
+            quantidade_alunos: 0, // Valor padrão
+            ativa: turma.ativa,
+            data_criacao: turma.data_criacao
+        }));
+        
+        res.json(turmasProcessadas);
+    });
+});
+
+// POST /api/turmas - Criar nova turma
+app.post('/api/turmas', authenticateToken, requireAdmin, (req, res) => {
+    const { nome, curso, periodo, ano } = req.body;
+    
+    console.log('🆕 Criando nova turma:', { nome, curso, periodo });
+    
+    if (!nome || !curso || !periodo) {
+        return res.status(400).json({ error: 'Nome, curso e período são obrigatórios' });
+    }
+
+    db.run(
+        `INSERT INTO turmas (nome, curso, periodo, ano) 
+         VALUES (?, ?, ?, ?)`,
+        [nome, curso, periodo, ano || new Date().getFullYear()],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao criar turma:', err);
+                return res.status(400).json({ error: err.message });
+            }
+            
+            console.log('✅ Turma criada com ID:', this.lastID);
+            res.json({ 
+                success: true, 
+                message: 'Turma criada com sucesso!', 
+                id: this.lastID 
+            });
+        }
+    );
+});
+
+// PUT /api/turmas/:id - Atualizar turma
+app.put('/api/turmas/:id', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+    const { nome, curso, periodo, ano, ativa } = req.body;
+    
+    console.log('✏️ Atualizando turma:', id);
+    
+    db.run(
+        `UPDATE turmas 
+         SET nome = ?, curso = ?, periodo = ?, ano = ?, ativa = ?
+         WHERE id = ?`,
+        [nome, curso, periodo, ano, ativa, id],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao atualizar turma:', err);
+                return res.status(400).json({ error: err.message });
+            }
+            
+            if (this.changes === 0) {
+                return res.status(404).json({ error: 'Turma não encontrada' });
+            }
+            
+            res.json({ 
+                success: true, 
+                message: 'Turma atualizada com sucesso!' 
+            });
+        }
+    );
+});
+
+// DELETE /api/turmas/:id - Excluir turma (desativar)
+app.delete('/api/turmas/:id', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+    
+    console.log('🗑️ Excluindo turma:', id);
+    
+    db.run(
+        'UPDATE turmas SET ativa = 0 WHERE id = ?',
+        [id],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao excluir turma:', err);
+                return res.status(400).json({ error: err.message });
+            }
+            
+            if (this.changes === 0) {
+                return res.status(404).json({ error: 'Turma não encontrada' });
+            }
+            
+            res.json({ 
+                success: true, 
+                message: 'Turma excluída com sucesso!' 
+            });
+        }
+    );
+});
+
+// POST /api/turmas/:id/alunos - Vincular alunos à turma
+app.post('/api/turmas/:id/alunos', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+    const { alunos_ids } = req.body;
+    
+    console.log('👥 Vinculando alunos à turma:', { turma_id: id, alunos_ids });
+    
+    if (!alunos_ids || !Array.isArray(alunos_ids)) {
+        return res.status(400).json({ error: 'Lista de alunos é obrigatória' });
+    }
+    
+    // Primeiro, verificar se a tabela aluno_turmas existe
+    db.run(`CREATE TABLE IF NOT EXISTS aluno_turmas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        aluno_id INTEGER NOT NULL,
+        turma_id INTEGER NOT NULL,
+        data_matricula DATETIME DEFAULT CURRENT_TIMESTAMP,
+        status TEXT DEFAULT 'cursando',
+        FOREIGN KEY (aluno_id) REFERENCES usuarios (id),
+        FOREIGN KEY (turma_id) REFERENCES turmas (id),
+        UNIQUE(aluno_id, turma_id)
+    )`, (err) => {
+        if (err) {
+            console.error('❌ Erro ao criar tabela aluno_turmas:', err);
+            return res.status(500).json({ error: 'Erro no banco de dados' });
+        }
+        
+        // Agora inserir os alunos
+        db.serialize(() => {
+            const stmt = db.prepare(
+                'INSERT OR REPLACE INTO aluno_turmas (aluno_id, turma_id) VALUES (?, ?)'
+            );
+            
+            let inserted = 0;
+            alunos_ids.forEach(alunoId => {
+                stmt.run([alunoId, id], function(err) {
+                    if (!err) inserted++;
+                });
+            });
+            
+            stmt.finalize((err) => {
+                if (err) {
+                    console.error('❌ Erro ao vincular alunos:', err);
+                    return res.status(500).json({ error: err.message });
+                }
+                
+                console.log(`✅ ${inserted} aluno(s) vinculado(s) com sucesso!`);
+                res.json({ 
+                    success: true, 
+                    message: `${inserted} aluno(s) vinculado(s) com sucesso!` 
+                });
+            });
+        });
+    });
+});
+
+// GET /api/turmas/:id/alunos - Listar alunos da turma
+app.get('/api/turmas/:id/alunos', authenticateToken, (req, res) => {
+    const { id } = req.params;
+    
+    console.log('📋 Buscando alunos da turma:', id);
+    
+    const query = `
+        SELECT u.id, u.nome, u.email, u.matricula, u.curso, u.periodo, at.data_matricula
+        FROM usuarios u
+        JOIN aluno_turmas at ON u.id = at.aluno_id
+        WHERE at.turma_id = ? AND u.ativo = 1 AND at.status = 'cursando'
+        ORDER BY u.nome
+    `;
+    
+    db.all(query, [id], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar alunos da turma:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        console.log(`✅ ${rows.length} alunos encontrados na turma`);
+        res.json(rows);
+    });
+});
+
+// GET /api/aluno/:id/turmas - Turmas do aluno
+app.get('/api/aluno/:id/turmas', authenticateToken, (req, res) => {
+    const { id } = req.params;
+    
+    console.log('🎓 Buscando turmas do aluno:', id);
+    
+    const query = `
+        SELECT t.*, at.data_matricula, at.status
+        FROM turmas t
+        JOIN aluno_turmas at ON t.id = at.turma_id
+        WHERE at.aluno_id = ? AND t.ativa = 1 AND at.status = 'cursando'
+        ORDER BY t.ano DESC, t.periodo
+    `;
+    
+    db.all(query, [id], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar turmas do aluno:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        console.log(`✅ ${rows.length} turmas encontradas para o aluno`);
+        res.json(rows);
+    });
+});
+// GET /api/turmas - Listar todas as turmas (VERSÃO CORRIGIDA)
+app.get('/api/turmas', authenticateToken, (req, res) => {
+    console.log('📚 Buscando turmas...');
+    
+    // ✅ QUERY CORRIGIDA - busca apenas colunas que existem
+    const query = `
+        SELECT 
+            id,
+            nome,
+            curso,
+            periodo,
+            ano,
+            ativa
+        FROM turmas 
+        WHERE ativa = 1
+        ORDER BY ano DESC, periodo, nome
+    `;
+    
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar turmas:', err);
+            
+            // Se a tabela não existe, criar
+            if (err.message.includes('no such table')) {
+                console.log('🔄 Criando tabela turmas...');
+                db.run(`CREATE TABLE IF NOT EXISTS turmas (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nome TEXT NOT NULL,
+                    curso TEXT NOT NULL,
+                    periodo INTEGER NOT NULL,
+                    ano INTEGER DEFAULT 2024,
+                    ativa BOOLEAN DEFAULT 1,
+                    data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
+                )`, (createErr) => {
+                    if (createErr) {
+                        console.error('❌ Erro ao criar tabela turmas:', createErr);
+                        return res.status(500).json({ error: 'Erro no banco de dados' });
+                    }
+                    
+                    // Inserir algumas turmas de exemplo
+                    console.log('✅ Tabela criada, inserindo turmas exemplo...');
+                    db.run(`INSERT INTO turmas (nome, curso, periodo, ano) VALUES 
+                        ('SI-2024-1A', 'Sistemas de Informação', 1, 2024),
+                        ('ADM-2024-1A', 'Administração', 1, 2024),
+                        ('DIR-2024-1A', 'Direito', 1, 2024)
+                    `, (insertErr) => {
+                        if (insertErr) console.error('❌ Erro ao inserir turmas exemplo:', insertErr);
+                        res.json([]);
+                    });
+                });
+                return;
+            }
+            
+            return res.status(500).json({ error: err.message });
+        }
+        
+        console.log(`✅ ${rows.length} turmas encontradas`);
+        
+        // ✅ PROCESSAMENTO CORRIGIDO - sem data_criacao
+        const turmasProcessadas = rows.map(turma => ({
+            id: turma.id,
+            nome: turma.nome,
+            curso: turma.curso,
+            periodo: turma.periodo,
+            ano: turma.ano,
+            quantidade_alunos: 0, // Valor padrão
+            ativa: turma.ativa,
+            // ❌ REMOVIDO: data_criacao não existe na tabela
+        }));
+        
+        res.json(turmasProcessadas);
+    });
+});
+// ✅ ROTA PÚBLICA PARA TESTE DE TURMAS (adicione no server.js)
+app.get('/api/test-turmas', (req, res) => {
+    console.log('🧪 Teste público de turmas...');
+    
+    const query = `SELECT id, nome, curso, periodo, ano, ativa FROM turmas WHERE ativa = 1`;
+    
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro no teste:', err);
+            
+            // Se tabela não existe, criar
+            if (err.message.includes('no such table')) {
+                db.run(`CREATE TABLE IF NOT EXISTS turmas (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nome TEXT NOT NULL,
+                    curso TEXT NOT NULL,
+                    periodo INTEGER NOT NULL,
+                    ano INTEGER DEFAULT 2024,
+                    ativa BOOLEAN DEFAULT 1
+                )`, (createErr) => {
+                    if (createErr) return res.status(500).json({ error: createErr.message });
+                    
+                    // Inserir exemplos
+                    db.run(`INSERT INTO turmas (nome, curso, periodo, ano) VALUES 
+                        ('SI-2024-1A', 'Sistemas de Informação', 1, 2024),
+                        ('ADM-2024-1A', 'Administração', 1, 2024),
+                        ('DIR-2024-1A', 'Direito', 1, 2024)
+                    `);
+                    res.json([]);
+                });
+                return;
+            }
+            
+            return res.status(500).json({ error: err.message });
+        }
+        
+        console.log(`✅ ${rows.length} turmas encontradas no teste`);
+        res.json(rows);
+    });
+});
+// ==================== ROTA PÚBLICA PARA CRIAR TURMAS ====================
+
+// POST /api/turmas/popular-public - Criar turmas (sem autenticação)
+app.post('/api/turmas/popular-public', (req, res) => {
+    console.log('🎯 Populando tabela turmas (pública)...');
+    
+    db.run(`CREATE TABLE IF NOT EXISTS turmas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL,
+        curso TEXT NOT NULL,
+        periodo INTEGER NOT NULL,
+        ano INTEGER DEFAULT 2024,
+        ativa BOOLEAN DEFAULT 1
+    )`, (err) => {
+        if (err) {
+            console.error('❌ Erro ao criar tabela:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        // Inserir turmas de exemplo
+        const turmasExemplo = [
+            ['SI-2024-1A', 'Sistemas de Informação', 1, 2024],
+            ['SI-2024-2A', 'Sistemas de Informação', 2, 2024],
+            ['ADM-2024-1A', 'Administração', 1, 2024],
+            ['ADM-2024-2A', 'Administração', 2, 2024],
+            ['DIR-2024-1A', 'Direito', 1, 2024],
+            ['ENG-2024-1A', 'Engenharia Civil', 1, 2024]
+        ];
+        
+        // Limpar tabela primeiro
+        db.run('DELETE FROM turmas', (err) => {
+            if (err) console.log('⚠️ Não foi possível limpar tabela:', err);
+            
+            // Inserir novas turmas
+            const stmt = db.prepare('INSERT INTO turmas (nome, curso, periodo, ano) VALUES (?, ?, ?, ?)');
+            let inserted = 0;
+            
+            turmasExemplo.forEach(turma => {
+                stmt.run(turma, function(err) {
+                    if (err) {
+                        console.error('❌ Erro ao inserir turma:', turma[0], err);
+                    } else {
+                        inserted++;
+                        console.log('✅ Turma inserida:', turma[0]);
+                    }
+                });
+            });
+            
+            stmt.finalize((err) => {
+                if (err) {
+                    console.error('❌ Erro ao finalizar inserções:', err);
+                    return res.status(500).json({ error: err.message });
+                }
+                
+                console.log(`🎉 ${inserted} turmas inseridas com sucesso!`);
+                res.json({ 
+                    success: true, 
+                    message: `${inserted} turmas criadas com sucesso!`,
+                    turmas_criadas: inserted
+                });
+            });
+        });
+    });
+});
+
+// GET /api/turmas/public - Listar turmas (sem autenticação)
+app.get('/api/turmas/public', (req, res) => {
+    console.log('📚 Buscando turmas (pública)...');
+    
+    const query = `SELECT id, nome, curso, periodo, ano, ativa FROM turmas WHERE ativa = 1 ORDER BY nome`;
+    
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar turmas:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        console.log(`✅ ${rows.length} turmas encontradas`);
+        res.json(rows);
+    });
 });

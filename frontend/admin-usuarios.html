@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="css/admin.css">
     <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Antes dos outros scripts -->
 </head>
 <body>
 
@@ -220,7 +219,107 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- MODAL DE VINCULAR ALUNOS À TURMA -->
+    <div class="modal-overlay" id="vincularAlunosModal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Vincular Alunos à Turma</h3>
+                <button class="modal-close" onclick="adminUsuarios.fecharModalVincularAlunos()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Turma: <strong id="turmaSelecionadaNome"></strong></label>
+                </div>
+                
+                <div class="form-group">
+                    <label>Buscar Alunos:</label>
+                    <input type="text" id="buscarAlunosTurma" class="form-control" 
+                           placeholder="Digite o nome ou matrícula do aluno...">
+                </div>
+                
+                <div class="alunos-list-container" style="max-height: 300px; overflow-y: auto;">
+                    <table class="alunos-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selecionarTodosAlunos"></th>
+                                <th>Nome</th>
+                                <th>Matrícula</th>
+                                <th>Email</th>
+                                <th>Turma Atual</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaAlunosTurma">
+                            <!-- Preenchido via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="button" class="btn-primary" onclick="adminUsuarios.vincularAlunosSelecionados()">
+                        <i class="fas fa-link"></i> Vincular Alunos Selecionados
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="adminUsuarios.fecharModalVincularAlunos()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA VINCULAR ALUNO A TURMAS -->
+    <div class="modal-overlay" id="vincularTurmaAlunoModal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-link"></i> Vincular Aluno a Turmas</h3>
+                <button class="modal-close" onclick="adminUsuarios.fecharModalVincularTurmaAluno()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Aluno: <strong id="alunoSelecionadoNome"></strong></label>
+                </div>
+                
+                <div class="form-group">
+                    <label>Turmas Disponíveis:</label>
+                    <div class="select-all-container">
+                        <input type="checkbox" id="selecionarTodasTurmas">
+                        <label for="selecionarTodasTurmas">Selecionar todas as turmas</label>
+                    </div>
+                </div>
+                
+                <div class="turmas-list-container" style="max-height: 300px; overflow-y: auto;">
+                    <table class="turmas-table">
+                        <thead>
+                            <tr>
+                                <th>Selecionar</th>
+                                <th>Nome da Turma</th>
+                                <th>Curso</th>
+                                <th>Período</th>
+                                <th>Alunos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaTurmasAluno">
+                            <!-- Preenchido via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="button" class="btn-primary" onclick="adminUsuarios.vincularAlunoATurmas()">
+                        <i class="fas fa-link"></i> Vincular às Turmas Selecionadas
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="adminUsuarios.fecharModalVincularTurmaAluno()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // 🔧 VERIFICAR SE É ADMIN
         document.addEventListener('DOMContentLoaded', function() {
@@ -238,8 +337,8 @@
             document.getElementById('mobileUserName').textContent = user.nome;
             document.getElementById('mobileNavUser').textContent = user.nome;
 
-            // Carregar usuários
-            adminUsuarios.carregarUsuarios();
+            // Inicializar AdminUsuarios
+            adminUsuarios.init();
             
             // Configurar busca
             document.getElementById('searchUsers').addEventListener('input', (e) => {
@@ -257,32 +356,33 @@
                 adminUsuarios.salvarEdicao();
             });
         });
-         function toggleMenu() {
-        const nav = document.getElementById('mobileNav');
-        nav.classList.toggle('active');
-    }
-
-    function closeMenu() {
-        const nav = document.getElementById('mobileNav');
-        nav.classList.remove('active');
-    }
-
-    // Fechar menu ao clicar fora
-    document.addEventListener('click', function(event) {
-        const nav = document.getElementById('mobileNav');
-        const hamburger = document.querySelector('.menu-hamburger');
         
-        if (nav.classList.contains('active') && 
-            !nav.contains(event.target) && 
-            !hamburger.contains(event.target)) {
+        function toggleMenu() {
+            const nav = document.getElementById('mobileNav');
+            nav.classList.toggle('active');
+        }
+
+        function closeMenu() {
+            const nav = document.getElementById('mobileNav');
             nav.classList.remove('active');
         }
-    });
 
-    // Fechar menu ao clicar em um link
-    document.querySelectorAll('.mobile-nav a').forEach(link => {
-        link.addEventListener('click', closeMenu);
-    });
+        // Fechar menu ao clicar fora
+        document.addEventListener('click', function(event) {
+            const nav = document.getElementById('mobileNav');
+            const hamburger = document.querySelector('.menu-hamburger');
+            
+            if (nav.classList.contains('active') && 
+                !nav.contains(event.target) && 
+                !hamburger.contains(event.target)) {
+                nav.classList.remove('active');
+            }
+        });
+
+        // Fechar menu ao clicar em um link
+        document.querySelectorAll('.mobile-nav a').forEach(link => {
+            link.addEventListener('click', closeMenu);
+        });
     </script>
 </body>
 </html>

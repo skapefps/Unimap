@@ -300,6 +300,28 @@ class AdminManager {
         console.log('🔄 Recarregando dashboard...');
         await this.loadDashboardData();
     }
+    // No admin.js - adicione esta função
+async atualizarTurmaUsuario(usuarioId, turma) {
+    try {
+        const response = await fetch(`/api/usuarios/${usuarioId}/turma`, {
+            method: 'PUT',
+            headers: this.getHeaders(),
+            body: JSON.stringify({ turma })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            this.mostrarMensagem('Turma do usuário atualizada com sucesso!', 'success');
+            this.carregarUsuarios();
+        } else {
+            throw new Error(data.error || 'Erro ao atualizar turma');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao atualizar turma:', error);
+        this.mostrarMensagem('Erro ao atualizar turma: ' + error.message, 'error');
+    }
+}
 }
 
 // Inicializar admin
@@ -314,4 +336,5 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('- UserData:', localStorage.getItem('userData'));
         adminManager.carregarUsuarios();
     };
+    
 });

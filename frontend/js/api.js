@@ -212,6 +212,78 @@ async login(dadosLogin) {
             method: 'DELETE'
         });
     }
+
+    // 👨‍🏫 FUNÇÕES DO PROFESSOR
+    async getMinhasAulas() {
+        try {
+            const token = localStorage.getItem('authToken');
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            
+            const response = await fetch('/api/aulas/usuario/' + userData.id, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const aulas = await response.json();
+                return { success: true, data: aulas };
+            } else {
+                const error = await response.json();
+                return { success: false, error: error.error };
+            }
+        } catch (error) {
+            console.error('Erro ao carregar aulas:', error);
+            return { success: false, error: 'Erro de conexão' };
+        }
+    }
+    // 🔥 NOVA FUNÇÃO ESPECÍFICA PARA PROFESSORES
+    async getMinhasAulasProfessor() {
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('/api/professor/minhas-aulas', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const aulas = await response.json();
+                return { success: true, data: aulas };
+            } else {
+                const error = await response.json();
+                return { success: false, error: error.error };
+            }
+        } catch (error) {
+            console.error('Erro ao carregar aulas do professor:', error);
+            return { success: false, error: 'Erro de conexão' };
+        }
+    }
+    // 🎓 FUNÇÕES DE CURSOS - CORRIGIDAS
+    async getCursos() {
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('/api/cursos', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const cursos = await response.json();
+                return { success: true, data: cursos };
+            } else {
+                const error = await response.json();
+                return { success: false, error: error.error };
+            }
+        } catch (error) {
+            console.error('Erro ao carregar cursos:', error);
+            return { success: false, error: 'Erro de conexão' };
+        }
+    }
 }
 
 // ✅ INSTÂNCIA GLOBAL

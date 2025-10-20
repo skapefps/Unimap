@@ -2657,3 +2657,1049 @@ main {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+/* ==================== ESTILOS PARA PROFESSORES ==================== */
+
+/* Container principal de professores */
+.professores-tabs {
+    display: flex;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 20px;
+    background: white;
+    border-radius: 10px 10px 0 0;
+    padding: 0 20px;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 15px 25px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.tab-btn:hover {
+    color: #3498db;
+    background: #f8f9fa;
+}
+
+.tab-btn.active {
+    color: #3498db;
+    border-bottom-color: #3498db;
+    background: #f8f9fa;
+}
+
+.tab-content {
+    display: none;
+    padding: 20px;
+    background: white;
+    border-radius: 0 0 10px 10px;
+    min-height: 400px;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Cards de professores */
+.professores-list {
+    display: grid;
+    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.professor-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid #e8e8e8;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.professor-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    border-color: #3498db;
+}
+
+.professor-card.favorite-card {
+    border-left: 4px solid #3498db;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.professor-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.professor-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.professor-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.professor-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 5px 0;
+    line-height: 1.3;
+}
+
+.professor-email {
+    font-size: 13px;
+    color: #7f8c8d;
+    margin: 0;
+    word-break: break-all;
+}
+
+.btn-remove-favorite {
+    background: #e74c3c;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.btn-remove-favorite:hover {
+    background: #c0392b;
+    transform: scale(1.1);
+}
+
+.professor-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid #3498db;
+    color: #3498db;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-outline:hover {
+    background: #3498db;
+    color: white;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 11px;
+}
+
+/* Formulário de adicionar professor */
+.add-professor-form {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.form-group.select-with-icon {
+    margin-bottom: 20px;
+}
+
+.form-group.select-with-icon label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-group.select-with-icon label i {
+    color: #3498db;
+    width: 16px;
+    text-align: center;
+}
+
+.select-shadow {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e8e8e8;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 16px;
+}
+
+.select-shadow:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* Estados vazios */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #7f8c8d;
+}
+
+.empty-state i {
+    margin-bottom: 20px;
+    color: #bdc3c7;
+}
+
+.empty-state p {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.empty-state-subtitle {
+    font-size: 14px !important;
+    color: #95a5a6 !important;
+}
+
+.empty-state.error {
+    color: #e74c3c;
+}
+
+.empty-state.error i {
+    color: #e74c3c;
+}
+
+/* Mensagens flutuantes */
+.mensagem-flutuante {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+    max-width: 400px;
+}
+
+.mensagem-flutuante.show {
+    transform: translateX(0);
+}
+
+.mensagem-conteudo {
+    background: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    border-left: 4px solid #3498db;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideInRight 0.3s ease;
+}
+
+.mensagem-success .mensagem-conteudo {
+    border-left-color: #27ae60;
+    color: #27ae60;
+}
+
+.mensagem-error .mensagem-conteudo {
+    border-left-color: #e74c3c;
+    color: #e74c3c;
+}
+
+.mensagem-warning .mensagem-conteudo {
+    border-left-color: #f39c12;
+    color: #f39c12;
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .professores-tabs {
+        flex-direction: column;
+        padding: 0;
+    }
+    
+    .tab-btn {
+        padding: 12px 20px;
+        border-bottom: 1px solid #e0e0e0;
+        border-radius: 0;
+    }
+    
+    .professores-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .professor-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .professor-avatar {
+        align-self: center;
+    }
+    
+    .add-professor-form {
+        padding: 20px;
+        margin: 0 10px;
+    }
+    
+    .mensagem-flutuante {
+        left: 10px;
+        right: 10px;
+        max-width: none;
+    }
+}
+
+/* Melhorias para dark mode (opcional) */
+@media (prefers-color-scheme: dark) {
+    .professor-card {
+        background: #2c3e50;
+        border-color: #34495e;
+        color: #ecf0f1;
+    }
+    
+    .professor-name {
+        color: #ecf0f1;
+    }
+    
+    .professor-email {
+        color: #bdc3c7;
+    }
+    
+    .tab-btn {
+        color: #bdc3c7;
+    }
+    
+    .tab-btn:hover {
+        background: #34495e;
+    }
+    
+    .select-shadow {
+        background-color: #34495e;
+        border-color: #4a5f7a;
+        color: #ecf0f1;
+    }
+}
+/* Botão de largura total */
+.btn-full {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+/* Melhorias para formulários mobile */
+@media (max-width: 768px) {
+    .add-professor-form {
+        padding: 15px;
+    }
+    
+    .form-group.select-with-icon {
+        margin-bottom: 15px;
+    }
+    
+    .select-shadow {
+        padding: 10px 12px;
+    }
+}
+
+/* Estados de loading */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+/* ==================== ALERTA DE DETALHES DOS PROFESSORES ==================== */
+
+/* Overlay do alerta */
+.professor-alert-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.professor-alert-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Container principal do alerta */
+.professor-alert {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 85vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.professor-alert-overlay.show .professor-alert {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+/* Header do alerta */
+.professor-alert-header {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    padding: 25px 30px 20px;
+    position: relative;
+}
+
+.professor-alert-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.professor-alert-title i {
+    font-size: 24px;
+}
+
+.professor-alert-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 16px;
+}
+
+.professor-alert-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+/* Conteúdo do alerta */
+.professor-alert-content {
+    padding: 30px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Informações do professor */
+.professor-details {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.professor-detail-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #3498db;
+}
+
+.professor-detail-icon {
+    width: 40px;
+    height: 40px;
+    background: #3498db;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.professor-detail-content {
+    flex: 1;
+}
+
+.professor-detail-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.professor-detail-value {
+    font-size: 16px;
+    font-weight: 500;
+    color: #2c3e50;
+    margin: 0;
+}
+
+/* Estatísticas */
+.professor-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin: 25px 0;
+}
+
+.professor-stat-card {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.professor-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.professor-stat-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: #3498db;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.professor-stat-label {
+    font-size: 12px;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+/* Aulas do professor */
+.professor-aulas-section {
+    margin-top: 25px;
+}
+
+.professor-section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.professor-aulas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.professor-aula-item {
+    background: white;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 12px 15px;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.professor-aula-item:hover {
+    border-color: #3498db;
+    background: #f8fafc;
+}
+
+.professor-aula-info {
+    flex: 1;
+}
+
+.professor-aula-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #2c3e50;
+    margin: 0 0 4px 0;
+}
+
+.professor-aula-details {
+    font-size: 12px;
+    color: #7f8c8d;
+    margin: 0;
+}
+
+.professor-aula-horario {
+    background: #3498db;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Footer do alerta */
+.professor-alert-footer {
+    padding: 20px 30px;
+    background: #f8f9fa;
+    border-top: 1px solid #e8e8e8;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.professor-alert-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.professor-alert-btn-primary {
+    background: #3498db;
+    color: white;
+}
+
+.professor-alert-btn-primary:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+}
+
+.professor-alert-btn-outline {
+    background: transparent;
+    border: 1px solid #bdc3c7;
+    color: #7f8c8d;
+}
+
+.professor-alert-btn-outline:hover {
+    border-color: #3498db;
+    color: #3498db;
+}
+
+/* Estados especiais */
+.professor-status-active {
+    color: #27ae60;
+    font-weight: 600;
+}
+
+.professor-status-inactive {
+    color: #e74c3c;
+    font-weight: 600;
+}
+
+.professor-badge {
+    background: #e74c3c;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+/* Animações */
+@keyframes alertSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes alertSlideOut {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.8) translateY(-20px);
+    }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .professor-alert {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .professor-alert-header {
+        padding: 20px 25px 15px;
+    }
+    
+    .professor-alert-title {
+        font-size: 20px;
+    }
+    
+    .professor-alert-content {
+        padding: 20px;
+    }
+    
+    .professor-detail-group {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .professor-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .professor-alert-footer {
+        flex-direction: column;
+    }
+    
+    .professor-alert-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .professor-alert-header {
+        padding: 15px 20px 10px;
+    }
+    
+    .professor-alert-title {
+        font-size: 18px;
+    }
+    
+    .professor-alert-content {
+        padding: 15px;
+    }
+    
+    .professor-detail-group {
+        padding: 12px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .professor-alert {
+        background: #2c3e50;
+        color: #ecf0f1;
+    }
+    
+    .professor-alert-header {
+        background: linear-gradient(135deg, #2980b9, #1f618d);
+    }
+    
+    .professor-detail-group {
+        background: #34495e;
+        border-left-color: #3498db;
+    }
+    
+    .professor-detail-value {
+        color: #ecf0f1;
+    }
+    
+    .professor-stat-card {
+        background: linear-gradient(135deg, #34495e, #2c3e50);
+        border-color: #4a5f7a;
+    }
+    
+    .professor-aula-item {
+        background: #34495e;
+        border-color: #4a5f7a;
+        color: #ecf0f1;
+    }
+    
+    .professor-aula-item:hover {
+        background: #3d566e;
+        border-color: #3498db;
+    }
+    
+    .professor-alert-footer {
+        background: #34495e;
+        border-top-color: #4a5f7a;
+    }
+    
+    .professor-alert-btn-outline {
+        border-color: #5d6d7e;
+        color: #bdc3c7;
+    }
+    
+    .professor-alert-btn-outline:hover {
+        border-color: #3498db;
+        color: #3498db;
+    }
+}
+
+/* Scrollbar personalizada */
+.professor-alert-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.professor-alert-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.professor-alert-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.professor-alert-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Efeitos de foco para acessibilidade */
+.professor-alert-close:focus,
+.professor-alert-btn:focus {
+    outline: 2px solid #3498db;
+    outline-offset: 2px;
+}
+
+/* Loading state */
+.professor-alert.loading .professor-alert-content {
+    position: relative;
+    min-height: 200px;
+}
+
+.professor-alert.loading .professor-alert-content::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+/* ==================== ESTILOS PARA TURMAS ==================== */
+
+.turmas-list {
+    display: grid;
+    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+}
+
+.turma-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid #e8e8e8;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.turma-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+
+.turma-card.disponivel {
+    border-left: 4px solid #27ae60;
+    background: linear-gradient(135deg, #ffffff 0%, #f0f9f0 100%);
+}
+
+.turma-header {
+    display: flex;
+    justify-content: between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.turma-disciplina {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+    flex: 1;
+}
+
+.btn-remove-turma,
+.btn-add-turma {
+    background: #e74c3c;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.btn-add-turma {
+    background: #27ae60;
+}
+
+.btn-remove-turma:hover {
+    background: #c0392b;
+    transform: scale(1.1);
+}
+
+.btn-add-turma:hover {
+    background: #219653;
+    transform: scale(1.1);
+}
+
+.turma-info {
+    margin-bottom: 15px;
+}
+
+.turma-info p {
+    margin: 5px 0;
+    font-size: 13px;
+    color: #555;
+}
+
+.turma-info strong {
+    color: #2c3e50;
+}
+
+.turma-status {
+    margin-top: 10px;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-cursando {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-concluido {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-trancado {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.turma-actions {
+    margin-top: 15px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .turmas-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .turma-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .turma-disciplina {
+        text-align: center;
+    }
+}

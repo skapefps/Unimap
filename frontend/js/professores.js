@@ -1,351 +1,242 @@
-// professores.js - Versão CORRIGIDA
+// professores.js - Gerenciador de Professores COMPLETO
 class ProfessoresManager {
     constructor() {
+        console.log('👨‍🏫 ProfessoresManager inicializado');
         this.user = null;
         this.professores = [];
         this.favoritos = [];
-        console.log('👨‍🏫 ProfessoresManager inicializado');
+        this.init();
     }
 
-    async init() {
-    console.log('🎯 Iniciando ProfessoresManager...');
-    await this.checkAuth();
-    await this.loadProfessores();
-    await this.loadMeusProfessores(); // ✅ ADICIONAR ESTA LINHA - carregar favoritos também
-    this.setupProfessorSelection();
-    this.setupEventListeners();
-    this.updateUserInfo();
-}
+    init() {
+        console.log('🎯 Iniciando ProfessoresManager...');
+        this.carregarUsuario();
+        this.carregarProfessores();
+        this.configurarEventListeners();
+    }
 
-    async checkAuth() {
-        // Use as mesmas chaves do auth.js
+    carregarUsuario() {
+        console.log('🔐 Verificando autenticação...');
         const userData = localStorage.getItem('userData');
-        const token = localStorage.getItem('authToken');
-        
-        console.log('🔐 Verificando autenticação...', { 
-            userData: !!userData, 
-            token: !!token 
-        });
-        
-        if (userData && token) {
-            try {
-                this.user = JSON.parse(userData);
-                console.log('✅ Usuário carregado:', this.user.nome);
-            } catch (error) {
-                console.error('❌ Erro ao carregar usuário:', error);
-            }
+        if (userData) {
+            this.user = JSON.parse(userData);
+            console.log('✅ Usuário carregado:', this.user.nome);
+            this.atualizarInterfaceUsuario();
         } else {
-            console.log('⚠️ Usuário não autenticado');
+            console.log('❌ Usuário não autenticado');
         }
     }
 
-    updateUserInfo() {
+    atualizarInterfaceUsuario() {
         console.log('📝 Atualizando informações do usuário na interface...');
-        
-        // Atualizar nome do usuário na interface se os elementos existirem
-        const mobileUserName = document.getElementById('mobileUserName');
-        const desktopUserName = document.getElementById('desktopUserName');
-        const navUser = document.querySelector('.nav-user');
-        
-        if (this.user) {
-            if (mobileUserName) mobileUserName.textContent = this.user.nome;
-            if (desktopUserName) desktopUserName.textContent = this.user.nome;
-            if (navUser) navUser.textContent = this.user.nome;
-        }
+        const userNameElements = document.querySelectorAll('#mobileUserName, #desktopUserName, .nav-user');
+        userNameElements.forEach(element => {
+            if (element) {
+                element.textContent = this.user.nome;
+            }
+        });
     }
 
-    async loadProfessores() {
+    async carregarProfessores() {
         try {
             console.log('📚 Carregando professores da API...');
             
             const token = localStorage.getItem('authToken');
             const response = await fetch('/api/professores', {
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 }
             });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+            if (response.ok) {
+                this.professores = await response.json();
+                console.log('✅ Professores carregados:', this.professores.length);
+                this.renderizarProfessores();
+            } else {
+                console.error('❌ Erro ao carregar professores:', response.status);
+                this.mostrarErro('Erro ao carregar professores');
             }
-            
-            const professores = await response.json();
-            this.professores = professores;
-            
-            console.log('✅ Professores carregados:', professores.length);
-            this.renderProfessoresDisponiveis();
-            this.populateProfessorSelect();
-            
         } catch (error) {
-            console.error('❌ Erro ao carregar professores:', error);
-            this.useFallbackData();
+            console.error('❌ Erro na requisição:', error);
+            this.mostrarErro('Erro de conexão');
         }
     }
 
-    useFallbackData() {
-        this.professores = [
-            { id: 1, nome: 'João Silva', email: 'joao.silva@unipam.edu.br', ativo: true },
-            { id: 2, nome: 'Maria Santos', email: 'maria.santos@unipam.edu.br', ativo: true },
-            { id: 3, nome: 'Pedro Costa', email: 'pedro.costa@unipam.edu.br', ativo: true }
-        ];
+    renderizarProfessores() {
+        // Renderizar lista de professores para adicionar
+        this.renderizarListaProfessores();
         
-        this.renderProfessoresDisponiveis();
-        this.populateProfessorSelect();
-        this.showMessage('Usando dados de exemplo (API offline)', 'info');
+        // Carregar professores favoritos
+        this.carregarProfessoresFavoritos();
     }
 
-    async loadMeusProfessores() {
-    try {
-        if (!this.user) {
-            console.log('⚠️ Sem usuário para carregar favoritos');
-            return;
-        }
-        
-        console.log('⭐ Carregando professores favoritos...');
-        
-        const token = localStorage.getItem('authToken');
-        const response = await fetch(`${api.baseURL}/professores/favoritos/${this.user.id}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        if (response.ok) {
-            const favoritos = await response.json();
-            this.favoritos = favoritos;
-            console.log('✅ Favoritos carregados do banco:', favoritos.length);
-            
-            // ✅ ATUALIZAR: Mostrar apenas os favoritos na aba "Meus Professores"
-            this.renderAbaMeusProfessores(favoritos);
-        } else {
-            console.log('ℹ️ Nenhum favorito encontrado no banco');
-            this.renderAbaMeusProfessores([]); // Mostrar lista vazia
-        }
-        
-    } catch (error) {
-        console.error('❌ Erro ao carregar favoritos:', error);
-        this.renderAbaMeusProfessores([]); // Mostrar lista vazia em caso de erro
-    }
-}
-
-// ✅ NOVA FUNÇÃO: Renderizar apenas na aba "Meus Professores"
-renderAbaMeusProfessores(favoritos) {
-    const container = document.querySelector('#meus-professores .professores-list');
-    if (!container) return;
-
-    if (!favoritos || favoritos.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-user-friends fa-3x"></i>
-                <p>Nenhum professor favorito</p>
-                <p class="empty-subtitle">Adicione professores aos favoritos</p>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = favoritos.map(professor => `
-        <div class="professor-card favorito">
-            <div class="professor-header">
-                <h4>${professor.nome}</h4>
-                <span class="favorito-badge">
-                    Favorito
-                </span>
-            </div>
-            <div class="professor-info">
-                <p><strong>Email:</strong> ${professor.email}</p>
-                <p><strong>Status:</strong> ${professor.ativo ? 'Ativo' : 'Inativo'}</p>
-            </div>
-            <div class="professor-actions">
-                <button class="btn-action small" onclick="professoresManager.verDetalhesProfessor(${professor.id})">
-                    <i class="fas fa-info-circle"></i> Detalhes
-                </button>
-                <button class="btn-action small danger" onclick="professoresManager.removerDosFavoritos(${professor.id})">
-                    <i class="fas fa-trash"></i> Remover
-                </button>
-            </div>
-        </div>
-    `).join('');
-}
-
-    // Na função renderProfessoresDisponiveis() - REMOVA as estrelas
-renderProfessoresDisponiveis() {
-    const container = document.querySelector('#meus-professores .professores-list');
-    if (!container) return;
-
-    if (this.professores.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-chalkboard-teacher fa-3x"></i>
-                <p>Nenhum professor encontrado</p>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = this.professores.map(professor => `
-        <div class="professor-card">
-            <div class="professor-header">
-                <h4>${professor.nome}</h4>
-                <button class="btn-favorito" onclick="professoresManager.adicionarAosFavoritos(${professor.id})">
-                    Adicionar aos favoritos  <!-- ✅ SEM ESTRELA -->
-                </button>
-            </div>
-            <div class="professor-info">
-                <p><strong>Email:</strong> ${professor.email}</p>
-                <p><strong>Status:</strong> ${professor.ativo ? 'Ativo' : 'Inativo'}</p>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Na função renderMeusProfessores() - REMOVA as estrelas
-renderMeusProfessores(professores) {
-    const container = document.querySelector('#meus-professores .professores-list');
-    if (!container) return;
-
-    if (!professores || professores.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-user-friends fa-3x"></i>  <!-- ✅ ÍCONE DIFERENTE -->
-                <p>Nenhum professor favorito</p>
-                <p class="empty-subtitle">Adicione professores aos favoritos</p>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = professores.map(professor => `
-        <div class="professor-card favorito">
-            <div class="professor-header">
-                <h4>${professor.nome}</h4>
-                <span class="favorito-badge">
-                    Favorito  <!-- ✅ SEM ESTRELA -->
-                </span>
-            </div>
-            <div class="professor-info">
-                <p><strong>Email:</strong> ${professor.email}</p>
-                <p><strong>Status:</strong> ${professor.ativo ? 'Ativo' : 'Inativo'}</p>
-            </div>
-            <div class="professor-actions">
-                <button class="btn-action small" onclick="professoresManager.verDetalhesProfessor(${professor.id})">
-                    <i class="fas fa-info-circle"></i> Detalhes
-                </button>
-                <button class="btn-action small danger" onclick="professoresManager.removerDosFavoritos(${professor.id})">
-                    <i class="fas fa-trash"></i> Remover
-                </button>
-            </div>
-        </div>
-    `).join('');
-}
-    populateProfessorSelect() {
-        console.log('🔍 Procurando select de professores...');
-        
-        // Tentar diferentes seletores
-        const select = document.getElementById('professor-select') || 
-                       document.querySelector('#adicionar-professor select:nth-child(3)') ||
-                       document.querySelector('#adicionar-professor select:last-child');
-        
+    renderizarListaProfessores() {
+        const select = document.getElementById('professor-select');
         if (!select) {
-            console.log('❌ Nenhum select de professores encontrado');
-            console.log('📋 Selects disponíveis:', document.querySelectorAll('#adicionar-professor select'));
+            console.log('❌ Container de professores não encontrado');
             return;
         }
-        
-        console.log('✅ Select encontrado:', select);
-        
-        // Salvar a primeira opção (placeholder)
-        const placeholder = select.querySelector('option') ? select.querySelector('option').textContent : 'Selecione o professor';
-        
-        // Popular com professores
-        select.innerHTML = `<option value="">${placeholder}</option>` +
-            this.professores.map(prof => 
-                `<option value="${prof.id}">${prof.nome}</option>`
-            ).join('');
-        
-        console.log('✅ Select populado com', this.professores.length, 'professores');
-    }
 
-    setupProfessorSelection() {
-        console.log('🎯 Configurando seleção de professores...');
-        
-        // Aguardar um pouco para garantir que o DOM está pronto
-        setTimeout(() => {
-            this.populateProfessorSelect();
-            
-            // Se ainda não encontrou, tentar novamente após 1 segundo
-            if (!document.querySelector('#adicionar-professor select option[value]')) {
-                console.log('🔄 Tentando novamente popular select...');
-                setTimeout(() => this.populateProfessorSelect(), 1000);
-            }
-        }, 100);
-    }
-
-    setupEventListeners() {
-        console.log('🔧 Configurando event listeners...');
-        
-        const form = document.querySelector('.add-professor-form');
-        if (form) {
-            form.addEventListener('submit', (e) => this.handleAdicionarProfessor(e));
-            console.log('✅ Formulário de adicionar professor configurado');
-        } else {
-            console.log('❌ Formulário de adicionar professor não encontrado');
+        // Limpar opções existentes (mantendo a primeira)
+        while (select.options.length > 1) {
+            select.remove(1);
         }
-    }
 
-    async handleAdicionarProfessor(e) {
-        e.preventDefault();
-        console.log('➕ Processando adição de professor...');
-        
-        // CORREÇÃO: Usar o select correto
-        const professorSelect = document.getElementById('professor-select');
-        
-        if (!professorSelect) {
-            console.error('❌ Select de professores não encontrado');
-            this.showMessage('Erro: Select de professores não encontrado', 'error');
+        if (this.professores.length === 0) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'Nenhum professor disponível';
+            select.appendChild(option);
             return;
         }
-        
-        const professorId = professorSelect.value;
-        console.log('📋 Professor selecionado:', professorId);
 
-        if (!professorId) {
-            this.showMessage('Selecione um professor!', 'error');
-            return;
-        }
+        this.professores.forEach(professor => {
+            const option = document.createElement('option');
+            option.value = professor.id;
+            option.textContent = `${professor.nome} - ${professor.email}`;
+            select.appendChild(option);
+        });
+
+        console.log('✅ Lista de professores renderizada');
+    }
+
+    async carregarProfessoresFavoritos() {
+        if (!this.user) return;
 
         try {
-            await this.adicionarAosFavoritos(parseInt(professorId));
-            
-            // Limpar formulário
-            if (e.target.reset) e.target.reset();
-            // Resetar o select
-            professorSelect.selectedIndex = 0;
-            
-        } catch (error) {
-            this.showMessage(error.message, 'error');
-        }
-    }
-
-    async adicionarAosFavoritos(professorId) {
-        try {
-            if (!this.user) {
-                this.showMessage('Faça login para adicionar favoritos', 'error');
-                return;
-            }
-
-            console.log('➕ Adicionando professor aos favoritos:', professorId);
+            console.log('⭐ Carregando professores favoritos...');
             
             const token = localStorage.getItem('authToken');
-            if (!token) {
-                throw new Error('Token de autenticação não encontrado');
+            const response = await fetch(`/api/professores/favoritos/${this.user.id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                this.favoritos = await response.json();
+                console.log('✅ Favoritos carregados:', this.favoritos.length);
+                this.renderizarProfessoresFavoritos();
+            } else {
+                console.error('❌ Erro ao carregar favoritos:', response.status);
             }
+        } catch (error) {
+            console.error('❌ Erro ao carregar favoritos:', error);
+        }
+    }
+
+    renderizarProfessoresFavoritos() {
+        const container = document.querySelector('#meus-professores .professores-list');
+        if (!container) {
+            console.log('❌ Container de favoritos não encontrado');
+            return;
+        }
+
+        if (this.favoritos.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-user-plus fa-3x"></i>
+                    <p>Nenhum professor favorito</p>
+                    <p class="empty-state-subtitle">Adicione professores na aba "Adicionar Professor"</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = this.favoritos.map(professor => `
+            <div class="professor-card favorite-card" data-professor-id="${professor.id}">
+                <div class="professor-header">
+                    <div class="professor-avatar">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div class="professor-info">
+                        <h3 class="professor-name">${professor.nome}</h3>
+                        <p class="professor-email">${professor.email}</p>
+                    </div>
+                    <button class="btn-remove-favorite" onclick="professoresManager.removerFavorito(${professor.id})" 
+                            title="Remover dos favoritos">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="professor-actions">
+                    <button class="btn-outline btn-sm" onclick="professoresManager.verDetalhesProfessor(${professor.id})">
+                        <i class="fas fa-info-circle"></i> Ver Detalhes
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        console.log('✅ Professores favoritos renderizados');
+    }
+
+    configurarEventListeners() {
+        console.log('🔧 Configurando event listeners...');
+        
+        // Configurar formulário de adicionar professor
+        const form = document.querySelector('.add-professor-form');
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('📝 Formulário submetido - Adicionar professor');
+                this.adicionarProfessorFavorito();
+                return false;
+            });
+        }
+
+        // Configurar botão diretamente também
+        const btnAdicionar = document.querySelector('.add-professor-form .btn-primary');
+        if (btnAdicionar) {
+            btnAdicionar.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🖱️ Botão adicionar clicado');
+                this.adicionarProfessorFavorito();
+                return false;
+            });
+        }
+    }
+
+    // 🔥 FUNÇÃO PRINCIPAL PARA CARREGAR PROFESSORES
+    loadMeusProfessores() {
+        console.log('👨‍🏫 Carregando meus professores...');
+        this.carregarProfessoresFavoritos();
+    }
+
+    async adicionarProfessorFavorito() {
+        console.log('⭐ Iniciando adição de professor aos favoritos...');
+        
+        const select = document.getElementById('professor-select');
+        if (!select) {
+            console.error('❌ Select de professores não encontrado');
+            this.mostrarMensagem('Erro: Select de professores não encontrado', 'error');
+            return;
+        }
+
+        const professorId = select.value;
+        console.log('🎯 Professor selecionado ID:', professorId);
+
+        if (!professorId) {
+            this.mostrarMensagem('Por favor, selecione um professor', 'warning');
+            return;
+        }
+
+        if (!this.user) {
+            this.mostrarMensagem('Usuário não autenticado', 'error');
+            return;
+        }
+
+        try {
+            console.log('📤 Enviando requisição para adicionar favorito...');
             
-            const response = await fetch(`${api.baseURL}/professores/favoritos`, {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('/api/professores/favoritos', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     aluno_id: this.user.id,
@@ -355,226 +246,340 @@ renderMeusProfessores(professores) {
 
             const data = await response.json();
 
-            if (response.ok) {
-                this.showMessage('Professor adicionado aos favoritos!', 'success');
-                await this.loadMeusProfessores();
+            if (response.ok && data.success) {
+                console.log('✅ Professor adicionado aos favoritos!');
+                this.mostrarMensagem('Professor adicionado aos favoritos!', 'success');
+                
+                // Recarregar a lista de favoritos
+                this.carregarProfessoresFavoritos();
+                
+                // Limpar seleção
+                select.value = '';
+                
+                // Manter na mesma aba
+                this.manterNaAbaAtual();
+                
             } else {
-                throw new Error(data.error || 'Erro ao adicionar favorito');
+                const errorMsg = data.error || 'Erro ao adicionar professor';
+                console.error('❌ Erro na resposta:', errorMsg);
+                throw new Error(errorMsg);
             }
         } catch (error) {
-            console.error('Erro ao adicionar favorito:', error);
-            this.showMessage('Erro ao adicionar favorito: ' + error.message, 'error');
+            console.error('❌ Erro ao adicionar favorito:', error);
+            this.mostrarMensagem('Erro ao adicionar professor: ' + error.message, 'error');
         }
     }
 
-    async removerDosFavoritos(professorId) {
-        try {
-            if (!this.user) {
-                this.showMessage('Faça login para remover favoritos', 'error');
-                return;
-            }
+    async removerFavorito(professorId) {
+        if (!this.user) {
+            this.mostrarMensagem('Usuário não autenticado', 'error');
+            return;
+        }
 
-            console.log('🗑️ Removendo professor dos favoritos:', professorId);
+        if (!confirm('Tem certeza que deseja remover este professor dos favoritos?')) {
+            return;
+        }
+
+        try {
+            console.log('🗑️ Removendo professor dos favoritos...');
             
             const token = localStorage.getItem('authToken');
-            if (!token) {
-                throw new Error('Token de autenticação não encontrado');
-            }
-            
-            const response = await fetch(`${api.baseURL}/professores/favoritos/${this.user.id}/${professorId}`, {
+            const response = await fetch(`/api/professores/favoritos/${this.user.id}/${professorId}`, {
                 method: 'DELETE',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 }
             });
 
-            if (response.ok) {
-                this.showMessage('Professor removido dos favoritos!', 'success');
-                await this.loadMeusProfessores();
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                console.log('✅ Professor removido dos favoritos!');
+                this.mostrarMensagem('Professor removido dos favoritos!', 'success');
+                
+                // Recarregar a lista de favoritos
+                this.carregarProfessoresFavoritos();
+                
             } else {
-                const data = await response.json();
-                throw new Error(data.error || 'Erro ao remover favorito');
+                const errorMsg = data.error || 'Erro ao remover professor';
+                throw new Error(errorMsg);
             }
         } catch (error) {
-            console.error('Erro ao remover favorito:', error);
-            this.showMessage('Erro ao remover professor: ' + error.message, 'error');
+            console.error('❌ Erro ao remover favorito:', error);
+            this.mostrarMensagem('Erro ao remover professor: ' + error.message, 'error');
         }
     }
 
     verDetalhesProfessor(professorId) {
-        const professor = this.professores.find(p => p.id === professorId);
-        if (professor) {
-            this.mostrarModalDetalhes(professor);
+    console.log('📖 Ver detalhes do professor:', professorId);
+    
+    const professor = this.professores.find(p => p.id == professorId) || 
+                     this.favoritos.find(p => p.id == professorId);
+    
+    if (professor) {
+        this.mostrarAlertaDetalhes(professor);
+    } else {
+        this.mostrarMensagem('Professor não encontrado', 'error');
+    }
+}
+
+mostrarAlertaDetalhes(professor) {
+    // Criar overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'professor-alert-overlay';
+    overlay.innerHTML = this.gerarHTMLAlerta(professor);
+    
+    document.body.appendChild(overlay);
+    
+    // Mostrar com animação
+    setTimeout(() => {
+        overlay.classList.add('show');
+    }, 10);
+    
+    // Configurar event listeners
+    this.configurarEventListenersAlerta(overlay, professor);
+}
+
+gerarHTMLAlerta(professor) {
+    const isFavorito = this.favoritos.some(p => p.id === professor.id);
+    
+    return `
+        <div class="professor-alert">
+            <div class="professor-alert-header">
+                <h2 class="professor-alert-title">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    Detalhes do Professor
+                </h2>
+                <button class="professor-alert-close" aria-label="Fechar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="professor-alert-content">
+                <div class="professor-details">
+                    <div class="professor-detail-group">
+                        <div class="professor-detail-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="professor-detail-content">
+                            <div class="professor-detail-label">Nome Completo</div>
+                            <div class="professor-detail-value">${professor.nome}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="professor-detail-group">
+                        <div class="professor-detail-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="professor-detail-content">
+                            <div class="professor-detail-label">Email</div>
+                            <div class="professor-detail-value">${professor.email}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="professor-detail-group">
+                        <div class="professor-detail-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="professor-detail-content">
+                            <div class="professor-detail-label">Status</div>
+                            <div class="professor-detail-value professor-status-${professor.ativo ? 'active' : 'inactive'}">
+                                ${professor.ativo ? 'Ativo' : 'Inativo'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="professor-stats">
+                    <div class="professor-stat-card">
+                        <span class="professor-stat-number">${isFavorito ? '⭐' : '—'}</span>
+                        <span class="professor-stat-label">Seu Favorito</span>
+                    </div>
+                    <div class="professor-stat-card">
+                        <span class="professor-stat-number">${professor.id}</span>
+                        <span class="professor-stat-label">ID</span>
+                    </div>
+                </div>
+                
+                <div class="professor-aulas-section">
+                    <h3 class="professor-section-title">
+                        <i class="fas fa-book"></i>
+                        Informações
+                    </h3>
+                    <div class="professor-aulas-list">
+                        <div class="professor-aula-item">
+                            <div class="professor-aula-info">
+                                <p class="professor-aula-name">Disponível para contato</p>
+                                <p class="professor-aula-details">Via email institucional</p>
+                            </div>
+                            <span class="professor-aula-horario">Email</span>
+                        </div>
+                        <div class="professor-aula-item">
+                            <div class="professor-aula-info">
+                                <p class="professor-aula-name">Status no sistema</p>
+                                <p class="professor-aula-details">Professor ${professor.ativo ? 'ativo' : 'inativo'}</p>
+                            </div>
+                            <span class="professor-aula-horario">${professor.ativo ? 'Ativo' : 'Inativo'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="professor-alert-footer">
+                <button class="professor-alert-btn professor-alert-btn-outline" data-action="close">
+                    <i class="fas fa-times"></i> Fechar
+                </button>
+                ${!isFavorito ? 
+                    `<button class="professor-alert-btn professor-alert-btn-primary" data-action="favorite">
+                        <i class="fas fa-star"></i> Adicionar aos Favoritos
+                    </button>` : 
+                    `<button class="professor-alert-btn professor-alert-btn-outline" data-action="unfavorite">
+                        <i class="fas fa-trash"></i> Remover dos Favoritos
+                    </button>`
+                }
+            </div>
+        </div>
+    `;
+}
+
+configurarEventListenersAlerta(overlay, professor) {
+    // Fechar ao clicar no X
+    const closeBtn = overlay.querySelector('.professor-alert-close');
+    closeBtn.addEventListener('click', () => {
+        this.fecharAlerta(overlay);
+    });
+    
+    // Fechar ao clicar no overlay (fora do alerta)
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            this.fecharAlerta(overlay);
+        }
+    });
+    
+    // Fechar com ESC
+    const keyHandler = (e) => {
+        if (e.key === 'Escape') {
+            this.fecharAlerta(overlay);
+            document.removeEventListener('keydown', keyHandler);
+        }
+    };
+    document.addEventListener('keydown', keyHandler);
+    
+    // Ações dos botões
+    const buttons = overlay.querySelectorAll('.professor-alert-btn');
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const action = btn.dataset.action;
+            this.executarAcaoAlerta(action, professor, overlay);
+        });
+    });
+}
+
+executarAcaoAlerta(action, professor, overlay) {
+    switch(action) {
+        case 'close':
+            this.fecharAlerta(overlay);
+            break;
+        case 'favorite':
+            this.adicionarProfessorFavoritoDireto(professor.id, overlay);
+            break;
+        case 'unfavorite':
+            this.removerFavoritoDireto(professor.id, overlay);
+            break;
+    }
+}
+
+adicionarProfessorFavoritoDireto(professorId, overlay) {
+    // Simular seleção no select e chamar a função existente
+    const select = document.getElementById('professor-select');
+    if (select) {
+        select.value = professorId;
+        this.adicionarProfessorFavorito();
+        this.fecharAlerta(overlay);
+    }
+}
+
+removerFavoritoDireto(professorId, overlay) {
+    this.removerFavorito(professorId);
+    this.fecharAlerta(overlay);
+}
+
+fecharAlerta(overlay) {
+    overlay.classList.remove('show');
+    setTimeout(() => {
+        if (overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
+        }
+    }, 300);
+}
+    mostrarMensagem(mensagem, tipo = 'info') {
+        // Remover mensagens anteriores
+        const mensagensAntigas = document.querySelectorAll('.mensagem-flutuante');
+        mensagensAntigas.forEach(msg => msg.remove());
+
+        // Criar nova mensagem
+        const mensagemDiv = document.createElement('div');
+        mensagemDiv.className = `mensagem-flutuante mensagem-${tipo}`;
+        mensagemDiv.innerHTML = `
+            <div class="mensagem-conteudo">
+                <i class="fas fa-${this.getIconeMensagem(tipo)}"></i>
+                <span>${mensagem}</span>
+            </div>
+        `;
+
+        document.body.appendChild(mensagemDiv);
+
+        // Mostrar mensagem
+        setTimeout(() => {
+            mensagemDiv.classList.add('show');
+        }, 100);
+
+        // Remover após 3 segundos
+        setTimeout(() => {
+            mensagemDiv.classList.remove('show');
+            setTimeout(() => {
+                if (mensagemDiv.parentNode) {
+                    mensagemDiv.parentNode.removeChild(mensagemDiv);
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    getIconeMensagem(tipo) {
+        switch(tipo) {
+            case 'success': return 'check-circle';
+            case 'error': return 'exclamation-circle';
+            case 'warning': return 'exclamation-triangle';
+            default: return 'info-circle';
         }
     }
 
-    mostrarModalDetalhes(professor) {
-        const modalHTML = `
-            <div class="modal-overlay" onclick="this.remove()">
-                <div class="modal-content" onclick="event.stopPropagation()">
-                    <div class="modal-header">
-                        <h3>${professor.nome}</h3>
-                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="professor-detalhes">
-                            <p><strong>Email:</strong> ${professor.email}</p>
-                            <p><strong>Status:</strong> ${professor.ativo ? 'Ativo' : 'Inativo'}</p>
-                            <p><strong>Disciplinas:</strong> Em desenvolvimento...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Remover modal existente
-        document.querySelectorAll('.modal-overlay').forEach(modal => modal.remove());
-        
-        // Adicionar novo modal
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    manterNaAbaAtual() {
+        // Garantir que permaneça na aba "Adicionar Professor"
+        const abaAdicionar = document.querySelector('.tab-btn[onclick*="adicionar-professor"]');
+        if (abaAdicionar) {
+            abaAdicionar.click();
+        }
     }
-    mostrarModalDetalhes(professor) {
-    const modalHTML = `
-        <div class="modal-overlay" onclick="this.remove()">
-            <div class="modal-content" onclick="event.stopPropagation()">
-                <div class="modal-header">
-                    <h3>${professor.nome}</h3>
-                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">
-                        <i class="fas fa-times"></i>
+
+    mostrarErro(mensagem) {
+        const container = document.querySelector('#meus-professores .professores-list');
+        if (container) {
+            container.innerHTML = `
+                <div class="empty-state error">
+                    <i class="fas fa-exclamation-triangle fa-3x"></i>
+                    <p>${mensagem}</p>
+                    <button class="btn-primary" onclick="professoresManager.carregarProfessores()">
+                        <i class="fas fa-redo"></i> Tentar Novamente
                     </button>
                 </div>
-                <div class="modal-body">
-                    <div class="professor-detalhes">
-                        <p>
-                            <strong>Email:</strong> 
-                            <a href="mailto:${professor.email}" style="color: #3498db; text-decoration: none;">
-                                ${professor.email}
-                            </a>
-                        </p>
-                        <p>
-                            <strong>Status:</strong> 
-                            <span style="color: ${professor.ativo ? '#27ae60' : '#e74c3c'}; font-weight: 600;">
-                                ${professor.ativo ? '🟢 Ativo' : '🔴 Inativo'}
-                            </span>
-                        </p>
-                        <p>
-                            <strong>Disponibilidade:</strong> 
-                            Segunda a Sexta, 08:00-18:00
-                        </p>
-                        <p>
-                            <strong>Área de Atuação:</strong> 
-                            Desenvolvimento Web, Banco de Dados
-                        </p>
-                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-                            <strong style="color: #2c3e50;">Informações de Contato:</strong>
-                            <p style="margin: 8px 0; color: #666;">
-                                <i class="fas fa-building" style="color: #3498db; width: 16px;"></i>
-                                Bloco A, Sala 205
-                            </p>
-                            <p style="margin: 8px 0; color: #666;">
-                                <i class="fas fa-clock" style="color: #3498db; width: 16px;"></i>
-                                Atendimento: 13:00-14:00
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Remover modal existente
-    document.querySelectorAll('.modal-overlay').forEach(modal => modal.remove());
-    
-    // Adicionar novo modal
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-}
-
-    showMessage(message, type = 'info') {
-    console.log(`${type.toUpperCase()}: ${message}`);
-    
-    // Remover notificação existente
-    const existingNotification = document.querySelector('.custom-notification');
-    if (existingNotification) {
-        existingNotification.remove();
-    }
-    
-    // Criar nova notificação
-    const notification = document.createElement('div');
-    notification.className = `custom-notification ${type}`;
-    
-    // Ícones para cada tipo
-    const icons = {
-        success: 'fas fa-check-circle',
-        error: 'fas fa-exclamation-circle', 
-        info: 'fas fa-info-circle',
-        warning: 'fas fa-exclamation-triangle'
-    };
-    
-    const icon = icons[type] || icons.info;
-    
-    notification.innerHTML = `
-        <div class="notification-content">
-            <i class="${icon}"></i>
-            <span>${message}</span>
-        </div>
-        <button class="notification-close" onclick="this.parentElement.remove()">
-            <i class="fas fa-times"></i>
-        </button>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Mostrar animação
-    setTimeout(() => {
-        notification.classList.add('show');
-    }, 10);
-    
-    // Auto-remover após 5 segundos (exceto para erros)
-    if (type !== 'error') {
-        setTimeout(() => {
-            if (notification.parentElement) {
-                notification.classList.remove('show');
-                setTimeout(() => {
-                    if (notification.parentElement) {
-                        notification.remove();
-                    }
-                }, 300);
-            }
-        }, 5000);
+            `;
+        }
     }
 }
-}
 
-
-// Inicialização com tratamento de erro
-let professoresManager;
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 DOM carregado - Inicializando ProfessoresManager...');
-    
-    try {
-        professoresManager = new ProfessoresManager();
-        
-        // Inicializar de forma assíncrona mas não bloquear a página
-        setTimeout(async () => {
-            try {
-                await professoresManager.init();
-                console.log('✅ ProfessoresManager inicializado com sucesso!');
-            } catch (error) {
-                console.error('❌ Erro na inicialização do ProfessoresManager:', error);
-                // Não quebrar a aplicação se houver erro
-            }
-        }, 100);
-        
-    } catch (error) {
-        console.error('❌ Erro crítico ao criar ProfessoresManager:', error);
-    }
-
-    
-}
-);
-
-
+// Inicialização
+console.log('📄 DOM carregado - Inicializando ProfessoresManager...');
+const professoresManager = new ProfessoresManager();
+console.log('✅ ProfessoresManager inicializado com sucesso!');

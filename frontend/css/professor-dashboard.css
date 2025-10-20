@@ -1897,3 +1897,225 @@
         padding: 1rem !important;
     }
 }
+/* professor-dashboard.css - Regras adicionais para o formulário melhorado */
+
+.professor-form-group-full {
+    width: 100%;
+}
+
+.professor-sala-select {
+    height: auto;
+    min-height: 120px;
+    margin-top: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px;
+}
+
+.professor-form-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.professor-form-help {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: #666;
+    font-style: italic;
+}
+
+.professor-dias-container {
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 8px;
+    background: #f9f9f9;
+}
+
+.professor-dia-text {
+    margin-left: 5px;
+}
+
+.professor-form-info {
+    background: #e3f2fd;
+    border: 1px solid #2196F3;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.professor-form-info p {
+    margin: 0;
+    color: #1976D2;
+    font-size: 0.9rem;
+}
+
+.sala-select-label {
+    margin-top: 15px;
+}
+
+/* Melhorar a busca de salas */
+.professor-search-container {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.professor-search-input {
+    padding-left: 35px;
+    width: 100%;
+}
+
+.professor-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+}
+
+/* Estilos para os checkboxes */
+.professor-dias-checkbox {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.professor-checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.professor-checkbox-label:hover {
+    background: #f5f5f5;
+}
+
+.professor-checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
+.professor-checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ddd;
+    border-radius: 3px;
+    margin-right: 8px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.professor-checkbox-label input[type="checkbox"]:checked + .professor-checkmark {
+    background: #3498db;
+    border-color: #3498db;
+}
+
+.professor-checkbox-label input[type="checkbox"]:checked + .professor-checkmark::after {
+    content: '✓';
+    position: absolute;
+    color: white;
+    font-size: 12px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Botões do formulário */
+.professor-form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.professor-btn-large {
+    padding: 12px 24px;
+    font-size: 1rem;
+}
+
+.professor-btn-secondary {
+    padding: 12px 24px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.3s ease;
+}
+
+.professor-btn-secondary:hover {
+    background: #545b62;
+}
+
+/* Modal de detalhes */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    padding: 0;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #2c3e50;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #7f8c8d;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.aula-detalhes p {
+    margin: 10px 0;
+    padding: 8px 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.aula-detalhes strong {
+    color: #2c3e50;
+    min-width: 80px;
+    display: inline-block;
+}

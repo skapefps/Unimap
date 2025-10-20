@@ -172,69 +172,107 @@
     </div>
 </section>
 
-        <!-- SEÇÃO PROFESSORES -->
-        <section id="professores" class="section">
-            <h2>Professores</h2>
-            <div class="professores-tabs">
-                <button class="tab-btn active" onclick="openTab('meus-professores')">Meus Professores</button>
-                <button class="tab-btn" onclick="openTab('adicionar-professor')">Adicionar Professor</button>
-            </div>
+       <!-- NA SEÇÃO PROFESSORES - ATUALIZE PARA: -->
+<section id="professores" class="section">
+    <div class="section-header">
+        <h2><i class="fas fa-chalkboard-teacher"></i> Professores</h2>
+        <p>Gerencie seus professores favoritos</p>
+    </div>
 
-            <div id="meus-professores" class="tab-content active">
-                <div class="professores-list">
-                    <div class="professor-card">
-                        <p><strong>Professor:</strong> João Silva</p>
-                        <p><strong>Periodo:</strong> 3°</p>
-                        <p><strong>Curso:</strong> Sistemas de Informação</p>
-                    </div>
-                    <div class="professor-card">
-                        <p><strong>Professor:</strong> Maria Santos</p>
-                        <p><strong>Periodo:</strong> 2°</p>
-                        <p><strong>Curso:</strong> Sistemas de Informação</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- NA SEÇÃO ADICIONAR PROFESSOR -->
-<div id="adicionar-professor" class="tab-content">
-    <form class="add-professor-form">
-        <!-- CURSO COM ÍCONE -->
-        <div class="form-group select-with-icon">
-            <label><i class="fas fa-graduation-cap"></i> Curso:</label>
-            <select class="select-shadow">
-                <option value="">Selecione seu curso</option>
-                <option value="si">Sistemas de Informação</option>
-                <option value="adm">Administração</option>
-                <option value="dir">Direito</option>
-            </select>
-        </div>
-
-        <!-- PERÍODO COM ÍCONE -->
-        <div class="form-group select-with-icon">
-            <label><i class="fas fa-calendar-alt"></i> Período:</label>
-            <select class="select-shadow">
-                <option value="">Selecione o período</option>
-                <option value="1">1° Período</option>
-                <option value="2">2° Período</option>
-                <option value="3">3° Período</option>
-                <option value="4">4° Período</option>
-            </select>
-        </div>
-
-        <!-- PROFESSOR COM ÍCONE -->
-        <div class="form-group select-with-icon">
-            <label><i class="fas fa-chalkboard-teacher"></i> Professor:</label>
-            <select id="professor-select" class="select-shadow">
-                <option value="">Selecione o professor</option>
-                <!-- JavaScript vai popular aqui -->
-            </select>
-        </div>
-
-        <button type="submit" class="btn-primary">
-            <i class="fas fa-plus-circle"></i> Adicionar Professor
+    <div class="professores-tabs">
+        <button class="tab-btn active" onclick="openTab('meus-professores')">
+            <i class="fas fa-star"></i> Meus Professores
         </button>
-    </form>
-</div>
+        <button class="tab-btn" onclick="openTab('adicionar-professor')">
+            <i class="fas fa-plus"></i> Adicionar Professor
+        </button>
+    </div>
+
+    <div id="meus-professores" class="tab-content active">
+        <div class="professores-list">
+            <div class="empty-state">
+                <i class="fas fa-spinner fa-spin fa-3x"></i>
+                <p>Carregando professores...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="adicionar-professor" class="tab-content">
+        <form class="add-professor-form">
+            <!-- CURSO COM ÍCONE -->
+            <div class="form-group select-with-icon">
+                <label><i class="fas fa-graduation-cap"></i> Curso:</label>
+                <select class="select-shadow" required>
+                    <option value="">Selecione seu curso</option>
+                    <option value="Sistemas de Informação">Sistemas de Informação</option>
+                    <option value="Administração">Administração</option>
+                    <option value="Direito">Direito</option>
+                </select>
+            </div>
+
+            <!-- PERÍODO COM ÍCONE -->
+            <div class="form-group select-with-icon">
+                <label><i class="fas fa-calendar-alt"></i> Período:</label>
+                <select class="select-shadow" required>
+                    <option value="">Selecione o período</option>
+                    <option value="1">1° Período</option>
+                    <option value="2">2° Período</option>
+                    <option value="3">3° Período</option>
+                    <option value="4">4° Período</option>
+                </select>
+            </div>
+
+            <!-- PROFESSOR COM ÍCONE -->
+            <div class="form-group select-with-icon">
+                <label><i class="fas fa-chalkboard-teacher"></i> Professor:</label>
+                <select id="professor-select" class="select-shadow" required>
+                    <option value="">Selecione o professor</option>
+                    <!-- JavaScript vai popular aqui -->
+                </select>
+            </div>
+
+            <button type="submit" class="btn-primary btn-full">
+                <i class="fas fa-plus-circle"></i> Adicionar Professor
+            </button>
+        </form>
+    </div>
+</section>
+<!-- ADICIONE esta seção após a seção de professores no index.html -->
+
+<!-- SEÇÃO TURMAS -->
+<section id="turmas" class="section">
+    <div class="section-header">
+        <h2><i class="fas fa-users"></i> Minhas Turmas</h2>
+        <p>Gerencie suas matrículas em turmas</p>
+    </div>
+
+    <div class="turmas-tabs">
+        <button class="tab-btn active" onclick="openTab('turmas-matriculadas')">
+            <i class="fas fa-check-circle"></i> Turmas Matriculadas
+        </button>
+        <button class="tab-btn" onclick="openTab('turmas-disponiveis')">
+            <i class="fas fa-search"></i> Turmas Disponíveis
+        </button>
+    </div>
+
+    <div id="turmas-matriculadas" class="tab-content active">
+        <div class="turmas-list" id="turmas-matriculadas">
+            <div class="empty-state">
+                <i class="fas fa-spinner fa-spin fa-3x"></i>
+                <p>Carregando turmas...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="turmas-disponiveis" class="tab-content">
+        <div class="turmas-list" id="turmas-disponiveis">
+            <div class="empty-state">
+                <i class="fas fa-spinner fa-spin fa-3x"></i>
+                <p>Carregando turmas disponíveis...</p>
+            </div>
+        </div>
+    </div>
+</section>
 
         <!-- SEÇÃO CRIAR AULA (MOBILE) -->
         <section id="criar-aula-mobile" class="section mobile-section" style="display: none;">
@@ -280,14 +318,14 @@
             <button class="btn-voltar" onclick="showSection('aulas-mobile')">← Voltar</button>
         </section>
     </main>
-    
-    <script src="js/auth.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
     <script src="js/aulas.js"></script>
     <script src="js/professores.js"></script>
     <script src="js/mapa.js"></script>
     <script>
+        
     document.addEventListener('DOMContentLoaded', function() {
         // Verificar se usuário está logado
         if (authManager.isUserAuthenticated()) {
@@ -296,7 +334,9 @@
         } else {
             console.log('👋 Visitante não logado');
         }
+        
     });
+    
     document.addEventListener('DOMContentLoaded', function() {
     const user = authManager ? authManager.getCurrentUser() : null;
     
@@ -305,8 +345,12 @@
         setTimeout(() => {
             window.location.href = 'professor-dashboard.html';
         }, 1000);
+        
     }
+    
 });
+
+
     
 </script>
 </body>
