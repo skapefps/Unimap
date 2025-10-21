@@ -3,6 +3,7 @@ class MapaManager {
     constructor() {
         this.salas = [];
         this.salasPorPagina = 20;
+        this.aulasAtivas = [];
         this.paginaAtual = 1;
         this.filtroTipo = 'todas';
         this.carregando = false;
@@ -89,91 +90,128 @@ class MapaManager {
         
         this.renderizarSalas(salasFiltradas, bloco, andar);
     }
+    verificarStatusSala(sala) {
+    // ativa = 1 → Disponível | ativa = 0 → Ocupada/Indisponível
+    const estaDisponivel = sala.ativa === 1;
+    
+    if (!estaDisponivel) {
+        return {
+            professor: 'Sala Indisponível',
+            disciplina: 'Manutenção/Reforma', 
+            turma: 'N/A',
+            horario_inicio: '--:--',
+            horario_fim: '--:--',
+            motivo: 'Em manutenção ou reservada'
+        };
+    }
+    
+    return null;
+}
 
     renderizarSalas(salas, bloco, andar) {
-        const container = document.querySelector('#mapa-salas .salas-grid');
-        const title = document.getElementById('sala-title');
-        
-        if (!container) {
-            console.error('❌ Container .salas-grid não encontrado!');
-            return;
-        }
+    const container = document.querySelector('#mapa-salas .salas-grid');
+    const title = document.getElementById('sala-title');
+    
+    if (!container) {
+        console.error('❌ Container .salas-grid não encontrado!');
+        return;
+    }
 
-        if (!title) {
-            console.error('❌ Elemento sala-title não encontrado!');
-            return;
-        }
+    if (!title) {
+        console.error('❌ Elemento sala-title não encontrado!');
+        return;
+    }
 
-        // ✅ ATUALIZAR TÍTULO COM CONTADOR
-        title.innerHTML = `
-            Bloco ${bloco} > ${andar}° Andar 
-            <span class="salas-counter">${salas.length} salas</span>
-        `;
+    // ✅ ATUALIZAR TÍTULO COM CONTADOR
+    title.innerHTML = `
+        Bloco ${bloco} > ${andar}° Andar 
+        <span class="salas-counter">${salas.length} salas</span>
+    `;
 
-        if (salas.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-door-closed fa-3x"></i>
-                    <p>Nenhuma sala encontrada neste andar</p>
-                    <p class="empty-subtitle">Bloco ${bloco}, ${andar}° Andar</p>
-                </div>
-            `;
-            return;
-        }
-
-        // ✅ FILTROS RÁPIDOS
-        const tipos = [...new Set(salas.map(s => s.tipo))];
-        const filtrosHTML = `
-            <div class="salas-filters">
-                <button class="filter-btn ${this.filtroTipo === 'todas' ? 'active' : ''}" 
-                        onclick="mapaManager.filtrarSalas('todas')">
-                    Todas (${salas.length})
-                </button>
-                ${tipos.map(tipo => {
-                    const count = salas.filter(s => s.tipo === tipo).length;
-                    return `
-                        <button class="filter-btn ${this.filtroTipo === tipo ? 'active' : ''}" 
-                                onclick="mapaManager.filtrarSalas('${tipo}')">
-                            ${tipo} (${count})
-                        </button>
-                    `;
-                }).join('')}
+    if (salas.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-door-closed fa-3x"></i>
+                <p>Nenhuma sala encontrada neste andar</p>
+                <p class="empty-subtitle">Bloco ${bloco}, ${andar}° Andar</p>
             </div>
         `;
+        return;
+    }
 
-        // ✅ APLICAR FILTRO ATUAL
-        let salasFiltradas = salas;
-        if (this.filtroTipo !== 'todas') {
-            salasFiltradas = salas.filter(s => s.tipo === this.filtroTipo);
-        }
+    // ✅ FILTROS RÁPIDOS
+    const tipos = [...new Set(salas.map(s => s.tipo))];
+    const filtrosHTML = `
+        <div class="salas-filters">
+            <button class="filter-btn ${this.filtroTipo === 'todas' ? 'active' : ''}" 
+                    onclick="mapaManager.filtrarSalas('todas')">
+                Todas (${salas.length})
+            </button>
+            ${tipos.map(tipo => {
+                const count = salas.filter(s => s.tipo === tipo).length;
+                return `
+                    <button class="filter-btn ${this.filtroTipo === tipo ? 'active' : ''}" 
+                            onclick="mapaManager.filtrarSalas('${tipo}')">
+                        ${tipo} (${count})
+                    </button>
+                `;
+            }).join('')}
+        </div>
+    `;
 
-        // ✅ PAGINAÇÃO
-        const inicio = (this.paginaAtual - 1) * this.salasPorPagina;
-        const fim = inicio + this.salasPorPagina;
-        const salasPagina = salasFiltradas.slice(inicio, fim);
-        const totalPaginas = Math.ceil(salasFiltradas.length / this.salasPorPagina);
+    // ✅ APLICAR FILTRO ATUAL
+    let salasFiltradas = salas;
+    if (this.filtroTipo !== 'todas') {
+        salasFiltradas = salas.filter(s => s.tipo === this.filtroTipo);
+    }
 
-        // ✅ RENDERIZAR SALAS
-        const salasHTML = salasPagina.map(sala => `
-            <div class="sala-card" data-sala-id="${sala.id}">
+    // ✅ PAGINAÇÃO
+    const inicio = (this.paginaAtual - 1) * this.salasPorPagina;
+    const fim = inicio + this.salasPorPagina;
+    const salasPagina = salasFiltradas.slice(inicio, fim); // ✅ AGORA ESTÁ DEFINIDA
+    const totalPaginas = Math.ceil(salasFiltradas.length / this.salasPorPagina);
+
+    // ✅ RENDERIZAR SALAS COM STATUS DE OCUPAÇÃO
+    const salasHTML = salasPagina.map(sala => {
+        // ✅ VERIFICAR STATUS PELA COLUNA 'ativa'
+        const salaOcupada = this.verificarStatusSala(sala);
+        const estaDisponivel = sala.ativa === 1;
+        
+        // ✅ CORES: Vermelho se inativa, Verde se ativa
+        const bordaCor = estaDisponivel ? '#27ae60' : '#e74c3c';
+        const statusClasse = estaDisponivel ? 'disponivel' : 'ocupada';
+        const statusTexto = estaDisponivel ? '🟢 Disponível' : '🔴 Indisponível';
+
+        return `
+            <div class="sala-card" data-sala-id="${sala.id}" 
+                 style="border-left-color: ${bordaCor}">
                 <h4>Sala ${sala.numero}</h4>
                 <p><strong>Tipo:</strong> ${sala.tipo}</p>
                 <p><strong>Capacidade:</strong> ${sala.capacidade} pessoas</p>
                 
-                ${sala.campus ? `<p><strong>Campus:</strong> Campus ${sala.campus}</p>` : ''}
-                
                 ${sala.recursos ? `<p><strong>Recursos:</strong> ${sala.recursos}</p>` : ''}
                 
-                ${sala.telefone ? `<p><strong>Telefone:</strong> ${sala.telefone}</p>` : ''}
+                <!-- ✅ EXIBIR MOTIVO SE ESTIVER INDISPONÍVEL -->
+                ${!estaDisponivel ? `
+                    <div class="sala-aula-info">
+                        <p style="margin: 0 0 5px 0; font-weight: 600; color: #c0392b;">🚫 Sala Indisponível</p>
+                        <p style="margin: 2px 0; font-size: 0.9em;"><strong>Motivo:</strong> Em manutenção ou reservada</p>
+                        <p style="margin: 2px 0; font-size: 0.9em;"><strong>Status:</strong> Não disponível para aulas</p>
+                    </div>
+                ` : `
+                    <div class="sala-aula-info" style="background: #e8f5e8; border-left-color: #27ae60;">
+                        <p style="margin: 0 0 5px 0; font-weight: 600; color: #27ae60;">✅ Sala Disponível</p>
+                        <p style="margin: 2px 0; font-size: 0.9em;"><strong>Status:</strong> Pronta para uso</p>
+                        <p style="margin: 2px 0; font-size: 0.9em;"><strong>Disponibilidade:</strong> Livre para reserva</p>
+                    </div>
+                `}
                 
-                ${sala.email ? `<p><strong>Email:</strong> ${sala.email}</p>` : ''}
-                
-                <div class="sala-status disponivel">
-                    🟢 Disponível
+                <div class="sala-status ${statusClasse}">
+                    ${statusTexto}
                 </div>
             </div>
-        `).join('');
-
+        `;
+    }).join('');
         // ✅ PAGINAÇÃO (se necessário)
         let paginacaoHTML = '';
         if (totalPaginas > 1) {
@@ -218,6 +256,61 @@ class MapaManager {
             </div>
         `;
     }
+    
+    verificarOcupacaoSala(sala) {
+    const agora = new Date();
+    const horaAtual = agora.getHours().toString().padStart(2, '0') + ':' + 
+                     agora.getMinutes().toString().padStart(2, '0');
+    
+    const aulaAtiva = this.aulasAtivas.find(aula => 
+        aula.sala_id === sala.id && 
+        aula.bloco === sala.bloco &&
+        aula.andar === sala.andar &&
+        horaAtual >= aula.horario_inicio && 
+        horaAtual <= aula.horario_fim
+    );
+
+    return aulaAtiva || null;
+}
+usarAulasAtivasExemplo() {
+    console.log('🔄 Usando dados de exemplo para aulas ativas...');
+    this.aulasAtivas = [
+        {
+            id: 1,
+            sala_id: 1,
+            sala_numero: '101',
+            bloco: 'A',
+            andar: 1,
+            professor: 'Dr. Carlos Silva',
+            disciplina: 'Algoritmos e Programação',
+            horario_inicio: '08:00',
+            horario_fim: '10:00',
+            turma: 'SI3N'
+        }
+        // ... mais aulas de exemplo
+    ];
+}
+// ✅ NOVO MÉTODO: Carregar aulas ativas
+async carregarAulasAtivas() {
+    try {
+        console.log('📚 Carregando aulas ativas...');
+        const token = localStorage.getItem('authToken');
+        const response = await fetch('/api/aulas/ativas', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        
+        if (response.ok) {
+            this.aulasAtivas = await response.json();
+            console.log(`✅ ${this.aulasAtivas.length} aulas ativas carregadas`);
+        } else {
+            this.usarAulasAtivasExemplo();
+        }
+    } catch (error) {
+        console.error('❌ Erro ao carregar aulas ativas:', error);
+        this.usarAulasAtivasExemplo();
+    }
+}
+
 
     mudarPagina(novaPagina) {
         console.log(`📄 Mudando para página: ${novaPagina}`);

@@ -1738,7 +1738,6 @@ main {
         gap: 0.5rem;
     }
 }
-/* 🔥 CORREÇÕES PARA MOBILE - SALAS */
 @media (max-width: 768px) {
     .sala-card {
         padding: 1rem;
@@ -1762,14 +1761,11 @@ main {
         min-width: 80px;
     }
 
-    /* Garantir que todas as informações caibam */
     .sala-card > * {
         max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        text-overflow: ellipsis;    
     }
 
-    /* Layout mais compacto para mobile */
     .salas-grid {
         grid-template-columns: 1fr;
         gap: 0.5rem;
@@ -1777,7 +1773,7 @@ main {
         padding: 0.5rem;
     }
 
-    /* Ajuste no título para mobile */
+
     #sala-title {
         font-size: 1.1rem;
         display: flex;
@@ -3706,4 +3702,74 @@ main {
 .fa-users-class:before {
     content: "👥";
     font-style: normal;
+}/* ===== CORREÇÃO ESPECÍFICA PARA BLOCOS NO MOBILE ===== */
+@media (max-width: 768px) {
+    .blocos-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1rem !important;
+        padding: 0.5rem !important;
+        overflow: visible !important;
+    }
+    
+    .bloco-card {
+        background: white !important;
+        border-radius: 12px !important;
+        padding: 1.5rem 1rem !important;
+        text-align: center !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        border-left: 4px solid #3498db !important;
+        min-height: 120px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        margin: 0 !important;
+    }
+    
+    .bloco-card:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
+    }
+    
+    .bloco-icon {
+        font-size: 2rem !important;
+        color: #3498db !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .bloco-card h3 {
+        color: #2c3e50 !important;
+        font-size: 1.1rem !important;
+        margin: 0 0 0.5rem 0 !important;
+        font-weight: 600 !important;
+    }
+    
+    .bloco-card p {
+        color: #7f8c8d !important;
+        margin: 0 !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .bloco-stats {
+        display: flex !important;
+        justify-content: space-around !important;
+        width: 100% !important;
+        margin-top: 0.5rem !important;
+        gap: 0.3rem !important;
+    }
+    
+    .bloco-stats .stat {
+        background: #f8f9fa !important;
+        padding: 0.3rem 0.6rem !important;
+        border-radius: 12px !important;
+        font-size: 0.7rem !important;
+        color: #495057 !important;
+        font-weight: 600 !important;
+        flex: 1 !important;
+        text-align: center !important;
+    }
 }
+

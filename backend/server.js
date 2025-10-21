@@ -1250,7 +1250,7 @@ app.post('/api/cursos', authenticateToken, requireAdmin, (req, res) => {
 
 // GET /api/salas - Retorna todas as salas
 app.get('/api/salas', authenticateToken, (req, res) => {
-    db.all('SELECT * FROM salas WHERE ativa = 1 ORDER BY bloco, andar, numero', [], (err, rows) => {
+    db.all('SELECT * FROM salas ORDER BY bloco, andar, numero', [], (err, rows) => {
         if (err) {
             console.error('❌ Erro ao buscar salas:', err);
             return res.status(500).json({ error: err.message });
