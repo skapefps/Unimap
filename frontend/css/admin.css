@@ -1112,6 +1112,14 @@ tr:hover {
     font-size: 12px;
     margin: 2px;
 }
+.btn-action.small.perigo {
+    background: red;
+}
+.btn-action.small.perigo:hover{
+    background: rgb(185, 75, 75);
+    transition: all;
+}
+
 
 /* Form controls */
 .form-control {

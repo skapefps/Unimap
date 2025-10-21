@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIMAP - Gerenciar Turmas</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- MOBILE HEADER -->
+    <header class="mobile-header">
+        <div class="header-top">
+            <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
+            <h1>UNIMAP - Turmas</h1>
+            <span class="user-name" id="mobileUserName">Admin</span>
+        </div>
+
+        <nav class="mobile-nav" id="mobileNav">
+            <div class="nav-user" id="mobileNavUser">Administrador</div>
+            <a href="admin.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="admin-cursos.html"><i class="fas fa-graduation-cap"></i> Cursos</a>
+            <a href="admin-salas.html"><i class="fas fa-door-open"></i> Salas</a>
+            <a href="admin-professores.html"><i class="fas fa-chalkboard-teacher"></i> Professores</a>
+            <a href="admin-usuarios.html"><i class="fas fa-users"></i> Usuários</a>
+            <a href="admin-turmas.html" class="active"><i class="fas fa-users-class"></i> Turmas</a>
+            <a href="index.html" class="btn-voltar-app-mobile">
+                <i class="fas fa-arrow-left"></i> Voltar para o App
+            </a>
+            <a href="#" onclick="authManager.logout()">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </a>
+        </nav>
+    </header>
+
+    <!-- DESKTOP HEADER -->
+    <header class="desktop-header">
+        <div class="header-content">
+            <a href="admin.html" class="logo-link">
+                <img src="images/unipam png.png" alt="UNIPAM" class="navbar-logo">
+                <h1>UNIMAP - Turmas</h1>
+            </a>
+            <nav class="desktop-nav">
+                 <a href="index.html" class="btn-flutuante-voltar" title="Voltar para o App">
+                <i class="fas fa-arrow-left"></i>
+                <span>Voltar para o App</span></a>
+                <a href="admin.html" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="admin-cursos.html" class="nav-link"><i class="fas fa-graduation-cap"></i> Cursos</a>
+                <a href="admin-salas.html" class="nav-link"><i class="fas fa-door-open"></i> Salas</a>
+                <a href="admin-professores.html" class="nav-link"><i class="fas fa-chalkboard-teacher"></i> Professores</a>
+                <a href="admin-usuarios.html" class="nav-link"><i class="fas fa-users"></i> Usuários</a>
+                <a href="admin-turmas.html" class="nav-link active"><i class="fas fa-users-class"></i> Turmas</a>
+                <span class="user-info" id="desktopUserName">Administrador</span>
+                <button class="btn-sair-desktop-texto" onclick="authManager.logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="admin-dashboard">
+        <div class="container">
+            <div class="page-header">
+                <h2>Gerenciar Turmas</h2>
+                <button class="btn-primary" onclick="adminTurmas.abrirModalCriarTurma()">
+                    <i class="fas fa-plus"></i> Nova Turma
+                </button>
+            </div>
+
+            <!-- ESTATÍSTICAS DE TURMAS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users-class"></i>
+                    </div>
+                    <h3>Total de Turmas</h3>
+                    <div class="stat-number" id="total-turmas">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <h3>Alunos Vinculados</h3>
+                    <div class="stat-number" id="total-alunos-vinculados">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <h3>Turmas com Alunos</h3>
+                    <div class="stat-number" id="turmas-com-alunos">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3>Inconsistências</h3>
+                    <div class="stat-number" id="inconsistencias">0</div>
+                </div>
+            </div>
+
+            <!-- TABELA DE TURMAS -->
+            <div class="table-container">
+                <table id="turmas-table">
+                    <thead>
+                        <tr>
+                            <th>Nome da Turma</th>
+                            <th>Curso</th>
+                            <th>Período</th>
+                            <th>Quantidade de Alunos</th>
+                            <th>Ano</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="turmas-body">
+                        <!-- Preenchido via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+        <!-- FERRAMENTAS DE DIAGNÓSTICO -->
+<div class="debug-actions" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #3498db;">
+    <h4><i class="fas fa-tools"></i> Ferramentas de Diagnóstico</h4>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+        <button class="btn-secondary" onclick="adminTurmas.debugAlunoTurmas()">
+            <i class="fas fa-bug"></i> Debug Básico
+        </button>
+        <button class="btn-secondary" onclick="adminTurmas.sincronizarQuantidades()">
+            <i class="fas fa-sync"></i> Sincronizar Quantidades
+        </button>
+        <button class="btn-secondary" onclick="adminTurmas.diagnosticoCompletoTurmas()">
+            <i class="fas fa-stethoscope"></i> Diagnóstico Completo
+        </button>
+        <button class="btn-secondary" onclick="adminTurmas.sincronizacaoCompleta()">
+            <i class="fas fa-sync-alt"></i> Sincronização Completa
+        </button>
+    </div>
+</div>
+    </main>
+
+    <!-- MODAL DE CRIAÇÃO/EDIÇÃO DE TURMA -->
+<div class="modal-overlay" id="turmaModal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-users-class"></i> <span id="turmaModalTitle">Nova Turma</span></h3>
+            <button class="modal-close" onclick="adminTurmas.fecharModalTurma()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="turmaForm">
+                <input type="hidden" id="turmaId">
+                
+                <div class="form-group">
+                    <label>Nome da Turma:</label>
+                    <input type="text" id="turmaNome" required class="form-control" placeholder="Ex: SI-2024-1A">
+                    <small class="form-text">Nome único para identificar a turma</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Curso:</label>
+                    <select id="turmaCurso" required class="form-control">
+                        <option value="">Selecione o curso</option>
+                        <option value="Sistemas de Informação">Sistemas de Informação</option>
+                        <option value="Administração">Administração</option>
+                        <option value="Direito">Direito</option>
+                        <option value="Engenharia Civil">Engenharia Civil</option>
+                        <option value="Medicina">Medicina</option>
+                        <option value="Enfermagem">Enfermagem</option>
+                        <option value="Psicologia">Psicologia</option>
+                        <option value="Educação Física">Educação Física</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Período:</label>
+                    <select id="turmaPeriodo" required class="form-control">
+                        <option value="">Selecione o período</option>
+                        <option value="1">1° Período</option>
+                        <option value="2">2° Período</option>
+                        <option value="3">3° Período</option>
+                        <option value="4">4° Período</option>
+                        <option value="5">5° Período</option>
+                        <option value="6">6° Período</option>
+                        <option value="7">7° Período</option>
+                        <option value="8">8° Período</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Ano:</label>
+                    <input type="number" id="turmaAno" required class="form-control" 
+                           min="2020" max="2030" value="2024">
+                </div>
+                
+                <div class="form-group">
+                    <label>Status:</label>
+                    <select id="turmaAtiva" class="form-control">
+                        <option value="true">Ativa</option>
+                        <option value="false">Inativa</option>
+                    </select>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Salvar Turma
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="adminTurmas.fecharModalTurma()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+    <!-- MODAL DE VINCULAR ALUNOS À TURMA -->
+    <div class="modal-overlay" id="vincularAlunosModal" style="display: none;">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Vincular Alunos à Turma</h3>
+                <button class="modal-close" onclick="adminTurmas.fecharModalVincularAlunos()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Turma: <strong id="turmaSelecionadaNome"></strong></label>
+                    <small class="form-text" id="turmaSelecionadaCurso"></small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Buscar Alunos:</label>
+                    <input type="text" id="buscarAlunosTurma" class="form-control" 
+                           placeholder="Digite o nome, matrícula ou email do aluno...">
+                </div>
+                
+                <div class="alunos-list-container" style="max-height: 400px; overflow-y: auto;">
+                    <table class="alunos-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selecionarTodosAlunos"></th>
+                                <th>Nome</th>
+                                <th>Matrícula</th>
+                                <th>Email</th>
+                                <th>Curso</th>
+                                <th>Turma Atual</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaAlunosTurma">
+                            <!-- Preenchido via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="button" class="btn-primary" onclick="adminTurmas.vincularAlunosSelecionados()">
+                        <i class="fas fa-link"></i> Vincular Alunos Selecionados
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="adminTurmas.fecharModalVincularAlunos()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin-turmas.js"></script>
+    
+    <script>
+        // 🔧 FUNÇÕES PARA MENU HAMBURGER
+        function toggleMenu() {
+            const nav = document.getElementById('mobileNav');
+            nav.classList.toggle('active');
+        }
+
+        function closeMenu() {
+            const nav = document.getElementById('mobileNav');
+            nav.classList.remove('active');
+        }
+
+        // Fechar menu ao clicar fora
+        document.addEventListener('click', function(event) {
+            const nav = document.getElementById('mobileNav');
+            const hamburger = document.querySelector('.menu-hamburger');
+            
+            if (nav.classList.contains('active') && 
+                !nav.contains(event.target) && 
+                !hamburger.contains(event.target)) {
+                nav.classList.remove('active');
+            }
+        });
+
+        // 🔧 ATUALIZAR NOME DO USUÁRIO
+        document.addEventListener('DOMContentLoaded', function() {
+            const userData = localStorage.getItem('userData');
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    // Desktop
+                    const desktopUser = document.getElementById('desktopUserName');
+                    if (desktopUser) {
+                        desktopUser.innerHTML = `${user.nome} <span class="user-type-badge admin">ADMIN</span>`;
+                    }
+                    // Mobile
+                    const mobileUser = document.getElementById('mobileUserName');
+                    const navUser = document.getElementById('mobileNavUser');
+                    if (mobileUser) mobileUser.textContent = user.nome;
+                    if (navUser) navUser.textContent = user.nome;
+                } catch (error) {
+                    console.error('Erro ao carregar usuário:', error);
+                }
+            }
+        });
+
+       async function recarregarSistemaTurmas() {
+    console.log('🔄 Recarregando sistema de turmas...');
+    
+    try {
+        if (window.adminTurmas) {
+            await adminTurmas.sincronizarQuantidades();
+            adminTurmas.showNotification('Quantidades de turmas sincronizadas com sucesso!', 'success');
+        } else {
+            alert('AdminTurmas não disponível');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao recarregar:', error);
+        alert('Erro ao recarregar: ' + error.message);
+    }
+}
+    </script>
+</body>
+</html>

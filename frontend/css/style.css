@@ -3703,3 +3703,7 @@ main {
         text-align: center;
     }
 }
+.fa-users-class:before {
+    content: "👥";
+    font-style: normal;
+}

@@ -1,3 +1,4 @@
+// admin.js - VERSÃO COMPLETA E CORRIGIDA
 class AdminManager {
     constructor() {
         this.init();
@@ -8,8 +9,12 @@ class AdminManager {
         await this.loadDashboardData();
         this.setupEventListeners();
         this.updateUserInfo();
+        
+        // SINCRONIZAR COM adminTurmas SE ESTIVER DISPONÍVEL
+        this.sincronizaradminTurmas();
     }
 
+    // 🔥 MÉTODO checkAdminAccess ADICIONADO
     async checkAdminAccess() {
         const userData = localStorage.getItem('userData');
         if (!userData) {
@@ -17,13 +22,88 @@ class AdminManager {
             return;
         }
 
-        const user = JSON.parse(userData);
-        if (user.tipo !== 'admin') {
-            alert('❌ Acesso restrito a administradores!');
-            window.location.href = 'index.html';
-            return;
+        try {
+            const user = JSON.parse(userData);
+            if (user.tipo !== 'admin') {
+                alert('❌ Acesso restrito a administradores!');
+                window.location.href = 'index.html';
+                return;
+            }
+        } catch (error) {
+            console.error('❌ Erro ao verificar acesso:', error);
+            window.location.href = 'login.html';
         }
     }
+    // MÉTODOS PARA O DASHBOARD - CORRIGIDOS
+vincularAlunosTurma(turmaId) {
+    this.verificarEExecutar(() => {
+        adminTurmas.vincularAlunosTurma(turmaId);
+    }, 'vincularAlunosTurma');
+}
+
+async editarTurmaDashboard(turmaId) {
+    await this.verificarEExecutar(async () => {
+        await adminTurmas.editarTurma(turmaId);
+    }, 'editarTurma');
+}
+
+async verAlunosTurmaDashboard(turmaId) {
+    await this.verificarEExecutar(async () => {
+        await adminTurmas.verAlunosTurma(turmaId);
+    }, 'verAlunosTurma');
+}
+
+// 🔥 NOVO MÉTODO: Verificar e executar com fallback
+verificarEExecutar(callback, acao) {
+    return new Promise((resolve) => {
+        const tentarExecutar = (tentativa = 0) => {
+            if (window.adminTurmas && typeof adminTurmas.carregarTurmas === 'function') {
+                const resultado = callback();
+                resolve(resultado);
+            } else if (tentativa < 5) {
+                console.log(`🔄 Tentativa ${tentativa + 1}/5 - Aguardando adminTurmas...`);
+                setTimeout(() => tentarExecutar(tentativa + 1), 500);
+            } else {
+                console.error(`❌ adminTurmas não carregado após 5 tentativas para: ${acao}`);
+                this.showNotification('Sistema de turmas não carregado. Recarregue a página.', 'error');
+                resolve(null);
+            }
+        };
+        
+        tentarExecutar();
+    });
+}
+
+ // 🔥 MÉTODO CORRIGIDO: Sincronizar com adminTurmas
+async sincronizarAdminTurmas() {
+    console.log('🔄 Iniciando sincronização com adminTurmas...');
+    
+    // Aguardar o adminTurmas carregar com timeout
+    let tentativas = 0;
+    const maxTentativas = 10;
+    
+    while (tentativas < maxTentativas) {
+        if (window.adminTurmas && typeof adminTurmas.carregarTurmas === 'function') {
+            console.log('✅ adminTurmas carregado, sincronizando...');
+            try {
+                await adminTurmas.carregarTurmas();
+                console.log('✅ Sincronização com adminTurmas concluída');
+                return true;
+            } catch (error) {
+                console.error('❌ Erro na sincronização:', error);
+                return false;
+            }
+        }
+        
+        tentativas++;
+        console.log(`⏳ Aguardando adminTurmas... (${tentativas}/${maxTentativas})`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    console.error('❌ Timeout: adminTurmas não carregado após 10 segundos');
+    this.showNotification('Aviso: Algumas funcionalidades de turmas podem não estar disponíveis', 'warning');
+    return false;
+}
 
     async loadDashboardData() {
         try {
@@ -50,8 +130,11 @@ class AdminManager {
                 this.useFallbackStats();
             }
 
-            // Carregar últimos usuários - CORREÇÃO PRINCIPAL
+            // Carregar últimos usuários
             await this.carregarUsuarios();
+
+            // CARREGAR TURMAS DO BANCO DIRETAMENTE
+            await this.carregarTurmasDashboard();
 
         } catch (error) {
             console.error('❌ Erro ao carregar dashboard:', error);
@@ -60,7 +143,127 @@ class AdminManager {
         }
     }
 
-    // NOVO MÉTODO PARA CARREGAR USUÁRIOS
+    // MÉTODO: Carregar turmas para o dashboard
+    async carregarTurmasDashboard() {
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('/api/turmas', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const turmasData = await response.json();
+                console.log('📚 Turmas carregadas para dashboard:', turmasData);
+                this.renderizarTurmasDashboard(turmasData);
+            } else {
+                console.error('❌ Erro ao carregar turmas:', response.status);
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar turmas do dashboard:', error);
+        }
+    }
+
+    // MÉTODO: Renderizar turmas no dashboard
+    renderizarTurmasDashboard(turmasData) {
+        const tbody = document.getElementById('turmas-body');
+        if (!tbody) {
+            console.log('ℹ️ Tabela de turmas não encontrada no dashboard');
+            return;
+        }
+
+        if (!Array.isArray(turmasData) || turmasData.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <i class="fas fa-users-slash"></i>
+                        <p>Nenhuma turma cadastrada</p>
+                        <button onclick="adminTurmas.abrirModalCriarTurma()" class="btn-primary" style="margin-top: 10px;">
+                            <i class="fas fa-plus"></i> Criar Primeira Turma
+                        </button>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = turmasData.map(turma => `
+            <tr>
+                <td><strong>${this.escapeHtml(turma.nome)}</strong></td>
+                <td>${this.escapeHtml(turma.curso)}</td>
+                <td>${turma.periodo}° Período</td>
+                <td>
+                    <span class="badge ${turma.quantidade_alunos > 0 ? 'active' : 'inactive'}">
+                        ${turma.quantidade_alunos} alunos
+                    </span>
+                </td>
+                <td>${turma.ano}</td>
+                <td>
+                    <button class="btn-action small" onclick="adminManager.vincularAlunosTurma(${turma.id})" 
+                            title="Vincular alunos">
+                        <i class="fas fa-user-plus"></i>
+                    </button>
+                    <button class="btn-action small" onclick="adminManager.editarTurmaDashboard(${turma.id})" 
+                            title="Editar turma">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-action small secundario" onclick="adminManager.verAlunosTurmaDashboard(${turma.id})"
+                            title="Ver alunos da turma">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // MÉTODOS PARA O DASHBOARD
+    vincularAlunosTurma(turmaId) {
+        if (window.adminTurmas) {
+            adminTurmas.vincularAlunosTurma(turmaId);
+        } else {
+            this.showNotification('Sistema de turmas não carregado', 'error');
+        }
+    }
+
+    async editarTurmaDashboard(turmaId) {
+        if (window.adminTurmas) {
+            await adminTurmas.editarTurma(turmaId);
+        } else {
+            this.showNotification('Sistema de turmas não carregado', 'error');
+        }
+    }
+
+    async verAlunosTurmaDashboard(turmaId) {
+        if (window.adminTurmas) {
+            await adminTurmas.verAlunosTurma(turmaId);
+        } else {
+            this.showNotification('Sistema de turmas não carregado', 'error');
+        }
+    }
+
+    // ATUALIZAR ESTATÍSTICAS
+    updateStats(stats) {
+        try {
+            const elements = {
+                'total-usuarios': stats.total_usuarios || stats.totalUsuarios || '0',
+                'total-professores': stats.total_professores || stats.totalProfessores || '0',
+                'total-salas': stats.total_salas || stats.totalSalas || '0',
+                'total-aulas': stats.total_aulas || stats.totalAulas || '0'
+            };
+            
+            Object.entries(elements).forEach(([id, value]) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value;
+                    element.style.color = '#2c3e50';
+                }
+            });
+
+        } catch (error) {
+            console.error('Erro ao atualizar estatísticas:', error);
+        }
+    }
+
+    // MÉTODO: Carregar usuários
     async carregarUsuarios() {
         try {
             const token = localStorage.getItem('authToken');
@@ -104,45 +307,6 @@ class AdminManager {
         }
     }
 
-    updateStats(stats) {
-        try {
-            const elements = {
-                'total-usuarios': stats.total_usuarios || stats.totalUsuarios || '0',
-                'total-professores': stats.total_professores || stats.totalProfessores || '0',
-                'total-salas': stats.total_salas || stats.totalSalas || '0',
-                'total-aulas': stats.total_aulas || stats.totalAulas || '0'
-            };
-            
-            Object.entries(elements).forEach(([id, value]) => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.textContent = value;
-                    element.style.color = '#2c3e50';
-                }
-            });
-        } catch (error) {
-            console.error('Erro ao atualizar estatísticas:', error);
-        }
-    }
-
-    useFallbackStats() {
-        console.log('🔄 Usando estatísticas fallback...');
-        const fallbackStats = {
-            'total-usuarios': '0',
-            'total-professores': '0', 
-            'total-salas': '0',
-            'total-aulas': '0'
-        };
-        
-        Object.entries(fallbackStats).forEach(([id, value]) => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.textContent = value;
-                element.style.color = '#95a5a6';
-            }
-        });
-    }
-
     renderUsuarios(usuarios) {
         const tbody = document.getElementById('usuarios-body');
         if (!tbody) {
@@ -181,19 +345,59 @@ class AdminManager {
         }
     }
 
-    // NOVO MÉTODO PARA ESCAPAR HTML
-    escapeHtml(unsafe) {
-        if (unsafe === null || unsafe === undefined) return 'N/A';
-        return unsafe
-            .toString()
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    // MÉTODO: Mostrar estado vazio
+    showEmptyState() {
+        const tbody = document.getElementById('usuarios-body');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="empty-state">
+                        <i class="fas fa-users-slash"></i>
+                        <p>Nenhum usuário cadastrado</p>
+                    </td>
+                </tr>
+            `;
+        }
     }
 
-    // NOVO MÉTODO PARA OBTER DISPLAY DO TIPO
+    // MÉTODO: Mostrar estado de erro
+    showErrorState(mensagem) {
+        const tbody = document.getElementById('usuarios-body');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>${mensagem}</p>
+                        <button onclick="adminManager.carregarUsuarios()" class="btn-primary" style="margin-top: 10px;">
+                            <i class="fas fa-redo"></i> Tentar Novamente
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // MÉTODO: Usar estatísticas fallback
+    useFallbackStats() {
+        console.log('🔄 Usando estatísticas fallback...');
+        const fallbackStats = {
+            'total-usuarios': '0',
+            'total-professores': '0', 
+            'total-salas': '0',
+            'total-aulas': '0'
+        };
+        
+        Object.entries(fallbackStats).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+                element.style.color = '#95a5a6';
+            }
+        });
+    }
+
+    // MÉTODO: Obter display do tipo
     getTipoDisplay(tipo) {
         const tipos = {
             'admin': 'Administrador',
@@ -203,6 +407,7 @@ class AdminManager {
         return tipos[tipo] || 'Aluno';
     }
 
+    // MÉTODO: Formatar data
     formatarData(dataString) {
         try {
             if (!dataString) return 'N/A';
@@ -226,37 +431,7 @@ class AdminManager {
         }
     }
 
-    showEmptyState() {
-        const tbody = document.getElementById('usuarios-body');
-        if (tbody) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="4" class="empty-state">
-                        <i class="fas fa-users-slash"></i>
-                        <p>Nenhum usuário cadastrado</p>
-                    </td>
-                </tr>
-            `;
-        }
-    }
-
-    showErrorState(mensagem) {
-        const tbody = document.getElementById('usuarios-body');
-        if (tbody) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="4" class="empty-state">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>${mensagem}</p>
-                        <button onclick="adminManager.carregarUsuarios()" class="btn-primary" style="margin-top: 10px;">
-                            <i class="fas fa-redo"></i> Tentar Novamente
-                        </button>
-                    </td>
-                </tr>
-            `;
-        }
-    }
-
+    // MÉTODO: Atualizar informações do usuário
     updateUserInfo() {
         try {
             const userData = localStorage.getItem('userData');
@@ -272,6 +447,7 @@ class AdminManager {
         }
     }
 
+    // MÉTODO: Configurar event listeners
     setupEventListeners() {
         // Logout
         const logoutBtn = document.querySelector('.btn-sair-desktop');
@@ -295,39 +471,83 @@ class AdminManager {
         }
     }
 
-    // NOVO MÉTODO PARA FORÇAR RECARREGAMENTO
-    async recarregarDashboard() {
-        console.log('🔄 Recarregando dashboard...');
-        await this.loadDashboardData();
+    // MÉTODO: Escapar HTML
+    escapeHtml(unsafe) {
+        if (unsafe === null || unsafe === undefined) return 'N/A';
+        return unsafe
+            .toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
-    // No admin.js - adicione esta função
-async atualizarTurmaUsuario(usuarioId, turma) {
-    try {
-        const response = await fetch(`/api/usuarios/${usuarioId}/turma`, {
-            method: 'PUT',
-            headers: this.getHeaders(),
-            body: JSON.stringify({ turma })
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-            this.mostrarMensagem('Turma do usuário atualizada com sucesso!', 'success');
-            this.carregarUsuarios();
-        } else {
-            throw new Error(data.error || 'Erro ao atualizar turma');
-        }
-    } catch (error) {
-        console.error('❌ Erro ao atualizar turma:', error);
-        this.mostrarMensagem('Erro ao atualizar turma: ' + error.message, 'error');
+    // 🔄 MÉTODO MELHORADO: Sincronizar com dashboard
+sincronizarComDashboard() {
+    console.log('🔄 Sincronizando com dashboard...');
+    
+    // Forçar atualização no AdminManager
+    if (window.adminManager && typeof adminManager.atualizarTurmasDashboard === 'function') {
+        adminManager.atualizarTurmasDashboard();
     }
+    
+    // Disparar evento customizado para outras partes do sistema
+    const event = new CustomEvent('turmasAtualizadas', {
+        detail: { turmas: this.turmas }
+    });
+    document.dispatchEvent(event);
 }
+
+
+    // MÉTODO: Mostrar notificação
+    showNotification(message, type = 'info') {
+        console.log(`[${type}] ${message}`);
+        // Implementação básica de notificação
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#3498db'};
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 5000);
+    }
+
+    // MÉTODO: Forçar atualização das turmas
+    async atualizarTurmasDashboard() {
+        console.log('🔄 Atualizando turmas no dashboard...');
+        await this.carregarTurmasDashboard();
+        
+        // Sincronizar com adminTurmas se disponível
+        if (window.adminTurmas) {
+            await adminTurmas.carregarTurmas();
+        }
+    }
 }
 
 // Inicializar admin
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Inicializando AdminManager...');
     window.adminManager = new AdminManager();
+    
+    // Adicionar função para atualizar turmas
+    window.atualizarTurmas = () => {
+        if (window.adminManager) {
+            adminManager.atualizarTurmasDashboard();
+        }
+    };
     
     // Adicionar botão de debug se necessário
     window.debugAdmin = () => {
@@ -336,5 +556,4 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('- UserData:', localStorage.getItem('userData'));
         adminManager.carregarUsuarios();
     };
-    
 });

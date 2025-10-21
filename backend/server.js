@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
-const sqlite3 = require('sqlite3').verbose();
+const sqlite3 = require('sqlite3').verbose();;
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const { OAuth2Client } = require('google-auth-library');
@@ -22,7 +22,7 @@ app.use(express.json());
 // ==================== INICIALIZAR BANCO COMPLETO ====================
 
 
-    /*function initializeDatabase() {
+    function initializeDatabase() {
     db.serialize(() => {
         console.log('🔄 Criando banco de dados COMPLETO...');
 
@@ -210,11 +210,61 @@ db.run(`CREATE TABLE IF NOT EXISTS password_reset_tokens (
     used BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES usuarios (id)
-)`);*/
+)`);
 
-// ==================== ROTAS DE REDEFINIÇÃO DE SENHA ====================
+// ==================== INICIALIZAR TABELA ALUNO_TURMAS ====================
+function initializeAlunoTurmasTable() {
+    console.log('🔄 Criando/verificando tabela aluno_turmas...');
+    
+    db.run(`CREATE TABLE IF NOT EXISTS aluno_turmas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        aluno_id INTEGER NOT NULL,
+        turma_id INTEGER NOT NULL,
+        data_matricula DATETIME DEFAULT CURRENT_TIMESTAMP,
+        status TEXT DEFAULT 'cursando',
+        FOREIGN KEY (aluno_id) REFERENCES usuarios (id),
+        FOREIGN KEY (turma_id) REFERENCES turmas (id),
+        UNIQUE(aluno_id, turma_id)
+    )`, (err) => {
+        if (err) {
+            console.error('❌ Erro ao criar tabela aluno_turmas:', err);
+        } else {
+            console.log('✅ Tabela aluno_turmas verificada/criada com sucesso!');
+        }
+    });
+}
 
-// 1. SOLICITAR REDEFINIÇÃO DE SENHA - VERSÃO MELHORADA
+// Chame esta função no início, após conectar ao banco
+initializeAlunoTurmasTable();
+
+
+// 🔥 CRIAR TABELA ALUNO_TURMAS IMEDIATAMENTE
+console.log('🔄 Verificando/Criando tabela aluno_turmas...');
+db.run(`CREATE TABLE IF NOT EXISTS aluno_turmas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    aluno_id INTEGER NOT NULL,
+    turma_id INTEGER NOT NULL,
+    data_matricula DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT DEFAULT 'cursando',
+    FOREIGN KEY (aluno_id) REFERENCES usuarios (id),
+    FOREIGN KEY (turma_id) REFERENCES turmas (id),
+    UNIQUE(aluno_id, turma_id)
+)`, function(err) {
+    if (err) {
+        console.error('❌ Erro ao criar tabela aluno_turmas:', err);
+    } else {
+        console.log('✅ Tabela aluno_turmas verificada/criada com sucesso!');
+        
+        // Verificar se existem registros
+        db.get('SELECT COUNT(*) as total FROM aluno_turmas', [], (err, row) => {
+            if (err) {
+                console.error('❌ Erro ao contar registros:', err);
+            } else {
+                console.log(`📊 Total de registros em aluno_turmas: ${row.total}`);
+            }
+        });
+    }
+});
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -2928,4 +2978,249 @@ app.get('/api/turmas/public', (req, res) => {
         console.log(`✅ ${rows.length} turmas encontradas`);
         res.json(rows);
     });
+});
+// DESVINCULAR ALUNO INDIVIDUAL - SQLITE
+app.post('/api/desmatricular-aluno', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { turma_id, aluno_id } = req.body;
+        
+        console.log('🗑️ Desvinculando aluno:', { turma_id, aluno_id });
+
+        // Verificar se o vínculo existe na tabela aluno_turmas
+        db.get('SELECT id FROM aluno_turmas WHERE aluno_id = ? AND turma_id = ?', 
+               [aluno_id, turma_id], (err, vinculo) => {
+            if (err) {
+                console.error('❌ Erro ao buscar vínculo:', err);
+                return res.status(500).json({ 
+                    success: false, 
+                    error: 'Erro interno do servidor' 
+                });
+            }
+
+            if (!vinculo) {
+                console.log('❌ Vínculo não encontrado');
+                return res.status(404).json({ 
+                    success: false, 
+                    error: 'Aluno não está vinculado a esta turma' 
+                });
+            }
+
+            console.log('📋 Vínculo encontrado:', vinculo);
+
+            // Remover o vínculo da tabela aluno_turmas
+            db.run('DELETE FROM aluno_turmas WHERE aluno_id = ? AND turma_id = ?', 
+                   [aluno_id, turma_id], 
+                   function(deleteErr) {
+                if (deleteErr) {
+                    console.error('❌ Erro ao remover vínculo:', deleteErr);
+                    return res.status(500).json({ 
+                        success: false, 
+                        error: 'Erro interno do servidor' 
+                    });
+                }
+
+                console.log('📊 Vínculo removido:', this.changes);
+
+                if (this.changes === 0) {
+                    console.log('⚠️ Vínculo não foi removido');
+                    return res.status(404).json({ 
+                        success: false, 
+                        error: 'Erro ao remover vínculo' 
+                    });
+                }
+
+                console.log('✅ Aluno desvinculado com sucesso');
+                res.json({ 
+                    success: true, 
+                    message: 'Aluno desvinculado da turma com sucesso!' 
+                });
+            });
+        });
+
+    } catch (error) {
+        console.error('❌ Erro ao desvincular aluno:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro interno do servidor' 
+        });
+    }
+});
+// DESVINCULAR TODOS OS ALUNOS DE UMA TURMA - SQLITE
+app.post('/api/turmas/:id/desvincular-todos', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const turma_id = req.params.id;
+        
+        console.log('🗑️ Desvinculando todos os alunos da turma:', turma_id);
+
+        // Verificar se a turma existe
+        db.get('SELECT id, nome FROM turmas WHERE id = ?', [turma_id], (err, turma) => {
+            if (err) {
+                console.error('❌ Erro ao buscar turma:', err);
+                return res.status(500).json({ 
+                    success: false, 
+                    error: 'Erro interno do servidor' 
+                });
+            }
+
+            if (!turma) {
+                console.log('❌ Turma não encontrada:', turma_id);
+                return res.status(404).json({ 
+                    success: false, 
+                    error: 'Turma não encontrada' 
+                });
+            }
+
+            console.log('📋 Turma encontrada:', turma);
+
+            // Verificar quantos alunos estão vinculados
+            db.get('SELECT COUNT(*) as total FROM aluno_turmas WHERE turma_id = ?', [turma_id], (countErr, countResult) => {
+                if (countErr) {
+                    console.error('❌ Erro ao contar alunos:', countErr);
+                    return res.status(500).json({ 
+                        success: false, 
+                        error: 'Erro interno do servidor' 
+                    });
+                }
+
+                console.log(`👥 ${countResult.total} alunos encontrados na turma`);
+
+                // Remover todos os vínculos da tabela aluno_turmas
+                db.run('DELETE FROM aluno_turmas WHERE turma_id = ?', [turma_id], function(deleteErr) {
+                    if (deleteErr) {
+                        console.error('❌ Erro ao desvincular alunos:', deleteErr);
+                        return res.status(500).json({ 
+                            success: false, 
+                            error: 'Erro interno do servidor' 
+                        });
+                    }
+
+                    console.log(`✅ ${this.changes} vínculos removidos da turma ${turma_id}`);
+
+                    res.json({ 
+                        success: true, 
+                        message: `Todos os ${this.changes} alunos foram desvinculados da turma!`,
+                        alunos_desvinculados: this.changes
+                    });
+                });
+            });
+        });
+
+    } catch (error) {
+        console.error('❌ Erro ao desvincular todos os alunos:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro interno do servidor' 
+        });
+    }
+});
+// DESVINCULAR MÚLTIPLOS ALUNOS - SQLITE
+app.post('/api/desmatricular-alunos', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { turma_id, alunos_ids } = req.body;
+        
+        console.log('🗑️ Desvinculando alunos em lote:', { turma_id, alunos_ids });
+
+        if (!alunos_ids || !Array.isArray(alunos_ids) || alunos_ids.length === 0) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Lista de alunos inválida' 
+            });
+        }
+
+        let desvinculados = 0;
+        let erros = [];
+
+        // Função para processar cada aluno
+        const processarAluno = (index) => {
+            if (index >= alunos_ids.length) {
+                // Todos os alunos processados
+                console.log(`✅ ${desvinculados} alunos desvinculados, ${erros.length} erros`);
+
+                if (desvinculados > 0) {
+                    res.json({ 
+                        success: true, 
+                        message: `${desvinculados} aluno(s) desvinculado(s) com sucesso!`,
+                        desvinculados,
+                        erros
+                    });
+                } else {
+                    res.status(400).json({ 
+                        success: false, 
+                        error: 'Nenhum aluno foi desvinculado: ' + erros.join(', ') 
+                    });
+                }
+                return;
+            }
+
+            const aluno_id = alunos_ids[index];
+            
+            // Remover vínculo da tabela aluno_turmas
+            db.run('DELETE FROM aluno_turmas WHERE aluno_id = ? AND turma_id = ?', 
+                   [aluno_id, turma_id], 
+                   function(deleteErr) {
+                if (deleteErr) {
+                    console.error(`❌ Erro ao desvincular aluno ${aluno_id}:`, deleteErr);
+                    erros.push(`Aluno ${aluno_id}: ${deleteErr.message}`);
+                } else if (this.changes > 0) {
+                    desvinculados++;
+                    console.log(`✅ Aluno ${aluno_id} desvinculado com sucesso`);
+                } else {
+                    erros.push(`Aluno ${aluno_id} não encontrado ou não vinculado`);
+                }
+                
+                // Processar próximo aluno
+                processarAluno(index + 1);
+            });
+        };
+
+        // Iniciar processamento
+        processarAluno(0);
+
+    } catch (error) {
+        console.error('❌ Erro ao desvincular alunos em lote:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro interno do servidor' 
+        });
+    }
+});
+// DESVINCULAR TODOS OS ALUNOS DE UMA TURMA
+app.post('/api/turmas/:id/desvincular-todos', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const turma_id = req.params.id;
+        
+        console.log('🗑️ Desvinculando todos os alunos da turma:', turma_id);
+
+        // Verificar se a turma existe
+        const [turma] = await connection.execute(
+            'SELECT * FROM turmas WHERE id = ?', 
+            [turma_id]
+        );
+
+        if (turma.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Turma não encontrada' 
+            });
+        }
+
+        // Desvincular todos os alunos da turma
+        const query = 'UPDATE usuarios SET turma_id = NULL WHERE turma_id = ?';
+        const [result] = await connection.execute(query, [turma_id]);
+
+        console.log(`✅ ${result.affectedRows} alunos desvinculados da turma ${turma_id}`);
+
+        res.json({ 
+            success: true, 
+            message: `Todos os ${result.affectedRows} alunos foram desvinculados da turma!`,
+            alunos_desvinculados: result.affectedRows
+        });
+
+    } catch (error) {
+        console.error('❌ Erro ao desvincular todos os alunos:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro interno do servidor' 
+        });
+    }
 });
