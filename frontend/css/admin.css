@@ -1549,7 +1549,6 @@ thead {
 }
 
 thead th {
-    padding: 1rem 1.5rem;
     text-align: left;
     font-weight: 600;
     font-size: 0.9rem;
@@ -1567,7 +1566,6 @@ tbody tr:hover {
 }
 
 tbody td {
-    padding: 1rem 1.5rem;
     color: #2c3e50;
 }
 
@@ -1933,92 +1931,3 @@ tbody td {
     border: 2px dashed #bdc3c7;
 }
 
-/* ==================== RESPONSIVO ==================== */
-
-@media (max-width: 768px) {
-    .admin-dashboard .container {
-        padding: 1rem;
-    }
-    
-    .page-header {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: flex-start;
-    }
-    
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .btn-group {
-        flex-direction: column;
-    }
-    
-    .action-buttons {
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-    
-    .professor-stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .info-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .aula-details {
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-    
-    .modal-content.large {
-        margin: 1rem;
-        max-width: calc(100vw - 2rem);
-    }
-    
-    thead {
-        display: none;
-    }
-    
-    tbody tr {
-        display: block;
-        margin-bottom: 1rem;
-        border: 1px solid #e1e8ed;
-        border-radius: 8px;
-        padding: 1rem;
-    }
-    
-    tbody td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.5rem 0;
-        border: none;
-    }
-    
-    tbody td::before {
-        content: attr(data-label);
-        font-weight: 600;
-        color: #2c3e50;
-        margin-right: 1rem;
-    }
-}
-
-/* Animações */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.form-container,
-.table-container,
-.modal-content {
-    animation: fadeIn 0.3s ease;
-}

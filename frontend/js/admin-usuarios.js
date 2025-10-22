@@ -370,59 +370,109 @@ class AdminUsuarios {
     }
 
     async alterarTipo(usuarioId, tipoAtual) {
-        const tipos = ['aluno', 'professor', 'admin'];
-        const tipoIndex = tipos.indexOf(tipoAtual);
-        const novoTipo = tipos[(tipoIndex + 1) % tipos.length];
+    const usuario = this.usuarios.find(u => u && u.id === usuarioId);
+    if (!usuario) {
+        this.showNotification('Usuário não encontrado', 'error');
+        return;
+    }
 
-        if (confirm(`Deseja alterar o tipo deste usuário para ${this.formatarTipo(novoTipo)}?`)) {
-            try {
-                const dadosAtualizados = { tipo: novoTipo };
+    const tipos = ['aluno', 'professor', 'admin'];
+    const tipoIndex = tipos.indexOf(tipoAtual);
+    const novoTipo = tipos[(tipoIndex + 1) % tipos.length];
+
+    if (confirm(`Deseja alterar o tipo de "${usuario.nome}" para ${this.formatarTipo(novoTipo)}?`)) {
+        try {
+            const dadosAtualizados = { tipo: novoTipo };
+            
+            if (novoTipo === 'professor') {
+                dadosAtualizados.matricula = '';
+                dadosAtualizados.periodo = null;
+                dadosAtualizados.curso = '';
+            } else if (novoTipo === 'admin') {
+                dadosAtualizados.matricula = '';
+                dadosAtualizados.periodo = null;
+            }
+
+            const response = await this.makeRequest(`/usuarios/${usuarioId}`, {
+                method: 'PUT',
+                body: JSON.stringify(dadosAtualizados)
+            });
+
+            if (response.success) {
+                this.limparCacheUsuario(usuarioId);
+                this.showNotification('Tipo de usuário alterado com sucesso!', 'success');
+                await this.carregarUsuarios(); // Recarregar para garantir dados atualizados
+            } else {
+                throw new Error(response.error || 'Erro ao alterar tipo');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao alterar tipo:', error);
+            
+            if (error.message.includes('404') || error.message.includes('Cannot PUT')) {
+                this.showNotification('Função de edição não disponível. Atualizando localmente...', 'warning');
                 
+                usuario.tipo = novoTipo;
                 if (novoTipo === 'professor') {
-                    dadosAtualizados.matricula = '';
-                    dadosAtualizados.periodo = null;
+                    usuario.matricula = '';
+                    usuario.periodo = null;
+                    usuario.curso = '';
+                } else if (novoTipo === 'admin') {
+                    usuario.matricula = '';
+                    usuario.periodo = null;
                 }
-
-                const response = await this.makeRequest(`/usuarios/${usuarioId}/tipo`, {
-                    method: 'PUT',
-                    body: JSON.stringify(dadosAtualizados)
-                });
-
-                if (response.success) {
-                    this.limparCacheUsuario(usuarioId);
-                    this.showNotification(response.message, 'success');
-                    await this.carregarUsuarios();
-                } else {
-                    throw new Error(response.error);
-                }
-            } catch (error) {
-                console.error('❌ Erro ao alterar tipo:', error);
+                
+                this.atualizarEstatisticas();
+                this.exibirUsuarios();
+                this.showNotification('Alteração aplicada localmente', 'info');
+            } else {
                 this.showNotification('Erro ao alterar tipo: ' + error.message, 'error');
             }
         }
     }
+}
 
-    async excluirUsuario(usuarioId) {
-        if (!confirm('Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.')) {
-            return;
+    // MÉTODO EXCLUIR USUÁRIO - VERSÃO CORRIGIDA
+async excluirUsuario(usuarioId) {
+    // Verificar se o usuário existe na lista local
+    const usuario = this.usuarios.find(u => u && u.id === usuarioId);
+    if (!usuario) {
+        this.showNotification('Usuário não encontrado', 'error');
+        return;
+    }
+
+    if (!confirm(`Tem certeza que deseja excluir o usuário "${usuario.nome}"? Esta ação não pode ser desfeita.`)) {
+        return;
+    }
+
+    try {
+        console.log(`🗑️ Tentando excluir usuário ID: ${usuarioId}`);
+        
+        const response = await this.makeRequest(`/usuarios/${usuarioId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.success) {
+            this.showNotification('Usuário excluído com sucesso!', 'success');
+            
+            // Remover da lista local
+            this.usuarios = this.usuarios.filter(u => u.id !== usuarioId);
+            this.usuariosFiltrados = this.usuariosFiltrados.filter(u => u.id !== usuarioId);
+            
+            this.atualizarEstatisticas();
+            this.exibirUsuarios();
+        } else {
+            throw new Error(response.error || 'Erro ao excluir usuário');
         }
-
-        try {
-            const response = await this.makeRequest(`/usuarios/${usuarioId}`, {
-                method: 'DELETE'
-            });
-
-            if (response.success) {
-                this.showNotification('Usuário excluído com sucesso!', 'success');
-                await this.carregarUsuarios();
-            } else {
-                throw new Error(response.error);
-            }
-        } catch (error) {
-            console.error('❌ Erro ao excluir usuário:', error);
+    } catch (error) {
+        console.error('❌ Erro ao excluir usuário:', error);
+        
+        if (error.message.includes('404') || error.message.includes('Cannot DELETE')) {
+            this.showNotification('Função de exclusão não disponível no momento. Contate o administrador do sistema.', 'warning');
+        } else {
             this.showNotification('Erro ao excluir usuário: ' + error.message, 'error');
         }
     }
+}
 
     limparCacheUsuario(usuarioId) {
         const usuarioLogado = JSON.parse(localStorage.getItem('userData') || '{}');
