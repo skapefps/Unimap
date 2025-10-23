@@ -1,4 +1,4 @@
-// professores.js - Gerenciador de Professores COM SELEÇÃO DE PERÍODO E TURMA
+// professores.js - Gerenciador de Professores PARA ALUNOS E ADMIN
 class ProfessoresManager {
     constructor() {
         console.log('👨‍🏫 ProfessoresManager inicializado');
@@ -18,25 +18,27 @@ class ProfessoresManager {
     }
 
     carregarUsuario() {
-    console.log('🔐 Verificando autenticação...');
-    const userData = localStorage.getItem('userData');
-    if (userData) {
-        this.user = JSON.parse(userData);
-        console.log('✅ Usuário carregado:', this.user.nome, '- Tipo:', this.user.tipo);
-        this.atualizarInterfaceUsuario();
-        
-        // SEMPRE carregar professores primeiro
-        this.carregarProfessores();
-        
-        // Se for aluno, carregar cursos e dados do aluno
-        if (this.user.tipo === 'aluno') {
-            this.carregarCursos();
-            this.carregarDadosAluno();
+        console.log('🔐 Verificando autenticação...');
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+            this.user = JSON.parse(userData);
+            console.log('✅ Usuário carregado:', this.user.nome, '- Tipo:', this.user.tipo);
+            this.atualizarInterfaceUsuario();
+            
+            // SEMPRE carregar professores primeiro
+            this.carregarProfessores();
+            
+            // Se for admin OU aluno, carregar cursos e dados
+            if (this.user.tipo === 'aluno' || this.user.tipo === 'admin') {
+                this.carregarCursos();
+                if (this.user.tipo === 'aluno') {
+                    this.carregarDadosAluno();
+                }
+            }
+        } else {
+            console.log('❌ Usuário não autenticado');
         }
-    } else {
-        console.log('❌ Usuário não autenticado');
     }
-}
 
     async carregarCursos() {
         try {
@@ -81,126 +83,100 @@ class ProfessoresManager {
                 if (aluno.curso && aluno.periodo && aluno.turma_id) {
                     this.preencherFormularioComDadosAluno(aluno);
                 }
-                
-                this.carregarProfessores();
             }
         } catch (error) {
             console.error('❌ Erro ao carregar dados do aluno:', error);
-            this.carregarProfessores();
         }
     }
+
     renderizarFormularioAdmin() {
-    const formContainer = document.querySelector('.add-professor-form');
-    if (!formContainer) {
-        console.log('❌ Container do formulário não encontrado');
-        return;
-    }
-
-    console.log('🔄 Renderizando formulário para ADMIN...');
-    
-    formContainer.innerHTML = `
-        <div class="form-group">
-            <label for="professor-select">
-                <i class="fas fa-chalkboard-teacher"></i> Professor:
-            </label>
-            <select id="professor-select" class="select-shadow" required>
-                <option value="">Selecione um professor</option>
-            </select>
-        </div>
-
-        <button type="submit" class="btn-primary btn-full">
-            <i class="fas fa-plus"></i> Adicionar Professor
-        </button>
-    `;
-
-    // Popular o select de professores
-    this.renderizarSelectProfessores();
-    
-    // Configurar event listeners específicos do admin
-    this.configurarEventListenersAdmin();
-}
-configurarEventListenersAdmin() {
-    const professorSelect = document.getElementById('professor-select');
-    if (professorSelect) {
-        professorSelect.addEventListener('change', () => {
-            this.validarFormularioAdmin();
-        });
-    }
-
-    const form = document.querySelector('.add-professor-form');
-    if (form) {
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.adicionarProfessorFavoritoAdmin();
-        });
-    }
-}
-async adicionarProfessorFavoritoAdmin() {
-    console.log('⭐ ADMIN: Iniciando adição de professor aos favoritos...');
-    
-    const professorSelect = document.getElementById('professor-select');
-    const professorId = professorSelect.value;
-
-    if (!professorId) {
-        this.mostrarMensagem('Por favor, selecione um professor', 'warning');
-        return;
-    }
-
-    if (!this.user) {
-        this.mostrarMensagem('Usuário não autenticado', 'error');
-        return;
-    }
-
-    try {
-        console.log('📤 ADMIN: Enviando requisição para adicionar favorito...');
-        
-        const token = localStorage.getItem('authToken');
-        const response = await fetch('/api/professores/favoritos', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                aluno_id: this.user.id,
-                professor_id: professorId
-            })
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-            console.log('✅ ADMIN: Professor adicionado aos favoritos!');
-            this.mostrarMensagem('Professor adicionado aos favoritos!', 'success');
-            
-            this.carregarProfessoresFavoritos();
-            professorSelect.value = '';
-            
-        } else {
-            const errorMsg = data.error || 'Erro ao adicionar professor';
-            throw new Error(errorMsg);
+        const formContainer = document.querySelector('.add-professor-form');
+        if (!formContainer) {
+            console.log('❌ Container do formulário não encontrado');
+            return;
         }
-    } catch (error) {
-        console.error('❌ ADMIN: Erro ao adicionar favorito:', error);
-        this.mostrarMensagem('Erro ao adicionar professor: ' + error.message, 'error');
+
+        console.log('🔄 Renderizando formulário para ADMIN...');
+        
+        formContainer.innerHTML = `
+            <div class="form-group">
+                <label for="professor-select-admin">
+                    <i class="fas fa-chalkboard-teacher"></i> Professor:
+                </label>
+                <select id="professor-select-admin" class="select-shadow" required>
+                    <option value="">Selecione um professor</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-primary btn-full" id="btn-adicionar-professor-admin">
+                <i class="fas fa-plus"></i> Adicionar Professor
+            </button>
+        `;
+
+        // Popular o select de professores IMEDIATAMENTE
+        this.popularSelectProfessoresAdmin();
+        
+        // Configurar validação imediata
+        this.configurarValidacaoAdmin();
     }
-}
-renderizarFormularioCompleto() {
+
+    popularSelectProfessoresAdmin() {
+        const select = document.getElementById('professor-select-admin');
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Selecione um professor</option>';
+
+        if (this.professores.length === 0) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'Nenhum professor disponível';
+            select.appendChild(option);
+            return;
+        }
+
+        this.professores.forEach(professor => {
+            const option = document.createElement('option');
+            option.value = professor.id;
+            option.textContent = `${professor.nome} - ${professor.email}`;
+            select.appendChild(option);
+        });
+
+        console.log('✅ Select de professores populado para admin');
+    }
+
+    configurarValidacaoAdmin() {
+        const professorSelect = document.getElementById('professor-select-admin');
+        const submitBtn = document.getElementById('btn-adicionar-professor-admin');
+
+        if (!professorSelect || !submitBtn) return;
+
+        // Validar imediatamente
+        submitBtn.disabled = !professorSelect.value;
+
+        // Configurar validação em tempo real
+        professorSelect.addEventListener('change', () => {
+            submitBtn.disabled = !professorSelect.value;
+        });
+
+        console.log('✅ Validação configurada para admin');
+    }
+
+    renderizarFormularioCompleto() {
     const formContainer = document.querySelector('.add-professor-form');
     if (!formContainer) {
         console.log('❌ Container do formulário não encontrado');
         return;
     }
 
-    console.log('🔄 Renderizando formulário COMPLETO para ALUNO...');
+    console.log('🔄 Renderizando formulário COMPLETO para ALUNO/ADMIN...');
     
     formContainer.innerHTML = `
         <div class="form-group">
             <label for="curso-select-professor">
-                <i class="fas fa-book"></i> Seu Curso:
+                <i class="fas fa-book"></i> ${this.user.tipo === 'admin' ? 'Curso do Aluno:' : 'Seu Curso:'}
             </label>
             <select id="curso-select-professor" class="select-shadow" required>
-                <option value="">Selecione seu curso</option>
+                <option value="">${this.user.tipo === 'admin' ? 'Selecione o curso' : 'Selecione seu curso'}</option>
                 ${this.cursos.map(curso => 
                     `<option value="${curso.id}" data-duracao="${curso.duracao_periodos || curso.total_periodos || 8}">
                         ${curso.nome}
@@ -211,7 +187,7 @@ renderizarFormularioCompleto() {
 
         <div class="form-group">
             <label for="periodo-select-professor">
-                <i class="fas fa-calendar-alt"></i> Seu Período:
+                <i class="fas fa-calendar-alt"></i> ${this.user.tipo === 'admin' ? 'Período do Aluno:' : 'Seu Período:'}
             </label>
             <select id="periodo-select-professor" class="select-shadow" required disabled>
                 <option value="">Selecione o período</option>
@@ -220,7 +196,7 @@ renderizarFormularioCompleto() {
 
         <div class="form-group">
             <label for="turma-select-professor">
-                <i class="fas fa-users"></i> Sua Turma:
+                <i class="fas fa-users"></i> ${this.user.tipo === 'admin' ? 'Turma do Aluno:' : 'Sua Turma:'}
             </label>
             <select id="turma-select-professor" class="select-shadow" required disabled>
                 <option value="">Selecione a turma</option>
@@ -228,64 +204,55 @@ renderizarFormularioCompleto() {
         </div>
 
         <div class="form-group">
-            <label for="professor-select">
+            <label for="professor-select-aluno">
                 <i class="fas fa-chalkboard-teacher"></i> Professor:
             </label>
-            <select id="professor-select" class="select-shadow" required disabled>
+            <select id="professor-select-aluno" class="select-shadow" required>
                 <option value="">Selecione um professor</option>
             </select>
         </div>
 
-        <button type="submit" class="btn-primary btn-full">
-            <i class="fas fa-plus"></i> Adicionar Professor
+        <button type="submit" class="btn-primary btn-full" id="btn-adicionar-professor-aluno" disabled>
+            <i class="fas fa-plus"></i> ${this.user.tipo === 'admin' ? 'Adicionar Professor aos Favoritos do Aluno' : 'Adicionar Professor'}
         </button>
     `;
 
-    this.configurarEventListenersFormulario();
+    // Popular professores IMEDIATAMENTE (não depende da turma)
+    this.popularSelectProfessoresAluno();
+    this.configurarEventListenersFormularioAluno();
 }
 
-    configurarEventListenersFormulario() {
-    // SE FOR ADMIN - APENAS CONFIGURAR O SELECT SIMPLES
-    if (this.user.tipo === 'admin') {
-        const professorSelect = document.getElementById('professor-select');
-        if (professorSelect) {
-            professorSelect.addEventListener('change', () => {
-                this.validarFormularioAdmin();
-            });
-        }
-    } 
-    // SE FOR ALUNO - CONFIGURAR TODOS OS SELECTS
-    else {
-        const cursoSelect = document.getElementById('curso-select-professor');
-        if (cursoSelect) {
-            cursoSelect.addEventListener('change', (e) => {
-                this.handleCursoChange(e.target.value);
-            });
-        }
-
-        const periodoSelect = document.getElementById('periodo-select-professor');
-        if (periodoSelect) {
-            periodoSelect.addEventListener('change', (e) => {
-                this.handlePeriodoChange(e.target.value);
-            });
-        }
-
-        const turmaSelect = document.getElementById('turma-select-professor');
-        if (turmaSelect) {
-            turmaSelect.addEventListener('change', () => {
-                this.validarFormularioCompleto();
-            });
-        }
-
-        const professorSelect = document.getElementById('professor-select');
-        if (professorSelect) {
-            professorSelect.addEventListener('change', () => {
-                this.validarFormularioCompleto();
-            });
-        }
+   configurarEventListenersFormularioAluno() {
+    const cursoSelect = document.getElementById('curso-select-professor');
+    if (cursoSelect) {
+        cursoSelect.addEventListener('change', (e) => {
+            this.handleCursoChange(e.target.value);
+            this.validarFormularioCompleto(); // Adicionar validação
+        });
     }
 
-    // Configurar submit do formulário (igual para ambos)
+    const periodoSelect = document.getElementById('periodo-select-professor');
+    if (periodoSelect) {
+        periodoSelect.addEventListener('change', (e) => {
+            this.handlePeriodoChange(e.target.value);
+            this.validarFormularioCompleto(); // Adicionar validação
+        });
+    }
+
+    const turmaSelect = document.getElementById('turma-select-professor');
+    if (turmaSelect) {
+        turmaSelect.addEventListener('change', () => {
+            this.validarFormularioCompleto();
+        });
+    }
+
+    const professorSelect = document.getElementById('professor-select-aluno');
+    if (professorSelect) {
+        professorSelect.addEventListener('change', () => {
+            this.validarFormularioCompleto();
+        });
+    }
+
     const form = document.querySelector('.add-professor-form');
     if (form) {
         form.addEventListener('submit', (e) => {
@@ -294,33 +261,33 @@ renderizarFormularioCompleto() {
         });
     }
 }
-    async handleCursoChange(cursoId) {
-        const periodoSelect = document.getElementById('periodo-select-professor');
-        const turmaSelect = document.getElementById('turma-select-professor');
-        const professorSelect = document.getElementById('professor-select');
+   async handleCursoChange(cursoId) {
+    const periodoSelect = document.getElementById('periodo-select-professor');
+    const turmaSelect = document.getElementById('turma-select-professor');
+    const professorSelect = document.getElementById('professor-select-aluno');
 
-        if (!cursoId) {
-            periodoSelect.disabled = true;
-            periodoSelect.innerHTML = '<option value="">Selecione o período</option>';
-            turmaSelect.disabled = true;
-            turmaSelect.innerHTML = '<option value="">Selecione a turma</option>';
-            professorSelect.disabled = true;
-            return;
-        }
-
-        const cursoSelecionado = this.cursos.find(curso => curso.id == cursoId);
-        const duracaoPeriodos = cursoSelecionado ? 
-            (cursoSelecionado.duracao_periodos || cursoSelecionado.total_periodos || 8) : 8;
-
-        console.log(`📚 Curso selecionado: ${cursoSelecionado?.nome}, Duração: ${duracaoPeriodos} períodos`);
-
-        await this.carregarPeriodos(duracaoPeriodos);
-        
-        periodoSelect.disabled = false;
+    if (!cursoId) {
+        periodoSelect.disabled = true;
+        periodoSelect.innerHTML = '<option value="">Selecione o período</option>';
         turmaSelect.disabled = true;
         turmaSelect.innerHTML = '<option value="">Selecione a turma</option>';
-        professorSelect.disabled = true;
+        // Não desabilitar o professor - sempre disponível
+        return;
     }
+
+    const cursoSelecionado = this.cursos.find(curso => curso.id == cursoId);
+    const duracaoPeriodos = cursoSelecionado ? 
+        (cursoSelecionado.duracao_periodos || cursoSelecionado.total_periodos || 8) : 8;
+
+    console.log(`📚 Curso selecionado: ${cursoSelecionado?.nome}, Duração: ${duracaoPeriodos} períodos`);
+
+    await this.carregarPeriodos(duracaoPeriodos);
+    
+    periodoSelect.disabled = false;
+    turmaSelect.disabled = true;
+    turmaSelect.innerHTML = '<option value="">Selecione a turma</option>';
+    // Não desabilitar o professor - sempre disponível
+}
 
     async carregarPeriodos(duracaoPeriodos) {
         const periodoSelect = document.getElementById('periodo-select-professor');
@@ -351,24 +318,24 @@ renderizarFormularioCompleto() {
     }
 
     async handlePeriodoChange(periodo) {
-        const turmaSelect = document.getElementById('turma-select-professor');
-        const professorSelect = document.getElementById('professor-select');
-        const cursoSelect = document.getElementById('curso-select-professor');
+    const turmaSelect = document.getElementById('turma-select-professor');
+    const professorSelect = document.getElementById('professor-select-aluno');
+    const cursoSelect = document.getElementById('curso-select-professor');
 
-        if (!periodo) {
-            turmaSelect.disabled = true;
-            turmaSelect.innerHTML = '<option value="">Selecione a turma</option>';
-            professorSelect.disabled = true;
-            return;
-        }
-
-        const cursoId = cursoSelect ? cursoSelect.value : '';
-        if (!cursoId) return;
-
-        turmaSelect.disabled = false;
-        await this.carregarTurmas(cursoId, periodo);
-        this.validarFormularioCompleto();
+    if (!periodo) {
+        turmaSelect.disabled = true;
+        turmaSelect.innerHTML = '<option value="">Selecione a turma</option>';
+        // Não desabilitar o professor - sempre disponível
+        return;
     }
+
+    const cursoId = cursoSelect ? cursoSelect.value : '';
+    if (!cursoId) return;
+
+    turmaSelect.disabled = false;
+    await this.carregarTurmas(cursoId, periodo);
+    this.validarFormularioCompleto();
+}
 
     async carregarTurmas(cursoId, periodo) {
         const turmaSelect = document.getElementById('turma-select-professor');
@@ -421,22 +388,45 @@ renderizarFormularioCompleto() {
     }
 
     validarFormularioCompleto() {
-        const cursoSelect = document.getElementById('curso-select-professor');
-        const periodoSelect = document.getElementById('periodo-select-professor');
-        const turmaSelect = document.getElementById('turma-select-professor');
-        const professorSelect = document.getElementById('professor-select');
-        const submitBtn = document.querySelector('.add-professor-form .btn-primary');
+    const cursoSelect = document.getElementById('curso-select-professor');
+    const periodoSelect = document.getElementById('periodo-select-professor');
+    const turmaSelect = document.getElementById('turma-select-professor');
+    const professorSelect = document.getElementById('professor-select-aluno');
+    const submitBtn = document.getElementById('btn-adicionar-professor-aluno');
 
-        if (!cursoSelect || !periodoSelect || !turmaSelect || !professorSelect || !submitBtn) return;
+    if (!cursoSelect || !periodoSelect || !turmaSelect || !professorSelect || !submitBtn) return;
 
-        const formularioValido = cursoSelect.value && 
-                                periodoSelect.value && 
-                                turmaSelect.value && 
-                                professorSelect.value;
+    const formularioValido = cursoSelect.value && 
+                            periodoSelect.value && 
+                            turmaSelect.value && 
+                            professorSelect.value;
+    
+    submitBtn.disabled = !formularioValido;
+}
 
-        professorSelect.disabled = !turmaSelect.value;
-        submitBtn.disabled = !formularioValido;
+    popularSelectProfessoresAluno() {
+    const select = document.getElementById('professor-select-aluno');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Selecione um professor</option>';
+
+    if (this.professores.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Nenhum professor disponível';
+        select.appendChild(option);
+        return;
     }
+
+    this.professores.forEach(professor => {
+        const option = document.createElement('option');
+        option.value = professor.id;
+        option.textContent = `${professor.nome} - ${professor.email}`;
+        select.appendChild(option);
+    });
+
+    console.log('✅ Select de professores populado para aluno');
+}
 
     getCursoNome(cursoId) {
         const curso = this.cursos.find(c => c.id == cursoId);
@@ -477,58 +467,36 @@ renderizarFormularioCompleto() {
     }
 
     async carregarProfessores() {
-    try {
-        console.log('📚 Carregando professores da API...');
-        
-        const token = localStorage.getItem('authToken');
-        const response = await fetch('/api/professores', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.ok) {
-            this.professores = await response.json();
-            console.log('✅ Professores carregados:', this.professores.length);
-            this.renderizarSelectProfessores();
+        try {
+            console.log('📚 Carregando professores da API...');
             
-            // ⭐⭐ ADICIONAR ESTA LINHA: Renderizar formulário baseado no tipo de usuário
-            if (this.user.tipo === 'admin') {
-                this.renderizarFormularioAdmin();
+            const token = localStorage.getItem('authToken');
+            const response = await fetch('/api/professores', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                this.professores = await response.json();
+                console.log('✅ Professores carregados:', this.professores.length);
+                
+                // Para admin, aguardar cursos serem carregados antes de renderizar
+                if (this.user.tipo === 'admin') {
+                    // Aguardar cursos serem carregados (se ainda não foram)
+                    if (this.cursos.length === 0) {
+                        await this.carregarCursos();
+                    }
+                }
+                
+                this.carregarProfessoresFavoritos();
+            } else {
+                console.error('❌ Erro ao carregar professores:', response.status);
             }
-            
-            this.carregarProfessoresFavoritos();
-        } else {
-            console.error('❌ Erro ao carregar professores:', response.status);
+        } catch (error) {
+            console.error('❌ Erro na requisição:', error);
         }
-    } catch (error) {
-        console.error('❌ Erro na requisição:', error);
-    }
-}
-
-    renderizarSelectProfessores() {
-        const select = document.getElementById('professor-select');
-        if (!select) return;
-
-        select.innerHTML = '<option value="">Selecione um professor</option>';
-
-        if (this.professores.length === 0) {
-            const option = document.createElement('option');
-            option.value = '';
-            option.textContent = 'Nenhum professor disponível';
-            select.appendChild(option);
-            return;
-        }
-
-        this.professores.forEach(professor => {
-            const option = document.createElement('option');
-            option.value = professor.id;
-            option.textContent = `${professor.nome} - ${professor.email}`;
-            select.appendChild(option);
-        });
-
-        console.log('✅ Select de professores renderizado');
     }
 
     async carregarProfessoresFavoritos() {
@@ -604,23 +572,37 @@ renderizarFormularioCompleto() {
     configurarEventListeners() {
         console.log('🔧 Configurando event listeners...');
         
-        const form = document.querySelector('.add-professor-form');
-        if (form) {
-            form.addEventListener('submit', (e) => {
+        // Configurar submit do formulário para admin (formulário completo)
+        const formAdmin = document.querySelector('.add-professor-form');
+        if (formAdmin && this.user.tipo === 'admin') {
+            formAdmin.addEventListener('submit', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('📝 Formulário submetido - Adicionar professor');
+                console.log('📝 Formulário ADMIN (completo) submetido');
                 this.adicionarProfessorFavorito();
                 return false;
             });
         }
 
-        const btnAdicionar = document.querySelector('.add-professor-form .btn-primary');
-        if (btnAdicionar) {
-            btnAdicionar.addEventListener('click', (e) => {
+        // Configurar botão para admin (formulário completo)
+        const btnAdicionarAdmin = document.getElementById('btn-adicionar-professor-aluno');
+        if (btnAdicionarAdmin && this.user.tipo === 'admin') {
+            btnAdicionarAdmin.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🖱️ Botão adicionar clicado');
+                console.log('🖱️ Botão ADMIN (completo) clicado');
+                this.adicionarProfessorFavorito();
+                return false;
+            });
+        }
+
+        // Configurar botão para aluno
+        const btnAdicionarAluno = document.getElementById('btn-adicionar-professor-aluno');
+        if (btnAdicionarAluno && this.user.tipo === 'aluno') {
+            btnAdicionarAluno.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🖱️ Botão ALUNO clicado');
                 this.adicionarProfessorFavorito();
                 return false;
             });
@@ -633,134 +615,153 @@ renderizarFormularioCompleto() {
     }
 
     async adicionarProfessorFavorito() {
-    // Se for admin, usar formulário simples
-    if (this.user.tipo === 'admin') {
-        console.log('⭐ ADMIN: Iniciando adição de professor aos favoritos...');
-        
-        const professorSelect = document.getElementById('professor-select');
-        const professorId = professorSelect.value;
-
-        if (!professorId) {
-            this.mostrarMensagem('Por favor, selecione um professor', 'warning');
-            return;
-        }
-
-        if (!this.user) {
-            this.mostrarMensagem('Usuário não autenticado', 'error');
-            return;
-        }
-
-        try {
-            console.log('📤 ADMIN: Enviando requisição para adicionar favorito...');
+        // Se for admin usando formulário completo
+        if (this.user.tipo === 'admin') {
+            console.log('⭐ ADMIN (Formulário Completo): Iniciando adição de professor aos favoritos...');
             
-            const token = localStorage.getItem('authToken');
-            const response = await fetch('/api/professores/favoritos', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    aluno_id: this.user.id,
-                    professor_id: professorId
-                })
+            const cursoSelect = document.getElementById('curso-select-professor');
+            const periodoSelect = document.getElementById('periodo-select-professor');
+            const turmaSelect = document.getElementById('turma-select-professor');
+            const professorSelect = document.getElementById('professor-select-aluno');
+
+            // Verificar se é o formulário completo (com campos de aluno)
+            if (cursoSelect && periodoSelect && turmaSelect && professorSelect) {
+                const cursoId = cursoSelect.value;
+                const periodo = periodoSelect.value;
+                const turmaId = turmaSelect.value;
+                const professorId = professorSelect.value;
+
+                console.log('🎯 Dados do formulário ADMIN (completo):', {
+                    cursoId, periodo, turmaId, professorId
+                });
+
+                if (!cursoId || !periodo || !turmaId || !professorId) {
+                    this.mostrarMensagem('Por favor, preencha todos os campos', 'warning');
+                    return;
+                }
+
+                if (!this.user) {
+                    this.mostrarMensagem('Usuário não autenticado', 'error');
+                    return;
+                }
+
+                try {
+                    console.log('📤 ADMIN: Enviando requisição para adicionar favorito...');
+                    
+                    const token = localStorage.getItem('authToken');
+                    const response = await fetch('/api/professores/favoritos', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            aluno_id: this.user.id, // Admin pode adicionar para si mesmo
+                            professor_id: professorId,
+                            curso_id: cursoId,
+                            periodo: periodo,
+                            turma_id: turmaId
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        console.log('✅ ADMIN: Professor adicionado aos favoritos!');
+                        this.mostrarMensagem('Professor adicionado aos favoritos!', 'success');
+                        
+                        this.carregarProfessoresFavoritos();
+                        this.limparFormulario();
+                        
+                    } else {
+                        const errorMsg = data.error || 'Erro ao adicionar professor';
+                        throw new Error(errorMsg);
+                    }
+                } catch (error) {
+                    console.error('❌ ADMIN: Erro ao adicionar favorito:', error);
+                    this.mostrarMensagem('Erro ao adicionar professor: ' + error.message, 'error');
+                }
+                return;
+            }
+        }
+        
+        // Se for aluno
+        if (this.user.tipo === 'aluno') {
+            console.log('⭐ ALUNO: Iniciando adição de professor aos favoritos...');
+            
+            const cursoSelect = document.getElementById('curso-select-professor');
+            const periodoSelect = document.getElementById('periodo-select-professor');
+            const turmaSelect = document.getElementById('turma-select-professor');
+            const professorSelect = document.getElementById('professor-select-aluno');
+
+            if (!cursoSelect || !periodoSelect || !turmaSelect || !professorSelect) {
+                this.mostrarMensagem('Erro: Formulário incompleto', 'error');
+                return;
+            }
+
+            const cursoId = cursoSelect.value;
+            const periodo = periodoSelect.value;
+            const turmaId = turmaSelect.value;
+            const professorId = professorSelect.value;
+
+            console.log('🎯 Dados do formulário:', {
+                cursoId, periodo, turmaId, professorId
             });
 
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                console.log('✅ ADMIN: Professor adicionado aos favoritos!');
-                this.mostrarMensagem('Professor adicionado aos favoritos!', 'success');
-                
-                this.carregarProfessoresFavoritos();
-                professorSelect.value = '';
-                
-            } else {
-                const errorMsg = data.error || 'Erro ao adicionar professor';
-                throw new Error(errorMsg);
+            if (!cursoId || !periodo || !turmaId || !professorId) {
+                this.mostrarMensagem('Por favor, preencha todos os campos', 'warning');
+                return;
             }
-        } catch (error) {
-            console.error('❌ ADMIN: Erro ao adicionar favorito:', error);
-            this.mostrarMensagem('Erro ao adicionar professor: ' + error.message, 'error');
+
+            if (!this.user) {
+                this.mostrarMensagem('Usuário não autenticado', 'error');
+                return;
+            }
+
+            try {
+                console.log('📤 ALUNO: Enviando requisição para adicionar favorito...');
+                
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/professores/favoritos', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        aluno_id: this.user.id,
+                        professor_id: professorId,
+                        curso_id: cursoId,
+                        periodo: periodo,
+                        turma_id: turmaId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    console.log('✅ ALUNO: Professor adicionado aos favoritos!');
+                    this.mostrarMensagem('Professor adicionado aos favoritos!', 'success');
+                    
+                    this.carregarProfessoresFavoritos();
+                    this.limparFormulario();
+                    
+                } else {
+                    const errorMsg = data.error || 'Erro ao adicionar professor';
+                    throw new Error(errorMsg);
+                }
+            } catch (error) {
+                console.error('❌ ALUNO: Erro ao adicionar favorito:', error);
+                this.mostrarMensagem('Erro ao adicionar professor: ' + error.message, 'error');
+            }
         }
-        return;
     }
-    
-    // Se for aluno, usar formulário completo
-    console.log('⭐ ALUNO: Iniciando adição de professor aos favoritos...');
-    
-    const cursoSelect = document.getElementById('curso-select-professor');
-    const periodoSelect = document.getElementById('periodo-select-professor');
-    const turmaSelect = document.getElementById('turma-select-professor');
-    const professorSelect = document.getElementById('professor-select');
-
-    if (!cursoSelect || !periodoSelect || !turmaSelect || !professorSelect) {
-        this.mostrarMensagem('Erro: Formulário incompleto', 'error');
-        return;
-    }
-
-    const cursoId = cursoSelect.value;
-    const periodo = periodoSelect.value;
-    const turmaId = turmaSelect.value;
-    const professorId = professorSelect.value;
-
-    console.log('🎯 Dados do formulário:', {
-        cursoId, periodo, turmaId, professorId
-    });
-
-    if (!cursoId || !periodo || !turmaId || !professorId) {
-        this.mostrarMensagem('Por favor, preencha todos os campos', 'warning');
-        return;
-    }
-
-    if (!this.user) {
-        this.mostrarMensagem('Usuário não autenticado', 'error');
-        return;
-    }
-
-    try {
-        console.log('📤 ALUNO: Enviando requisição para adicionar favorito...');
-        
-        const token = localStorage.getItem('authToken');
-        const response = await fetch('/api/professores/favoritos', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                aluno_id: this.user.id,
-                professor_id: professorId,
-                curso_id: cursoId,
-                periodo: periodo,
-                turma_id: turmaId
-            })
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-            console.log('✅ ALUNO: Professor adicionado aos favoritos!');
-            this.mostrarMensagem('Professor adicionado aos favoritos!', 'success');
-            
-            this.carregarProfessoresFavoritos();
-            this.limparFormulario();
-            
-        } else {
-            const errorMsg = data.error || 'Erro ao adicionar professor';
-            throw new Error(errorMsg);
-        }
-    } catch (error) {
-        console.error('❌ ALUNO: Erro ao adicionar favorito:', error);
-        this.mostrarMensagem('Erro ao adicionar professor: ' + error.message, 'error');
-    }
-}
 
     limparFormulario() {
         const cursoSelect = document.getElementById('curso-select-professor');
         const periodoSelect = document.getElementById('periodo-select-professor');
         const turmaSelect = document.getElementById('turma-select-professor');
-        const professorSelect = document.getElementById('professor-select');
+        const professorSelect = document.getElementById('professor-select-aluno');
 
         if (cursoSelect) cursoSelect.value = '';
         if (periodoSelect) {
@@ -904,29 +905,6 @@ renderizarFormularioCompleto() {
                             <span class="professor-stat-label">ID</span>
                         </div>
                     </div>
-                    
-                    <div class="professor-aulas-section">
-                        <h3 class="professor-section-title">
-                            <i class="fas fa-book"></i>
-                            Informações
-                        </h3>
-                        <div class="professor-aulas-list">
-                            <div class="professor-aula-item">
-                                <div class="professor-aula-info">
-                                    <p class="professor-aula-name">Disponível para contato</p>
-                                    <p class="professor-aula-details">Via email institucional</p>
-                                </div>
-                                <span class="professor-aula-horario">Email</span>
-                            </div>
-                            <div class="professor-aula-item">
-                                <div class="professor-aula-info">
-                                    <p class="professor-aula-name">Status no sistema</p>
-                                    <p class="professor-aula-details">Professor ${professor.ativo ? 'ativo' : 'inativo'}</p>
-                                </div>
-                                <span class="professor-aula-horario">${professor.ativo ? 'Ativo' : 'Inativo'}</span>
-                            </div>
-                        </div>
-                    </div>
                 </div>
                 
                 <div class="professor-alert-footer">
@@ -974,15 +952,6 @@ renderizarFormularioCompleto() {
             });
         });
     }
-    validarFormularioAdmin() {
-    const professorSelect = document.getElementById('professor-select');
-    const submitBtn = document.querySelector('.add-professor-form .btn-primary');
-
-    if (!professorSelect || !submitBtn) return;
-
-    const formularioValido = professorSelect.value;
-    submitBtn.disabled = !formularioValido;
-}
 
     executarAcaoAlerta(action, professor, overlay) {
         switch(action) {
@@ -999,12 +968,20 @@ renderizarFormularioCompleto() {
     }
 
     adicionarProfessorFavoritoDireto(professorId, overlay) {
-        const select = document.getElementById('professor-select');
-        if (select) {
-            select.value = professorId;
-            this.adicionarProfessorFavorito();
-            this.fecharAlerta(overlay);
+        if (this.user.tipo === 'admin') {
+            const select = document.getElementById('professor-select-aluno');
+            if (select) {
+                select.value = professorId;
+                this.adicionarProfessorFavorito();
+            }
+        } else {
+            const select = document.getElementById('professor-select-aluno');
+            if (select) {
+                select.value = professorId;
+                this.adicionarProfessorFavorito();
+            }
         }
+        this.fecharAlerta(overlay);
     }
 
     removerFavoritoDireto(professorId, overlay) {
