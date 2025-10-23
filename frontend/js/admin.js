@@ -11,7 +11,7 @@ class AdminManager {
         this.updateUserInfo();
         
         // SINCRONIZAR COM adminTurmas SE ESTIVER DISPONÍVEL
-        this.sincronizaradminTurmas();
+        this.sincronizarAdminTurmas();
     }
 
     // 🔥 MÉTODO checkAdminAccess ADICIONADO
@@ -307,43 +307,48 @@ async sincronizarAdminTurmas() {
         }
     }
 
-    renderUsuarios(usuarios) {
-        const tbody = document.getElementById('usuarios-body');
-        if (!tbody) {
-            console.error('❌ Tabela de usuários não encontrada');
-            return;
-        }
-
-        // VERIFICAÇÃO ROBUSTA
-        if (!usuarios || !Array.isArray(usuarios) || usuarios.length === 0) {
-            this.showEmptyState();
-            return;
-        }
-
-        try {
-            tbody.innerHTML = usuarios.map(usuario => `
-                <tr>
-                    <td>
-                        <strong>${this.escapeHtml(usuario.nome || 'N/A')}</strong>
-                        ${usuario.tipo === 'admin' ? '<i class="fas fa-crown" style="color: #e74c3c; margin-left: 8px;"></i>' : ''}
-                    </td>
-                    <td>${this.escapeHtml(usuario.email || 'N/A')}</td>
-                    <td>
-                        <span class="badge ${usuario.tipo || 'aluno'}">
-                            ${this.getTipoDisplay(usuario.tipo)}
-                        </span>
-                    </td>
-                    <td>${this.formatarData(usuario.data_cadastro || usuario.created_at)}</td>
-                </tr>
-            `).join('');
-
-            console.log('✅ Usuários renderizados:', usuarios.length);
-            
-        } catch (error) {
-            console.error('❌ Erro ao renderizar usuários:', error);
-            this.showErrorState('Erro ao exibir usuários');
-        }
+   // admin.js - ATUALIZAR O MÉTODO renderUsuarios
+renderUsuarios(usuarios) {
+    const tbody = document.getElementById('usuarios-body');
+    if (!tbody) {
+        console.error('❌ Tabela de usuários não encontrada');
+        return;
     }
+
+    if (!usuarios || !Array.isArray(usuarios) || usuarios.length === 0) {
+        this.showEmptyState();
+        return;
+    }
+
+    try {
+        // Mostrar apenas os 5 primeiros usuários no dashboard
+        const usuariosParaMostrar = usuarios.slice(0, 5);
+        
+        tbody.innerHTML = usuariosParaMostrar.map(usuario => `
+            <tr>
+                <td>
+                    <strong>${this.escapeHtml(usuario.nome || 'N/A')}</strong>
+                    ${usuario.tipo === 'admin' ? '<i class="fas fa-crown" style="color: #e74c3c; margin-left: 8px;"></i>' : ''}
+                </td>
+                <td>${this.escapeHtml(usuario.email || 'N/A')}</td>
+                <td>
+                    <span class="badge ${usuario.tipo || 'aluno'}">
+                        ${this.getTipoDisplay(usuario.tipo)}
+                    </span>
+                </td>
+                <td>${this.formatarData(usuario.data_cadastro || usuario.created_at)}</td>
+                <td>${this.escapeHtml(usuario.curso || 'N/A')}</td>
+                <td>${usuario.periodo ? `${usuario.periodo}° Período` : 'N/A'}</td>
+            </tr>
+        `).join('');
+
+        console.log('✅ Usuários renderizados no dashboard:', usuariosParaMostrar.length);
+        
+    } catch (error) {
+        console.error('❌ Erro ao renderizar usuários:', error);
+        this.showErrorState('Erro ao exibir usuários');
+    }
+}
 
     // MÉTODO: Mostrar estado vazio
     showEmptyState() {

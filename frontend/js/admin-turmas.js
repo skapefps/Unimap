@@ -6,9 +6,112 @@ class AdminTurmas {
         this.turmaEditando = null;
         this.carregando = false;
         this.inicializado = false;
+        this.cursosComPeriodos = {};
+        this.cursosDisponiveis = [];
     }
 
-    // Inicializar
+    async carregarCursosDoBanco() {
+        try {
+            console.log('📚 Carregando cursos para turmas...');
+            
+            const response = await this.makeRequest('/cursos-com-periodos');
+            
+            if (response.success) {
+                this.cursosComPeriodos = {};
+                this.cursosDisponiveis = [];
+                
+                console.log('📊 Cursos recebidos da API:', response.data);
+                
+                response.data.forEach(curso => {
+                    this.cursosComPeriodos[curso.nome] = curso.total_periodos || 8;
+                    this.cursosDisponiveis.push(curso.nome);
+                });
+                
+                console.log(`✅ ${this.cursosDisponiveis.length} cursos carregados para turmas:`, this.cursosDisponiveis);
+                this.popularCursosNoModalTurma();
+            } else {
+                throw new Error(response.error || 'Erro ao carregar cursos');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar cursos para turmas:', error);
+            this.usarCursosFallbackTurmas();
+        }
+    }
+
+    // 🔥 MÉTODO: Fallback para cursos
+    usarCursosFallbackTurmas() {
+        console.log('🔄 Usando cursos fallback para turmas...');
+        const cursosFallback = {
+            'Sistemas de Informação': 8,
+            'Administração': 8,
+            'Direito': 10,
+            'Medicina': 12,
+            'Engenharia Civil': 10
+        };
+        
+        this.cursosComPeriodos = cursosFallback;
+        this.cursosDisponiveis = Object.keys(cursosFallback);
+        this.popularCursosNoModalTurma();
+    }
+
+    // 🔥 MÉTODO: Popular cursos no modal de turma
+    popularCursosNoModalTurma() {
+        const selectCurso = document.getElementById('turmaCurso');
+        if (!selectCurso) {
+            console.log('❌ Elemento turmaCurso não encontrado');
+            return;
+        }
+        
+        console.log('📝 Populando cursos no modal de turma...');
+        console.log('📋 Cursos disponíveis:', this.cursosDisponiveis);
+        
+        // Limpar opções existentes
+        selectCurso.innerHTML = '<option value="">Selecione o curso</option>';
+        
+        // Adicionar cada curso como opção
+        this.cursosDisponiveis.forEach(curso => {
+            const option = document.createElement('option');
+            option.value = curso;
+            option.textContent = curso;
+            selectCurso.appendChild(option);
+        });
+        
+        console.log(`✅ ${this.cursosDisponiveis.length} cursos adicionados ao modal de turma`);
+    }
+
+    // 🔥 MÉTODO: Atualizar períodos baseado no curso selecionado
+    atualizarPeriodosTurma(cursoSelecionado) {
+        const selectPeriodo = document.getElementById('turmaPeriodo');
+        if (!selectPeriodo) {
+            console.log('❌ Elemento turmaPeriodo não encontrado');
+            return;
+        }
+        
+        console.log(`🔄 Atualizando períodos para o curso: ${cursoSelecionado}`);
+        
+        // Limpar períodos atuais
+        selectPeriodo.innerHTML = '<option value="">Selecione o período</option>';
+        
+        if (cursoSelecionado && this.cursosComPeriodos[cursoSelecionado]) {
+            const totalPeriodos = this.cursosComPeriodos[cursoSelecionado];
+            
+            console.log(`📚 Curso ${cursoSelecionado} tem ${totalPeriodos} períodos`);
+            
+            // Criar opções de período (1 até total_periodos)
+            for (let i = 1; i <= totalPeriodos; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${i}° Período`;
+                selectPeriodo.appendChild(option);
+            }
+            
+            console.log(`✅ Gerados ${totalPeriodos} períodos para ${cursoSelecionado}`);
+        } else {
+            console.log('❌ Curso não encontrado ou sem períodos definidos:', cursoSelecionado);
+        }
+    }
+
+    // 🔥 ATUALIZAR O MÉTODO init para carregar cursos também
     async init() {
         if (this.inicializado) {
             console.log('✅ AdminTurmas já foi inicializado');
@@ -17,6 +120,9 @@ class AdminTurmas {
 
         try {
             console.log('🚀 Inicializando AdminTurmas...');
+            
+            // 🔥 CARREGAR CURSOS PRIMEIRO
+            await this.carregarCursosDoBanco();
             
             await this.carregarTurmas();
             await this.carregarAlunos();
@@ -301,19 +407,129 @@ class AdminTurmas {
     }
 
     // MODAL DE TURMAS
-    abrirModalCriarTurma() {
+   abrirModalCriarTurma() {
+    try {
         this.turmaEditando = null;
-        document.getElementById('turmaModalTitle').textContent = 'Nova Turma';
-        document.getElementById('turmaId').value = '';
-        document.getElementById('turmaForm').reset();
-        document.getElementById('turmaAtiva').value = 'true';
         
+        const modalTitle = document.getElementById('turmaModalTitle');
+        const turmaIdInput = document.getElementById('turmaId');
+        const turmaForm = document.getElementById('turmaForm');
         const modal = document.getElementById('turmaModal');
-        if (modal) {
-            this.prepararModalMobile(modal);
-            modal.style.display = 'flex';
+        
+        if (!modal) {
+            console.error('❌ Modal não encontrado no DOM');
+            this.criarModalTurmaFallback();
+            return;
         }
+        
+        if (modalTitle) modalTitle.textContent = 'Nova Turma';
+        if (turmaIdInput) turmaIdInput.value = '';
+        if (turmaForm) turmaForm.reset();
+        
+        // 🔥 GARANTIR QUE OS CURSOS ESTÃO CARREGADOS
+        this.popularCursosNoModalTurma();
+        
+        // Abrir modal
+        modal.style.display = 'flex';
+        this.prepararModalMobile(modal);
+        
+    } catch (error) {
+        console.error('❌ Erro ao abrir modal de criação:', error);
+        this.criarModalTurmaFallback();
     }
+}
+
+
+// ADICIONE ESTE MÉTODO PARA FALLBACK:
+criarModalTurmaFallback() {
+    console.log('🔄 Criando modal de turma fallback...');
+    
+    const modalHTML = `
+        <div class="modal-overlay" id="turmaModal" style="display: flex;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-users-class"></i> Nova Turma</h3>
+                    <button class="modal-close" onclick="adminTurmas.fecharModalTurma()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="turmaForm">
+                        <input type="hidden" id="turmaId" value="">
+                        
+                        <div class="form-group">
+                            <label>Nome da Turma:</label>
+                            <input type="text" id="turmaNome" required class="form-control" 
+                                   placeholder="Ex: SI-2024-1A">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Curso:</label>
+                            <select id="turmaCurso" required class="form-control">
+                                <option value="">Selecione o curso</option>
+                                <option value="Sistemas de Informação">Sistemas de Informação</option>
+                                <option value="Administração">Administração</option>
+                                <option value="Direito">Direito</option>
+                                <option value="Engenharia Civil">Engenharia Civil</option>
+                                <option value="Medicina">Medicina</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Período:</label>
+                            <select id="turmaPeriodo" required class="form-control">
+                                <option value="">Selecione o período</option>
+                                ${[1,2,3,4,5,6,7,8].map(p => 
+                                    `<option value="${p}">${p}° Período</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Ano:</label>
+                            <input type="number" id="turmaAno" required class="form-control" 
+                                   min="2020" max="2030" value="2024">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Status:</label>
+                            <select id="turmaAtiva" class="form-control">
+                                <option value="true" selected>Ativa</option>
+                                <option value="false">Inativa</option>
+                            </select>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-save"></i> Salvar Turma
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="adminTurmas.fecharModalTurma()">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remover modal existente se houver
+    const modalExistente = document.getElementById('turmaModal');
+    if (modalExistente) {
+        modalExistente.remove();
+    }
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Configurar event listener para o formulário
+    const turmaForm = document.getElementById('turmaForm');
+    if (turmaForm) {
+        turmaForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.salvarTurma(e);
+        });
+    }
+}
 
    // admin-turmas.js - MÉTODO editarTurma CORRIGIDO E SIMPLIFICADO
 async editarTurma(turmaId) {
@@ -325,7 +541,6 @@ async editarTurma(turmaId) {
 
         this.turmaEditando = turma;
 
-        // VERIFICAÇÃO DIRETA DOS ELEMENTOS (SEM TIMEOUT COMPLEXO)
         const modal = document.getElementById('turmaModal');
         if (!modal) {
             console.log('ℹ️ Modal não encontrado, criando dinamicamente...');
@@ -349,12 +564,31 @@ async editarTurma(turmaId) {
             return;
         }
 
+        // 🔥 GARANTIR QUE OS CURSOS ESTÃO CARREGADOS ANTES DE PREENCHER
+        this.popularCursosNoModalTurma();
+
         // Preencher os dados
         if (modalTitle) modalTitle.textContent = 'Editar Turma';
         if (turmaIdInput) turmaIdInput.value = turma.id;
         if (turmaNomeInput) turmaNomeInput.value = turma.nome || '';
-        if (turmaCursoInput) turmaCursoInput.value = turma.curso || '';
-        if (turmaPeriodoInput) turmaPeriodoInput.value = turma.periodo || '';
+        
+        // 🔥 PREENCHER CURSO E ATUALIZAR PERÍODOS
+        if (turmaCursoInput && turma.curso) {
+            turmaCursoInput.value = turma.curso;
+            // Atualizar os períodos baseado no curso
+            this.atualizarPeriodosTurma(turma.curso);
+            
+            // Agora preencher o período
+            if (turmaPeriodoInput && turma.periodo) {
+                // Aguardar um pouco para garantir que os períodos foram carregados
+                setTimeout(() => {
+                    if (turmaPeriodoInput) {
+                        turmaPeriodoInput.value = turma.periodo;
+                    }
+                }, 100);
+            }
+        }
+        
         if (turmaAnoInput) turmaAnoInput.value = turma.ano || new Date().getFullYear();
         if (turmaAtivaInput) turmaAtivaInput.value = turma.ativa ? 'true' : 'false';
 
@@ -372,10 +606,7 @@ async editarTurma(turmaId) {
         }
     }
 }
-
-
-    // MÉTODO FALLBACK - CRIAR MODAL DINAMICAMENTE
-    // admin-turmas.js - MÉTODO FALLBACK ATUALIZADO
+// admin-turmas.js - ATUALIZAR MÉTODO FALLBACK
 async criarModalEdicaoFallback(turma) {
     try {
         console.log('🔄 Criando modal de edição fallback...');
@@ -384,6 +615,14 @@ async criarModalEdicaoFallback(turma) {
         const modalExistente = document.getElementById('turmaModal');
         if (modalExistente) {
             modalExistente.remove();
+        }
+        
+        // 🔥 GERAR OPÇÕES DE PERÍODO DINAMICAMENTE
+        let opcoesPeriodo = '';
+        const totalPeriodos = this.cursosComPeriodos[turma.curso] || 8;
+        
+        for (let i = 1; i <= totalPeriodos; i++) {
+            opcoesPeriodo += `<option value="${i}" ${turma.periodo == i ? 'selected' : ''}>${i}° Período</option>`;
         }
         
         const modalHTML = `
@@ -405,25 +644,23 @@ async criarModalEdicaoFallback(turma) {
                                        value="${this.escapeHtml(turma.nome || '')}" placeholder="Ex: SI-2024-1A">
                             </div>
                             
+                            <!-- 🔥 CURSO DINÂMICO -->
                             <div class="form-group">
                                 <label>Curso:</label>
-                                <select id="turmaCurso" required class="form-control">
+                                <select id="turmaCurso" required class="form-control" onchange="adminTurmas.atualizarPeriodosTurma(this.value)">
                                     <option value="">Selecione o curso</option>
-                                    <option value="Sistemas de Informação" ${turma.curso === 'Sistemas de Informação' ? 'selected' : ''}>Sistemas de Informação</option>
-                                    <option value="Administração" ${turma.curso === 'Administração' ? 'selected' : ''}>Administração</option>
-                                    <option value="Direito" ${turma.curso === 'Direito' ? 'selected' : ''}>Direito</option>
-                                    <option value="Engenharia Civil" ${turma.curso === 'Engenharia Civil' ? 'selected' : ''}>Engenharia Civil</option>
-                                    <option value="Medicina" ${turma.curso === 'Medicina' ? 'selected' : ''}>Medicina</option>
+                                    ${this.cursosDisponiveis.map(curso => 
+                                        `<option value="${curso}" ${turma.curso === curso ? 'selected' : ''}>${curso}</option>`
+                                    ).join('')}
                                 </select>
                             </div>
                             
+                            <!-- 🔥 PERÍODO DINÂMICO -->
                             <div class="form-group">
                                 <label>Período:</label>
                                 <select id="turmaPeriodo" required class="form-control">
                                     <option value="">Selecione o período</option>
-                                    ${[1,2,3,4,5,6,7,8].map(p => 
-                                        `<option value="${p}" ${turma.periodo == p ? 'selected' : ''}>${p}° Período</option>`
-                                    ).join('')}
+                                    ${opcoesPeriodo}
                                 </select>
                             </div>
                             
@@ -472,6 +709,26 @@ async criarModalEdicaoFallback(turma) {
         console.error('❌ Erro ao criar modal fallback:', error);
         this.showNotification('Erro crítico: Não foi possível abrir a edição da turma', 'error');
     }
+}
+// admin-turmas.js - ADICIONAR VALIDAÇÃO
+validarCursoEPeriodo(curso, periodo) {
+    if (!curso) {
+        return { valido: false, erro: 'Curso é obrigatório' };
+    }
+    
+    if (!periodo) {
+        return { valido: false, erro: 'Período é obrigatório' };
+    }
+    
+    const totalPeriodos = this.cursosComPeriodos[curso];
+    if (totalPeriodos && periodo > totalPeriodos) {
+        return { 
+            valido: false, 
+            erro: `O curso ${curso} tem apenas ${totalPeriodos} períodos. Período ${periodo} é inválido.` 
+        };
+    }
+    
+    return { valido: true };
 }
 
     // FECHAR MODAL TURMA
@@ -631,37 +888,103 @@ async criarModalEdicaoFallback(turma) {
             this.showNotification('Erro ao abrir modal: ' + error.message, 'error');
         }
     }
+    // admin-turmas.js - MELHORAR O MÉTODO FALLBACK
+async criarModalVincularAlunosFallback() {
+    console.log('🔄 Criando modal de vínculo fallback...');
+    
+    const modalId = 'vincularAlunosModal';
+    
+    // ✅ REMOVER APENAS ESTE MODAL ESPECÍFICO
+    const modalExistente = document.getElementById(modalId);
+    if (modalExistente) {
+        modalExistente.remove();
+    }
+    
+    const modalHTML = `
+        <div class="modal-overlay" id="${modalId}" style="display: none;">
+            <!-- ... resto do código do modal ... -->
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    console.log('✅ Modal de vínculo fallback criado');
+}
 
-    async abrirModalVincularAlunos(turma) {
-        try {
-            const turmaNomeElement = document.getElementById('turmaSelecionadaNome');
-            const turmaCursoElement = document.getElementById('turmaSelecionadaCurso');
+   // admin-turmas.js - VERIFICAÇÃO MAIS ROBUSTA
+async abrirModalVincularAlunos(turma) {
+    try {
+        console.log('🎯 Abrindo modal de vínculo para turma:', turma);
+        
+        // ✅ PRIMEIRO: Sempre garantir que o modal existe
+        let modal = document.getElementById('vincularAlunosModal');
+        if (!modal) {
+            console.log('🔄 Modal não encontrado, criando...');
+            await this.criarModalVincularAlunosFallback();
+            modal = document.getElementById('vincularAlunosModal');
+        }
+        
+        // ✅ SEGUNDO: Verificar elementos críticos
+        let turmaNomeElement = document.getElementById('turmaSelecionadaNome');
+        if (!turmaNomeElement) {
+            console.error('❌ Elemento turmaSelecionadaNome não encontrado após criar modal');
+            
+            // Tentar recriar o modal completamente
+            await this.criarModalVincularAlunosFallback();
+            modal = document.getElementById('vincularAlunosModal');
+            turmaNomeElement = document.getElementById('turmaSelecionadaNome');
             
             if (!turmaNomeElement) {
-                throw new Error('Elemento turmaSelecionadaNome não encontrado');
+                throw new Error('Não foi possível criar o elemento turmaSelecionadaNome');
             }
-            
-            turmaNomeElement.textContent = turma.nome;
-            if (turmaCursoElement) {
-                turmaCursoElement.textContent = `Curso: ${turma.curso}`;
-            }
-            
-            await this.carregarAlunos();
-            this.renderizarListaAlunosParaTurma();
-            
-            const modal = document.getElementById('vincularAlunosModal');
-            if (!modal) {
-                throw new Error('Modal vincularAlunosModal não encontrado');
-            }
-            
-            modal.style.display = 'flex';
-            this.prepararModalMobile(modal);
-            
-        } catch (error) {
-            console.error('❌ Erro no modal de vínculo:', error);
-            throw error;
         }
+        
+        // ✅ AGORA PREENCHER OS DADOS
+        turmaNomeElement.textContent = turma.nome || 'Turma sem nome';
+        
+        const turmaCursoElement = document.getElementById('turmaSelecionadaCurso');
+        if (turmaCursoElement) {
+            turmaCursoElement.textContent = `Curso: ${turma.curso || 'Não definido'}`;
+        }
+        
+        // Carregar e renderizar alunos
+        await this.carregarAlunos();
+        this.renderizarListaAlunosParaTurma();
+        
+        // ✅ ABRIR MODAL
+        modal.style.display = 'flex';
+        this.prepararModalMobile(modal);
+        
+        console.log('✅ Modal de vínculo aberto com sucesso');
+        
+    } catch (error) {
+        console.error('❌ Erro crítico no modal de vínculo:', error);
+        this.showNotification('Erro ao abrir modal de vínculo: ' + error.message, 'error');
     }
+}// admin-turmas.js - ADICIONAR MÉTODO DE VERIFICAÇÃO
+verificarErestaurarModais() {
+    console.log('🔍 Verificando e restaurando modais...');
+    
+    const modaisNecessarios = [
+        { id: 'vincularAlunosModal', nome: 'Vincular Alunos' },
+        { id: 'turmaModal', nome: 'Gerenciar Turma' }
+    ];
+    
+    modaisNecessarios.forEach(modalInfo => {
+        const modal = document.getElementById(modalInfo.id);
+        if (!modal) {
+            console.log(`🔄 Modal ${modalInfo.nome} não encontrado, restaurando...`);
+            
+            if (modalInfo.id === 'vincularAlunosModal') {
+                this.criarModalVincularAlunosFallback();
+            } else if (modalInfo.id === 'turmaModal') {
+                this.criarModalTurmaFallback();
+            }
+        } else {
+            console.log(`✅ Modal ${modalInfo.nome} encontrado`);
+        }
+    });
+}
 
     // VALIDAÇÃO DE CURSO DO ALUNO
     validarCursoAluno(alunoId, turmaCurso) {
@@ -896,79 +1219,88 @@ async criarModalEdicaoFallback(turma) {
         }
     }
 
-    mostrarModalAlunosTurma(alunos, turmaId) {
-        const turma = this.turmas.find(t => t.id === turmaId);
-        const turmaNome = turma ? turma.nome : 'Turma';
-        
-        const modalHTML = `
-            <div class="modal-overlay" onclick="this.remove()">
-                <div class="modal-content large" onclick="event.stopPropagation()">
-                    <div class="modal-header">
-                        <h3><i class="fas fa-users"></i> Alunos da Turma - ${this.escapeHtml(turmaNome)}</h3>
-                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="table-container">
-                            <table>
-                                <thead>
+    // admin-turmas.js - MÉTODO CORRIGIDO
+mostrarModalAlunosTurma(alunos, turmaId) {
+    const turma = this.turmas.find(t => t.id === turmaId);
+    const turmaNome = turma ? turma.nome : 'Turma';
+    
+    // ✅ CRIAR UM ID ÚNICO PARA ESTE MODAL ESPECÍFICO
+    const modalId = 'modal-ver-alunos-turma';
+    
+    // ✅ REMOVER APENAS ESTE MODAL ESPECÍFICO (se existir)
+    const modalExistente = document.getElementById(modalId);
+    if (modalExistente) {
+        modalExistente.remove();
+    }
+    
+    const modalHTML = `
+        <div class="modal-overlay" id="${modalId}" onclick="this.remove()">
+            <div class="modal-content large" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h3><i class="fas fa-users"></i> Alunos da Turma - ${this.escapeHtml(turmaNome)}</h3>
+                    <button class="modal-close" onclick="document.getElementById('${modalId}').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Matrícula</th>
+                                    <th>Email</th>
+                                    <th>Curso</th>
+                                    <th>Período</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${alunos.map(aluno => `
                                     <tr>
-                                        <th>Nome</th>
-                                        <th>Matrícula</th>
-                                        <th>Email</th>
-                                        <th>Curso</th>
-                                        <th>Período</th>
-                                        <th>Status</th>
-                                        <th>Ações</th>
+                                        <td>${this.escapeHtml(aluno.nome)}</td>
+                                        <td>${this.escapeHtml(aluno.matricula || 'N/A')}</td>
+                                        <td>${this.escapeHtml(aluno.email)}</td>
+                                        <td>${this.escapeHtml(aluno.curso || 'N/A')}</td>
+                                        <td>${aluno.periodo || 'N/A'}° Período</td>
+                                        <td>
+                                            <span class="badge ${aluno.ativo !== false ? 'active' : 'inactive'}">
+                                                ${aluno.ativo !== false ? 'Ativo' : 'Inativo'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn-action small perigo" 
+                                                    onclick="adminTurmas.desvincularAluno(${turmaId}, ${aluno.id}, '${this.escapeHtml(aluno.nome)}')"
+                                                    title="Desvincular aluno">
+                                                <i class="fas fa-unlink"></i>
+                                            </button>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    ${alunos.map(aluno => `
-                                        <tr>
-                                            <td>${this.escapeHtml(aluno.nome)}</td>
-                                            <td>${this.escapeHtml(aluno.matricula || 'N/A')}</td>
-                                            <td>${this.escapeHtml(aluno.email)}</td>
-                                            <td>${this.escapeHtml(aluno.curso || 'N/A')}</td>
-                                            <td>${aluno.periodo || 'N/A'}° Período</td>
-                                            <td>
-                                                <span class="badge ${aluno.ativo !== false ? 'active' : 'inactive'}">
-                                                    ${aluno.ativo !== false ? 'Ativo' : 'Inativo'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <button class="btn-action small perigo" 
-                                                        onclick="adminTurmas.desvincularAluno(${turmaId}, ${aluno.id}, '${this.escapeHtml(aluno.nome)}')"
-                                                        title="Desvincular aluno">
-                                                    <i class="fas fa-unlink"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                    ${alunos.length === 0 ? `
-                                        <tr>
-                                            <td colspan="7" class="empty-state">
-                                                <i class="fas fa-users-slash"></i>
-                                                <p>Nenhum aluno nesta turma</p>
-                                            </td>
-                                        </tr>
-                                    ` : ''}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">
-                                Fechar
-                            </button>
-                        </div>
+                                `).join('')}
+                                ${alunos.length === 0 ? `
+                                    <tr>
+                                        <td colspan="7" class="empty-state">
+                                            <i class="fas fa-users-slash"></i>
+                                            <p>Nenhum aluno nesta turma</p>
+                                        </td>
+                                    </tr>
+                                ` : ''}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" onclick="document.getElementById('${modalId}').remove()">
+                            Fechar
+                        </button>
                     </div>
                 </div>
             </div>
-        `;
-        
-        document.querySelectorAll('.modal-overlay').forEach(modal => modal.remove());
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-    }
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
 
     // ATUALIZAR QUANTIDADE DE ALUNOS NA TURMA
     async atualizarQuantidadeAlunosTurma(turmaId) {
@@ -1225,63 +1557,81 @@ async desvincularAlunosEmLote(turmaId, alunosIds) {
         this.showNotification('Erro ao desvincular alunos: ' + error.message, 'error');
     }
 }
-    // MODAL PARA GERENCIAR VÍNCULOS DE ALUNOS
-    async abrirModalGerenciarVinculos(turmaId) {
-        try {
-            console.log('👥 Abrindo modal de gerenciar vínculos:', turmaId);
-            
-            const turma = this.turmas.find(t => t.id === turmaId);
-            if (!turma) {
-                throw new Error('Turma não encontrada');
-            }
+    // admin-turmas.js - MÉTODO CORRIGIDO
+mostrarModalGerenciarVinculos(turma, alunosVinculados) {
+    try {
+        console.log('🎯 Mostrando modal de gerenciar vínculos:', {
+            turma: turma.nome,
+            alunos: alunosVinculados.length
+        });
 
-            this.turmaEditando = turma;
-
-            // Buscar alunos vinculados à turma
-            const response = await this.makeRequest(`/turmas/${turmaId}/alunos`);
-            if (response && response.success) {
-                const alunosVinculados = response.data || [];
-                this.mostrarModalGerenciarVinculos(turma, alunosVinculados);
-            } else {
-                throw new Error('Erro ao carregar alunos da turma');
-            }
-
-        } catch (error) {
-            console.error('❌ Erro ao abrir modal de gerenciar vínculos:', error);
-            this.showNotification('Erro ao carregar alunos da turma: ' + error.message, 'error');
+        const modalId = 'modal-gerenciar-vinculos';
+        
+        // ✅ REMOVER APENAS ESTE MODAL ESPECÍFICO
+        const modalExistente = document.getElementById(modalId);
+        if (modalExistente) {
+            modalExistente.remove();
         }
-    }
 
-    // MOSTRAR MODAL DE GERENCIAR VÍNCULOS
-    mostrarModalGerenciarVinculos(turma, alunosVinculados) {
+        // ✅ CONSTRUIR HTML DOS ALUNOS CORRETAMENTE
+        let alunosHTML = '';
+        
+        if (alunosVinculados && alunosVinculados.length > 0) {
+            alunosHTML = alunosVinculados.map(aluno => `
+                <tr>
+                    <td>
+                        <input type="checkbox" class="aluno-vinculado-checkbox" value="${aluno.id}">
+                    </td>
+                    <td>${this.escapeHtml(aluno.nome)}</td>
+                    <td>${this.escapeHtml(aluno.matricula || 'N/A')}</td>
+                    <td>${this.escapeHtml(aluno.email)}</td>
+                    <td>${this.escapeHtml(aluno.curso || 'N/A')}</td>
+                    <td>${this.formatarData(aluno.data_matricula || aluno.data_vinculo || aluno.created_at)}</td>
+                    <td>
+                        <button class="btn-action small perigo" 
+                                onclick="adminTurmas.desvincularAluno(${turma.id}, ${aluno.id}, '${this.escapeHtml(aluno.nome)}')"
+                                title="Desvincular aluno">
+                            <i class="fas fa-unlink"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            alunosHTML = `
+                <tr>
+                    <td colspan="7" class="empty-state">
+                        <i class="fas fa-users-slash"></i>
+                        <p>Nenhum aluno vinculado a esta turma</p>
+                    </td>
+                </tr>
+            `;
+        }
+
         const modalHTML = `
-            <div class="modal-overlay" onclick="this.remove()">
+            <div class="modal-overlay" id="${modalId}" onclick="this.remove()">
                 <div class="modal-content large" onclick="event.stopPropagation()">
                     <div class="modal-header">
                         <h3><i class="fas fa-user-times"></i> Gerenciar Alunos - ${this.escapeHtml(turma.nome)}</h3>
-                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">
+                        <button class="modal-close" onclick="document.getElementById('${modalId}').remove()">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
                             <label>Turma: <strong>${this.escapeHtml(turma.nome)}</strong></label>
-                            <small class="form-text">Curso: ${this.escapeHtml(turma.curso)} | ${turma.quantidade_alunos || 0} aluno(s) vinculado(s)</small>
+                            <small class="form-text">Curso: ${this.escapeHtml(turma.curso)} | ${alunosVinculados.length} aluno(s) vinculado(s)</small>
                         </div>
                         
-                        <div class="form-group">
-                            <label>Buscar Alunos Vinculados:</label>
-                            <input type="text" id="buscarAlunosVinculados" class="form-control" 
-                                   placeholder="Digite o nome, matrícula ou email...">
-                        </div>
+                        ${alunosVinculados.length > 0 ? `
+                            <div class="form-group">
+                                <label>Buscar Alunos Vinculados:</label>
+                                <input type="text" id="buscarAlunosVinculados" class="form-control" 
+                                       placeholder="Digite o nome, matrícula ou email...">
+                            </div>
+                        ` : ''}
                         
                         <div class="alunos-vinculados-container" style="max-height: 400px; overflow-y: auto;">
-                            ${alunosVinculados.length === 0 ? `
-                                <div class="empty-state">
-                                    <i class="fas fa-users-slash"></i>
-                                    <p>Nenhum aluno vinculado a esta turma</p>
-                                </div>
-                            ` : `
+                            ${alunosVinculados.length > 0 ? `
                                 <table class="alunos-table">
                                     <thead>
                                         <tr>
@@ -1295,27 +1645,14 @@ async desvincularAlunosEmLote(turmaId, alunosIds) {
                                         </tr>
                                     </thead>
                                     <tbody id="listaAlunosVinculados">
-                                        ${alunosVinculados.map(aluno => `
-                                            <tr>
-                                                <td>
-                                                    <input type="checkbox" class="aluno-vinculado-checkbox" value="${aluno.id}">
-                                                </td>
-                                                <td>${this.escapeHtml(aluno.nome)}</td>
-                                                <td>${this.escapeHtml(aluno.matricula || 'N/A')}</td>
-                                                <td>${this.escapeHtml(aluno.email)}</td>
-                                                <td>${this.escapeHtml(aluno.curso || 'N/A')}</td>
-                                                <td>${this.formatarData(aluno.data_vinculo || aluno.created_at)}</td>
-                                                <td>
-                                                    <button class="btn-action small perigo" 
-                                                            onclick="adminTurmas.desvincularAluno(${turma.id}, ${aluno.id}, '${this.escapeHtml(aluno.nome)}')"
-                                                            title="Desvincular aluno">
-                                                        <i class="fas fa-unlink"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        `).join('')}
+                                        ${alunosHTML}
                                     </tbody>
                                 </table>
+                            ` : `
+                                <div class="empty-state">
+                                    <i class="fas fa-users-slash"></i>
+                                    <p>Nenhum aluno vinculado a esta turma</p>
+                                </div>
                             `}
                         </div>
                         
@@ -1324,51 +1661,116 @@ async desvincularAlunosEmLote(turmaId, alunosIds) {
                                 <button type="button" class="btn-primary perigo" onclick="adminTurmas.desvincularAlunosSelecionados()">
                                     <i class="fas fa-unlink"></i> Desvincular Selecionados
                                 </button>
-                                <button type="button" class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">
+                                <button type="button" class="btn-secondary" onclick="document.getElementById('${modalId}').remove()">
                                     <i class="fas fa-times"></i> Fechar
                                 </button>
                             </div>
-                        ` : ''}
+                        ` : `
+                            <div class="btn-group">
+                                <button type="button" class="btn-secondary" onclick="document.getElementById('${modalId}').remove()">
+                                    <i class="fas fa-times"></i> Fechar
+                                </button>
+                            </div>
+                        `}
                     </div>
                 </div>
             </div>
         `;
         
-        document.querySelectorAll('.modal-overlay').forEach(modal => modal.remove());
         document.body.insertAdjacentHTML('beforeend', modalHTML);
         
-        // Configurar event listeners
-        this.configurarModalGerenciarVinculos();
+        // ✅ CONFIGURAR EVENT LISTENERS APÓS CRIAR O MODAL
+        if (alunosVinculados.length > 0) {
+            this.configurarModalGerenciarVinculos();
+        }
+        
+        console.log('✅ Modal de gerenciar vínculos criado com sucesso');
+        
+    } catch (error) {
+        console.error('❌ Erro ao criar modal de gerenciar vínculos:', error);
+        this.showNotification('Erro ao criar modal: ' + error.message, 'error');
     }
+}
 
     // CONFIGURAR MODAL DE GERENCIAR VÍNCULOS
-    configurarModalGerenciarVinculos() {
-        // Selecionar todos
+    // admin-turmas.js - CORRIGIR CONFIGURAÇÃO DO MODAL
+configurarModalGerenciarVinculos() {
+    try {
+        console.log('⚙️ Configurando modal de gerenciar vínculos...');
+        
+        // ✅ VERIFICAR SE OS ELEMENTOS EXISTEM ANTES DE CONFIGURAR
         const selecionarTodos = document.getElementById('selecionarTodosVinculados');
         const checkboxes = document.querySelectorAll('.aluno-vinculado-checkbox');
+        const buscarInput = document.getElementById('buscarAlunosVinculados');
         
+        // Configurar "Selecionar Todos"
         if (selecionarTodos && checkboxes.length > 0) {
             selecionarTodos.addEventListener('change', (e) => {
                 checkboxes.forEach(checkbox => {
                     checkbox.checked = e.target.checked;
                 });
             });
+            
+            console.log('✅ "Selecionar Todos" configurado');
+        } else {
+            console.warn('⚠️ Elementos de seleção não encontrados');
         }
         
-        // Buscar alunos
-        const buscarInput = document.getElementById('buscarAlunosVinculados');
+        // Configurar busca
         if (buscarInput) {
             buscarInput.addEventListener('input', (e) => {
                 const termo = e.target.value.toLowerCase();
                 const linhas = document.querySelectorAll('#listaAlunosVinculados tr');
                 
+                let linhasVisiveis = 0;
                 linhas.forEach(linha => {
                     const texto = linha.textContent.toLowerCase();
-                    linha.style.display = texto.includes(termo) ? '' : 'none';
+                    const deveMostrar = texto.includes(termo);
+                    linha.style.display = deveMostrar ? '' : 'none';
+                    
+                    if (deveMostrar) linhasVisiveis++;
                 });
+                
+                console.log(`🔍 Busca: ${linhasVisiveis}/${linhas.length} alunos encontrados`);
             });
+            
+            console.log('✅ Busca configurada');
+        } else {
+            console.warn('⚠️ Campo de busca não encontrado');
         }
+        
+    } catch (error) {
+        console.error('❌ Erro ao configurar modal de gerenciar vínculos:', error);
     }
+}
+async abrirModalGerenciarVinculos(turmaId) {
+    try {
+        console.log('👥 Abrindo modal de gerenciar vínculos:', turmaId);
+        
+        const turma = this.turmas.find(t => t.id === turmaId);
+        if (!turma) {
+            throw new Error('Turma não encontrada');
+        }
+
+        this.turmaEditando = turma;
+
+        // Buscar alunos vinculados à turma
+        const response = await this.makeRequest(`/turmas/${turmaId}/alunos`);
+        console.log('📡 Resposta da API alunos da turma:', response);
+        
+        if (response && response.success) {
+            const alunosVinculados = response.data || [];
+            console.log(`✅ ${alunosVinculados.length} alunos encontrados na turma`);
+            this.mostrarModalGerenciarVinculos(turma, alunosVinculados);
+        } else {
+            throw new Error('Erro ao carregar alunos da turma: ' + (response?.error || 'Desconhecido'));
+        }
+
+    } catch (error) {
+        console.error('❌ Erro ao abrir modal de gerenciar vínculos:', error);
+        this.showNotification('Erro ao carregar alunos da turma: ' + error.message, 'error');
+    }
+}
 
     // DESVINCULAR ALUNOS SELECIONADOS NO MODAL
     // DESVINCULAR ALUNOS SELECIONADOS NO MODAL - VERSÃO CORRIGIDA

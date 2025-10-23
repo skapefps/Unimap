@@ -141,83 +141,69 @@
 </div>
     </main>
 
-    <!-- MODAL DE CRIAÇÃO/EDIÇÃO DE TURMA -->
-<div class="modal-overlay" id="turmaModal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-users-class"></i> <span id="turmaModalTitle">Nova Turma</span></h3>
-            <button class="modal-close" onclick="adminTurmas.fecharModalTurma()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <form id="turmaForm">
-                <input type="hidden" id="turmaId">
-                
-                <div class="form-group">
-                    <label>Nome da Turma:</label>
-                    <input type="text" id="turmaNome" required class="form-control" placeholder="Ex: SI-2024-1A">
-                    <small class="form-text">Nome único para identificar a turma</small>
-                </div>
-                
-                <div class="form-group">
-                    <label>Curso:</label>
-                    <select id="turmaCurso" required class="form-control">
-                        <option value="">Selecione o curso</option>
-                        <option value="Sistemas de Informação">Sistemas de Informação</option>
-                        <option value="Administração">Administração</option>
-                        <option value="Direito">Direito</option>
-                        <option value="Engenharia Civil">Engenharia Civil</option>
-                        <option value="Medicina">Medicina</option>
-                        <option value="Enfermagem">Enfermagem</option>
-                        <option value="Psicologia">Psicologia</option>
-                        <option value="Educação Física">Educação Física</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>Período:</label>
-                    <select id="turmaPeriodo" required class="form-control">
-                        <option value="">Selecione o período</option>
-                        <option value="1">1° Período</option>
-                        <option value="2">2° Período</option>
-                        <option value="3">3° Período</option>
-                        <option value="4">4° Período</option>
-                        <option value="5">5° Período</option>
-                        <option value="6">6° Período</option>
-                        <option value="7">7° Período</option>
-                        <option value="8">8° Período</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>Ano:</label>
-                    <input type="number" id="turmaAno" required class="form-control" 
-                           min="2020" max="2030" value="2024">
-                </div>
-                
-                <div class="form-group">
-                    <label>Status:</label>
-                    <select id="turmaAtiva" class="form-control">
-                        <option value="true">Ativa</option>
-                        <option value="false">Inativa</option>
-                    </select>
-                </div>
-                
-                <div class="btn-group">
-                    <button type="submit" class="btn-primary">
-                        <i class="fas fa-save"></i> Salvar Turma
-                    </button>
-                    <button type="button" class="btn-secondary" onclick="adminTurmas.fecharModalTurma()">
-                        <i class="fas fa-times"></i> Cancelar
-                    </button>
-                </div>
-            </form>
+    <!-- MODAL DE CRIAÇÃO/EDIÇÃO DE TURMA - VERSÃO ATUALIZADA -->
+    <div class="modal-overlay" id="turmaModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-users-class"></i> <span id="turmaModalTitle">Nova Turma</span></h3>
+                <button class="modal-close" onclick="adminTurmas.fecharModalTurma()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="turmaForm">
+                    <input type="hidden" id="turmaId">
+                    
+                    <div class="form-group">
+                        <label>Nome da Turma:</label>
+                        <input type="text" id="turmaNome" required class="form-control" placeholder="Ex: SI-2024-1A">
+                        <small class="form-text">Nome único para identificar a turma</small>
+                    </div>
+                    
+                    <!-- 🔥 CURSO DINÂMICO -->
+                    <div class="form-group">
+                        <label>Curso:</label>
+                        <select id="turmaCurso" required class="form-control" onchange="adminTurmas.atualizarPeriodosTurma(this.value)">
+                            <option value="">Selecione o curso</option>
+                            <!-- Os cursos serão preenchidos via JavaScript -->
+                        </select>
+                    </div>
+                    
+                    <!-- 🔥 PERÍODO DINÂMICO -->
+                    <div class="form-group">
+                        <label>Período:</label>
+                        <select id="turmaPeriodo" required class="form-control">
+                            <option value="">Selecione o período</option>
+                            <!-- Os períodos serão preenchidos dinamicamente -->
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Ano:</label>
+                        <input type="number" id="turmaAno" required class="form-control" 
+                               min="2020" max="2030" value="2024">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Status:</label>
+                        <select id="turmaAtiva" class="form-control">
+                            <option value="true">Ativa</option>
+                            <option value="false">Inativa</option>
+                        </select>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i> Salvar Turma
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="adminTurmas.fecharModalTurma()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
-
-
 
     <!-- MODAL DE VINCULAR ALUNOS À TURMA -->
     <div class="modal-overlay" id="vincularAlunosModal" style="display: none;">

@@ -239,6 +239,10 @@ class AuthManager {
         if (result.success) {
             console.log('✅ LOGIN BEM-SUCEDIDO via API!', result);
             console.log('🔍 TIPO DE USUÁRIO RECEBIDO:', result.user.tipo);
+            if (result.user.tipo === 'aluno' && (!result.user.periodo || !result.user.turma_id)) {
+    // O selecaoPeriodoManager vai detectar automaticamente e mostrar o modal
+    console.log('🎯 Aluno precisa selecionar período/turma');
+}
             
             // Salvar dados de autenticação
             this.isAuthenticated = true;

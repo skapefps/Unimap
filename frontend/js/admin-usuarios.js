@@ -8,6 +8,48 @@ class AdminUsuarios {
         this.usuarioEditando = null;
         this.carregando = false;
         this.inicializado = false;
+        this.cursosComPeriodos = {};
+        this.cursosDisponiveis = [];
+    }
+async carregarCursosDoBanco() {
+        try {
+            console.log('📚 Carregando cursos do banco...');
+            
+            const response = await this.makeRequest('/cursos-com-periodos');
+            
+            if (response.success) {
+                this.cursosComPeriodos = {};
+                this.cursosDisponiveis = [];
+                
+                response.data.forEach(curso => {
+                    this.cursosComPeriodos[curso.nome] = curso.total_periodos || 8;
+                    this.cursosDisponiveis.push(curso.nome);
+                });
+                
+                console.log(`✅ ${this.cursosDisponiveis.length} cursos carregados do banco`);
+                this.popularCursosNoModal();
+            } else {
+                throw new Error(response.error || 'Erro ao carregar cursos');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar cursos:', error);
+            // Fallback para cursos padrão se der erro
+            this.usarCursosFallback();
+        }
+    }
+
+    // Fallback caso a API falhe
+    usarCursosFallback() {
+        console.log('🔄 Usando cursos fallback...');
+        const cursosFallback = {
+            'Sistemas de Informação': 8,
+            'Administração': 8,
+            'Direito': 10
+        };
+        
+        this.cursosComPeriodos = cursosFallback;
+        this.cursosDisponiveis = Object.keys(cursosFallback);
+        this.popularCursosNoModal();
     }
 
     // Inicializar
@@ -20,6 +62,8 @@ class AdminUsuarios {
         try {
             console.log('🚀 Inicializando AdminUsuarios...');
             
+            // 🔥 CARREGAR CURSOS PRIMEIRO
+            await this.carregarCursosDoBanco();
             await this.carregarUsuarios();
             this.setupEventListeners();
             this.inicializado = true;
@@ -30,6 +74,26 @@ class AdminUsuarios {
             this.showNotification('Erro ao carregar dados do sistema', 'error');
         }
     }
+    atualizarPeriodos(cursoSelecionado) {
+        const selectPeriodo = document.getElementById('editUserPeriodo');
+        if (!selectPeriodo) return;
+        
+        selectPeriodo.innerHTML = '<option value="">Selecione o período</option>';
+        
+        if (cursoSelecionado && this.cursosComPeriodos[cursoSelecionado]) {
+            const totalPeriodos = this.cursosComPeriodos[cursoSelecionado];
+            
+            for (let i = 1; i <= totalPeriodos; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${i}° Período`;
+                selectPeriodo.appendChild(option);
+            }
+            
+            console.log(`✅ Gerados ${totalPeriodos} períodos para ${cursoSelecionado}`);
+        }
+    }
+    
 
     // Fazer requisições autenticadas
     async makeRequest(endpoint, options = {}) {
@@ -309,29 +373,86 @@ class AdminUsuarios {
         this.exibirUsuarios();
     }
 
-    async editarUsuario(usuarioId) {
-        try {
-            const usuario = this.usuarios.find(u => u.id === usuarioId);
-            if (!usuario) {
-                throw new Error('Usuário não encontrado');
-            }
-
-            this.usuarioEditando = usuario;
-
-            document.getElementById('editUserId').value = usuario.id;
-            document.getElementById('editUserName').value = usuario.nome || '';
-            document.getElementById('editUserEmail').value = usuario.email || '';
-            document.getElementById('editUserMatricula').value = usuario.matricula || '';
-            document.getElementById('editUserType').value = usuario.tipo || 'aluno';
-            document.getElementById('editUserCurso').value = usuario.curso || '';
-            document.getElementById('editUserPeriodo').value = usuario.periodo || '';
-
-            document.getElementById('editUserModal').style.display = 'flex';
-        } catch (error) {
-            console.error('❌ Erro ao abrir edição:', error);
-            this.showNotification('Erro ao carregar dados do usuário', 'error');
+    // admin-usuarios.js - ATUALIZAR O MÉTODO editarUsuario
+async editarUsuario(usuarioId) {
+    try {
+        const usuario = this.usuarios.find(u => u.id === usuarioId);
+        if (!usuario) {
+            throw new Error('Usuário não encontrado');
         }
+
+        this.usuarioEditando = usuario;
+
+        // ✅ VERIFICAR SE OS ELEMENTOS DO MODAL EXISTEM
+        const editUserId = document.getElementById('editUserId');
+        const editUserModal = document.getElementById('editUserModal');
+        
+        if (!editUserId || !editUserModal) {
+            this.showNotification(
+                'Para editar usuários, acesse a página "Gerenciar Usuários"', 
+                'info',
+                5000
+            );
+            return;
+        }
+
+        // Só preencher os campos se o modal existir
+        editUserId.value = usuario.id;
+        
+        const editUserName = document.getElementById('editUserName');
+        const editUserEmail = document.getElementById('editUserEmail');
+        const editUserMatricula = document.getElementById('editUserMatricula');
+        const editUserType = document.getElementById('editUserType');
+        const editUserCurso = document.getElementById('editUserCurso');
+        const editUserPeriodo = document.getElementById('editUserPeriodo');
+
+        if (editUserName) editUserName.value = usuario.nome || '';
+        if (editUserEmail) editUserEmail.value = usuario.email || '';
+        if (editUserMatricula) editUserMatricula.value = usuario.matricula || '';
+        if (editUserType) editUserType.value = usuario.tipo || 'aluno';
+        
+        // 🔥 PREENCHER CURSO E PERÍODO DINAMICAMENTE
+        if (editUserCurso && usuario.curso) {
+            editUserCurso.value = usuario.curso;
+            // Atualizar os períodos baseado no curso
+            this.atualizarPeriodos(usuario.curso);
+            
+            // Agora preencher o período
+            if (editUserPeriodo && usuario.periodo) {
+                // Aguardar um pouco para garantir que os períodos foram carregados
+                setTimeout(() => {
+                    if (editUserPeriodo) {
+                        editUserPeriodo.value = usuario.periodo;
+                    }
+                }, 100);
+            }
+        }
+
+        editUserModal.style.display = 'flex';
+    } catch (error) {
+        console.error('❌ Erro ao abrir edição:', error);
+        this.showNotification('Erro ao carregar dados do usuário', 'error');
     }
+}
+    popularCursosNoModal() {
+    const selectCurso = document.getElementById('editUserCurso');
+    if (!selectCurso) {
+        console.log('❌ Elemento editUserCurso não encontrado');
+        return;
+    }
+    
+    console.log('📝 Populando cursos no modal...');
+    selectCurso.innerHTML = '<option value="">Selecione um curso</option>';
+    
+    this.cursosDisponiveis.forEach(curso => {
+        const option = document.createElement('option');
+        option.value = curso;
+        option.textContent = curso;
+        selectCurso.appendChild(option);
+    });
+    
+    console.log(`✅ ${this.cursosDisponiveis.length} cursos adicionados ao modal`);
+}
 
     fecharModal() {
         document.getElementById('editUserModal').style.display = 'none';

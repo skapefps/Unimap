@@ -122,7 +122,7 @@ app.use(express.json());
             horario_inicio TIME NOT NULL,
             horario_fim TIME NOT NULL
         )`);
-
+atualizarTabelaCursosComPeriodos();
         // ========== DADOS INICIAIS ==========
         
         // Admin
@@ -1893,7 +1893,7 @@ app.get('/api/usuario/perfil', authenticateToken, (req, res) => {
                 console.error('❌ Erro ao buscar perfil:', err);
                 return res.status(404).json({ error: 'Usuário não encontrado' });
             }
-            res.json(user);
+            res.json(user); // ← ISSO É IMPORTANTE: retornar o usuário diretamente
         }
     );
 });
@@ -2169,6 +2169,39 @@ app.use('/Unimap/frontend/images', express.static(path.join(__dirname, '../front
 
 // Servir arquivos da raiz também (caso precise)
 app.use(express.static(path.join(__dirname)));
+app.put('/api/aluno/atualizar-dados', authenticateToken, (req, res) => {
+    const { curso, periodo, turma_id } = req.body;
+    
+    console.log('✏️ Aluno atualizando próprios dados:', { 
+        aluno_id: req.user.id, 
+        curso, 
+        periodo 
+    });
+
+    // Verificar se é aluno
+    if (req.user.tipo !== 'aluno') {
+        return res.status(403).json({ error: 'Acesso restrito a alunos' });
+    }
+
+    db.run(
+        `UPDATE usuarios 
+         SET curso = ?, periodo = ?
+         WHERE id = ?`,
+        [curso, periodo, req.user.id],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao atualizar dados do aluno:', err);
+                return res.status(400).json({ error: err.message });
+            }
+            
+            console.log('✅ Dados do aluno atualizados com sucesso');
+            res.json({ 
+                success: true, 
+                message: 'Dados atualizados com sucesso!' 
+            });
+        }
+    );
+});
 
 app.listen(PORT, () => {
     console.log(`🚀 UNIMAP COMPLETO rodando: http://localhost:${PORT}`);
@@ -3385,5 +3418,800 @@ app.get('/api/usuarios/stats', authenticateToken, requireAdmin, (req, res) => {
                 res.json(results);
             }
         }
+    });
+});
+// ==================== ROTAS PARA ALUNO ATUALIZAR PRÓPRIOS DADOS ====================
+
+// PUT /api/aluno/atualizar-dados - Aluno atualizar próprios dados
+
+app.post('/api/aluno/selecionar-turma', authenticateToken, (req, res) => {
+    const { turma_id } = req.body;
+    
+    console.log('🎓 Aluno selecionando turma:', { 
+        aluno_id: req.user.id, 
+        turma_id 
+    });
+
+    // Verificar se é aluno
+    if (req.user.tipo !== 'aluno') {
+        return res.status(403).json({ error: 'Acesso restrito a alunos' });
+    }
+
+    if (!turma_id) {
+        return res.status(400).json({ error: 'Turma ID é obrigatório' });
+    }
+
+    // Verificar se a turma existe
+    db.get('SELECT * FROM turmas WHERE id = ? AND ativa = 1', [turma_id], (err, turma) => {
+        if (err) {
+            console.error('❌ Erro ao verificar turma:', err);
+            return res.status(500).json({ error: 'Erro interno do servidor' });
+        }
+
+        if (!turma) {
+            return res.status(404).json({ error: 'Turma não encontrada' });
+        }
+
+        // Vincular aluno à turma
+        db.run(
+            'INSERT OR REPLACE INTO aluno_turmas (aluno_id, turma_id, status) VALUES (?, ?, "cursando")',
+            [req.user.id, turma_id],
+            function(err) {
+                if (err) {
+                    console.error('❌ Erro ao vincular aluno à turma:', err);
+                    return res.status(400).json({ error: err.message });
+                }
+                
+                console.log('✅ Aluno vinculado à turma com sucesso');
+                res.json({ 
+                    success: true, 
+                    message: 'Turma selecionada com sucesso!' 
+                });
+            }
+        );
+    });
+});
+// POST /api/aluno/selecionar-periodo - Vincular aluno à turma (ACESSO ALUNO)
+app.post('/api/aluno/selecionar-periodo', authenticateToken, (req, res) => {
+    const { turma_id } = req.body;
+    
+    console.log('🎓 Aluno selecionando turma:', { 
+        aluno_id: req.user.id, 
+        turma_id 
+    });
+
+    // Verificar se é aluno
+    if (req.user.tipo !== 'aluno') {
+        return res.status(403).json({ error: 'Acesso restrito a alunos' });
+    }
+
+    if (!turma_id) {
+        return res.status(400).json({ error: 'Turma ID é obrigatório' });
+    }
+
+    // Verificar se a turma existe
+    db.get('SELECT * FROM turmas WHERE id = ? AND ativa = 1', [turma_id], (err, turma) => {
+        if (err) {
+            console.error('❌ Erro ao verificar turma:', err);
+            return res.status(500).json({ error: 'Erro interno do servidor' });
+        }
+
+        if (!turma) {
+            return res.status(404).json({ error: 'Turma não encontrada' });
+        }
+
+        // Vincular aluno à turma
+        db.run(
+            'INSERT OR REPLACE INTO aluno_turmas (aluno_id, turma_id, status) VALUES (?, ?, "cursando")',
+            [req.user.id, turma_id],
+            function(err) {
+                if (err) {
+                    console.error('❌ Erro ao vincular aluno à turma:', err);
+                    return res.status(400).json({ error: err.message });
+                }
+                
+                console.log('✅ Aluno vinculado à turma com sucesso');
+                res.json({ 
+                    success: true, 
+                    message: 'Turma selecionada com sucesso!' 
+                });
+            }
+        );
+    });
+});
+
+// POST /api/aluno/completar-cadastro - Completa cadastro do aluno (curso, período, turma)
+// ADICIONE ESTA ROTA NO server.js (se não existir)
+app.post('/api/aluno/completar-cadastro', authenticateToken, async (req, res) => {
+    try {
+        const { curso_id, periodo, turma_id } = req.body;
+        const aluno_id = req.user.id;
+        
+        console.log('🎯 Completando cadastro do aluno:', { aluno_id, curso_id, periodo, turma_id });
+        console.log('🔐 Usuário autenticado:', req.user);
+        
+        if (req.user.tipo !== 'aluno') {
+            return res.status(403).json({ 
+                success: false,
+                error: 'Acesso restrito a alunos' 
+            });
+        }
+
+        if (!curso_id || !periodo || !turma_id) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Curso, período e turma são obrigatórios' 
+            });
+        }
+
+        // Buscar nome do curso
+        db.get('SELECT nome FROM cursos WHERE id = ?', [curso_id], (err, curso) => {
+            if (err || !curso) {
+                console.error('❌ Erro ao buscar curso:', err);
+                return res.status(500).json({ 
+                    success: false,
+                    error: 'Curso não encontrado' 
+                });
+            }
+
+            const nomeCurso = curso.nome;
+            console.log('📚 Curso encontrado:', nomeCurso);
+
+            // Iniciar transação
+            db.serialize(() => {
+                // 1. Atualizar dados do usuário
+                db.run(
+                    `UPDATE usuarios SET curso = ?, periodo = ? WHERE id = ?`,
+                    [nomeCurso, periodo, aluno_id],
+                    function(err) {
+                        if (err) {
+                            console.error('❌ Erro ao atualizar dados do aluno:', err);
+                            return res.status(500).json({ 
+                                success: false,
+                                error: 'Erro ao atualizar dados' 
+                            });
+                        }
+                        
+                        console.log('✅ Dados do aluno atualizados');
+                        
+                        // 2. Vincular à turma
+                        db.run(
+                            `INSERT OR REPLACE INTO aluno_turmas (aluno_id, turma_id, status) 
+                             VALUES (?, ?, 'cursando')`,
+                            [aluno_id, turma_id],
+                            function(err) {
+                                if (err) {
+                                    console.error('❌ Erro ao vincular aluno à turma:', err);
+                                    return res.status(500).json({ 
+                                        success: false,
+                                        error: 'Erro ao vincular à turma' 
+                                    });
+                                }
+                                
+                                console.log('✅ Aluno vinculado à turma com sucesso');
+                                
+                                // 3. Buscar dados atualizados
+                                db.get(
+                                    `SELECT id, nome, email, matricula, tipo, curso, periodo 
+                                     FROM usuarios WHERE id = ?`,
+                                    [aluno_id],
+                                    (err, user) => {
+                                        if (err) {
+                                            console.error('❌ Erro ao buscar usuário atualizado:', err);
+                                            return res.status(500).json({ 
+                                                success: false,
+                                                error: 'Erro ao buscar dados atualizados' 
+                                            });
+                                        }
+                                        
+                                        console.log('✅ Cadastro completado com sucesso para:', user.nome);
+                                        
+                                        res.json({ 
+                                            success: true, 
+                                            message: 'Cadastro completado com sucesso!',
+                                            user: user
+                                        });
+                                    }
+                                );
+                            }
+                        );
+                    }
+                );
+            });
+        });
+        
+    } catch (error) {
+        console.error('❌ Erro ao completar cadastro:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Erro interno do servidor' 
+        });
+    }
+});
+app.get('/api/debug/routes', (req, res) => {
+    const routes = [
+        'GET  /api/cursos',
+        'GET  /api/turmas',
+        'GET  /api/turmas/public',
+        'POST /api/turmas/popular-public',
+        'PUT  /api/aluno/atualizar-dados',
+        'POST /api/aluno/selecionar-turma',
+        'POST /api/aluno/completar-cadastro',
+        'GET  /api/debug/routes'
+    ];
+    
+    res.json({
+        message: 'Rotas disponíveis para aluno',
+        routes: routes
+    });
+});
+app.get('/api/cursos-com-periodos', authenticateToken, (req, res) => {
+    console.log('📚 Buscando cursos com períodos...');
+    
+    db.all('SELECT id, nome, total_periodos FROM cursos WHERE ativo = 1 ORDER BY nome', [], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar cursos com períodos:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        console.log(`✅ ${rows.length} cursos encontrados`);
+        res.json(rows);
+    });
+});
+function atualizarTabelaCursosComPeriodos() {
+    console.log('🔄 Atualizando tabela cursos com total_periodos...');
+    
+    // Adicionar coluna total_periodos se não existir
+    db.run(`ALTER TABLE cursos ADD COLUMN total_periodos INTEGER DEFAULT 8`, (err) => {
+        if (err && !err.message.includes('duplicate column name')) {
+            console.error('❌ Erro ao adicionar coluna total_periodos:', err);
+        } else {
+            console.log('✅ Coluna total_periodos verificada/adicionada');
+            atualizarPeriodosDosCursos();
+        }
+    });
+}
+
+function atualizarPeriodosDosCursos() {
+    console.log('📚 Atualizando períodos dos cursos existentes...');
+    
+    const cursosPeriodos = {
+        'Sistemas de Informação': 8,
+        'Administração': 8,
+        'Direito': 10,
+        'Medicina': 12,
+        'Engenharia Civil': 10,
+        'Psicologia': 10,
+        'Enfermagem': 8,
+        'Educação Física': 8,
+        'Ciências Contábeis': 8,
+        'Arquitetura e Urbanismo': 10
+    };
+    
+    Object.entries(cursosPeriodos).forEach(([nome, periodos]) => {
+        db.run(
+            'UPDATE cursos SET total_periodos = ? WHERE nome = ?',
+            [periodos, nome],
+            function(err) {
+                if (err) {
+                    console.error(`❌ Erro ao atualizar curso ${nome}:`, err);
+                } else if (this.changes > 0) {
+                    console.log(`✅ Curso ${nome} atualizado com ${periodos} períodos`);
+                }
+            }
+        );
+    });
+}
+// ==================== ROTAS PARA SISTEMA DE SELEÇÃO DE PERÍODO ====================
+
+// 🔥 ROTA PARA VERIFICAR DADOS COMPLETOS DO ALUNO
+app.get('/api/aluno/dados-completos/:id', authenticateToken, (req, res) => {
+    const alunoId = req.params.id;
+    
+    console.log('🔍 Verificando dados completos do aluno:', alunoId);
+    console.log('👤 Usuário autenticado:', req.user.id, req.user.nome);
+    
+    // Verificar se o usuário tem permissão para ver esses dados
+    if (req.user.id != alunoId && req.user.tipo !== 'admin') {
+        return res.status(403).json({ 
+            success: false, 
+            error: 'Sem permissão para acessar esses dados' 
+        });
+    }
+    
+    const query = `
+        SELECT 
+            u.id, u.nome, u.email, u.tipo, u.curso, u.periodo,
+            at.turma_id,
+            t.nome as turma_nome
+        FROM usuarios u
+        LEFT JOIN aluno_turmas at ON u.id = at.aluno_id AND at.status = 'cursando'
+        LEFT JOIN turmas t ON at.turma_id = t.id
+        WHERE u.id = ? AND u.ativo = 1
+    `;
+    
+    db.get(query, [alunoId], (err, aluno) => {
+        if (err) {
+            console.error('❌ Erro ao buscar dados do aluno:', err);
+            return res.status(500).json({ 
+                success: false, 
+                error: 'Erro interno do servidor' 
+            });
+        }
+        
+        if (!aluno) {
+            console.log('❌ Aluno não encontrado:', alunoId);
+            return res.json({ 
+                success: false, 
+                error: 'Aluno não encontrado' 
+            });
+        }
+        
+        // VERIFICAÇÃO CORRETA: verificar se todos os campos estão preenchidos
+        const temCurso = aluno.curso && aluno.curso.trim() !== '';
+        const temPeriodo = aluno.periodo !== null && aluno.periodo !== undefined;
+        const temTurma = aluno.turma_id !== null && aluno.turma_id !== undefined;
+        
+        const cadastroCompleto = temCurso && temPeriodo && temTurma;
+        
+        console.log('📊 Dados do aluno:', {
+            id: aluno.id,
+            nome: aluno.nome,
+            curso: aluno.curso,
+            periodo: aluno.periodo,
+            turma_id: aluno.turma_id,
+            temCurso: temCurso,
+            temPeriodo: temPeriodo,
+            temTurma: temTurma,
+            cadastroCompleto: cadastroCompleto
+        });
+        
+        res.json({
+            success: true,
+            data: {
+                id: aluno.id,
+                nome: aluno.nome,
+                email: aluno.email,
+                tipo: aluno.tipo,
+                curso: aluno.curso,
+                periodo: aluno.periodo,
+                turma_id: aluno.turma_id,
+                turma: aluno.turma_nome
+            },
+            cadastro_completo: cadastroCompleto,
+            precisa_completar: !cadastroCompleto
+        });
+    });
+});
+
+// 🔥 ROTA PARA COMPLETAR CADASTRO DO ALUNO (CURSO, PERÍODO, TURMA)
+app.post('/api/aluno/completar-cadastro', authenticateToken, (req, res) => {
+    const { curso, periodo, turma_id } = req.body;
+    const aluno_id = req.user.id;
+    
+    console.log('🎯 Completando cadastro do aluno:', { aluno_id, curso, periodo, turma_id });
+    
+    if (req.user.tipo !== 'aluno') {
+        return res.status(403).json({ 
+            success: false,
+            error: 'Acesso restrito a alunos' 
+        });
+    }
+
+    if (!curso || !periodo || !turma_id) {
+        return res.status(400).json({ 
+            success: false,
+            error: 'Curso, período e turma são obrigatórios' 
+        });
+    }
+
+    // Iniciar transação
+    db.serialize(() => {
+        // 1. Atualizar dados do usuário
+        db.run(
+            `UPDATE usuarios SET curso = ?, periodo = ? WHERE id = ?`,
+            [curso, periodo, aluno_id],
+            function(err) {
+                if (err) {
+                    console.error('❌ Erro ao atualizar dados do aluno:', err);
+                    return res.status(500).json({ 
+                        success: false,
+                        error: 'Erro ao atualizar dados' 
+                    });
+                }
+                
+                console.log('✅ Dados do aluno atualizados');
+                
+                // 2. Vincular à turma
+                db.run(
+                    `INSERT OR REPLACE INTO aluno_turmas (aluno_id, turma_id, status) 
+                     VALUES (?, ?, 'cursando')`,
+                    [aluno_id, turma_id],
+                    function(err) {
+                        if (err) {
+                            console.error('❌ Erro ao vincular aluno à turma:', err);
+                            return res.status(500).json({ 
+                                success: false,
+                                error: 'Erro ao vincular à turma' 
+                            });
+                        }
+                        
+                        console.log('✅ Aluno vinculado à turma com sucesso');
+                        
+                        // 3. Buscar dados atualizados
+                        db.get(
+                            `SELECT id, nome, email, matricula, tipo, curso, periodo 
+                             FROM usuarios WHERE id = ?`,
+                            [aluno_id],
+                            (err, user) => {
+                                if (err) {
+                                    console.error('❌ Erro ao buscar usuário atualizado:', err);
+                                    return res.status(500).json({ 
+                                        success: false,
+                                        error: 'Erro ao buscar dados atualizados' 
+                                    });
+                                }
+                                
+                                console.log('✅ Cadastro completado com sucesso para:', user.nome);
+                                
+                                res.json({ 
+                                    success: true, 
+                                    message: 'Cadastro completado com sucesso!',
+                                    user: user
+                                });
+                            }
+                        );
+                    }
+                );
+            }
+        );
+    });
+});
+
+// 🔥 ROTA PARA BUSCAR TURMAS POR CURSO E PERÍODO
+app.get('/api/turmas/curso/:cursoId/periodo/:periodo', authenticateToken, (req, res) => {
+    const { cursoId, periodo } = req.params;
+    
+    console.log('🔍 Buscando turmas para curso:', cursoId, 'período:', periodo);
+    
+    // Buscar o nome do curso pelo ID
+    db.get('SELECT nome FROM cursos WHERE id = ?', [cursoId], (err, curso) => {
+        if (err) {
+            console.error('❌ Erro ao buscar curso:', err);
+            return res.status(500).json({ 
+                success: false,
+                error: 'Erro interno do servidor' 
+            });
+        }
+        
+        if (!curso) {
+            return res.status(404).json({ 
+                success: false,
+                error: 'Curso não encontrado' 
+            });
+        }
+        
+        const nomeCurso = curso.nome;
+        console.log('📚 Curso encontrado:', nomeCurso);
+        
+        // Buscar turmas que correspondem ao curso e período
+        const query = `
+            SELECT t.* 
+            FROM turmas t
+            WHERE t.curso = ? AND t.periodo = ? AND t.ativa = 1
+            ORDER BY t.nome
+        `;
+        
+        db.all(query, [nomeCurso, periodo], (err, turmas) => {
+            if (err) {
+                console.error('❌ Erro ao buscar turmas:', err);
+                return res.status(500).json({ 
+                    success: false,
+                    error: 'Erro interno do servidor' 
+                });
+            }
+            
+            console.log(`✅ ${turmas.length} turmas encontradas para ${nomeCurso}, período ${periodo}`);
+            
+            res.json({
+                success: true,
+                data: turmas
+            });
+        });
+    });
+});
+
+// 🔥 ROTA PARA BUSCAR CURSOS COM PERÍODOS
+app.get('/api/cursos-com-periodos', authenticateToken, (req, res) => {
+    console.log('📚 Buscando cursos com períodos...');
+    
+    const query = `
+        SELECT id, nome, total_periodos 
+        FROM cursos 
+        WHERE ativo = 1 
+        ORDER BY nome
+    `;
+    
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar cursos com períodos:', err);
+            return res.status(500).json({ 
+                success: false,
+                error: err.message 
+            });
+        }
+        
+        console.log(`✅ ${rows.length} cursos encontrados`);
+        
+        // Se não tiver total_periodos, usar valores padrão
+        const cursosProcessados = rows.map(curso => ({
+            id: curso.id,
+            nome: curso.nome,
+            duracao_periodos: curso.total_periodos || getDuracaoPadrao(curso.nome)
+        }));
+        
+        res.json({
+            success: true,
+            data: cursosProcessados
+        });
+    });
+});
+app.get('/api/turmas/simple', authenticateToken, (req, res) => {
+    console.log('🔍 Buscando todas as turmas (simple)...');
+    
+    const query = `
+        SELECT id, nome, curso, periodo, ano, ativa 
+        FROM turmas 
+        WHERE ativa = 1 
+        ORDER BY curso, periodo, nome
+    `;
+    
+    db.all(query, [], (err, turmas) => {
+        if (err) {
+            console.error('❌ Erro ao buscar turmas simples:', err);
+            return res.status(500).json({ 
+                success: false,
+                error: err.message 
+            });
+        }
+        
+        console.log(`✅ ${turmas.length} turmas encontradas`);
+        res.json({
+            success: true,
+            data: turmas
+        });
+    });
+});
+
+app.get('/api/turmas/public', (req, res) => {
+    console.log('📚 Buscando turmas (pública)...');
+    
+    const query = `
+        SELECT id, nome, curso, periodo, ano, ativa 
+        FROM turmas 
+        WHERE ativa = 1 
+        ORDER BY curso, periodo, nome
+    `;
+    
+    db.all(query, [], (err, turmas) => {
+        if (err) {
+            console.error('❌ Erro ao buscar turmas públicas:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        console.log(`✅ ${turmas.length} turmas encontradas`);
+        res.json(turmas);
+    });
+});
+
+// 🔥 FUNÇÃO AUXILIAR PARA DURAÇÃO PADRÃO DOS CURSOS
+function getDuracaoPadrao(nomeCurso) {
+    const duracaoPorCurso = {
+        'Sistemas de Informação': 8,
+        'Administração': 8,
+        'Direito': 10,
+        'Engenharia Civil': 10,
+        'Medicina': 12,
+        'Psicologia': 10,
+        'Enfermagem': 8,
+        'Educação Física': 8,
+        'Ciências Contábeis': 8,
+        'Arquitetura e Urbanismo': 10
+    };
+    
+    for (const [curso, duracao] of Object.entries(duracaoPorCurso)) {
+        if (nomeCurso.includes(curso)) {
+            return duracao;
+        }
+    }
+    
+    return 8; // Padrão
+}
+
+// 🔥 ROTA DE DEBUG PARA SISTEMA DE ALUNOS
+app.get('/api/debug/routes-aluno', (req, res) => {
+    const rotasAluno = [
+        'GET  /api/aluno/dados-completos/:id',
+        'POST /api/aluno/completar-cadastro',
+        'GET  /api/turmas/curso/:cursoId/periodo/:periodo',
+        'GET  /api/cursos-com-periodos',
+        'GET  /api/turmas/public',
+        'GET  /api/cursos',
+        'GET  /api/debug/routes-aluno'
+    ];
+    
+    res.json({
+        success: true,
+        message: 'Rotas disponíveis para o sistema de alunos',
+        rotas: rotasAluno
+    });
+});
+
+// 🔥 ROTA PARA CRIAR TURMAS DE EXEMPLO (se necessário)
+app.post('/api/turmas/criar-exemplos', authenticateToken, requireAdmin, (req, res) => {
+    console.log('🎯 Criando turmas de exemplo...');
+    
+    const turmasExemplo = [
+        ['SI-2024-1A', 'Sistemas de Informação', 1, 2024],
+        ['SI-2024-1B', 'Sistemas de Informação', 1, 2024],
+        ['SI-2024-2A', 'Sistemas de Informação', 2, 2024],
+        ['SI-2024-3A', 'Sistemas de Informação', 3, 2024],
+        ['ADM-2024-1A', 'Administração', 1, 2024],
+        ['ADM-2024-1B', 'Administração', 1, 2024],
+        ['DIR-2024-1A', 'Direito', 1, 2024],
+        ['DIR-2024-2A', 'Direito', 2, 2024],
+        ['DIR-2024-3A', 'Direito', 3, 2024],
+        ['ENG-2024-1A', 'Engenharia Civil', 1, 2024]
+    ];
+    
+    db.serialize(() => {
+        // Criar tabela se não existir
+        db.run(`CREATE TABLE IF NOT EXISTS turmas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            curso TEXT NOT NULL,
+            periodo INTEGER NOT NULL,
+            ano INTEGER DEFAULT 2024,
+            ativa BOOLEAN DEFAULT 1
+        )`, (err) => {
+            if (err) {
+                console.error('❌ Erro ao criar tabela turmas:', err);
+                return res.status(500).json({ error: err.message });
+            }
+            
+            // Inserir turmas
+            const stmt = db.prepare('INSERT OR IGNORE INTO turmas (nome, curso, periodo, ano) VALUES (?, ?, ?, ?)');
+            let inserted = 0;
+            
+            turmasExemplo.forEach(turma => {
+                stmt.run(turma, function(err) {
+                    if (err) {
+                        console.error('❌ Erro ao inserir turma:', turma[0], err);
+                    } else {
+                        inserted++;
+                        console.log('✅ Turma inserida:', turma[0]);
+                    }
+                });
+            });
+            
+            stmt.finalize((err) => {
+                if (err) {
+                    console.error('❌ Erro ao finalizar inserções:', err);
+                    return res.status(500).json({ error: err.message });
+                }
+                
+                console.log(`🎉 ${inserted} turmas criadas com sucesso!`);
+                res.json({ 
+                    success: true, 
+                    message: `${inserted} turmas criadas com sucesso!` 
+                });
+            });
+        });
+    });
+});
+app.get('/api/debug/turmas-filtro', authenticateToken, (req, res) => {
+    const { curso, periodo } = req.query;
+    
+    console.log('🔍 Debug filtro turmas:', { curso, periodo });
+    
+    const query = `
+        SELECT * FROM turmas 
+        WHERE curso = ? AND periodo = ? AND ativa = 1
+        ORDER BY nome
+    `;
+    
+    db.all(query, [curso, periodo], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro no debug:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        res.json({
+            curso_filtro: curso,
+            periodo_filtro: periodo,
+            total_turmas: rows.length,
+            turmas: rows
+        });
+    });
+});
+app.get('/api/debug/aluno-completo/:id', authenticateToken, (req, res) => {
+    const alunoId = req.params.id;
+    
+    console.log('🔍 DEBUG COMPLETO do aluno:', alunoId);
+    
+    const query = `
+        SELECT 
+            u.id, u.nome, u.email, u.curso, u.periodo,
+            at.turma_id, 
+            t.nome as turma_nome,
+            u.curso as curso_original,
+            LENGTH(u.curso) as tamanho_curso,
+            u.periodo as periodo_original,
+            at.turma_id as turma_id_original
+        FROM usuarios u
+        LEFT JOIN aluno_turmas at ON u.id = at.aluno_id AND at.status = 'cursando'
+        LEFT JOIN turmas t ON at.turma_id = t.id
+        WHERE u.id = ? AND u.ativo = 1
+    `;
+    
+    db.get(query, [alunoId], (err, aluno) => {
+        if (err) {
+            console.error('❌ Erro no debug:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        if (!aluno) {
+            console.log('❌ Aluno não encontrado no debug');
+            return res.status(404).json({ error: 'Aluno não encontrado' });
+        }
+        
+        console.log('📊 DETALHES COMPLETOS DO ALUNO:', aluno);
+        
+        // Análise detalhada
+        const analise = {
+            existe_aluno: !!aluno,
+            curso: {
+                valor: aluno.curso_original,
+                tamanho: aluno.tamanho_curso,
+                vazio: !aluno.curso_original || aluno.curso_original.trim() === '',
+                preenchido: !!aluno.curso_original && aluno.curso_original.trim() !== ''
+            },
+            periodo: {
+                valor: aluno.periodo_original,
+                vazio: aluno.periodo_original === null || aluno.periodo_original === undefined || aluno.periodo_original === '',
+                preenchido: aluno.periodo_original !== null && aluno.periodo_original !== undefined && aluno.periodo_original !== ''
+            },
+            turma: {
+                valor: aluno.turma_id_original,
+                vazio: aluno.turma_id_original === null || aluno.turma_id_original === undefined || aluno.turma_id_original === '',
+                preenchido: aluno.turma_id_original !== null && aluno.turma_id_original !== undefined && aluno.turma_id_original !== ''
+            },
+            cadastro_completo: !(!aluno.curso_original || aluno.curso_original.trim() === '' || 
+                               aluno.periodo_original === null || aluno.periodo_original === undefined || aluno.periodo_original === '' ||
+                               aluno.turma_id_original === null || aluno.turma_id_original === undefined || aluno.turma_id_original === '')
+        };
+        
+        res.json({
+            aluno: aluno,
+            analise: analise,
+            precisa_completar: !analise.cadastro_completo
+        });
+    });
+});
+// No server.js, adicione:
+app.get('/api/debug/estado-aluno/:id', authenticateToken, (req, res) => {
+    const alunoId = req.params.id;
+    
+    db.get(`
+        SELECT u.id, u.nome, u.curso, u.periodo, at.turma_id, t.nome as turma_nome
+        FROM usuarios u
+        LEFT JOIN aluno_turmas at ON u.id = at.aluno_id AND at.status = 'cursando'
+        LEFT JOIN turmas t ON at.turma_id = t.id
+        WHERE u.id = ?
+    `, [alunoId], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(row);
     });
 });

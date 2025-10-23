@@ -132,39 +132,39 @@ async login(dadosLogin) {
 
     // 🔧 NOVO: MÉTODO GENÉRICO PARA REQUISIÇÕES AUTENTICADAS
     async authenticatedRequest(endpoint, options = {}) {
-        try {
-            const response = await fetch(`${this.baseURL}${endpoint}`, {
-                headers: this.getHeaders(),
-                ...options
-            });
+    try {
+        const response = await fetch(`${this.baseURL}${endpoint}`, {
+            headers: this.getHeaders(),
+            ...options
+        });
 
-            if (response.status === 401) {
-                console.error('❌ Token inválido ou expirado');
-                // Limpar autenticação e redirecionar para login
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('userData');
-                window.location.href = 'login.html';
-                return null;
-            }
+        // Verificar se a resposta é JSON
+        const contentType = response.headers.get('content-type');
+        let data;
+        
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            const text = await response.text();
+            throw new Error(`Resposta não é JSON: ${text.substring(0, 100)}`);
+        }
 
-            const data = await response.json();
-            
-            if (response.ok) {
-                return { success: true, data };
-            } else {
-                return { 
-                    success: false, 
-                    error: data.error || 'Erro na requisição' 
-                };
-            }
-        } catch (error) {
-            console.error(`❌ Erro na requisição para ${endpoint}:`, error);
+        if (response.ok) {
+            return { success: true, data };
+        } else {
             return { 
                 success: false, 
-                error: 'Erro de conexão com o servidor' 
+                error: data.error || `Erro ${response.status}: ${response.statusText}` 
             };
         }
+    } catch (error) {
+        console.error(`❌ Erro na requisição para ${endpoint}:`, error);
+        return { 
+            success: false, 
+            error: error.message || 'Erro de conexão com o servidor' 
+        };
     }
+}
 
     // 🔧 MÉTODOS ESPECÍFICOS PARA SALAS
     async getSalas() {

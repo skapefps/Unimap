@@ -192,24 +192,20 @@
                     </div>
                     
                     <div class="form-group">
-                        <label>Curso:</label>
-                        <input type="text" id="editUserCurso" class="form-control">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Período:</label>
-                        <select id="editUserPeriodo" class="form-control">
-                            <option value="">Selecione</option>
-                            <option value="1">1° Período</option>
-                            <option value="2">2° Período</option>
-                            <option value="3">3° Período</option>
-                            <option value="4">4° Período</option>
-                            <option value="5">5° Período</option>
-                            <option value="6">6° Período</option>
-                            <option value="7">7° Período</option>
-                            <option value="8">8° Período</option>
-                        </select>
-                    </div>
+                    <label>Curso:</label>
+                    <select id="editUserCurso" class="form-control" onchange="adminUsuarios.atualizarPeriodos(this.value)">
+                        <option value="">Selecione um curso</option>
+                        <!-- Os cursos serão preenchidos via JavaScript -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Período:</label>
+                    <select id="editUserPeriodo" class="form-control">
+                        <option value="">Selecione o período</option>
+                        <!-- Os períodos serão preenchidos dinamicamente -->
+                    </select>
+                </div>
                     
                     <div class="btn-group">
                         <button type="submit" class="btn-primary">
@@ -224,55 +220,58 @@
         </div>
     </div>
 
-    <!-- MODAL DE VINCULAR ALUNOS À TURMA -->
-    <div class="modal-overlay" id="vincularAlunosModal" style="display: none;">
-        <div class="modal-content" style="max-width: 800px;">
-            <div class="modal-header">
-                <h3><i class="fas fa-user-plus"></i> Vincular Alunos à Turma</h3>
-                <button class="modal-close" onclick="adminUsuarios.fecharModalVincularAlunos()">
-                    <i class="fas fa-times"></i>
-                </button>
+    <!-- admin-turmas.html - ADICIONAR ESTE MODAL SE NÃO EXISTIR -->
+<!-- MODAL PARA VINCULAR ALUNOS À TURMA -->
+<div class="modal-overlay" id="vincularAlunosModal" style="display: none;">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-user-plus"></i> Vincular Alunos à Turma</h3>
+            <button class="modal-close" onclick="adminTurmas.fecharModalVincularAlunos()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Turma: <strong id="turmaSelecionadaNome"></strong></label>
+                <small id="turmaSelecionadaCurso" class="form-text"></small>
             </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Turma: <strong id="turmaSelecionadaNome"></strong></label>
-                </div>
-                
-                <div class="form-group">
-                    <label>Buscar Alunos:</label>
-                    <input type="text" id="buscarAlunosTurma" class="form-control" 
-                           placeholder="Digite o nome ou matrícula do aluno...">
-                </div>
-                
-                <div class="alunos-list-container" style="max-height: 300px; overflow-y: auto;">
-                    <table class="alunos-table">
-                        <thead>
-                            <tr>
-                                <th><input type="checkbox" id="selecionarTodosAlunos"></th>
-                                <th>Nome</th>
-                                <th>Matrícula</th>
-                                <th>Email</th>
-                                <th>Turma Atual</th>
-                            </tr>
-                        </thead>
-                        <tbody id="listaAlunosTurma">
-                            <!-- Preenchido via JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-                
-                <div class="btn-group">
-                    <button type="button" class="btn-primary" onclick="adminUsuarios.vincularAlunosSelecionados()">
-                        <i class="fas fa-link"></i> Vincular Alunos Selecionados
-                    </button>
-                    <button type="button" class="btn-secondary" onclick="adminUsuarios.fecharModalVincularAlunos()">
-                        <i class="fas fa-times"></i> Cancelar
-                    </button>
-                </div>
+            
+            <div class="form-group">
+                <label>Buscar Alunos:</label>
+                <input type="text" id="buscarAlunosTurma" class="form-control" 
+                       placeholder="Digite o nome ou matrícula do aluno...">
+            </div>
+            
+            <div class="alunos-list-container" style="max-height: 300px; overflow-y: auto;">
+                <table class="alunos-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selecionarTodosAlunos"></th>
+                            <th>Nome</th>
+                            <th>Matrícula</th>
+                            <th>Email</th>
+                            <th>Curso</th>
+                            <th>Turma Atual</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaAlunosTurma">
+                        <!-- Preenchido via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="btn-group">
+                <button type="button" class="btn-primary" onclick="adminTurmas.vincularAlunosSelecionados()">
+                    <i class="fas fa-link"></i> Vincular Alunos Selecionados
+                </button>
+                <button type="button" class="btn-secondary" onclick="adminTurmas.fecharModalVincularAlunos()">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
             </div>
         </div>
     </div>
-
+</div>
     <!-- MODAL PARA VINCULAR ALUNO A TURMAS -->
     <div class="modal-overlay" id="vincularTurmaAlunoModal" style="display: none;">
         <div class="modal-content" style="max-width: 800px;">
