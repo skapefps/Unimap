@@ -2763,59 +2763,112 @@ app.delete('/api/turmas/:id', authenticateToken, requireAdmin, (req, res) => {
 });
 
 // POST /api/turmas/:id/alunos - Vincular alunos à turma
-app.post('/api/turmas/:id/alunos', authenticateToken, requireAdmin, (req, res) => {
-    const { id } = req.params;
-    const { alunos_ids } = req.body;
+// ==================== ROTA PARA VINCULAR ALUNOS - VERSÃO SEQUENCIAL ====================
+
+// POST /api/vincular-alunos - Vincular alunos à turma (VERSÃO SEQUENCIAL)
+app.post('/api/vincular-alunos', authenticateToken, requireAdmin, async (req, res) => {
+    const { turma_id, alunos_ids } = req.body;
     
-    console.log('👥 Vinculando alunos à turma:', { turma_id: id, alunos_ids });
-    
-    if (!alunos_ids || !Array.isArray(alunos_ids)) {
-        return res.status(400).json({ error: 'Lista de alunos é obrigatória' });
+    console.log('👥 VINCULAR ALUNOS - Sequencial:', { turma_id, alunos_ids });
+
+    if (!turma_id || !alunos_ids || !Array.isArray(alunos_ids)) {
+        return res.status(400).json({ 
+            success: false,
+            error: 'Turma ID e lista de alunos são obrigatórios' 
+        });
     }
-    
-    // Primeiro, verificar se a tabela aluno_turmas existe
-    db.run(`CREATE TABLE IF NOT EXISTS aluno_turmas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        aluno_id INTEGER NOT NULL,
-        turma_id INTEGER NOT NULL,
-        data_matricula DATETIME DEFAULT CURRENT_TIMESTAMP,
-        status TEXT DEFAULT 'cursando',
-        FOREIGN KEY (aluno_id) REFERENCES usuarios (id),
-        FOREIGN KEY (turma_id) REFERENCES turmas (id),
-        UNIQUE(aluno_id, turma_id)
-    )`, (err) => {
-        if (err) {
-            console.error('❌ Erro ao criar tabela aluno_turmas:', err);
-            return res.status(500).json({ error: 'Erro no banco de dados' });
-        }
-        
-        // Agora inserir os alunos
-        db.serialize(() => {
-            const stmt = db.prepare(
-                'INSERT OR REPLACE INTO aluno_turmas (aluno_id, turma_id) VALUES (?, ?)'
-            );
-            
-            let inserted = 0;
-            alunos_ids.forEach(alunoId => {
-                stmt.run([alunoId, id], function(err) {
-                    if (!err) inserted++;
-                });
-            });
-            
-            stmt.finalize((err) => {
-                if (err) {
-                    console.error('❌ Erro ao vincular alunos:', err);
-                    return res.status(500).json({ error: err.message });
-                }
-                
-                console.log(`✅ ${inserted} aluno(s) vinculado(s) com sucesso!`);
-                res.json({ 
-                    success: true, 
-                    message: `${inserted} aluno(s) vinculado(s) com sucesso!` 
-                });
+
+    try {
+        // Verificar se a turma existe
+        const turma = await new Promise((resolve, reject) => {
+            db.get('SELECT * FROM turmas WHERE id = ? AND ativa = 1', [turma_id], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
             });
         });
-    });
+
+        if (!turma) {
+            console.log('❌ Turma não encontrada:', turma_id);
+            return res.status(404).json({ 
+                success: false,
+                error: 'Turma não encontrada' 
+            });
+        }
+
+        console.log('✅ Turma encontrada:', turma.nome);
+
+        let vinculados = 0;
+        let erros = [];
+
+        // 🔥 PROCESSAMENTO SEQUENCIAL (igual ao desvincular)
+        for (const alunoId of alunos_ids) {
+            try {
+                console.log(`🔄 Processando aluno ${alunoId}...`);
+
+                // Verificar se o aluno existe
+                const aluno = await new Promise((resolve, reject) => {
+                    db.get('SELECT id, nome FROM usuarios WHERE id = ? AND ativo = 1', [alunoId], (err, row) => {
+                        if (err) reject(err);
+                        else resolve(row);
+                    });
+                });
+
+                if (!aluno) {
+                    console.log(`❌ Aluno não encontrado: ${alunoId}`);
+                    erros.push(`Aluno ${alunoId}: não encontrado`);
+                    continue;
+                }
+
+                console.log(`✅ Aluno encontrado: ${aluno.nome}`);
+
+                // Inserir na tabela aluno_turmas
+                const result = await new Promise((resolve, reject) => {
+                    db.run(
+                        'INSERT OR IGNORE INTO aluno_turmas (aluno_id, turma_id, status) VALUES (?, ?, "cursando")',
+                        [alunoId, turma_id],
+                        function(insertErr) {
+                            if (insertErr) reject(insertErr);
+                            else resolve(this);
+                        }
+                    );
+                });
+
+                if (result.changes > 0) {
+                    vinculados++;
+                    console.log(`✅ Aluno ${aluno.nome} vinculado com sucesso`);
+                } else {
+                    console.log(`⚠️ Aluno ${aluno.nome} já estava vinculado`);
+                }
+
+            } catch (error) {
+                console.error(`❌ Erro ao processar aluno ${alunoId}:`, error);
+                erros.push(`Aluno ${alunoId}: ${error.message}`);
+            }
+        }
+
+        console.log(`🎯 VINCULAÇÃO concluída: ${vinculados} vinculados, ${erros.length} erros`);
+
+        if (vinculados > 0) {
+            res.json({ 
+                success: true, 
+                message: `${vinculados} aluno(s) vinculado(s) com sucesso!`,
+                vinculados: vinculados,
+                erros: erros.length > 0 ? erros : undefined
+            });
+        } else {
+            res.status(400).json({ 
+                success: false,
+                error: 'Nenhum aluno foi vinculado: ' + (erros.length > 0 ? erros.join(', ') : 'Verifique os IDs')
+            });
+        }
+
+    } catch (error) {
+        console.error('❌ Erro geral na vinculação:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Erro interno do servidor: ' + error.message
+        });
+    }
 });
 
 // GET /api/turmas/:id/alunos - Listar alunos da turma
@@ -3059,6 +3112,139 @@ app.get('/api/turmas/public', (req, res) => {
         res.json(rows);
     });
 });
+// ==================== ROTA PARA MATRICULAR ALUNOS - VERSÃO CORRIGIDA ====================
+
+// POST /api/matricular-alunos - Vincular alunos à turma (VERSÃO ROBUSTA)
+app.post('/api/matricular-alunos', authenticateToken, requireAdmin, (req, res) => {
+    const { turma_id, alunos_ids } = req.body;
+    
+    console.log('👥 MATRICULAR ALUNOS - Iniciando:', { turma_id, alunos_ids });
+
+    if (!turma_id || !alunos_ids || !Array.isArray(alunos_ids)) {
+        return res.status(400).json({ 
+            success: false,
+            error: 'Turma ID e lista de alunos são obrigatórios' 
+        });
+    }
+
+    // Verificar se a turma existe
+    db.get('SELECT * FROM turmas WHERE id = ? AND ativa = 1', [turma_id], (err, turma) => {
+        if (err) {
+            console.error('❌ Erro ao verificar turma:', err);
+            return res.status(500).json({ 
+                success: false,
+                error: 'Erro interno do servidor' 
+            });
+        }
+
+        if (!turma) {
+            console.log('❌ Turma não encontrada:', turma_id);
+            return res.status(404).json({ 
+                success: false,
+                error: 'Turma não encontrada' 
+            });
+        }
+
+        console.log('✅ Turma encontrada:', turma.nome);
+
+        // Garantir que a tabela existe
+        db.run(`CREATE TABLE IF NOT EXISTS aluno_turmas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            aluno_id INTEGER NOT NULL,
+            turma_id INTEGER NOT NULL,
+            data_matricula DATETIME DEFAULT CURRENT_TIMESTAMP,
+            status TEXT DEFAULT 'cursando',
+            UNIQUE(aluno_id, turma_id)
+        )`, (createErr) => {
+            if (createErr) {
+                console.error('❌ Erro ao criar tabela:', createErr);
+                return res.status(500).json({ 
+                    success: false,
+                    error: 'Erro no banco de dados' 
+                });
+            }
+
+            console.log('✅ Tabela aluno_turmas verificada');
+
+            // Usar uma abordagem mais simples e sequencial
+            let matriculados = 0;
+            let erros = [];
+            let index = 0;
+
+            const processarProximoAluno = () => {
+                if (index >= alunos_ids.length) {
+                    // Todos os alunos foram processados
+                    console.log(`🎯 Processamento concluído: ${matriculados} sucessos, ${erros.length} erros`);
+                    
+                    if (matriculados > 0) {
+                        res.json({ 
+                            success: true, 
+                            message: `${matriculados} aluno(s) matriculado(s) com sucesso!`,
+                            matriculados: matriculados,
+                            erros: erros.length > 0 ? erros : undefined
+                        });
+                    } else {
+                        res.status(400).json({ 
+                            success: false,
+                            error: 'Nenhum aluno foi matriculado: ' + (erros.length > 0 ? erros.join(', ') : 'Verifique os IDs dos alunos')
+                        });
+                    }
+                    return;
+                }
+
+                const alunoId = alunos_ids[index];
+                console.log(`🔄 Processando aluno ${index + 1}/${alunos_ids.length}: ID ${alunoId}`);
+
+                // Primeiro verificar se o aluno existe
+                db.get('SELECT id, nome FROM usuarios WHERE id = ? AND ativo = 1', [alunoId], (alunoErr, aluno) => {
+                    if (alunoErr) {
+                        console.error(`❌ Erro ao verificar aluno ${alunoId}:`, alunoErr);
+                        erros.push(`Aluno ${alunoId}: erro ao verificar`);
+                        index++;
+                        processarProximoAluno();
+                        return;
+                    }
+
+                    if (!aluno) {
+                        console.log(`❌ Aluno não encontrado: ${alunoId}`);
+                        erros.push(`Aluno ${alunoId}: não encontrado`);
+                        index++;
+                        processarProximoAluno();
+                        return;
+                    }
+
+                    console.log(`✅ Aluno encontrado: ${aluno.nome} (ID: ${aluno.id})`);
+
+                    // Agora inserir na tabela aluno_turmas
+                    db.run(
+                        'INSERT OR IGNORE INTO aluno_turmas (aluno_id, turma_id, status) VALUES (?, ?, "cursando")',
+                        [alunoId, turma_id],
+                        function(insertErr) {
+                            if (insertErr) {
+                                console.error(`❌ Erro ao matricular aluno ${alunoId}:`, insertErr);
+                                erros.push(`Aluno ${aluno.nome}: ${insertErr.message}`);
+                            } else {
+                                if (this.changes > 0) {
+                                    matriculados++;
+                                    console.log(`✅ Aluno ${aluno.nome} matriculado com sucesso`);
+                                } else {
+                                    console.log(`⚠️ Aluno ${aluno.nome} já estava matriculado nesta turma`);
+                                    // Não conta como erro, apenas como informação
+                                }
+                            }
+                            
+                            index++;
+                            processarProximoAluno();
+                        }
+                    );
+                });
+            };
+
+            // Iniciar o processamento
+            processarProximoAluno();
+        });
+    });
+});
 // DESVINCULAR ALUNO INDIVIDUAL - SQLITE
 app.post('/api/desmatricular-aluno', authenticateToken, requireAdmin, async (req, res) => {
     try {
@@ -3193,6 +3379,7 @@ app.post('/api/turmas/:id/desvincular-todos', authenticateToken, requireAdmin, a
         });
     }
 });
+
 // DESVINCULAR MÚLTIPLOS ALUNOS - SQLITE
 app.post('/api/desmatricular-alunos', authenticateToken, requireAdmin, async (req, res) => {
     try {
