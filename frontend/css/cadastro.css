@@ -215,7 +215,7 @@ body {
         justify-content: center;
         align-items: center;
         padding: 20px;
-        background: #00427C;
+        background: url('../images/background.webp') center/cover no-repeat fixed;
     }
     
     .register-container {

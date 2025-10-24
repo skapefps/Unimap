@@ -4320,7 +4320,6 @@ main {
     }
 }
 
-/* Efeito de confete (opcional) */
 .confetti {
     position: fixed;
     width: 10px;

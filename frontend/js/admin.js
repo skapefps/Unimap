@@ -101,7 +101,6 @@ async sincronizarAdminTurmas() {
     }
     
     console.error('❌ Timeout: adminTurmas não carregado após 10 segundos');
-    this.showNotification('Aviso: Algumas funcionalidades de turmas podem não estar disponíveis', 'warning');
     return false;
 }
 

@@ -8,7 +8,7 @@
 
 body {
     font-family: 'Inter', Arial, sans-serif;
-    background: url('../images/background.webp') center/cover no-repeat;
+    background: url('../images/background.webp') center/cover no-repeat fixed;
     height: 100vh;
     display: flex;
     justify-content: flex-end;
@@ -320,11 +320,38 @@ body {
     }
     
     .mobile-login-form {
-        padding: 50px 35px;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
+    padding: 40px 35px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    overflow-y: auto;
+}
+/* Para telas muito pequenas em altura */
+@media (max-height: 700px) and (max-width: 768px) {
+    .mobile-login-form {
+        padding: 30px 25px;
+        justify-content: flex-start;
     }
+    
+    .mobile-header {
+        padding: 40px 30px 25px;
+    }
+    
+    .mobile-input-group,
+    .mobile-password-group {
+        margin-bottom: 15px;
+    }
+    
+    .welcome-text {
+        margin-bottom: 20px;
+    }
+    
+    .mobile-forgot-password {
+        margin-bottom: 20px;
+    }
+}
     
     .welcome-text {
         font-size: 24px;
@@ -473,10 +500,7 @@ body {
     }
 }
 
-/* Esconder mobile view por padrão */
-.mobile-view {
-    display: none;
-}
+
 
 /* Mostrar desktop view por padrão */
 .desktop-view {
@@ -484,11 +508,13 @@ body {
 }
 
 /* Responsive */
+/* ===== MOBILE STYLES ===== */
 @media (max-width: 768px) {
     body {
         justify-content: center;
-        padding: 20px;
-        background: url('../images/background.webp') center/cover no-repeat;
+        align-items: flex-start;
+        padding: 0;
+        background: #00427C url('../images/background.webp') center/cover no-repeat fixed;
     }
     
     .login-container {
@@ -512,4 +538,56 @@ body {
     .forgot-password {
         text-align: center;
     }
+}
+/* CORREÇÃO DO WALLPAPER */
+body {
+    background: url('../images/background.webp') center/cover no-repeat fixed !important;
+    min-height: 100vh !important;
+    height: 100% !important;
+}
+
+/* CORREÇÃO DO LOGIN/CADASTRO CONTAINER */
+.login-container,
+.register-container {
+    min-height: 100vh !important;
+    height: auto !important;
+}
+
+/* CORREÇÃO PARA TELAS MUITO ALTAS */
+@media (min-height: 800px) {
+    .login-form,
+    .mobile-login-form,
+    .register-form,
+    .mobile-register-form {
+        justify-content: center !important;
+        padding-top: 60px !important;
+        padding-bottom: 60px !important;
+    }
+}
+
+/* CORREÇÃO PARA TELAS MUITO BAIXAS */
+@media (max-height: 600px) {
+    .login-container,
+    .register-container {
+        height: auto !important;
+        min-height: auto !important;
+        overflow-y: auto !important;
+    }
+    
+    .login-form,
+    .mobile-login-form,
+    .register-form,
+    .mobile-register-form {
+        padding: 30px 25px !important;
+        justify-content: flex-start !important;
+    }
+}
+
+/* GARANTIR QUE SEMPRE OCUPE 100% DA ALTURA */
+.login-form,
+.mobile-login-form,
+.register-form,
+.mobile-register-form {
+    min-height: 100% !important;
+    flex: 1 !important;
 }
