@@ -38,7 +38,6 @@
                         <img src="/Unimap/frontend/images/Logo-Google-G.png" alt="Google">
                     </button>
                     
-                   <!-- No formulário de login, adicione este link -->
                 <div style="text-align: center; margin-top: 1rem;">
                     <a href="forgot-password.html" style="color: #3498db; text-decoration: none;">
                         <i class="fas fa-key"></i> Esqueci minha senha
@@ -123,7 +122,6 @@
         }
     });*/
 
-    // Função para Esqueci a Senha
     function forgotPassword() {
         const email = document.getElementById('emailDesktop').value;
         if (email) {
@@ -134,12 +132,10 @@
         }
     }
 
-    // Função de login com Google - CORRIGIDA
 async function loginWithGoogle() {
     try {
         console.log('🔐 Iniciando login com Google...');
-        
-        // Verificar se Google API está carregada
+
         if (typeof google === 'undefined') {
             throw new Error('Google Identity Services não carregada');
         }
@@ -179,12 +175,9 @@ async function loginWithGoogle() {
                 window.location.href = "index.html";
             }, 1000);
         } else {
-            // Tratamento simplificado de erro
             if (data.error && data.error.includes('já está cadastrado')) {
                 showMessage('✅ Login realizado com sucesso!', 'success');
-                
-                // Se chegou aqui é porque a API já corrigiu e fez o login
-                // Então podemos redirecionar também
+
                 setTimeout(() => {
                     window.location.href = "index.html";
                 }, 1000);
@@ -195,8 +188,7 @@ async function loginWithGoogle() {
 
     } catch (error) {
         console.error("❌ Erro no login Google:", error);
-        
-        // Mensagens de erro mais amigáveis
+
         let errorMessage = 'Erro no login com Google';
         if (error.message.includes('cancelou')) {
             errorMessage = 'Login com Google cancelado';
@@ -207,31 +199,26 @@ async function loginWithGoogle() {
         showMessage('❌ ' + errorMessage, 'error');
     }
 }
-    // Função para mostrar mensagens
     function showMessage(message, type = 'info') {
-        // Remover mensagens anteriores
         const existingMessage = document.querySelector('.custom-message');
         if (existingMessage) {
             existingMessage.remove();
         }
         
-        // Criar nova mensagem
         const messageDiv = document.createElement('div');
         messageDiv.className = `custom-message custom-message-${type}`;
         messageDiv.innerHTML = `
             <span>${message}</span>
             <button onclick="this.parentElement.remove()">×</button>
         `;
-        
-        // Adicionar ao formulário
+
         const form = document.querySelector('.login-form');
         if (form) {
             form.insertBefore(messageDiv, form.firstChild);
         } else {
             alert(message);
         }
-        
-        // Auto-remover após 5 segundos
+
         setTimeout(() => {
             if (messageDiv.parentElement) {
                 messageDiv.remove();
@@ -239,7 +226,6 @@ async function loginWithGoogle() {
         }, 5000);
     }
 
-    // Adicionar CSS para as mensagens
     const style = document.createElement('style');
     style.textContent = `
         .custom-message {
@@ -295,14 +281,12 @@ async function loginWithGoogle() {
         }
     `;
     document.head.appendChild(style);
-    // DEBUG - Verificar se scripts carregaram
 setTimeout(() => {
     console.log('🔍 DEBUG - Scripts carregados:');
     console.log('- api:', typeof api);
     console.log('- authManager:', typeof authManager);
     console.log('- ApiService:', typeof ApiService);
     
-    // Tentar carregar manualmente se não carregou
     if (typeof authManager === 'undefined') {
         console.log('🔄 Tentando carregar auth.js manualmente...');
         const script = document.createElement('script');

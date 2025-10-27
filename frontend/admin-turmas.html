@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- MOBILE HEADER -->
     <header class="mobile-header">
         <div class="header-top">
             <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
@@ -35,7 +34,6 @@
         </nav>
     </header>
 
-    <!-- DESKTOP HEADER -->
     <header class="desktop-header">
         <div class="header-content">
             <a href="admin.html" class="logo-link">
@@ -69,7 +67,6 @@
                 </button>
             </div>
 
-            <!-- ESTATÍSTICAS DE TURMAS -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon">
@@ -101,7 +98,6 @@
                 </div>
             </div>
 
-            <!-- TABELA DE TURMAS -->
             <div class="table-container">
                 <table id="turmas-table">
                     <thead>
@@ -116,12 +112,10 @@
                         </tr>
                     </thead>
                     <tbody id="turmas-body">
-                        <!-- Preenchido via JavaScript -->
                     </tbody>
                 </table>
             </div>
 
-        <!-- FERRAMENTAS DE DIAGNÓSTICO -->
 <div class="debug-actions" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #3498db;">
     <h4><i class="fas fa-tools"></i> Ferramentas de Diagnóstico</h4>
     <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
@@ -141,7 +135,6 @@
 </div>
     </main>
 
-    <!-- MODAL DE CRIAÇÃO/EDIÇÃO DE TURMA - VERSÃO ATUALIZADA -->
     <div class="modal-overlay" id="turmaModal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
@@ -160,21 +153,17 @@
                         <small class="form-text">Nome único para identificar a turma</small>
                     </div>
                     
-                    <!-- 🔥 CURSO DINÂMICO -->
                     <div class="form-group">
                         <label>Curso:</label>
                         <select id="turmaCurso" required class="form-control" onchange="adminTurmas.atualizarPeriodosTurma(this.value)">
                             <option value="">Selecione o curso</option>
-                            <!-- Os cursos serão preenchidos via JavaScript -->
                         </select>
                     </div>
                     
-                    <!-- 🔥 PERÍODO DINÂMICO -->
                     <div class="form-group">
                         <label>Período:</label>
                         <select id="turmaPeriodo" required class="form-control">
                             <option value="">Selecione o período</option>
-                            <!-- Os períodos serão preenchidos dinamicamente -->
                         </select>
                     </div>
                     
@@ -205,7 +194,6 @@
         </div>
     </div>
 
-    <!-- MODAL DE VINCULAR ALUNOS À TURMA -->
     <div class="modal-overlay" id="vincularAlunosModal" style="display: none;">
         <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header">
@@ -240,7 +228,6 @@
                             </tr>
                         </thead>
                         <tbody id="listaAlunosTurma">
-                            <!-- Preenchido via JavaScript -->
                         </tbody>
                     </table>
                 </div>
@@ -262,7 +249,6 @@
     <script src="js/admin-turmas.js"></script>
     
     <script>
-        // 🔧 FUNÇÕES PARA MENU HAMBURGER
         function toggleMenu() {
             const nav = document.getElementById('mobileNav');
             nav.classList.toggle('active');
@@ -273,7 +259,6 @@
             nav.classList.remove('active');
         }
 
-        // Fechar menu ao clicar fora
         document.addEventListener('click', function(event) {
             const nav = document.getElementById('mobileNav');
             const hamburger = document.querySelector('.menu-hamburger');
@@ -285,18 +270,15 @@
             }
         });
 
-        // 🔧 ATUALIZAR NOME DO USUÁRIO
         document.addEventListener('DOMContentLoaded', function() {
             const userData = localStorage.getItem('userData');
             if (userData) {
                 try {
                     const user = JSON.parse(userData);
-                    // Desktop
                     const desktopUser = document.getElementById('desktopUserName');
                     if (desktopUser) {
                         desktopUser.innerHTML = `${user.nome} <span class="user-type-badge admin">ADMIN</span>`;
                     }
-                    // Mobile
                     const mobileUser = document.getElementById('mobileUserName');
                     const navUser = document.getElementById('mobileNavUser');
                     if (mobileUser) mobileUser.textContent = user.nome;

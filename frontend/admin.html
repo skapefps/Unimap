@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- MOBILE HEADER -->
     <header class="mobile-header">
         <div class="header-top">
             <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
@@ -35,7 +34,6 @@
         </nav>
     </header>
 
-    <!-- DESKTOP HEADER -->
     <header class="desktop-header">
         <div class="header-content">
             <a href="admin.html" class="logo-link">
@@ -66,7 +64,6 @@
                 <h2>Dashboard Administrativo</h2>
             </div>
             
-            <!-- ESTATÍSTICAS -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon">
@@ -98,7 +95,6 @@
                 </div>
             </div>
 
-            <!-- AÇÕES RÁPIDAS -->
             <div class="quick-actions">
                 <h3>Ações Rápidas</h3>
                 <div class="actions-grid">
@@ -135,7 +131,6 @@
     </div>
 </div>
     
-            <!-- ÚLTIMOS USUÁRIOS -->
             <div class="recent-section">
                 <h3>Últimos Usuários Cadastrados</h3>
                 <div class="table-container">
@@ -171,7 +166,6 @@
     <script src="js/admin.js"></script>
     
     <script>
-        // 🔧 FUNÇÕES PARA MENU HAMBURGER
         function toggleMenu() {
             const nav = document.getElementById('mobileNav');
             nav.classList.toggle('active');
@@ -182,7 +176,6 @@
             nav.classList.remove('active');
         }
 
-        // Fechar menu ao clicar fora
         document.addEventListener('click', function(event) {
             const nav = document.getElementById('mobileNav');
             const hamburger = document.querySelector('.menu-hamburger');
@@ -194,18 +187,15 @@
             }
         });
 
-        // 🔧 ATUALIZAR NOME DO USUÁRIO
         document.addEventListener('DOMContentLoaded', function() {
             const userData = localStorage.getItem('userData');
             if (userData) {
                 try {
                     const user = JSON.parse(userData);
-                    // Desktop
                     const desktopUser = document.getElementById('desktopUserName');
                     if (desktopUser) {
                         desktopUser.innerHTML = `${user.nome} <span class="user-type-badge admin">ADMIN</span>`;
                     }
-                    // Mobile
                     const mobileUser = document.getElementById('mobileUserName');
                     const navUser = document.getElementById('mobileNavUser');
                     if (mobileUser) mobileUser.textContent = user.nome;

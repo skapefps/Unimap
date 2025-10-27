@@ -16,7 +16,6 @@
 <script src="js/auth.js"></script>
 <script src="js/admin-usuarios.js"></script>
 
-    <!-- MOBILE HEADER -->
     <header class="mobile-header">
         <div class="header-top">
             <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
@@ -39,7 +38,6 @@
         </nav>
     </header>
 
-    <!-- DESKTOP HEADER -->
     <header class="desktop-header">
         <div class="header-content">
             <a href="admin.html" class="logo-link">
@@ -71,7 +69,6 @@
               
             </div>
 
-            <!-- ESTATÍSTICAS RÁPIDAS -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon">
@@ -103,7 +100,6 @@
                 </div>
             </div>
             
-            <!-- LISTA DE USUÁRIOS -->
              
             <div class="recent-section">
                 <div class="section-header">
@@ -135,12 +131,10 @@
                             </tr>
                         </thead>
                         <tbody id="usuarios-body">
-                            <!-- Preenchido via JavaScript -->
                         </tbody>
                     </table>
                 </div>
 
-                <!-- PAGINAÇÃO -->
                 <div class="paginacao">
                     <button class="btn-pagina" id="prevPage" disabled>
                         <i class="fas fa-chevron-left"></i> Anterior
@@ -154,7 +148,6 @@
         </div>
     </main>
 
-    <!-- MODAL DE EDIÇÃO DE USUÁRIO -->
     <div class="modal-overlay" id="editUserModal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
@@ -195,7 +188,6 @@
                     <label>Curso:</label>
                     <select id="editUserCurso" class="form-control" onchange="adminUsuarios.atualizarPeriodos(this.value)">
                         <option value="">Selecione um curso</option>
-                        <!-- Os cursos serão preenchidos via JavaScript -->
                     </select>
                 </div>
 
@@ -203,7 +195,6 @@
                     <label>Período:</label>
                     <select id="editUserPeriodo" class="form-control">
                         <option value="">Selecione o período</option>
-                        <!-- Os períodos serão preenchidos dinamicamente -->
                     </select>
                 </div>
                     
@@ -220,8 +211,6 @@
         </div>
     </div>
 
-    <!-- admin-turmas.html - ADICIONAR ESTE MODAL SE NÃO EXISTIR -->
-<!-- MODAL PARA VINCULAR ALUNOS À TURMA -->
 <div class="modal-overlay" id="vincularAlunosModal" style="display: none;">
     <div class="modal-content" style="max-width: 800px;">
         <div class="modal-header">
@@ -256,7 +245,6 @@
                         </tr>
                     </thead>
                     <tbody id="listaAlunosTurma">
-                        <!-- Preenchido via JavaScript -->
                     </tbody>
                 </table>
             </div>
@@ -272,7 +260,6 @@
         </div>
     </div>
 </div>
-    <!-- MODAL PARA VINCULAR ALUNO A TURMAS -->
     <div class="modal-overlay" id="vincularTurmaAlunoModal" style="display: none;">
         <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
@@ -306,7 +293,6 @@
                             </tr>
                         </thead>
                         <tbody id="listaTurmasAluno">
-                            <!-- Preenchido via JavaScript -->
                         </tbody>
                     </table>
                 </div>
@@ -324,7 +310,6 @@
     </div>
 
     <script>
-        // 🔧 VERIFICAR SE É ADMIN
         document.addEventListener('DOMContentLoaded', function() {
             const user = authManager.getCurrentUser();
             
@@ -334,26 +319,21 @@
                 return;
             }
 
-            // Atualizar nome do usuário
             document.getElementById('desktopUserName').innerHTML = 
                 `${user.nome} <span class="user-type-badge admin">ADMIN</span>`;
             document.getElementById('mobileUserName').textContent = user.nome;
             document.getElementById('mobileNavUser').textContent = user.nome;
 
-            // Inicializar AdminUsuarios
             adminUsuarios.init();
             
-            // Configurar busca
             document.getElementById('searchUsers').addEventListener('input', (e) => {
                 adminUsuarios.filtrarUsuarios(e.target.value);
             });
             
-            // Configurar filtro por tipo
             document.getElementById('filterType').addEventListener('change', (e) => {
                 adminUsuarios.filtrarPorTipo(e.target.value);
             });
             
-            // Configurar formulário de edição
             document.getElementById('editUserForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 adminUsuarios.salvarEdicao();
@@ -370,7 +350,6 @@
             nav.classList.remove('active');
         }
 
-        // Fechar menu ao clicar fora
         document.addEventListener('click', function(event) {
             const nav = document.getElementById('mobileNav');
             const hamburger = document.querySelector('.menu-hamburger');
@@ -382,7 +361,6 @@
             }
         });
 
-        // Fechar menu ao clicar em um link
         document.querySelectorAll('.mobile-nav a').forEach(link => {
             link.addEventListener('click', closeMenu);
         });

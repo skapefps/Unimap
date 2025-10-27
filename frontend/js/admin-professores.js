@@ -1,4 +1,3 @@
-// admin-professores.js - Sistema Completo de Gerenciamento de Professores (CORRIGIDO)
 class ProfessoresAdmin {
     constructor() {
         this.professores = [];
@@ -8,8 +7,7 @@ class ProfessoresAdmin {
 
     async init() {
         console.log('👨‍🏫 Inicializando gerenciamento de professores...');
-        
-        // Verificar autenticação
+
         if (!this.checkAuth()) {
             console.error('❌ Usuário não autenticado');
             window.location.href = 'login.html';
@@ -136,11 +134,9 @@ class ProfessoresAdmin {
             title.textContent = this.currentEditId ? 'Editar Professor' : 'Cadastrar Novo Professor';
             
             if (!this.currentEditId) {
-                // Limpar formulário apenas para novo cadastro
                 document.getElementById('professor-form').reset();
             }
-            
-            // Scroll para o formulário
+
             form.scrollIntoView({ behavior: 'smooth' });
         } else {
             console.error('❌ Elementos do formulário não encontrados');
@@ -166,7 +162,6 @@ class ProfessoresAdmin {
             return;
         }
 
-        // Validação de email
         if (!this.validateEmail(email)) {
             this.showMessage('Digite um email válido', 'error');
             return;
@@ -176,11 +171,9 @@ class ProfessoresAdmin {
             const professorData = { nome, email };
             
             if (this.currentEditId) {
-                // Editar professor existente
                 await adminAPI.updateProfessor(this.currentEditId, professorData);
                 this.showMessage('Professor atualizado com sucesso!', 'success');
             } else {
-                // Criar novo professor
                 await adminAPI.createProfessor(professorData);
                 this.showMessage('Professor cadastrado com sucesso!', 'success');
             }
@@ -211,11 +204,9 @@ class ProfessoresAdmin {
                 throw new Error('Professor não encontrado');
             }
 
-            // Preencher formulário
             document.getElementById('professor-nome').value = professor.nome;
             document.getElementById('professor-email').value = professor.email;
             
-            // Configurar para edição
             this.currentEditId = id;
             this.showForm();
             
@@ -262,7 +253,6 @@ class ProfessoresAdmin {
         this.showMessage('Carregando detalhes...', 'info');
 
         try {
-            // Carregar estatísticas do professor com fallback
             const [favoritosData, aulasData] = await Promise.all([
                 this.getProfessorFavoritosWithFallback(id),
                 this.getProfessorAulasWithFallback(id)
@@ -272,7 +262,6 @@ class ProfessoresAdmin {
             
         } catch (error) {
             console.error('❌ Erro ao carregar detalhes completos:', error);
-            // Mostrar modal mesmo com dados limitados
             this.showProfessorDetails(professor, { count: 0, alunos: [] }, []);
             this.showMessage('Algumas informações podem estar incompletas', 'warning');
         }
@@ -283,7 +272,6 @@ class ProfessoresAdmin {
     }
 }
 
-// Adicione estes métodos auxiliares para fallback:
 async getProfessorFavoritosWithFallback(id) {
     try {
         return await adminAPI.getProfessorFavoritos(id);
@@ -422,15 +410,12 @@ async getProfessorAulasWithFallback(id) {
             </div>
         `;
 
-        // Remover modal existente
         document.querySelectorAll('.modal-overlay').forEach(modal => modal.remove());
-        
-        // Adicionar novo modal
+
         document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
 
     calcularTotalAlunos(aulas) {
-        // Estimativa: cada turma tem ~30 alunos
         return aulas.length * 30;
     }
 
@@ -446,8 +431,7 @@ async getProfessorAulasWithFallback(id) {
 
     showMessage(message, type = 'info') {
         console.log(`${type.toUpperCase()}: ${message}`);
-        
-        // Sistema de notificação simples
+
         const notification = document.createElement('div');
         notification.className = `admin-notification ${type}`;
         notification.innerHTML = `
@@ -461,11 +445,9 @@ async getProfessorAulasWithFallback(id) {
         `;
         
         document.body.appendChild(notification);
-        
-        // Mostrar animação
+
         setTimeout(() => notification.classList.add('show'), 10);
-        
-        // Auto-remover
+
         setTimeout(() => {
             if (notification.parentElement) {
                 notification.classList.remove('show');
@@ -479,5 +461,4 @@ async getProfessorAulasWithFallback(id) {
     }
 }
 
-// Instância global
 const professoresAdmin = new ProfessoresAdmin();

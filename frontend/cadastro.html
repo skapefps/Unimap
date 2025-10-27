@@ -13,7 +13,6 @@
 </head>
 <body>
     <div class="register-container">
-        <!-- Desktop View -->
         <div class="desktop-view">
             <form class="register-form" id="registerFormDesktop">
                 <div class="form-logo">
@@ -56,7 +55,6 @@
             </form>
         </div>
 
-        <!-- Mobile View -->
         <div class="mobile-view">
             <form class="mobile-register-form" id="registerFormMobile">
                 <div class="form-logo">
@@ -104,7 +102,6 @@
 <script>
     let isProcessing = false;
     
-    // CSS para mensagens - COLOCAR NO INÍCIO
     const style = document.createElement('style');
     style.textContent = `
         .custom-message {
@@ -190,7 +187,6 @@
         console.log('UNIMAP Cadastro carregado');
         setupOurForms();
         
-        // Prevenir submit dos formulários
         document.getElementById('registerFormDesktop').addEventListener('submit', function(e) {
             e.preventDefault();
             console.log('Submit prevenido - desktop');
@@ -205,7 +201,6 @@
     function setupOurForms() {
         console.log('🔧 Configurando formulários...');
         
-        // Desktop
         const desktopBtn = document.getElementById('registerBtnDesktop');
         if (desktopBtn) {
             desktopBtn.onclick = function(e) {
@@ -214,7 +209,6 @@
             };
         }
         
-        // Mobile
         const mobileBtn = document.getElementById('registerBtnMobile');
         if (mobileBtn) {
             mobileBtn.onclick = function(e) {
@@ -240,7 +234,6 @@
             ? document.getElementById('registerBtnMobile')
             : document.getElementById('registerBtnDesktop');
 
-        // Validar dados
         const validation = validateData(inputs);
         if (!validation.isValid) {
             showMessage('❌ ' + validation.message, 'error', 4000);
@@ -248,7 +241,6 @@
             return;
         }
 
-        // Mostrar loading
         if (registerBtn) {
             registerBtn.textContent = '🔄 CADASTRANDO...';
             registerBtn.disabled = true;
@@ -269,13 +261,10 @@
             if (result.success) {
                 console.log('✅ Cadastro realizado com sucesso!');
                 
-                // MOSTRAR MENSAGEM POR MAIS TEMPO
                 showMessage('✅ ' + result.message + ' Redirecionando para login...', 'success', 3000);
-                
-                // Limpar formulário
+
                 clearForm(inputs);
                 
-                // Redirecionar após a mensagem ficar visível
                 setTimeout(() => {
                     console.log('🔄 Redirecionando para login...');
                     window.location.href = 'login.html';
@@ -371,11 +360,9 @@
         return fieldNames[key] || key;
     }
 
-    // FUNÇÃO ÚNICA showMessage - CORRIGIDA
     function showMessage(message, type = 'info', duration = 3000) {
         console.log('💬 Mostrando mensagem:', message, 'Duração:', duration);
         
-        // Remover mensagens anteriores
         const existingMessages = document.querySelectorAll('.custom-message');
         existingMessages.forEach(msg => {
             msg.style.animation = 'slideOut 0.3s ease';
@@ -386,13 +373,10 @@
             }, 300);
         });
 
-        // Aguardar um pouco antes de mostrar nova mensagem
         setTimeout(() => {
-            // Criar mensagem
             const messageDiv = document.createElement('div');
             messageDiv.className = `custom-message custom-message-${type}`;
-            
-            // Botão de fechar
+
             const closeButton = document.createElement('button');
             closeButton.innerHTML = '✕';
             closeButton.onclick = function() {
@@ -418,8 +402,7 @@
             document.body.appendChild(messageDiv);
             
             console.log('✅ Mensagem exibida:', message);
-            
-            // Auto-remover após o tempo especificado
+
             if (duration > 0) {
                 setTimeout(() => {
                     if (messageDiv.parentElement) {
@@ -436,7 +419,6 @@
         }, 100);
     }
 
-    // Google OAuth
     async function registerWithGoogle() {
         try {
             console.log('🔐 Iniciando cadastro com Google...');

@@ -16,7 +16,6 @@
     <script src="js/professores.js"></script>
     <script src="js/professor-mapa.js"></script>    
 <body>
-    <!-- MOBILE HEADER - IDÊNTICO AO ADMIN -->
     <header class="mobile-header">
         <div class="header-top">
             <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
@@ -43,7 +42,6 @@
         </nav>
     </header>
 
-    <!-- DESKTOP HEADER - IDÊNTICO AO ADMIN -->
     <header class="desktop-header">
         <div class="header-content">
             <a href="professor-dashboard.html" class="logo-link">
@@ -71,7 +69,6 @@
     </header>
 
     <main>
-        <!-- SEÇÃO MINHAS AULAS (PROFESSOR) -->
         <section id="minhas-aulas-professor" class="section active">
             <div class="professor-page-header">
                 <h2><i class="fas fa-chalkboard-teacher"></i> Minhas Aulas</h2>
@@ -80,7 +77,6 @@
                 </button>
             </div>
 
-            <!-- FILTROS -->
             <div class="professor-filters-container">
                 <div class="professor-filter-group">
                     <label for="filterCurso">Curso:</label>
@@ -105,7 +101,6 @@
                 </div>
             </div>
 
-            <!-- GRID DE AULAS -->
             <div class="professor-aulas-grid" id="aulas-professor-grid">
                 <div class="professor-empty-state">
                     <i class="fas fa-spinner fa-spin"></i>
@@ -114,7 +109,6 @@
             </div>
         </section>
 
-       <!-- SEÇÃO CRIAR AULA - VERSÃO MELHORADA -->
 <section id="criar-aula" class="section">
     <div class="professor-page-header">
         <h2><i class="fas fa-plus-circle"></i> Criar Nova Aula</h2>
@@ -125,7 +119,6 @@
 
     <div class="professor-form-container">
         <form class="professor-criar-aula-form" id="formCriarAula">
-            <!-- Linha 1: Curso e Período -->
             <div class="professor-form-row">
                 <div class="professor-form-group">
                     <label for="cursoSelect" class="professor-form-label">
@@ -133,7 +126,6 @@
                     </label>
                     <select id="cursoSelect" class="professor-form-control" required>
                         <option value="">Selecione o curso</option>
-                        <!-- Cursos serão carregados dinamicamente -->
                     </select>
                 </div>
                 <div class="professor-form-group">
@@ -153,8 +145,7 @@
                     </select>
                 </div>
             </div>
-            
-            <!-- Linha 2: Turma e Disciplina -->
+
             <div class="professor-form-row">
                 <div class="professor-form-group">
                     <label for="turmaSelect" class="professor-form-label">
@@ -186,7 +177,6 @@
                 </div>
             </div>
 
-            <!-- Linha 3: Sala -->
             <div class="professor-form-row">
                 <div class="professor-form-group professor-form-group-full">
                     <label for="searchSala" class="professor-form-label">
@@ -203,13 +193,11 @@
                     </label>
                     <select id="salaSelect" class="professor-form-control professor-sala-select" required size="6">
                         <option value="">Selecione uma sala da lista abaixo</option>
-                        <!-- Salas serão carregadas dinamicamente -->
                     </select>
                     <small class="professor-form-help">Use a busca acima para filtrar as salas</small>
                 </div>
             </div>
 
-            <!-- Linha 4: Horário -->
             <div class="professor-form-row">
                 <div class="professor-form-group">
                     <label for="horarioSelect" class="professor-form-label">
@@ -217,20 +205,14 @@
                     </label>
                     <select id="horarioSelect" class="professor-form-control" required>
                         <option value="">Selecione o horário</option>
-                        <option value="07:00-09:00">07:00 - 09:00</option>
-                        <option value="08:00-10:00">08:00 - 10:00</option>
-                        <option value="09:00-11:00">09:00 - 11:00</option>
-                        <option value="10:00-12:00">10:00 - 12:00</option>
-                        <option value="11:00-13:00">11:00 - 13:00</option>
-                        <option value="14:00-16:00">14:00 - 16:00</option>
-                        <option value="16:00-18:00">16:00 - 18:00</option>
-                        <option value="19:00-21:00">19:00 - 21:00</option>
-                        <option value="21:00-23:00">21:00 - 23:00</option>
+                        <option value="18:50-19:40">18:50 - 19:40</option>
+                        <option value="19:40-20:30">19:40 - 20:30</option>
+                        <option value="20:40-21:30">20:40 - 21:30</option>
+                        <option value="21:30-22:20">21:30 - 22:20</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Dias da Semana -->
             <div class="professor-form-group professor-dias-container">
                 <label class="professor-form-label">
                     <i class="fas fa-calendar-day"></i> Dias da Semana *
@@ -265,7 +247,6 @@
                 <small class="professor-form-help">Selecione os dias em que a aula ocorrerá</small>
             </div>
 
-            <!-- Ações do Formulário -->
             <div class="professor-form-actions">
                 <button type="submit" class="btn-primary professor-btn-large">
                     <i class="fas fa-save"></i> Criar Aula
@@ -282,7 +263,6 @@
     </div>
 </section>
 
-       <!-- SEÇÃO MAPA DE SALAS COMPLETO -->
 <section id="mapa-blocos" class="section">
     <div class="professor-page-header">
         <h2><i class="fas fa-door-open"></i> Mapa de Salas</h2>
@@ -291,7 +271,6 @@
         </button>
     </div>
     
-    <!-- Blocos - AGORA DINÂMICO -->
     <div class="professor-blocos-grid" id="blocos-grid">
         <div class="professor-empty-state">
             <i class="fas fa-spinner fa-spin"></i>
@@ -299,7 +278,6 @@
         </div>
     </div>
 
-    <!-- Seção de Andares (inicialmente escondida) -->
     <div id="andares-section" class="andares-section" style="display: none;">
         <div class="professor-andares-header">
             <button class="professor-btn-voltar-andar" onclick="voltarParaBlocos()">
@@ -309,11 +287,9 @@
         </div>
         
         <div class="professor-andares-grid" id="andares-grid">
-            <!-- Andares serão carregados dinamicamente -->
         </div>
     </div>
 
-    <!-- Seção de Salas (inicialmente escondida) -->
     <div id="salas-section" class="salas-section" style="display: none;">
         <div class="professor-salas-header">
             <button class="professor-btn-voltar-sala" onclick="voltarParaAndares()">
@@ -338,14 +314,12 @@
         </div>
         
         <div class="professor-salas-grid" id="salas-grid">
-            <!-- Salas serão carregadas dinamicamente -->
         </div>
     </div>
 </section>
 
 
    <script>
-    // 🔧 FUNÇÕES PARA MENU HAMBURGER
     function toggleMenu() {
         const nav = document.getElementById('mobileNav');
         nav.classList.toggle('active');
@@ -356,7 +330,6 @@
         nav.classList.remove('active');
     }
 
-    // Fechar menu ao clicar fora
     document.addEventListener('click', function(event) {
         const nav = document.getElementById('mobileNav');
         const hamburger = document.querySelector('.menu-hamburger');
@@ -368,7 +341,6 @@
         }
     });
 
-    // 🔧 ATUALIZAR NOME DO USUÁRIO COM BADGE PROFESSOR - VERSÃO CORRIGIDA
     function atualizarInterfaceUsuario() {
         const userData = localStorage.getItem('userData');
         if (userData) {
@@ -377,7 +349,6 @@
                 
                 console.log('👤 Atualizando interface para usuário:', user);
                 
-                // Desktop - Adicionar badge PROFESSOR
                 const desktopUser = document.getElementById('desktopUserName');
                 if (desktopUser) {
                     desktopUser.innerHTML = `
@@ -395,7 +366,6 @@
                     console.log('✅ Badge professor adicionado no desktop');
                 }
                 
-                // Mobile Header
                 const mobileUser = document.getElementById('mobileUserName');
                 if (mobileUser) {
                     mobileUser.innerHTML = `${user.nome} <span style="
@@ -409,7 +379,6 @@
                     console.log('✅ Badge professor adicionado no mobile header');
                 }
                 
-                // Mobile Nav
                 const navUser = document.getElementById('mobileNavUser');
                 if (navUser) {
                     navUser.innerHTML = `<i class="fas fa-chalkboard-teacher"></i> ${user.nome} <span style="
@@ -431,7 +400,6 @@
         }
     }
 
-    // 🔧 INICIALIZAÇÃO DO DASHBOARD - VERSÃO CORRIGIDA
     function initializeProfessorDashboard() {
         console.log('🎯 Inicializando dashboard do professor...');
         
@@ -445,13 +413,10 @@
 
         console.log('👤 Professor carregado:', user);
         
-        // 🔥 CORREÇÃO: Atualizar interface imediatamente
         atualizarInterfaceUsuario();
         
-        // Configurar formulário de criação de aula
         configurarFormularioAula();
         
-        // Inicializar mapa
         inicializarMapaProfessor();
     }
 
@@ -461,7 +426,6 @@
             formCriarAula.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                // Coletar dados do formulário
                 const dadosAula = {
                     disciplina: document.getElementById('disciplinaInput').value.trim(),
                     sala_id: document.getElementById('salaSelect').value,
@@ -472,7 +436,6 @@
                         .map(cb => cb.value).join(',')
                 };
 
-                // Separar horário
                 if (dadosAula.horario) {
                     const [horario_inicio, horario_fim] = dadosAula.horario.split('-');
                     dadosAula.horario_inicio = horario_inicio.trim();
@@ -484,7 +447,6 @@
             });
         }
 
-        // Melhorar UX do formulário
         const salaSelect = document.getElementById('salaSelect');
         if (salaSelect) {
             salaSelect.addEventListener('change', function() {
@@ -497,47 +459,38 @@
     }
 
     function showSection(sectionId) {
-        // Fechar menu mobile ao clicar em um link
         closeMenu();
-        
-        // Remover classe active de todos os links
+
         document.querySelectorAll('.nav-link').forEach(link => {
             link.classList.remove('active');
         });
-        
-        // Remover classe active de todos os mobile links
+
         document.querySelectorAll('.mobile-nav a').forEach(link => {
             link.classList.remove('active');
         });
-        
-        // Adicionar classe active ao link clicado (desktop)
+
         const clickedDesktopLink = document.querySelector(`.desktop-nav [onclick="showSection('${sectionId}')"]`);
         if (clickedDesktopLink) {
             clickedDesktopLink.classList.add('active');
         }
-        
-        // Adicionar classe active ao link clicado (mobile)
+
         const clickedMobileLink = document.querySelector(`.mobile-nav [onclick="showSection('${sectionId}')"]`);
         if (clickedMobileLink) {
             clickedMobileLink.classList.add('active');
         }
-        
-        // Esconder todas as seções
+
         document.querySelectorAll('.section').forEach(section => {
             section.classList.remove('active');
         });
-        
-        // Mostrar seção selecionada
+
         const targetSection = document.getElementById(sectionId);
         if (targetSection) {
             targetSection.classList.add('active');
         }
-        
-        // Scroll para o topo
+
         window.scrollTo(0, 0);
     }
 
-    // 🔧 FUNÇÃO DE NOTIFICAÇÃO
     function showNotification(message, type = 'info') {
         const notification = document.createElement('div');
         notification.className = `custom-notification ${type}`;
@@ -562,21 +515,17 @@
         }, 5000);
     }
 
-    // 🔥 INICIALIZAR MAPA DO PROFESSOR
     function inicializarMapaProfessor() {
         console.log('🗺️ Inicializando mapa do professor...');
         carregarBlocos();
-        
-        // Configurar eventos
+
         configurarEventosMapa();
     }
 
-    // 🔥 VARIÁVEIS GLOBAIS PARA O MAPA
     let blocosData = [];
     let currentBloco = null;
     let currentAndar = null;
 
-    // 🔥 CARREGAR BLOCOS DA API
     async function carregarBlocos() {
         try {
             console.log('📡 Carregando blocos da API...');
@@ -597,12 +546,10 @@
             }
         } catch (error) {
             console.error('❌ Erro ao carregar blocos:', error);
-            // Fallback: usar blocos padrão
             usarBlocosPadrao();
         }
     }
 
-    // 🔥 RENDERIZAR BLOCOS NA TELA
     function renderizarBlocos(blocos) {
         const container = document.getElementById('blocos-grid');
         if (!container) return;
@@ -636,7 +583,6 @@
         console.log(`✅ ${blocos.length} blocos renderizados`);
     }
 
-    // 🔥 FALLBACK SE A API FALHAR
     function usarBlocosPadrao() {
         console.log('🔄 Usando blocos padrão...');
         const blocosPadrao = [
@@ -658,32 +604,26 @@
         renderizarBlocos(blocosPadrao);
     }
 
-    // 🔥 SELECIONAR BLOCO
     async function selecionarBloco(bloco) {
         console.log(`🏢 Selecionando bloco: ${bloco}`);
         currentBloco = bloco;
-        
-        // Atualizar título
+
         document.getElementById('bloco-selecionado-title').textContent = `Bloco ${bloco}`;
-        
-        // Mostrar loading
+
         document.getElementById('andares-grid').innerHTML = `
             <div class="professor-empty-state">
                 <i class="fas fa-spinner fa-spin"></i>
                 <p>Carregando andares...</p>
             </div>
         `;
-        
-        // Mostrar seção de andares
+
         document.getElementById('blocos-grid').style.display = 'none';
         document.getElementById('andares-section').style.display = 'block';
         document.getElementById('salas-section').style.display = 'none';
-        
-        // Carregar andares
+
         await carregarAndares(bloco);
     }
 
-    // 🔥 CARREGAR ANDARES DO BLOCO
     async function carregarAndares(bloco) {
         try {
             console.log(`📡 Carregando andares do bloco ${bloco}...`);
@@ -704,12 +644,10 @@
             }
         } catch (error) {
             console.error('❌ Erro ao carregar andares:', error);
-            // Fallback: andares padrão
             usarAndaresPadrao();
         }
     }
 
-    // 🔥 RENDERIZAR ANDARES
     function renderizarAndares(andares) {
         const container = document.getElementById('andares-grid');
         if (!container) return;
@@ -737,37 +675,30 @@
         console.log(`✅ ${andares.length} andares renderizados`);
     }
 
-    // 🔥 FALLBACK PARA ANDARES
     function usarAndaresPadrao() {
         const andaresPadrao = ['Térreo', '1º Andar', '2º Andar', '3º Andar'];
         renderizarAndares(andaresPadrao);
     }
 
-    // 🔥 SELECIONAR ANDAR
     async function selecionarAndar(andar) {
         console.log(`🚪 Selecionando andar: ${andar} do bloco ${currentBloco}`);
         currentAndar = andar;
-        
-        // Atualizar título
+
         document.getElementById('andar-selecionado-title').textContent = `Bloco ${currentBloco} > ${andar}`;
-        
-        // Mostrar loading
+
         document.getElementById('salas-grid').innerHTML = `
             <div class="professor-empty-state">
                 <i class="fas fa-spinner fa-spin"></i>
                 <p>Carregando salas...</p>
             </div>
         `;
-        
-        // Mostrar seção de salas
+
         document.getElementById('andares-section').style.display = 'none';
         document.getElementById('salas-section').style.display = 'block';
-        
-        // Carregar salas
+
         await carregarSalas(currentBloco, andar);
     }
 
-    // 🔥 CARREGAR SALAS DO ANDAR
     async function carregarSalas(bloco, andar) {
         try {
             console.log(`📡 Carregando salas: Bloco ${bloco}, Andar ${andar}`);
@@ -788,7 +719,6 @@
             }
         } catch (error) {
             console.error('❌ Erro ao carregar salas:', error);
-            // Fallback: mostrar mensagem de erro
             document.getElementById('salas-grid').innerHTML = `
                 <div class="professor-empty-state">
                     <i class="fas fa-exclamation-triangle fa-3x"></i>
@@ -799,7 +729,6 @@
         }
     }
 
-    // 🔥 RENDERIZAR SALAS
     function renderizarSalas(salas) {
         const container = document.getElementById('salas-grid');
         if (!container) return;
@@ -839,7 +768,6 @@
         console.log(`✅ ${salas.length} salas renderizadas`);
     }
 
-    // 🔥 FUNÇÕES DE NAVEGAÇÃO
     function voltarParaBlocos() {
         document.getElementById('andares-section').style.display = 'none';
         document.getElementById('salas-section').style.display = 'none';
@@ -853,9 +781,7 @@
         currentAndar = null;
     }
 
-    // 🔥 CONFIGURAR EVENTOS
     function configurarEventosMapa() {
-        // Filtro de pesquisa de salas
         const searchInput = document.getElementById('searchSalaMapa');
         if (searchInput) {
             searchInput.addEventListener('input', function() {
@@ -863,7 +789,6 @@
             });
         }
 
-        // Filtro de tipo de sala
         const tipoFilter = document.getElementById('filterTipoSala');
         if (tipoFilter) {
             tipoFilter.addEventListener('change', function() {
@@ -872,7 +797,6 @@
         }
     }
 
-    // 🔥 FUNÇÕES DE FILTRO
     function filtrarSalas(termo) {
         const salas = document.querySelectorAll('.professor-sala-card');
         const termoLower = termo.toLowerCase();
@@ -897,23 +821,19 @@
         });
     }
 
-    // 🔥 FUNÇÃO AUXILIAR
     function verDetalhesSala(salaId) {
         alert(`Detalhes da sala ${salaId}\n\nEm desenvolvimento...`);
     }
 
-    // 🔥 INICIALIZAÇÃO PRINCIPAL - VERSÃO CORRIGIDA
     document.addEventListener('DOMContentLoaded', function() {
         console.log('📄 DOM carregado - Inicializando dashboard do professor...');
         
-        // 🔥 CORREÇÃO: Chamar a função imediatamente
         setTimeout(() => {
             atualizarInterfaceUsuario();
             initializeProfessorDashboard();
         }, 100);
     });
 
-    // 🔥 DEBUG NO CONSOLE
     window.debugMapaProfessor = function() {
         console.log('🔍 DEBUG MAPA PROFESSOR:');
         console.log('- Blocos carregados:', blocosData.length);

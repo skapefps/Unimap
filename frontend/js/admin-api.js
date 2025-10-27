@@ -1,4 +1,3 @@
-// admin-api.js - Sistema de API para Admin (ATUALIZADO)
 class AdminAPI {
     constructor() {
         this.baseURL = '';
@@ -20,10 +19,8 @@ class AdminAPI {
             console.log(`📤 API Request: ${endpoint}`, config);
 
             const response = await fetch(url, config);
-            
-            // Verificar status da resposta
+
             if (!response.ok) {
-                // Se for 404, tentar rota alternativa para algumas endpoints
                 if (response.status === 404) {
                     if (endpoint.includes('/favoritos-count')) {
                         console.log('🔄 Tentando rota alternativa para favoritos...');
@@ -34,8 +31,7 @@ class AdminAPI {
                 
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
-            
-            // Verificar se a resposta é JSON
+
             const contentType = response.headers.get('content-type');
             let data;
             
@@ -51,8 +47,7 @@ class AdminAPI {
 
         } catch (error) {
             console.error(`❌ API Error (${endpoint}):`, error);
-            
-            // Para endpoints críticos, retornar dados de fallback
+
             if (endpoint.includes('/favoritos-count') || endpoint.includes('/favoritos')) {
                 console.log('🔄 Retornando dados de fallback para favoritos');
                 return {
@@ -70,7 +65,6 @@ class AdminAPI {
         }
     }
 
-    // Métodos HTTP
     async get(endpoint) {
         return this.request(endpoint, { method: 'GET' });
     }
@@ -93,7 +87,6 @@ class AdminAPI {
         return this.request(endpoint, { method: 'DELETE' });
     }
 
-    // Métodos específicos para professores
     async getProfessores() {
         return this.get('/api/professores');
     }
@@ -123,5 +116,4 @@ class AdminAPI {
     }
 }
 
-// Instância global
 const adminAPI = new AdminAPI();

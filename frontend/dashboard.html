@@ -172,7 +172,6 @@
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script>
-        // Carregar dados do usuário quando a página carregar
         document.addEventListener('DOMContentLoaded', function() {
             const user = authManager.getCurrentUser();
             const token = authManager.getToken();
@@ -183,7 +182,6 @@
                 return;
             }
             
-            // Mostrar informações do usuário
             document.getElementById('userData').innerHTML = `
                 <p><strong>Nome:</strong> ${user.nome}</p>
                 <p><strong>Email:</strong> ${user.email}</p>
@@ -192,7 +190,6 @@
                 ${user.periodo ? `<p><strong>Período:</strong> ${user.periodo}º</p>` : ''}
             `;
             
-            // Carregar estatísticas (apenas para admin)
             if (user.tipo === 'admin') {
                 loadDashboardStats(token);
             }
