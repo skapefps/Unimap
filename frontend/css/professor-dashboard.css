@@ -1,7 +1,9 @@
-/* ===== ESTILOS ESPECÍFICOS DO PROFESSOR DASHBOARD ===== */
+/* ===== ESTILOS OTIMIZADOS DO PROFESSOR DASHBOARD ===== */
 /* Prefixo: professor- para evitar conflitos */
 
-/* Page Header do Professor */
+/* ===== COMPONENTES PRINCIPAIS ===== */
+
+/* Page Header */
 .professor-page-header {
     display: flex;
     justify-content: space-between;
@@ -21,8 +23,9 @@
     gap: 10px;
 }
 
-/* Filtros do Professor */
-.professor-filters-container {
+/* Containers de Filtros */
+.professor-filters-container,
+.professor-salas-filters {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
@@ -45,80 +48,128 @@
     font-size: 0.9rem;
 }
 
-.professor-filter-select, 
-.professor-filter-input {
+/* Inputs e Seletores */
+.professor-filter-select,
+.professor-filter-input,
+.professor-form-control,
+.professor-search-input {
     padding: 0.75rem;
     border: 2px solid #e9ecef;
     border-radius: 8px;
     font-size: 0.9rem;
     transition: border-color 0.3s ease;
+    width: 100%;
 }
 
-.professor-filter-select:focus, 
-.professor-filter-input:focus {
+.professor-filter-select:focus,
+.professor-filter-input:focus,
+.professor-form-control:focus,
+.professor-search-input:focus {
     outline: none;
     border-color: #3498db;
 }
 
-/* Grid de Aulas do Professor */
-.professor-aulas-grid {
+/* ===== SISTEMA DE GRIDS ===== */
+
+/* Grids Principais */
+.professor-aulas-grid,
+.professor-blocos-grid,
+.professor-andares-grid,
+.professor-salas-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
-.professor-aula-card {
+.professor-aulas-grid { grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); }
+.professor-blocos-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.professor-andares-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.professor-salas-grid { grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); }
+
+/* Cards Base */
+.professor-aula-card,
+.professor-bloco-card,
+.professor-andar-card,
+.professor-sala-card {
     background: white;
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    border-left: 6px solid #3498db;
     transition: all 0.3s ease;
     position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease-out;
 }
 
-.professor-aula-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+.professor-aula-card { border-left: 6px solid #3498db; }
+.professor-bloco-card { border-left: 6px solid #3498db; }
+.professor-andar-card { border-left: 4px solid #27ae60; }
+.professor-sala-card { border-left: 4px solid #3498db; }
+
+/* Efeitos Hover */
+.professor-aula-card:hover,
+.professor-bloco-card:hover,
+.professor-andar-card:hover,
+.professor-sala-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.12);
 }
 
-.professor-aula-header {
+/* ===== COMPONENTES DE CARDS ===== */
+
+/* Headers de Cards */
+.professor-aula-header,
+.professor-sala-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 1rem;
+    gap: 1rem;
 }
 
-.professor-aula-title {
-    font-size: 1.2rem;
-    font-weight: 700;
+.professor-aula-title,
+.professor-sala-header h4 {
     color: #2c3e50;
     margin: 0;
+    font-weight: 700;
+    flex: 1;
 }
 
-.professor-aula-badge {
-    padding: 0.4rem 0.8rem;
+.professor-aula-title { font-size: 1.2rem; }
+.professor-sala-header h4 { font-size: 1.3rem; }
+
+/* Badges e Status */
+.professor-aula-badge,
+.professor-sala-status {
+    padding: 0.5rem 1rem;
     border-radius: 20px;
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
-.professor-aula-badge.ativa {
+.professor-aula-badge.ativa,
+.professor-sala-status.professor-disponivel {
     background: #d4edda;
     color: #155724;
 }
 
-.professor-aula-badge.inativa {
+.professor-aula-badge.inativa,
+.professor-sala-status.professor-ocupada {
     background: #f8d7da;
     color: #721c24;
 }
 
-.professor-aula-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+/* Informações de Cards */
+.professor-aula-info,
+.professor-sala-info {
+    margin-bottom: 1rem;
 }
+
+.professor-aula-info { display: flex; flex-direction: column; gap: 0.5rem; }
+.professor-sala-info { flex: 1; }
 
 .professor-info-item {
     display: flex;
@@ -131,1037 +182,6 @@
 .professor-info-item i {
     width: 16px;
     color: #3498db;
-}
-
-/* Form Container do Professor */
-.professor-form-container {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.professor-criar-aula-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.professor-form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.professor-form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.professor-form-group label {
-    font-weight: 600;
-    color: #2c3e50;
-    font-size: 0.9rem;
-}
-
-.professor-form-control {
-    padding: 0.75rem;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: border-color 0.3s ease;
-}
-
-.professor-form-control:focus {
-    outline: none;
-    border-color: #3498db;
-}
-
-/* Search Container do Professor */
-.professor-search-container {
-    position: relative;
-    margin-bottom: 0.5rem;
-}
-
-.professor-search-input {
-    padding: 0.75rem 2.5rem 0.75rem 1rem;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    width: 100%;
-}
-
-.professor-search-icon {
-    position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #6c757d;
-}
-
-/* Checkbox do Professor */
-.professor-dias-checkbox {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 1rem;
-    margin-top: 0.5rem;
-}
-
-.professor-checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    padding: 0.75rem;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-.professor-checkbox-label:hover {
-    border-color: #3498db;
-}
-
-.professor-checkbox-label input[type="checkbox"] {
-    display: none;
-}
-
-.professor-checkmark {
-    width: 20px;
-    height: 20px;
-    border: 2px solid #e9ecef;
-    border-radius: 4px;
-    position: relative;
-    transition: all 0.3s ease;
-}
-
-.professor-checkbox-label input[type="checkbox"]:checked + .professor-checkmark {
-    background: #3498db;
-    border-color: #3498db;
-}
-
-.professor-checkbox-label input[type="checkbox"]:checked + .professor-checkmark::after {
-    content: '✓';
-    position: absolute;
-    color: white;
-    font-size: 14px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-/* Form Actions do Professor */
-.professor-form-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 2px solid #ecf0f1;
-}
-
-.professor-btn-large {
-    padding: 1rem 2rem;
-    font-size: 1.1rem;
-}
-
-.professor-btn-secondary {
-    background: #95a5a6;
-    color: white;
-    border: none;
-    padding: 1rem 2rem;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.3s;
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.professor-btn-secondary:hover {
-    background: #7f8c8d;
-}
-
-/* Blocos Grid do Professor */
-.professor-blocos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-}
-
-.professor-bloco-card {
-    background: white;
-    padding: 2rem;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border-left: 6px solid #3498db;
-}
-
-.professor-bloco-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-}
-
-.professor-bloco-icon {
-    font-size: 3rem;
-    color: #3498db;
-    margin-bottom: 1rem;
-}
-
-.professor-bloco-card h3 {
-    color: #2c3e50;
-    margin-bottom: 0.5rem;
-    font-size: 1.5rem;
-}
-
-.professor-bloco-card p {
-    color: #7f8c8d;
-    margin: 0;
-}
-
-.professor-bloco-stats {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 1rem;
-}
-
-.professor-bloco-stats .professor-stat {
-    background: #f8f9fa;
-    padding: 0.3rem 0.8rem;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    color: #495057;
-    font-weight: 600;
-}
-
-/* Andares Grid do Professor */
-.professor-andares-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-}
-
-.professor-andar-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border-left: 4px solid #27ae60;
-}
-
-.professor-andar-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 25px rgba(0,0,0,0.12);
-}
-
-.professor-andar-icon {
-    font-size: 2.5rem;
-    color: #27ae60;
-    margin-bottom: 1rem;
-}
-
-.professor-andar-card h4 {
-    color: #2c3e50;
-    margin-bottom: 0.5rem;
-    font-size: 1.2rem;
-}
-
-.professor-andar-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-.professor-andar-stats .professor-stat {
-    background: #f8f9fa;
-    padding: 0.3rem 0.8rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    color: #495057;
-    font-weight: 600;
-}
-
-.professor-andar-stats .professor-status {
-    padding: 0.3rem 0.8rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-}
-
-.professor-andar-stats .professor-disponivel {
-    background: #d4edda;
-    color: #155724;
-}
-
-/* Salas Grid do Professor */
-.professor-salas-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-}
-
-.professor-sala-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    border-left: 4px solid #3498db;
-    transition: all 0.3s ease;
-}
-
-.professor-sala-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 25px rgba(0,0,0,0.12);
-}
-
-.professor-sala-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-}
-
-.professor-sala-header h4 {
-    color: #2c3e50;
-    margin: 0;
-    font-size: 1.2rem;
-    font-weight: 700;
-}
-
-.professor-sala-status {
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-.professor-sala-status.professor-disponivel {
-    background: #d4edda;
-    color: #155724;
-}
-
-.professor-sala-status.professor-ocupada {
-    background: #f8d7da;
-    color: #721c24;
-}
-
-.professor-sala-info {
-    margin-bottom: 1rem;
-}
-
-.professor-sala-info p {
-    margin: 0.5rem 0;
-    color: #555;
-    font-size: 0.9rem;
-}
-
-.professor-sala-info strong {
-    color: #2c3e50;
-}
-
-.professor-sala-horario {
-    padding-top: 1rem;
-    border-top: 1px solid #e9ecef;
-}
-
-.professor-sala-horario p {
-    margin: 0;
-    font-size: 0.85rem;
-    color: #6c757d;
-}
-
-/* Empty State do Professor */
-.professor-empty-state {
-    text-align: center;
-    padding: 3rem;
-    color: #6c757d;
-    grid-column: 1 / -1;
-}
-
-.professor-empty-state i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    color: #bdc3c7;
-}
-
-.professor-empty-state p {
-    margin: 0;
-    font-size: 1rem;
-}
-
-/* Botões de voltar do Professor */
-.professor-btn-voltar-andar,
-.professor-btn-voltar-sala {
-    background: #3498db;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.3s;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.professor-btn-voltar-andar:hover,
-.professor-btn-voltar-sala:hover {
-    background: #2980b9;
-}
-
-/* Cabeçalhos das seções do Professor */
-.professor-andares-header,
-.professor-salas-header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #ecf0f1;
-}
-
-.professor-andares-header h3,
-.professor-salas-header h3 {
-    color: #2c3e50;
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-
-/* Filtros do Mapa do Professor */
-.professor-salas-filters {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-}
-
-/* Responsividade do Professor */
-@media (max-width: 768px) {
-    .professor-form-row {
-        grid-template-columns: 1fr;
-    }
-    
-    .professor-filters-container {
-        grid-template-columns: 1fr;
-    }
-    
-    .professor-aulas-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .professor-blocos-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .professor-andares-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .professor-salas-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .professor-form-actions {
-        flex-direction: column;
-    }
-    
-    .professor-page-header {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: flex-start;
-    }
-    
-    .professor-salas-filters {
-        grid-template-columns: 1fr;
-    }
-    
-    .professor-andares-header,
-    .professor-salas-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .professor-bloco-card,
-    .professor-andar-card,
-    .professor-sala-card {
-        padding: 1rem;
-    }
-    
-    .professor-bloco-icon {
-        font-size: 2.5rem;
-    }
-    
-    .professor-andar-icon {
-        font-size: 2rem;
-    }
-}
-/* ===== ESTILOS ESPECÍFICOS DO PROFESSOR DASHBOARD ===== */
-/* Prefixo: professor- para evitar conflitos */
-
-/* Page Header do Professor */
-.professor-page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #ecf0f1;
-}
-
-.professor-page-header h2 {
-    color: #2c3e50;
-    font-size: 2rem;
-    font-weight: 800;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-/* Filtros do Professor */
-.professor-filters-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-}
-
-.professor-filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.professor-filter-group label {
-    font-weight: 600;
-    color: #2c3e50;
-    font-size: 0.9rem;
-}
-
-.professor-filter-select, 
-.professor-filter-input {
-    padding: 0.75rem;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    transition: border-color 0.3s ease;
-}
-
-.professor-filter-select:focus, 
-.professor-filter-input:focus {
-    outline: none;
-    border-color: #3498db;
-}
-
-/* Grid de Aulas do Professor */
-.professor-aulas-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 1.5rem;
-}
-
-.professor-aula-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    border-left: 6px solid #3498db;
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.professor-aula-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-}
-
-.professor-aula-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-}
-
-.professor-aula-title {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin: 0;
-}
-
-.professor-aula-badge {
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-.professor-aula-badge.ativa {
-    background: #d4edda;
-    color: #155724;
-}
-
-.professor-aula-badge.inativa {
-    background: #f8d7da;
-    color: #721c24;
-}
-
-.professor-aula-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.professor-info-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #555;
-    font-size: 0.9rem;
-}
-
-.professor-info-item i {
-    width: 16px;
-    color: #3498db;
-}
-
-/* Form Container do Professor */
-.professor-form-container {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.professor-criar-aula-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.professor-form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.professor-form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.professor-form-group label {
-    font-weight: 600;
-    color: #2c3e50;
-    font-size: 0.9rem;
-}
-
-.professor-form-control {
-    padding: 0.75rem;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: border-color 0.3s ease;
-}
-
-.professor-form-control:focus {
-    outline: none;
-    border-color: #3498db;
-}
-
-/* Search Container do Professor */
-.professor-search-container {
-    position: relative;
-    margin-bottom: 0.5rem;
-}
-
-.professor-search-input {
-    padding: 0.75rem 2.5rem 0.75rem 1rem;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    width: 100%;
-}
-
-.professor-search-icon {
-    position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #6c757d;
-}
-
-/* Checkbox do Professor */
-.professor-dias-checkbox {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 1rem;
-    margin-top: 0.5rem;
-}
-
-.professor-checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    padding: 0.75rem;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-.professor-checkbox-label:hover {
-    border-color: #3498db;
-}
-
-.professor-checkbox-label input[type="checkbox"] {
-    display: none;
-}
-
-.professor-checkmark {
-    width: 20px;
-    height: 20px;
-    border: 2px solid #e9ecef;
-    border-radius: 4px;
-    position: relative;
-    transition: all 0.3s ease;
-}
-
-.professor-checkbox-label input[type="checkbox"]:checked + .professor-checkmark {
-    background: #3498db;
-    border-color: #3498db;
-}
-
-.professor-checkbox-label input[type="checkbox"]:checked + .professor-checkmark::after {
-    content: '✓';
-    position: absolute;
-    color: white;
-    font-size: 14px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-/* Form Actions do Professor */
-.professor-form-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 2px solid #ecf0f1;
-}
-
-.professor-btn-large {
-    padding: 1rem 2rem;
-    font-size: 1.1rem;
-}
-
-.professor-btn-secondary {
-    background: #95a5a6;
-    color: white;
-    border: none;
-    padding: 1rem 2rem;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.3s;
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.professor-btn-secondary:hover {
-    background: #7f8c8d;
-}
-
-/* ===== MAPA DE SALAS DO PROFESSOR ===== */
-
-/* Blocos Grid do Professor */
-.professor-blocos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.professor-bloco-card {
-    background: white;
-    padding: 2rem;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border-left: 6px solid #3498db;
-    position: relative;
-    overflow: hidden;
-}
-
-.professor-bloco-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-}
-
-.professor-bloco-icon {
-    font-size: 3rem;
-    color: #3498db;
-    margin-bottom: 1rem;
-    transition: transform 0.3s ease;
-}
-
-.professor-bloco-card:hover .professor-bloco-icon {
-    transform: scale(1.1);
-}
-
-.professor-bloco-card h3 {
-    color: #2c3e50;
-    margin-bottom: 0.5rem;
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-
-.professor-bloco-card p {
-    color: #7f8c8d;
-    margin: 0;
-    font-size: 0.9rem;
-}
-
-.professor-bloco-stats {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 1rem;
-    gap: 0.5rem;
-}
-
-.professor-bloco-stats .professor-stat {
-    background: #f8f9fa;
-    padding: 0.5rem 1rem;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    color: #495057;
-    font-weight: 600;
-    flex: 1;
-    text-align: center;
-}
-
-/* Andares Grid do Professor */
-.professor-andares-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.professor-andar-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border-left: 4px solid #27ae60;
-    position: relative;
-    overflow: hidden;
-}
-
-.professor-andar-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 25px rgba(0,0,0,0.12);
-}
-
-.professor-andar-icon {
-    font-size: 2.5rem;
-    color: #27ae60;
-    margin-bottom: 1rem;
-    transition: transform 0.3s ease;
-}
-
-.professor-andar-card:hover .professor-andar-icon {
-    transform: scale(1.1);
-}
-
-.professor-andar-card h4 {
-    color: #2c3e50;
-    margin-bottom: 0.5rem;
-    font-size: 1.2rem;
-    font-weight: 700;
-}
-
-.professor-andar-card p {
-    color: #7f8c8d;
-    margin: 0 0 1rem 0;
-    font-size: 0.9rem;
-}
-
-.professor-andar-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-.professor-andar-stats .professor-stat {
-    background: #f8f9fa;
-    padding: 0.4rem 0.8rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    color: #495057;
-    font-weight: 600;
-}
-
-.professor-andar-stats .professor-status {
-    padding: 0.4rem 0.8rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-}
-
-.professor-andar-stats .professor-disponivel {
-    background: #d4edda;
-    color: #155724;
-}
-
-.professor-andar-tipos {
-    margin-top: 0.5rem;
-    padding: 0.5rem;
-    background: #e8f4fd;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    color: #3498db;
-    font-weight: 500;
-}
-
-/* ===== SALAS DO PROFESSOR ===== */
-
-/* Filtros de Salas */
-.professor-salas-filters {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.professor-filter-btn {
-    background: white;
-    border: 2px solid #e9ecef;
-    padding: 0.75rem 1.5rem;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #495057;
-    white-space: nowrap;
-}
-
-.professor-filter-btn:hover {
-    border-color: #3498db;
-    color: #3498db;
-}
-
-.professor-filter-btn.active {
-    background: #3498db;
-    color: white;
-    border-color: #3498db;
-}
-
-/* Grid de Salas do Professor */
-.professor-salas-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.professor-sala-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    border-left: 4px solid #3498db;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.professor-sala-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 25px rgba(0,0,0,0.12);
-}
-
-.professor-sala-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-    gap: 1rem;
-}
-
-.professor-sala-header h4 {
-    color: #2c3e50;
-    margin: 0;
-    font-size: 1.3rem;
-    font-weight: 700;
-    flex: 1;
-}
-
-.professor-sala-status {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-
-.professor-sala-status.professor-disponivel {
-    background: #d4edda;
-    color: #155724;
-}
-
-.professor-sala-status.professor-ocupada {
-    background: #f8d7da;
-    color: #721c24;
-}
-
-.professor-sala-info {
-    margin-bottom: 1rem;
 }
 
 .professor-sala-info p {
@@ -1174,22 +194,232 @@
 .professor-sala-info strong {
     color: #2c3e50;
     font-weight: 600;
+    display: inline-block;
+    min-width: 80px;
 }
 
-.professor-sala-horario {
-    padding-top: 1rem;
-    border-top: 1px solid #e9ecef;
+/* ===== FORMULÁRIOS ===== */
+
+.professor-form-container {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.professor-criar-aula-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.professor-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.professor-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.professor-form-group label {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.9rem;
+}
+
+/* Sistema de Checkbox */
+.professor-dias-checkbox {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.professor-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.professor-checkbox-label:hover {
+    border-color: #3498db;
+}
+
+.professor-checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
+.professor-checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e9ecef;
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.professor-checkbox-label input[type="checkbox"]:checked + .professor-checkmark {
+    background: #3498db;
+    border-color: #3498db;
+}
+
+.professor-checkbox-label input[type="checkbox"]:checked + .professor-checkmark::after {
+    content: '✓';
+    position: absolute;
+    color: white;
+    font-size: 14px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* ===== BOTÕES E AÇÕES ===== */
+
+.professor-form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #ecf0f1;
+}
+
+.professor-btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+}
+
+.professor-btn-secondary,
+.professor-btn-voltar-andar,
+.professor-btn-voltar-sala {
+    background: #95a5a6;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.professor-btn-secondary:hover,
+.professor-btn-voltar-andar:hover,
+.professor-btn-voltar-sala:hover {
+    background: #7f8c8d;
+}
+
+.professor-btn-voltar-andar,
+.professor-btn-voltar-sala {
+    background: #3498db;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+}
+
+.professor-btn-voltar-andar:hover,
+.professor-btn-voltar-sala:hover {
+    background: #2980b9;
+}
+
+/* ===== COMPONENTES ESPECÍFICOS ===== */
+
+/* Search Container */
+.professor-search-container {
+    position: relative;
+    margin-bottom: 0.5rem;
+}
+
+.professor-search-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+/* Blocos e Andares - Elementos Especiais */
+.professor-bloco-icon,
+.professor-andar-icon {
+    transition: transform 0.3s ease;
+    margin-bottom: 1rem;
+}
+
+.professor-bloco-icon {
+    font-size: 3rem;
+    color: #3498db;
+}
+
+.professor-andar-icon {
+    font-size: 2.5rem;
+    color: #27ae60;
+}
+
+.professor-bloco-card:hover .professor-bloco-icon,
+.professor-andar-card:hover .professor-andar-icon {
+    transform: scale(1.1);
+}
+
+.professor-bloco-card h3,
+.professor-andar-card h4 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.professor-bloco-card h3 { font-size: 1.5rem; }
+.professor-andar-card h4 { font-size: 1.2rem; }
+
+.professor-bloco-card p,
+.professor-andar-card p {
+    color: #7f8c8d;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Stats e Status */
+.professor-bloco-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+    gap: 0.5rem;
+}
+
+.professor-andar-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
     margin-top: 1rem;
 }
 
-.professor-sala-horario p {
-    margin: 0;
-    font-size: 0.85rem;
-    color: #6c757d;
-    font-weight: 500;
+.professor-stat {
+    background: #f8f9fa;
+    padding: 0.5rem 1rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    color: #495057;
+    font-weight: 600;
+    text-align: center;
 }
 
-/* Cabeçalhos das seções do Professor */
+.professor-andar-stats .professor-stat {
+    padding: 0.4rem 0.8rem;
+    border-radius: 12px;
+}
+
+/* Cabeçalhos de Seção */
 .professor-andares-header,
 .professor-salas-header {
     display: flex;
@@ -1210,31 +440,7 @@
     flex: 1;
 }
 
-/* Botões de voltar do Professor */
-.professor-btn-voltar-andar,
-.professor-btn-voltar-sala {
-    background: #3498db;
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.professor-btn-voltar-andar:hover,
-.professor-btn-voltar-sala:hover {
-    background: #2980b9;
-    transform: translateY(-1px);
-}
-
-/* Empty State do Professor */
+/* Empty State */
 .professor-empty-state {
     text-align: center;
     padding: 3rem 2rem;
@@ -1257,28 +463,43 @@
     font-weight: 500;
 }
 
-.professor-empty-subtitle {
-    font-size: 0.9rem !important;
-    color: #868e96 !important;
-    margin-bottom: 0 !important;
-}
+/* ===== ANIMAÇÕES ===== */
 
-/* ===== RESPONSIVIDADE DO PROFESSOR ===== */
-
-@media (max-width: 1200px) {
-    .professor-blocos-grid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
-    
-    .professor-andares-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    }
-    
-    .professor-salas-grid {
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
+/* ===== RESPONSIVIDADE ===== */
+
+/* Desktop Grande */
+@media (min-width: 1201px) {
+    .professor-salas-grid { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
+    .professor-blocos-grid { grid-template-columns: repeat(4, 1fr); }
+    .professor-andares-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Desktop Médio */
+@media (min-width: 992px) and (max-width: 1200px) {
+    .professor-salas-grid { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+    .professor-blocos-grid { grid-template-columns: repeat(2, 1fr); }
+    .professor-andares-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Tablet */
+@media (min-width: 769px) and (max-width: 991px) {
+    .professor-salas-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+    .professor-blocos-grid { grid-template-columns: repeat(2, 1fr); }
+    .professor-andares-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Mobile */
 @media (max-width: 768px) {
     .professor-page-header {
         flex-direction: column;
@@ -1286,49 +507,19 @@
         align-items: flex-start;
     }
     
-    .professor-form-row {
-        grid-template-columns: 1fr;
-    }
-    
-    .professor-filters-container {
-        grid-template-columns: 1fr;
-        padding: 1rem;
-    }
-    
-    .professor-aulas-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .professor-blocos-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-    }
-    
-    .professor-andares-grid {
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 1rem;
-    }
-    
+    .professor-form-row,
+    .professor-filters-container,
+    .professor-aulas-grid,
     .professor-salas-grid {
         grid-template-columns: 1fr;
-        gap: 1rem;
     }
     
-    .professor-form-actions {
-        flex-direction: column;
-    }
+    .professor-blocos-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    .professor-andares-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
     
+    .professor-form-actions,
     .professor-salas-filters {
         flex-direction: column;
-        align-items: stretch;
-        gap: 0.75rem;
-        padding: 1rem;
-    }
-    
-    .professor-filter-btn {
-        text-align: center;
-        padding: 0.75rem 1rem;
     }
     
     .professor-andares-header,
@@ -1336,11 +527,6 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
-    }
-    
-    .professor-btn-voltar-andar,
-    .professor-btn-voltar-sala {
-        align-self: flex-start;
     }
     
     .professor-sala-header {
@@ -1359,25 +545,15 @@
         padding: 1.25rem;
     }
     
-    .professor-bloco-icon {
-        font-size: 2.5rem;
-    }
-    
-    .professor-andar-icon {
-        font-size: 2rem;
-    }
-    
     .professor-form-container {
         padding: 1.5rem;
         margin: 0 1rem;
     }
 }
 
+/* Mobile Pequeno */
 @media (max-width: 480px) {
-    .professor-blocos-grid {
-        grid-template-columns: 1fr;
-    }
-    
+    .professor-blocos-grid,
     .professor-andares-grid {
         grid-template-columns: 1fr;
     }
@@ -1388,26 +564,16 @@
         padding: 1rem;
     }
     
-    .professor-bloco-icon {
-        font-size: 2rem;
-    }
-    
-    .professor-andar-icon {
-        font-size: 1.75rem;
-    }
-    
-    .professor-page-header h2 {
-        font-size: 1.5rem;
-    }
+    .professor-bloco-icon { font-size: 2rem; }
+    .professor-andar-icon { font-size: 1.75rem; }
+    .professor-page-header h2 { font-size: 1.5rem; }
     
     .professor-andares-header h3,
     .professor-salas-header h3 {
         font-size: 1.3rem;
     }
     
-    .professor-sala-header h4 {
-        font-size: 1.1rem;
-    }
+    .professor-sala-header h4 { font-size: 1.1rem; }
     
     .professor-empty-state {
         padding: 2rem 1rem;
@@ -1421,701 +587,4 @@
         padding: 1rem;
         margin: 0 0.5rem;
     }
-}
-
-/* Animações suaves */
-.professor-bloco-card,
-.professor-andar-card,
-.professor-sala-card {
-    animation: fadeInUp 0.5s ease-out;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Estados de loading */
-.professor-loading {
-    opacity: 0.7;
-    pointer-events: none;
-}
-
-.professor-loading::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: inherit;
-}
-
-/* Badge para tipo de usuário */
-.user-type-badge.professor {
-    background: #3498db;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    margin-left: 8px;
-    font-weight: 600;
-}
-/* ===== SALAS DO PROFESSOR - CORREÇÃO DESKTOP ===== */
-
-/* Grid de Salas do Professor - DESKTOP */
-.professor-salas-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.professor-sala-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    border-left: 4px solid #3498db;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    min-height: 200px;
-    display: flex;
-    flex-direction: column;
-}
-
-.professor-sala-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 25px rgba(0,0,0,0.12);
-}
-
-.professor-sala-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-    gap: 1rem;
-}
-
-.professor-sala-header h4 {
-    color: #2c3e50;
-    margin: 0;
-    font-size: 1.3rem;
-    font-weight: 700;
-    flex: 1;
-}
-
-.professor-sala-status {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-.professor-sala-status.professor-disponivel {
-    background: #d4edda;
-    color: #155724;
-}
-
-.professor-sala-info {
-    margin-bottom: 1rem;
-    flex: 1;
-}
-
-.professor-sala-info p {
-    margin: 0.5rem 0;
-    color: #555;
-    font-size: 0.9rem;
-    line-height: 1.4;
-}
-
-.professor-sala-info strong {
-    color: #2c3e50;
-    font-weight: 600;
-    display: inline-block;
-    min-width: 80px;
-}
-
-.professor-sala-horario {
-    padding-top: 1rem;
-    border-top: 1px solid #e9ecef;
-    margin-top: auto;
-}
-
-.professor-sala-horario p {
-    margin: 0;
-    font-size: 0.85rem;
-    color: #6c757d;
-    font-weight: 500;
-}
-
-/* Filtros de Salas - DESKTOP */
-.professor-salas-filters {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.professor-filter-btn {
-    background: white;
-    border: 2px solid #e9ecef;
-    padding: 0.75rem 1.5rem;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #495057;
-    white-space: nowrap;
-}
-
-.professor-filter-btn:hover {
-    border-color: #3498db;
-    color: #3498db;
-}
-
-.professor-filter-btn.active {
-    background: #3498db;
-    color: white;
-    border-color: #3498db;
-}
-
-/* Cabeçalhos das seções - DESKTOP */
-.professor-andares-header,
-.professor-salas-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #ecf0f1;
-}
-
-.professor-andares-header h3,
-.professor-salas-header h3 {
-    color: #2c3e50;
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 700;
-    flex: 1;
-}
-
-/* Blocos e Andares - DESKTOP */
-.professor-blocos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.professor-andares-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-/* ===== RESPONSIVIDADE ESPECÍFICA ===== */
-
-/* Desktop grande */
-@media (min-width: 1201px) {
-    .professor-salas-grid {
-        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-    }
-    
-    .professor-blocos-grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
-    
-    .professor-andares-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* Desktop médio */
-@media (min-width: 992px) and (max-width: 1200px) {
-    .professor-salas-grid {
-        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    }
-    
-    .professor-blocos-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .professor-andares-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-/* Tablet */
-@media (min-width: 769px) and (max-width: 991px) {
-    .professor-salas-grid {
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    }
-    
-    .professor-blocos-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .professor-andares-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-/* Mobile - mantém as regras anteriores */
-@media (max-width: 768px) {
-    .professor-salas-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .professor-blocos-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-    }
-    
-    .professor-andares-grid {
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 1rem;
-    }
-    
-    .professor-salas-filters {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.75rem;
-        padding: 1rem;
-    }
-    
-    .professor-filter-btn {
-        text-align: center;
-        padding: 0.75rem 1rem;
-    }
-    
-    .professor-andares-header,
-    .professor-salas-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-    
-    .professor-sala-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-}
-
-/* Mobile pequeno */
-@media (max-width: 480px) {
-    .professor-blocos-grid,
-    .professor-andares-grid {
-        grid-template-columns: 1fr;
-    }
-}
-/* ===== CORREÇÕES ESPECÍFICAS PARA SALAS DO PROFESSOR - DESKTOP ===== */
-
-/* 🔥 CORREÇÃO DO GRID DE SALAS - DESKTOP */
-@media (min-width: 769px) {
-    .professor-salas-grid {
-        display: grid !important;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
-        gap: 1.5rem !important;
-        margin-bottom: 2rem !important;
-    }
-
-    .professor-sala-card {
-        background: white !important;
-        border-radius: 12px !important;
-        padding: 1.5rem !important;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
-        border-left: 4px solid #3498db !important;
-        transition: all 0.3s ease !important;
-        position: relative !important;
-        overflow: hidden !important;
-        min-height: 200px !important;
-        display: flex !important;
-        flex-direction: column !important;
-    }
-
-    .professor-sala-card:hover {
-        transform: translateY(-3px) !important;
-        box-shadow: 0 6px 25px rgba(0,0,0,0.12) !important;
-    }
-
-    .professor-sala-header {
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: flex-start !important;
-        margin-bottom: 1rem !important;
-        gap: 1rem !important;
-    }
-
-    .professor-sala-header h4 {
-        color: #2c3e50 !important;
-        margin: 0 !important;
-        font-size: 1.3rem !important;
-        font-weight: 700 !important;
-        flex: 1 !important;
-    }
-
-    .professor-sala-status {
-        padding: 0.5rem 1rem !important;
-        border-radius: 20px !important;
-        font-size: 0.75rem !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        white-space: nowrap !important;
-        flex-shrink: 0 !important;
-    }
-
-    .professor-sala-info {
-        margin-bottom: 1rem !important;
-        flex: 1 !important;
-    }
-
-    .professor-sala-info p {
-        margin: 0.5rem 0 !important;
-        color: #555 !important;
-        font-size: 0.9rem !important;
-        line-height: 1.4 !important;
-    }
-
-    .professor-sala-info strong {
-        color: #2c3e50 !important;
-        font-weight: 600 !important;
-        display: inline-block !important;
-        min-width: 80px !important;
-    }
-
-    .professor-sala-horario {
-        padding-top: 1rem !important;
-        border-top: 1px solid #e9ecef !important;
-        margin-top: auto !important;
-    }
-}
-
-/* 🔥 CORREÇÃO PARA TELAS GRANDES */
-@media (min-width: 1201px) {
-    .professor-salas-grid {
-        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)) !important;
-    }
-}
-
-/* 🔥 CORREÇÃO PARA TABLET/DESKTOP PEQUENO */
-@media (min-width: 769px) and (max-width: 991px) {
-    .professor-salas-grid {
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
-    }
-}
-
-/* 🔥 GARANTIR QUE AS REGRAS MOBILE SEJAM APLICADAS */
-@media (max-width: 768px) {
-    .professor-salas-grid {
-        grid-template-columns: 1fr !important;
-        gap: 1rem !important;
-    }
-    
-    .professor-sala-card {
-        padding: 1.25rem !important;
-        min-height: auto !important;
-    }
-    
-    .professor-sala-header {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 0.5rem !important;
-    }
-    
-    .professor-sala-status {
-        align-self: flex-start !important;
-    }
-}
-
-/* 🔥 REMOVER CONFLITOS COM CSS GERAL */
-#salas-section .professor-salas-grid,
-#mapa-blocos .professor-salas-grid {
-    display: grid !important;
-}
-
-/* 🔥 CORREÇÃO ESPECÍFICA PARA O CONTAINER DE SALAS */
-.salas-section .professor-salas-grid,
-#salas-section .professor-salas-grid {
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
-}
-
-/* 🔥 FORÇAR ESTILOS DO PROFESSOR EM DETRIMENTO DOS GERAIS */
-.professor-salas-grid {
-    display: grid !important;
-}
-
-.professor-sala-card {
-    background: white !important;
-    border-radius: 12px !important;
-    padding: 1.5rem !important;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
-    border-left: 4px solid #3498db !important;
-}
-
-/* 🔥 CORREÇÃO PARA OS FILTROS DE SALAS */
-.professor-salas-filters {
-    display: flex !important;
-    gap: 1rem !important;
-    margin-bottom: 2rem !important;
-    padding: 1.5rem !important;
-    background: white !important;
-    border-radius: 12px !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important;
-    align-items: center !important;
-    flex-wrap: wrap !important;
-}
-
-@media (max-width: 768px) {
-    .professor-salas-filters {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 0.75rem !important;
-        padding: 1rem !important;
-    }
-}
-/* professor-dashboard.css - Regras adicionais para o formulário melhorado */
-
-.professor-form-group-full {
-    width: 100%;
-}
-
-.professor-sala-select {
-    height: auto;
-    min-height: 120px;
-    margin-top: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 8px;
-}
-
-.professor-form-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: #333;
-}
-
-.professor-form-help {
-    display: block;
-    margin-top: 4px;
-    font-size: 0.8rem;
-    color: #666;
-    font-style: italic;
-}
-
-.professor-dias-container {
-    border: 1px solid #ddd;
-    padding: 15px;
-    border-radius: 8px;
-    background: #f9f9f9;
-}
-
-.professor-dia-text {
-    margin-left: 5px;
-}
-
-.professor-form-info {
-    background: #e3f2fd;
-    border: 1px solid #2196F3;
-    border-radius: 6px;
-    padding: 12px;
-    margin-top: 20px;
-    text-align: center;
-}
-
-.professor-form-info p {
-    margin: 0;
-    color: #1976D2;
-    font-size: 0.9rem;
-}
-
-.sala-select-label {
-    margin-top: 15px;
-}
-
-/* Melhorar a busca de salas */
-.professor-search-container {
-    position: relative;
-    margin-bottom: 10px;
-}
-
-.professor-search-input {
-    padding-left: 35px;
-    width: 100%;
-}
-
-.professor-search-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #666;
-}
-
-/* Estilos para os checkboxes */
-.professor-dias-checkbox {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-top: 10px;
-}
-
-.professor-checkbox-label {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    transition: all 0.3s ease;
-}
-
-.professor-checkbox-label:hover {
-    background: #f5f5f5;
-}
-
-.professor-checkbox-label input[type="checkbox"] {
-    display: none;
-}
-
-.professor-checkmark {
-    width: 18px;
-    height: 18px;
-    border: 2px solid #ddd;
-    border-radius: 3px;
-    margin-right: 8px;
-    position: relative;
-    transition: all 0.3s ease;
-}
-
-.professor-checkbox-label input[type="checkbox"]:checked + .professor-checkmark {
-    background: #3498db;
-    border-color: #3498db;
-}
-
-.professor-checkbox-label input[type="checkbox"]:checked + .professor-checkmark::after {
-    content: '✓';
-    position: absolute;
-    color: white;
-    font-size: 12px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-/* Botões do formulário */
-.professor-form-actions {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
-}
-
-.professor-btn-large {
-    padding: 12px 24px;
-    font-size: 1rem;
-}
-
-.professor-btn-secondary {
-    padding: 12px 24px;
-    background: #6c757d;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background 0.3s ease;
-}
-
-.professor-btn-secondary:hover {
-    background: #545b62;
-}
-
-/* Modal de detalhes */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background: white;
-    border-radius: 8px;
-    padding: 0;
-    max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-}
-
-.modal-header {
-    padding: 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: between;
-    align-items: center;
-}
-
-.modal-header h3 {
-    margin: 0;
-    color: #2c3e50;
-}
-
-.modal-close {
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    cursor: pointer;
-    color: #7f8c8d;
-}
-
-.modal-body {
-    padding: 20px;
-}
-
-.aula-detalhes p {
-    margin: 10px 0;
-    padding: 8px 0;
-    border-bottom: 1px solid #f8f9fa;
-}
-
-.aula-detalhes strong {
-    color: #2c3e50;
-    min-width: 80px;
-    display: inline-block;
 }

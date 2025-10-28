@@ -1,26 +1,24 @@
-/* ADMIN STYLES MODERNOS */
 .admin-dashboard {
     margin-top: 80px;
     padding: 2rem;
     background: #f8f9fa;
-    min-height: calc(100vh - 80px);
+    min-height: calc(100vh - 80px)
 }
 
 .container {
     max-width: 1200px;
-    margin: 0 auto;
+    margin: 0 auto
 }
 
-/* STATS GRID MODERNO */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
-    margin: 2rem 0;
+    margin: 2rem 0
 }
 
 .stat-card {
-    background: white;
+    background: #fff;
     padding: 2rem;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -28,7 +26,7 @@
     border-left: 6px solid #3498db;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    overflow: hidden;
+    overflow: hidden
 }
 
 .stat-card::before {
@@ -38,12 +36,12 @@
     left: 0;
     width: 100%;
     height: 4px;
-    background: linear-gradient(90deg, #3498db, #2980b9);
+    background: linear-gradient(90deg, #3498db, #2980b9)
 }
 
 .stat-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12)
 }
 
 .stat-card h3 {
@@ -52,7 +50,7 @@
     margin-bottom: 0.5rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    font-weight: 600;
+    font-weight: 600
 }
 
 .stat-number {
@@ -60,40 +58,39 @@
     font-weight: 800;
     color: #2c3e50;
     margin: 1rem 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
 }
 
 .stat-icon {
     font-size: 2.5rem;
     margin-bottom: 1rem;
-    color: #3498db;
+    color: #3498db
 }
 
-/* QUICK ACTIONS MODERNO */
 .quick-actions {
-    background: white;
+    background: #fff;
     padding: 2.5rem;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    margin: 2rem 0;
+    margin: 2rem 0
 }
 
 .quick-actions h3 {
     color: #2c3e50;
     margin-bottom: 1.5rem;
     font-size: 1.4rem;
-    font-weight: 700;
+    font-weight: 700
 }
 
 .actions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1.5rem;
-    margin-top: 1rem;
+    margin-top: 1rem
 }
 
 .action-btn {
-    background: white;
+    background: #fff;
     border: 2px solid #e9ecef;
     padding: 2rem 1.5rem;
     border-radius: 12px;
@@ -104,68 +101,67 @@
     align-items: center;
     gap: 1rem;
     text-decoration: none;
-    color: #2c3e50;
+    color: #2c3e50
 }
 
 .action-btn:hover {
     background: #3498db;
-    color: white;
+    color: #fff;
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
     border-color: #3498db;
-    text-decoration: none;
+    text-decoration: none
 }
 
 .action-btn:hover .action-icon {
-    color: white;
-    transform: scale(1.1);
+    color: #fff;
+    transform: scale(1.1)
 }
 
 .action-icon {
     font-size: 2.5rem;
     color: #3498db;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease
 }
 
 .action-btn span {
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 1rem
 }
 
-/* RECENT SECTION MODERNO */
 .recent-section {
-    background: white;
+    background: #fff;
     padding: 2.5rem;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    margin: 2rem 0;
+    margin: 2rem 0
 }
 
 .recent-section h3 {
     color: #2c3e50;
     margin-bottom: 1.5rem;
     font-size: 1.4rem;
-    font-weight: 700;
+    font-weight: 700
 }
 
 .table-container {
     overflow-x: auto;
     margin-top: 1rem;
     border-radius: 12px;
-    border: 1px solid #e9ecef;
+    border: 1px solid #e9ecef
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    background: white;
+    background: #fff
 }
 
 th,
 td {
     padding: 1.2rem 1rem;
     text-align: left;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid #e9ecef
 }
 
 th {
@@ -174,112 +170,106 @@ th {
     color: #2c3e50;
     font-size: 0.9rem;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.5px
 }
 
 td {
     color: #495057;
-    font-size: 0.95rem;
+    font-size: 0.95rem
 }
 
 tr:hover {
-    background: #f8f9fa;
+    background: #f8f9fa
 }
 
-/* BADGES MODERNOS */
 .badge {
     padding: 0.4rem 0.8rem;
     border-radius: 20px;
     font-size: 0.75rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    text-transform: uppercase
 }
 
 .badge.admin {
     background: #e74c3c;
-    color: white;
+    color: #fff
 }
 
 .badge.aluno {
     background: #3498db;
-    color: white;
+    color: #fff
 }
 
 .badge.professor {
     background: #9b59b6;
-    color: white;
+    color: #fff
 }
 
-/* PAGE HEADER */
 .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 2rem
 }
 
 .page-header h2 {
     color: #2c3e50;
     font-size: 2rem;
     font-weight: 800;
-    margin: 0;
+    margin: 0
 }
 
-/* RESPONSIVO */
-@media (max-width: 768px) {
+@media (max-width:768px) {
     .admin-dashboard {
         padding: 1rem;
-        margin-top: 60px;
+        margin-top: 60px
     }
 
     .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr
     }
 
     .actions-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr
     }
 
     .page-header {
         flex-direction: column;
         gap: 1rem;
-        align-items: flex-start;
+        align-items: flex-start
     }
 
     .stat-card {
-        padding: 1.5rem;
+        padding: 1.5rem
     }
 
     .quick-actions,
     .recent-section {
-        padding: 1.5rem;
+        padding: 1.5rem
     }
 }
 
-/* LOADING STATES */
 .loading {
     opacity: 0.6;
-    pointer-events: none;
+    pointer-events: none
 }
 
 .empty-state {
     text-align: center;
     padding: 3rem;
-    color: #6c757d;
+    color: #6c757d
 }
 
 .empty-state i {
     font-size: 4rem;
     margin-bottom: 1rem;
-    color: #bdc3c7;
+    color: #bdc3c7
 }
 
-/* 🔥 NAVBAR ADMIN - MINIMALISTA ELEGANTE */
 .desktop-header .header-content {
     background: linear-gradient(135deg, #2c3e50, #34495e) !important;
     padding: 0 2rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1)
 }
 
 .desktop-nav .nav-link {
@@ -290,42 +280,40 @@ tr:hover {
     transition: all 0.3s ease;
     font-weight: 500;
     border-bottom: 3px solid transparent;
-    background: transparent !important;
+    background: transparent !important
 }
 
 .desktop-nav .nav-link:hover {
-    color: white !important;
+    color: #fff !important;
     border-bottom: 3px solid #3498db;
-    transform: translateY(-2px);
+    transform: translateY(-2px)
 }
 
 .desktop-nav .nav-link.active {
-    color: white !important;
+    color: #fff !important;
     border-bottom: 3px solid #e74c3c;
     font-weight: 600;
-    background: rgba(255, 255, 255, 0.05) !important;
+    background: rgba(255, 255, 255, 0.05) !important
 }
 
-/* DASHBOARD DESTACADO */
 .desktop-nav .admin-only {
     background: rgba(231, 76, 60, 0.2) !important;
-    color: white !important;
+    color: #fff !important;
     border: 1px solid rgba(231, 76, 60, 0.4) !important;
     border-radius: 8px;
-    font-weight: 600;
+    font-weight: 600
 }
 
 .desktop-nav .admin-only:hover {
     background: rgba(231, 76, 60, 0.4) !important;
-    border-color: #e74c3c;
+    border-color: #e74c3c
 }
 
-/* 🔥 RESET FORTE PARA NAVBAR ADMIN */
 body header.desktop-header {
     background: linear-gradient(135deg, #1a2530, #2c3e50) !important;
     padding: 0 !important;
     margin: 0 !important;
-    border-bottom: 3px solid #3498db !important;
+    border-bottom: 3px solid #3498db !important
 }
 
 body header.desktop-header .header-content {
@@ -335,24 +323,23 @@ body header.desktop-header .header-content {
     align-items: center !important;
     max-width: 1200px !important;
     margin: 0 auto !important;
-    padding: 1rem 2rem !important;
+    padding: 1rem 2rem !important
 }
 
 body header.desktop-header h1 {
-    color: white !important;
+    color: #fff !important;
     font-size: 1.5rem !important;
     font-weight: 700 !important;
     margin: 0 !important;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important
 }
 
-/* 🔥 NAV LINKS - ESTILO FORTE */
 body .desktop-nav {
     display: flex !important;
     align-items: center !important;
     gap: 0.5rem !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 0 !important
 }
 
 body .desktop-nav .nav-link {
@@ -364,283 +351,38 @@ body .desktop-nav .nav-link {
     font-weight: 600 !important;
     border: 2px solid transparent !important;
     background: transparent !important;
-    display: block !important;
+    display: block !important
 }
 
 body .desktop-nav .nav-link:hover {
     background: rgba(255, 255, 255, 0.15) !important;
-    color: white !important;
+    color: #fff !important;
     transform: translateY(-2px) !important;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
-    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important
 }
 
 body .desktop-nav .nav-link.active {
     background: linear-gradient(135deg, #3498db, #2980b9) !important;
-    color: white !important;
+    color: #fff !important;
     border: 2px solid rgba(255, 255, 255, 0.4) !important;
     font-weight: 700 !important;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4) !important;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4) !important
 }
 
-/* 🔥 USER INFO */
 body .user-info {
-    color: white !important;
+    color: #fff !important;
     font-weight: 600 !important;
     padding: 10px 16px !important;
     background: rgba(255, 255, 255, 0.1) !important;
     border-radius: 10px !important;
     border: 2px solid rgba(255, 255, 255, 0.2) !important;
-    margin: 0 10px !important;
+    margin: 0 10px !important
 }
 
-
-
-/* 🔥 ADMIN DASHBOARD STYLES */
-.admin-dashboard {
-    margin-top: 80px;
-    padding: 2rem;
-    background: #f8f9fa;
-    min-height: calc(100vh - 80px);
-}
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin: 2rem 0;
-}
-
-.stat-card {
-    background: white;
-    padding: 2rem;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    text-align: center;
-    border-left: 6px solid #3498db;
-    transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-}
-
-.stat-card h3 {
-    color: #7f8c8d;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    font-weight: 600;
-}
-
-.stat-number {
-    font-size: 3rem;
-    font-weight: 800;
-    color: #2c3e50;
-    margin: 1rem 0;
-}
-
-.stat-icon {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    color: #3498db;
-}
-
-.quick-actions {
-    background: white;
-    padding: 2.5rem;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    margin: 2rem 0;
-}
-
-.quick-actions h3 {
-    color: #2c3e50;
-    margin-bottom: 1.5rem;
-    font-size: 1.4rem;
-    font-weight: 700;
-}
-
-.actions-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-top: 1rem;
-}
-
-.action-btn {
-    background: white;
-    border: 2px solid #e9ecef;
-    padding: 2rem 1.5rem;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    text-decoration: none;
-    color: #2c3e50;
-}
-
-.action-btn:hover {
-    background: #3498db;
-    color: white;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
-    border-color: #3498db;
-    text-decoration: none;
-}
-
-.action-btn:hover .action-icon {
-    color: white;
-    transform: scale(1.1);
-}
-
-.action-icon {
-    font-size: 2.5rem;
-    color: #3498db;
-    transition: all 0.3s ease;
-}
-
-.action-btn span {
-    font-weight: 600;
-    font-size: 1rem;
-}
-
-.recent-section {
-    background: white;
-    padding: 2.5rem;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    margin: 2rem 0;
-}
-
-.recent-section h3 {
-    color: #2c3e50;
-    margin-bottom: 1.5rem;
-    font-size: 1.4rem;
-    font-weight: 700;
-}
-
-.table-container {
-    overflow-x: auto;
-    margin-top: 1rem;
-    border-radius: 12px;
-    border: 1px solid #e9ecef;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-}
-
-th,
-td {
-    padding: 1.2rem 1rem;
-    text-align: left;
-    border-bottom: 1px solid #e9ecef;
-}
-
-th {
-    background: #f8f9fa;
-    font-weight: 700;
-    color: #2c3e50;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-}
-
-td {
-    color: #495057;
-    font-size: 0.95rem;
-}
-
-tr:hover {
-    background: #f8f9fa;
-}
-
-.badge {
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-.badge.admin {
-    background: #e74c3c;
-    color: white;
-}
-
-.badge.aluno {
-    background: #3498db;
-    color: white;
-}
-
-.badge.professor {
-    background: #9b59b6;
-    color: white;
-}
-
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-}
-
-.page-header h2 {
-    color: #2c3e50;
-    font-size: 2rem;
-    font-weight: 800;
-    margin: 0;
-}
-
-@media (max-width: 768px) {
-    .admin-dashboard {
-        padding: 1rem;
-        margin-top: 60px;
-    }
-
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .actions-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .stat-card {
-        padding: 1.5rem;
-    }
-
-    .quick-actions,
-    .recent-section {
-        padding: 1.5rem;
-    }
-
-    body .desktop-nav {
-        flex-wrap: wrap;
-        gap: 0.3rem;
-    }
-
-    body .desktop-nav .nav-link {
-        padding: 8px 12px;
-        font-size: 0.8rem;
-    }
-}
-
-/* 🔥 BOTÃO VOLTAR PARA O APP */
 .btn-voltar-app {
     background: linear-gradient(135deg, #27ae60, #229954) !important;
-    color: white !important;
+    color: #fff !important;
     border: 2px solid rgba(255, 255, 255, 0.4) !important;
     border-radius: 10px;
     font-weight: 700;
@@ -649,49 +391,46 @@ tr:hover {
     transition: all 0.3s ease;
     display: flex !important;
     align-items: center !important;
-    gap: 8px;
+    gap: 8px
 }
 
 .btn-voltar-app:hover {
     background: linear-gradient(135deg, #229954, #1e8449) !important;
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
-    border-color: rgba(255, 255, 255, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.6) !important
 }
 
 .btn-voltar-app i {
-    font-size: 0.9rem;
+    font-size: 0.9rem
 }
 
-/* MOBILE */
 .btn-voltar-app-mobile {
     background: linear-gradient(135deg, #27ae60, #229954) !important;
-    color: white !important;
+    color: #fff !important;
     border-bottom: 3px solid #1e8449 !important;
     display: flex !important;
     align-items: center !important;
     gap: 1rem;
     font-weight: 700;
     border-radius: 10px;
-    margin: 8px 12px;
+    margin: 8px 12px
 }
 
-
 .btn-voltar-app-mobile:hover {
-    background: linear-gradient(135deg, #229954, #1e8449) !important;
+    background: linear-gradient(135deg, #229954, #1e8449) !important
 }
 
 .btn-voltar-app-mobile i {
-    color: white !important;
+    color: #fff !important
 }
 
-/* 🔥 BOTÃO VOLTAR FLUTUANTE */
 .btn-flutuante-voltar {
     position: fixed;
     bottom: 30px;
     right: 30px;
     background: linear-gradient(135deg, #27ae60, #229954);
-    color: white;
+    color: #fff;
     padding: 15px 20px;
     border-radius: 50px;
     text-decoration: none;
@@ -701,584 +440,433 @@ tr:hover {
     display: flex;
     align-items: center;
     gap: 10px;
-    z-index: 999;
+    z-index: 999
 }
 
 .btn-flutuante-voltar:hover {
     background: linear-gradient(135deg, #229954, #1e8449);
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(39, 174, 96, 0.5);
-    color: white;
-    text-decoration: none;
+    color: #fff;
+    text-decoration: none
 }
 
 .btn-flutuante-voltar span {
-    display: none;
+    display: none
 }
 
 .btn-flutuante-voltar:hover span {
-    display: inline;
+    display: inline
 }
 
-/* MOBILE */
-@media (max-width: 768px) {
+@media (max-width:768px) {
     .btn-flutuante-voltar {
         bottom: 20px;
         right: 20px;
-        padding: 12px 15px;
+        padding: 12px 15px
     }
 }
 
-/* 🔥 CORREÇÕES ESPECÍFICAS PARA ADMIN NA FAIXA 769px-850px */
-@media (min-width: 769px) and (max-width: 850px) {
-
-    /* HEADER DO ADMIN COMPACTO */
+@media (min-width:769px) and (max-width:850px) {
     .desktop-header {
-        padding: 0 10px;
+        padding: 0 10px
     }
 
     .header-content {
         padding: 0 !important;
         justify-content: space-between !important;
-        min-height: 60px;
+        min-height: 60px
     }
 
     .desktop-header h1 {
         font-size: 1.2rem;
-        white-space: nowrap;
+        white-space: nowrap
     }
 
-    /* NAV COMPACTA PARA ADMIN */
     .desktop-nav {
         gap: 6px;
-        margin-left: auto;
+        margin-left: auto
     }
 
     .nav-link {
         padding: 5px 8px;
         font-size: 0.75rem;
-        white-space: nowrap;
+        white-space: nowrap
     }
 
-    /* BOTÃO VOLTAR COMPACTO */
     .btn-flutuante-voltar {
         padding: 5px 8px !important;
         font-size: 0.75rem !important;
-        white-space: nowrap;
+        white-space: nowrap
     }
 
     .btn-flutuante-voltar span {
-        display: none;
-        /* Esconde texto, mostra apenas ícone */
+        display: none
     }
 
     .btn-flutuante-voltar i {
-        margin-right: 0 !important;
+        margin-right: 0 !important
     }
 
-    /* USER INFO COMPACTO */
     .user-info {
         font-size: 0.75rem;
         padding: 4px 8px;
-        white-space: nowrap;
+        white-space: nowrap
     }
 
-    /* BOTÃO SAIR COMPACTO */
     .btn-sair-desktop {
         padding: 6px !important;
         width: 35px;
-        height: 35px;
+        height: 35px
     }
 
-    /* MAIN CONTENT */
     main.admin-dashboard {
         margin-top: 65px;
-        padding: 15px;
+        padding: 15px
     }
 
-    /* STATS GRID COMPACTO */
     .stats-grid {
         grid-template-columns: repeat(2, 1fr) !important;
-        gap: 15px;
+        gap: 15px
     }
 
     .stat-card {
-        padding: 15px;
+        padding: 15px
     }
 
     .stat-card h3 {
-        font-size: 0.9rem;
+        font-size: 0.9rem
     }
 
     .stat-number {
-        font-size: 1.5rem;
+        font-size: 1.5rem
     }
 
-    /* ACTIONS GRID COMPACTO */
     .actions-grid {
         grid-template-columns: repeat(2, 1fr) !important;
-        gap: 12px;
+        gap: 12px
     }
 
     .action-btn {
-        padding: 15px;
+        padding: 15px
     }
 
     .action-btn span {
-        font-size: 0.8rem;
+        font-size: 0.8rem
     }
 
-    /* TABLE COMPACTA */
     .table-container {
-        font-size: 0.8rem;
+        font-size: 0.8rem
     }
 
     .table-container th,
     .table-container td {
-        padding: 8px 6px;
+        padding: 8px 6px
     }
 }
 
-/* 🔥 CORREÇÃO ESPECÍFICA PARA 769px-800px (MAIS CRÍTICO) */
-@media (min-width: 769px) and (max-width: 800px) {
+@media (min-width:769px) and (max-width:800px) {
     .desktop-nav {
-        gap: 4px;
+        gap: 4px
     }
 
     .nav-link {
         padding: 4px 6px;
-        font-size: 0.7rem;
+        font-size: 0.7rem
     }
 
     .btn-flutuante-voltar {
         padding: 4px 6px !important;
-        font-size: 0.7rem !important;
+        font-size: 0.7rem !important
     }
 
     .user-info {
-        display: none;
-        /* Esconde em telas muito estreitas */
+        display: none
     }
 
-    /* STATS MAIS COMPACTAS */
     .stats-grid {
         grid-template-columns: 1fr 1fr !important;
-        gap: 10px;
+        gap: 10px
     }
 
     .stat-card {
-        padding: 12px;
+        padding: 12px
     }
 
     .stat-icon {
         width: 40px;
-        height: 40px;
+        height: 40px
     }
 
     .stat-icon i {
-        font-size: 1rem;
+        font-size: 1rem
     }
 }
 
-/* 🔥 GARANTIR QUE O LAYOUT DO ADMIN FUNCIONE */
-@media (min-width: 769px) and (max-width: 850px) {
+@media (min-width:769px) and (max-width:850px) {
     .admin-dashboard .container {
-        padding: 0 10px;
+        padding: 0 10px
     }
 
     .page-header h2 {
-        font-size: 1.3rem;
+        font-size: 1.3rem
     }
 
     .quick-actions h3,
     .recent-section h3 {
-        font-size: 1.1rem;
+        font-size: 1.1rem
     }
 }
 
-/* 🔥 CORREÇÃO PARA O BOTÃO VOLTAR FLUTUANTE */
-@media (min-width: 769px) and (max-width: 850px) {
+@media (min-width:769px) and (max-width:850px) {
     .btn-flutuante-voltar {
         background: rgba(255, 255, 255, 0.1) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         padding: 6px 8px !important;
         border-radius: 6px;
-        color: white;
+        color: #fff;
         text-decoration: none;
         display: flex;
         align-items: center;
         gap: 4px;
-        transition: all 0.3s ease;
+        transition: all 0.3s ease
     }
 
     .btn-flutuante-voltar:hover {
         background: rgba(255, 255, 255, 0.2) !important;
-        transform: translateY(-1px);
+        transform: translateY(-1px)
     }
 
     .btn-flutuante-voltar i {
-        font-size: 0.8rem;
+        font-size: 0.8rem
     }
 }
 
-/* 🔥 CORREÇÃO CONSERVADORA PARA 801px-850px */
-@media (min-width: 801px) and (max-width: 850px) {
+@media (min-width:801px) and (max-width:850px) {
     .desktop-header {
-        padding: 0 15px;
+        padding: 0 15px
     }
 
     .header-content {
         padding: 0 !important;
-        justify-content: space-between;
+        justify-content: space-between
     }
 
     .desktop-header h1 {
-        font-size: 1.4rem;
+        font-size: 1.4rem
     }
 
     .desktop-nav {
-        gap: 10px;
+        gap: 10px
     }
 
     .nav-link {
         padding: 8px 12px;
-        font-size: 0.85rem;
+        font-size: 0.85rem
     }
 
     .btn-flutuante-voltar {
         padding: 8px 12px !important;
-        font-size: 0.85rem !important;
+        font-size: 0.85rem !important
     }
 
     .user-info {
         font-size: 0.85rem;
-        padding: 6px 12px;
+        padding: 6px 12px
     }
 
     .btn-sair-desktop {
         padding: 8px;
         width: 38px;
-        height: 38px;
+        height: 38px
     }
 }
 
-/* 🔥 CORREÇÃO PARA O BOTÃO DE LOGOUT NA FAIXA 801px-850px */
-@media (min-width: 801px) and (max-width: 850px) {
-
-    /* HEADER COMPACTO */
+@media (min-width:801px) and (max-width:850px) {
     .desktop-header {
         padding: 0 10px;
-        overflow: hidden;
-        /* Previne vazamento de elementos */
+        overflow: hidden
     }
 
     .header-content {
         padding: 0 !important;
         justify-content: space-between;
         min-height: 60px;
-        width: 100%;
+        width: 100%
     }
 
     .desktop-header h1 {
         font-size: 1.3rem;
         white-space: nowrap;
-        flex-shrink: 0;
+        flex-shrink: 0
     }
 
-    /* NAV COMPACTA - GARANTIR QUE TUDO CAIBA */
     .desktop-nav {
         gap: 6px;
         margin-left: auto;
         flex-wrap: nowrap;
         justify-content: flex-end;
         align-items: center;
-        min-width: 0;
-        /* Permite que encolha */
+        min-width: 0
     }
 
     .nav-link {
         padding: 5px 8px;
         font-size: 0.75rem;
         white-space: nowrap;
-        flex-shrink: 0;
+        flex-shrink: 0
     }
 
-    /* BOTÃO VOLTAR COMPACTO */
     .btn-flutuante-voltar {
         padding: 5px 8px !important;
         font-size: 0.75rem !important;
         white-space: nowrap;
-        flex-shrink: 0;
+        flex-shrink: 0
     }
 
     .btn-flutuante-voltar span {
-        display: none;
-        /* Esconde texto para economizar espaço */
+        display: none
     }
 
     .btn-flutuante-voltar i {
-        margin-right: 0 !important;
+        margin-right: 0 !important
     }
 
-    /* USER INFO COMPACTO */
     .user-info {
         font-size: 0.75rem;
         padding: 4px 8px;
         white-space: nowrap;
         flex-shrink: 0;
-        display: none;
-        /* Esconde em telas estreitas */
+        display: none
     }
 
-    /* 🔥 BOTÃO LOGOUT CORRIGIDO */
     .btn-sair-desktop {
         padding: 6px !important;
         width: 35px;
         height: 35px;
         flex-shrink: 0;
-        margin-left: 4px;
+        margin-left: 4px
     }
 
     .btn-sair-desktop i {
-        font-size: 0.9rem;
+        font-size: 0.9rem
     }
 }
 
-/* 🔥 CORREÇÃO ESPECÍFICA PARA EVITAR ESPAÇO BRANCO */
-@media (min-width: 801px) and (max-width: 850px) {
+@media (min-width:801px) and (max-width:850px) {
     .desktop-nav {
-        /* Garante que não haja espaço extra */
         padding: 0;
-        margin: 0;
+        margin: 0
     }
 
     .header-content {
-        /* Remove qualquer padding/margin extra */
         padding: 0;
         margin: 0;
-        gap: 0;
+        gap: 0
     }
 
-    /* Previne quebra de linha */
     .desktop-nav>* {
-        margin: 0;
+        margin: 0
     }
 }
 
-/* 🔥 VERSÃO MAIS RADICAL SE AINDA HOUVER ESPAÇO BRANCO */
-@media (min-width: 801px) and (max-width: 850px) {
+@media (min-width:801px) and (max-width:850px) {
     .desktop-header {
-        position: relative;
+        position: relative
     }
 
     .header-content {
         display: grid !important;
         grid-template-columns: auto 1fr auto;
         gap: 10px;
-        align-items: center;
+        align-items: center
     }
 
     .desktop-header h1 {
         grid-column: 1;
-        justify-self: start;
+        justify-self: start
     }
 
     .desktop-nav {
         grid-column: 3;
         justify-self: end;
         display: flex !important;
-        gap: 6px;
+        gap: 6px
     }
 
-    /* Esconde elementos menos importantes */
     .user-info {
-        display: none !important;
+        display: none !important
     }
 
     .btn-flutuante-voltar span {
-        display: none !important;
+        display: none !important
     }
 
-    /* Garante que o botão logout fique visível */
     .btn-sair-desktop {
         opacity: 1 !important;
         visibility: visible !important;
-        position: static !important;
+        position: static !important
     }
 }
 
-/* Badges para tipos de usuário */
-.badge.aluno {
-    background: #3498db;
-    color: white;
-}
-
-.badge.professor {
-    background: #9b59b6;
-    color: white;
-}
-
-.badge.admin {
-    background: #e74c3c;
-    color: white;
-}
-
-/* Botões de ação pequenos */
 .btn-action.small {
     padding: 6px 10px;
     font-size: 12px;
-    margin: 2px;
+    margin: 2px
 }
 
 .btn-action.small.perigo {
-    background: red;
+    background: red
 }
 
 .btn-action.small.perigo:hover {
     background: rgb(185, 75, 75);
-    transition: all;
+    transition: all
 }
 
-
-/* Form controls */
 .form-control {
     width: 100%;
     padding: 10px;
     border: 2px solid #e9ecef;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 14px
 }
 
 .btn-group {
     display: flex;
     gap: 10px;
-    margin-top: 20px;
+    margin-top: 20px
 }
 
 .btn-secondary {
     background: #95a5a6;
-    color: white;
+    color: #fff;
     border: none;
     padding: 12px 20px;
     border-radius: 6px;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: background 0.3s
 }
 
 .btn-secondary:hover {
-    background: #7f8c8d;
+    background: #7f8c8d
 }
 
-/* 🔔 NOTIFICAÇÕES ESTILIZADAS */
-.custom-notification {
-    position: relative;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    padding: 16px 20px;
-    min-width: 300px;
-    max-width: 400px;
-    margin-bottom: 10px;
-    transform: translateX(400px);
-    opacity: 0;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-left: 4px solid #3498db;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.custom-notification.show {
-    transform: translateX(0);
-    opacity: 1;
-}
-
-.custom-notification.success {
-    border-left-color: #27ae60;
-    background: linear-gradient(135deg, #f8fff9, #ffffff);
-}
-
-.custom-notification.error {
-    border-left-color: #e74c3c;
-    background: linear-gradient(135deg, #fff8f8, #ffffff);
-}
-
-.custom-notification.info {
-    border-left-color: #3498db;
-    background: linear-gradient(135deg, #f8fbff, #ffffff);
-}
-
-.custom-notification.warning {
-    border-left-color: #f39c12;
-    background: linear-gradient(135deg, #fffbf0, #ffffff);
-}
-
-.notification-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex: 1;
-}
-
-.notification-content i {
-    font-size: 1.2rem;
-    width: 20px;
-}
-
-.custom-notification.success .notification-content i {
-    color: #27ae60;
-}
-
-.custom-notification.error .notification-content i {
-    color: #e74c3c;
-}
-
-.custom-notification.info .notification-content i {
-    color: #3498db;
-}
-
-.custom-notification.warning .notification-content i {
-    color: #f39c12;
-}
-
-.notification-content span {
-    color: #2c3e50;
-    font-weight: 500;
-    line-height: 1.4;
-}
-
-.notification-close {
-    background: none;
-    border: none;
-    color: #7f8c8d;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-    margin-left: 10px;
-}
-
-.notification-close:hover {
-    background: #f8f9fa;
-    color: #e74c3c;
-}
-
-/* 🔥 MENU HAMBURGER ADMIN - MOBILE */
 .mobile-nav {
     position: fixed;
     top: 60px;
     left: -100%;
     width: 80%;
     height: calc(100vh - 60px);
-    background: white;
+    background: #fff;
     transition: left 0.3s ease;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
     z-index: 999;
-    overflow-y: auto;
+    overflow-y: auto
 }
 
 .mobile-nav.active {
-    left: 0;
+    left: 0
 }
 
 .mobile-nav a {
@@ -1290,167 +878,158 @@ tr:hover {
     transition: background 0.3s;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 12px
 }
 
 .mobile-nav a.active {
     background: #3498db;
-    color: white;
+    color: #fff
 }
 
 .mobile-nav a.active i {
-    color: white;
+    color: #fff
 }
 
 .mobile-nav a:hover:not(.active) {
-    background: #f8f9fa;
+    background: #f8f9fa
 }
 
-/* Botão voltar no mobile */
 .mobile-nav .btn-voltar-app-mobile {
     background: linear-gradient(135deg, #27ae60, #229954);
-    color: white;
+    color: #fff;
     border-radius: 10px;
     margin: 8px 12px;
     font-weight: 600;
-    border: none;
+    border: none
 }
 
 .mobile-nav .btn-voltar-app-mobile:hover {
-    background: linear-gradient(135deg, #229954, #1e8449);
+    background: linear-gradient(135deg, #229954, #1e8449)
 }
 
-/* Header mobile admin */
 .mobile-header {
     background: #2c3e50;
-    color: white;
+    color: #fff;
     padding: 15px;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1)
 }
 
 .header-top {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: center
 }
 
 .menu-hamburger {
     background: none;
     border: none;
-    color: white;
+    color: #fff;
     font-size: 24px;
     cursor: pointer;
-    padding: 5px;
+    padding: 5px
 }
 
 .mobile-header h1 {
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 600
 }
 
 .user-name {
     font-size: 14px;
-    opacity: 0.9;
+    opacity: 0.9
 }
 
 .nav-user {
     padding: 20px;
     background: #34495e;
-    color: white;
+    color: #fff;
     font-weight: 600;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1)
 }
 
-/* Responsividade para tablets */
-@media (max-width: 768px) {
+@media (max-width:768px) {
     .admin-dashboard {
         margin-top: 60px;
-        padding: 1rem;
+        padding: 1rem
     }
 
     .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr
     }
 
     .actions-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr
     }
 
     .page-header {
         flex-direction: column;
         gap: 1rem;
-        align-items: flex-start;
+        align-items: flex-start
     }
 
     .section-header {
         flex-direction: column;
-        gap: 1rem;
+        gap: 1rem
     }
 
     .header-actions {
-        width: 100%;
+        width: 100%
     }
 
     .filter-select {
-        width: 100%;
+        width: 100%
     }
 }
 
-/* Telas muito pequenas */
-@media (max-width: 480px) {
+@media (max-width:480px) {
     .mobile-nav {
-        width: 85%;
+        width: 85%
     }
 
     .mobile-header h1 {
-        font-size: 16px;
+        font-size: 16px
     }
 
     .user-name {
-        font-size: 12px;
+        font-size: 12px
     }
 }
 
-/* ==================== ADMIN PROFESSORES ==================== */
-
-/* Container Principal */
 .admin-dashboard .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 2rem
 }
 
-/* Cabeçalho da Página */
 .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid #e1e8ed;
+    border-bottom: 2px solid #e1e8ed
 }
 
 .page-header h2 {
     color: #2c3e50;
     font-size: 1.8rem;
     font-weight: 700;
-    margin: 0;
+    margin: 0
 }
 
 .page-header h2 i {
     color: #3498db;
-    margin-right: 0.5rem;
+    margin-right: 0.5rem
 }
 
-/* Botão Novo Professor */
 .btn-primary {
     background: linear-gradient(135deg, #3498db, #2980b9);
-    color: white;
+    color: #fff;
     border: none;
     padding: 0.75rem 1.5rem;
     border-radius: 8px;
@@ -1460,51 +1039,49 @@ tr:hover {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    text-decoration: none;
+    text-decoration: none
 }
 
 .btn-primary:hover {
     background: linear-gradient(135deg, #2980b9, #3498db);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3)
 }
 
-/* Container do Formulário */
 .form-container {
-    background: white;
+    background: #fff;
     padding: 2rem;
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     margin-bottom: 2rem;
     border: 1px solid #e1e8ed;
-    display: none;
+    display: none
 }
 
 .form-container h3 {
     color: #2c3e50;
     margin-bottom: 1.5rem;
     font-size: 1.4rem;
-    font-weight: 600;
+    font-weight: 600
 }
 
-/* Grid do Formulário */
 .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.5rem
 }
 
 .form-group {
     display: flex;
-    flex-direction: column;
+    flex-direction: column
 }
 
 .form-group label {
     font-weight: 600;
     color: #2c3e50;
     margin-bottom: 0.5rem;
-    font-size: 0.9rem;
+    font-size: 0.9rem
 }
 
 .form-group input,
@@ -1514,60 +1091,32 @@ tr:hover {
     border-radius: 8px;
     font-size: 1rem;
     transition: all 0.3s ease;
-    background: white;
+    background: #fff
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
     border-color: #3498db;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1)
 }
 
-/* Grupo de Botões */
 .btn-group {
     display: flex;
     gap: 1rem;
-    justify-content: flex-start;
+    justify-content: flex-start
 }
 
-.btn-secondary {
-    background: #95a5a6;
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.btn-secondary:hover {
-    background: #7f8c8d;
-    transform: translateY(-1px);
-}
-
-/* Container da Tabela */
 .table-container {
-    background: white;
+    background: #fff;
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    border: 1px solid #e1e8ed;
-}
-
-/* Tabela */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
+    border: 1px solid #e1e8ed
 }
 
 thead {
-    background: linear-gradient(135deg, #2c3e50, #34495e);
+    background: linear-gradient(135deg, #2c3e50, #34495e)
 }
 
 thead th {
@@ -1575,40 +1124,38 @@ thead th {
     font-weight: 600;
     font-size: 0.9rem;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.5px
 }
 
 tbody tr {
     border-bottom: 1px solid #e1e8ed;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease
 }
 
 tbody tr:hover {
-    background: #f8f9fa;
+    background: #f8f9fa
 }
 
 tbody td {
-    color: #2c3e50;
+    color: #2c3e50
 }
 
-/* Informações do Professor */
 .professor-info {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.25rem
 }
 
 .professor-info strong {
     font-size: 1rem;
-    color: #2c3e50;
+    color: #2c3e50
 }
 
 .professor-email {
     font-size: 0.8rem;
-    color: #7f8c8d;
+    color: #7f8c8d
 }
 
-/* Badge de Status */
 .status-badge {
     padding: 0.4rem 0.8rem;
     border-radius: 20px;
@@ -1616,26 +1163,25 @@ tbody td {
     font-weight: 600;
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.4rem
 }
 
 .status-badge.active {
     background: #d5f4e6;
     color: #27ae60;
-    border: 1px solid #27ae60;
+    border: 1px solid #27ae60
 }
 
 .status-badge.inactive {
     background: #fde8e8;
     color: #e74c3c;
-    border: 1px solid #e74c3c;
+    border: 1px solid #e74c3c
 }
 
-/* Botões de Ação */
 .action-buttons {
     display: flex;
     gap: 0.5rem;
-    justify-content: flex-start;
+    justify-content: flex-start
 }
 
 .btn-action {
@@ -1647,71 +1193,68 @@ tbody td {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8rem;
+    font-size: 0.8rem
 }
 
 .btn-action.small {
     width: 36px;
-    height: 36px;
+    height: 36px
 }
 
 .btn-action:not(.small) {
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1rem
 }
 
 .btn-action.success {
     background: #27ae60;
-    color: white;
+    color: #fff
 }
 
 .btn-action.success:hover {
     background: #219653;
-    transform: translateY(-1px);
+    transform: translateY(-1px)
 }
 
 .btn-action.danger {
     background: #e74c3c;
-    color: white;
+    color: #fff
 }
 
 .btn-action.danger:hover {
     background: #c0392b;
-    transform: translateY(-1px);
+    transform: translateY(-1px)
 }
 
 .btn-action.info {
     background: #3498db;
-    color: white;
+    color: #fff
 }
 
 .btn-action.info:hover {
     background: #2980b9;
-    transform: translateY(-1px);
+    transform: translateY(-1px)
 }
 
-/* Estado Vazio */
 .empty-state {
     text-align: center;
     padding: 3rem 2rem;
-    color: #7f8c8d;
+    color: #7f8c8d
 }
 
 .empty-state i {
     font-size: 3rem;
     margin-bottom: 1rem;
-    color: #bdc3c7;
+    color: #bdc3c7
 }
 
 .empty-state p {
     margin: 0.5rem 0;
-    font-size: 1.1rem;
+    font-size: 1.1rem
 }
 
 .empty-state button {
-    margin-top: 1rem;
+    margin-top: 1rem
 }
-
-/* ==================== MODAL DE DETALHES ==================== */
 
 .modal-overlay {
     position: fixed;
@@ -1724,21 +1267,21 @@ tbody td {
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    padding: 2rem;
+    padding: 2rem
 }
 
 .modal-content {
-    background: white;
+    background: #fff;
     border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     max-width: 600px;
     width: 100%;
     max-height: 90vh;
-    overflow-y: auto;
+    overflow-y: auto
 }
 
 .modal-content.large {
-    max-width: 800px;
+    max-width: 800px
 }
 
 .modal-header {
@@ -1748,7 +1291,7 @@ tbody td {
     justify-content: space-between;
     align-items: center;
     background: #f8f9fa;
-    border-radius: 12px 12px 0 0;
+    border-radius: 12px 12px 0 0
 }
 
 .modal-header h3 {
@@ -1757,7 +1300,7 @@ tbody td {
     font-size: 1.4rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.5rem
 }
 
 .modal-close {
@@ -1768,16 +1311,16 @@ tbody td {
     cursor: pointer;
     padding: 0.5rem;
     border-radius: 4px;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease
 }
 
 .modal-close:hover {
     background: #e74c3c;
-    color: white;
+    color: #fff
 }
 
 .modal-body {
-    padding: 2rem;
+    padding: 2rem
 }
 
 .modal-footer {
@@ -1787,35 +1330,34 @@ tbody td {
     justify-content: flex-end;
     gap: 1rem;
     background: #f8f9fa;
-    border-radius: 0 0 12px 12px;
+    border-radius: 0 0 12px 12px
 }
 
-/* Grid de Estatísticas */
 .professor-stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 2rem
 }
 
 .stat-card.mini {
-    background: white;
+    background: #fff;
     padding: 1.5rem 1rem;
     border-radius: 8px;
     text-align: center;
     border: 1px solid #e1e8ed;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease
 }
 
 .stat-card.mini:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
 }
 
 .stat-card.mini .stat-icon {
     font-size: 2rem;
     color: #3498db;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.5rem
 }
 
 .stat-card.mini .stat-number {
@@ -1823,27 +1365,26 @@ tbody td {
     font-weight: bold;
     color: #2c3e50;
     display: block;
-    line-height: 1;
+    line-height: 1
 }
 
 .stat-card.mini .stat-label {
     font-size: 0.8rem;
     color: #7f8c8d;
-    margin-top: 0.5rem;
+    margin-top: 0.5rem
 }
 
-/* Seções de Detalhes */
 .details-sections {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.5rem
 }
 
 .details-section {
-    background: white;
+    background: #fff;
     padding: 1.5rem;
     border-radius: 8px;
-    border: 1px solid #e1e8ed;
+    border: 1px solid #e1e8ed
 }
 
 .details-section h4 {
@@ -1852,43 +1393,41 @@ tbody td {
     font-size: 1.1rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.5rem
 }
 
 .details-section h4 i {
-    color: #3498db;
+    color: #3498db
 }
 
-/* Grid de Informações */
 .info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
+    gap: 1rem
 }
 
 .info-item {
     display: flex;
-    flex-direction: column;
+    flex-direction: column
 }
 
 .info-item label {
     font-weight: 600;
     color: #7f8c8d;
     font-size: 0.9rem;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.25rem
 }
 
 .info-item span {
     color: #2c3e50;
-    font-size: 1rem;
+    font-size: 1rem
 }
 
-/* Listas */
 .alunos-list,
 .aulas-list {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.75rem
 }
 
 .aluno-item,
@@ -1900,19 +1439,19 @@ tbody td {
     background: #f8f9fa;
     border-radius: 8px;
     border-left: 4px solid #3498db;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease
 }
 
 .aluno-item:hover,
 .aula-item:hover {
     background: #e3f2fd;
-    transform: translateX(4px);
+    transform: translateX(4px)
 }
 
 .aluno-item i {
     color: #3498db;
     width: 16px;
-    text-align: center;
+    text-align: center
 }
 
 .aula-header {
@@ -1920,12 +1459,12 @@ tbody td {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5rem;
-    width: 100%;
+    width: 100%
 }
 
 .aula-header strong {
     color: #2c3e50;
-    font-size: 1rem;
+    font-size: 1rem
 }
 
 .aula-horario {
@@ -1934,7 +1473,7 @@ tbody td {
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 600
 }
 
 .aula-details {
@@ -1943,7 +1482,7 @@ tbody td {
     font-size: 0.9rem;
     color: #666;
     width: 100%;
-    justify-content: space-between;
+    justify-content: space-between
 }
 
 .no-data {
@@ -1953,25 +1492,24 @@ tbody td {
     padding: 2rem;
     background: #f8f9fa;
     border-radius: 8px;
-    border: 2px dashed #bdc3c7;
+    border: 2px dashed #bdc3c7
 }
-
 
 .importbutton button {
     background-color: #007BFF;
-    color: white;
+    color: #fff;
     font-size: 18px;
     padding: 14px 32px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3)
 }
 
 .btn-import {
     background-color: #007BFF;
-    color: white;
+    color: #fff;
     font-size: 18px;
     padding: 14px 32px;
     border-radius: 8px;
@@ -1979,15 +1517,15 @@ tbody td {
     transition: all 0.3s ease;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: center
 }
 
 .btn-import:hover {
     background-color: #0056b3;
-    transform: scale(1.05);
+    transform: scale(1.05)
 }
 
 .importbutton button:active {
     transform: scale(0.97);
-    box-shadow: 0 2px 6px rgba(0, 86, 179, 0.3);
+    box-shadow: 0 2px 6px rgba(0, 86, 179, 0.3)
 }
