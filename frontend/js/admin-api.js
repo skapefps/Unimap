@@ -88,7 +88,7 @@ class AdminAPI {
     }
 
     async getProfessores() {
-        return this.get('/api/professores');
+        return this.get('/api/professores?todos=true');
     }
 
     async createProfessor(data) {

@@ -23,7 +23,7 @@
     background: white;
     padding: 2rem;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     text-align: center;
     border-left: 6px solid #3498db;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -43,7 +43,7 @@
 
 .stat-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
 .stat-card h3 {
@@ -74,7 +74,7 @@
     background: white;
     padding: 2.5rem;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     margin: 2rem 0;
 }
 
@@ -137,7 +137,7 @@
     background: white;
     padding: 2.5rem;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     margin: 2rem 0;
 }
 
@@ -161,7 +161,8 @@ table {
     background: white;
 }
 
-th, td {
+th,
+td {
     padding: 1.2rem 1rem;
     text-align: left;
     border-bottom: 1px solid #e9ecef;
@@ -231,25 +232,25 @@ tr:hover {
         padding: 1rem;
         margin-top: 60px;
     }
-    
+
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .actions-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .page-header {
         flex-direction: column;
         gap: 1rem;
         align-items: flex-start;
     }
-    
+
     .stat-card {
         padding: 1.5rem;
     }
-    
+
     .quick-actions,
     .recent-section {
         padding: 1.5rem;
@@ -278,7 +279,7 @@ tr:hover {
 .desktop-header .header-content {
     background: linear-gradient(135deg, #2c3e50, #34495e) !important;
     padding: 0 2rem;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .desktop-nav .nav-link {
@@ -302,7 +303,7 @@ tr:hover {
     color: white !important;
     border-bottom: 3px solid #e74c3c;
     font-weight: 600;
-    background: rgba(255,255,255,0.05) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
 }
 
 /* DASHBOARD DESTACADO */
@@ -318,6 +319,7 @@ tr:hover {
     background: rgba(231, 76, 60, 0.4) !important;
     border-color: #e74c3c;
 }
+
 /* 🔥 RESET FORTE PARA NAVBAR ADMIN */
 body header.desktop-header {
     background: linear-gradient(135deg, #1a2530, #2c3e50) !important;
@@ -341,7 +343,7 @@ body header.desktop-header h1 {
     font-size: 1.5rem !important;
     font-weight: 700 !important;
     margin: 0 !important;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
 }
 
 /* 🔥 NAV LINKS - ESTILO FORTE */
@@ -369,7 +371,7 @@ body .desktop-nav .nav-link:hover {
     background: rgba(255, 255, 255, 0.15) !important;
     color: white !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
     border: 2px solid rgba(255, 255, 255, 0.3) !important;
 }
 
@@ -418,7 +420,7 @@ body .user-info {
     background: white;
     padding: 2rem;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     text-align: center;
     border-left: 6px solid #3498db;
     transition: all 0.3s ease;
@@ -426,7 +428,7 @@ body .user-info {
 
 .stat-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
 .stat-card h3 {
@@ -454,7 +456,7 @@ body .user-info {
     background: white;
     padding: 2.5rem;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     margin: 2rem 0;
 }
 
@@ -516,7 +518,7 @@ body .user-info {
     background: white;
     padding: 2.5rem;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     margin: 2rem 0;
 }
 
@@ -540,7 +542,8 @@ table {
     background: white;
 }
 
-th, td {
+th,
+td {
     padding: 1.2rem 1rem;
     text-align: left;
     border-bottom: 1px solid #e9ecef;
@@ -605,34 +608,35 @@ tr:hover {
         padding: 1rem;
         margin-top: 60px;
     }
-    
+
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .actions-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .stat-card {
         padding: 1.5rem;
     }
-    
+
     .quick-actions,
     .recent-section {
         padding: 1.5rem;
     }
-    
+
     body .desktop-nav {
         flex-wrap: wrap;
         gap: 0.3rem;
     }
-    
+
     body .desktop-nav .nav-link {
         padding: 8px 12px;
         font-size: 0.8rem;
     }
 }
+
 /* 🔥 BOTÃO VOLTAR PARA O APP */
 .btn-voltar-app {
     background: linear-gradient(135deg, #27ae60, #229954) !important;
@@ -680,6 +684,7 @@ tr:hover {
 .btn-voltar-app-mobile i {
     color: white !important;
 }
+
 /* 🔥 BOTÃO VOLTAR FLUTUANTE */
 .btn-flutuante-voltar {
     position: fixed;
@@ -723,108 +728,111 @@ tr:hover {
         padding: 12px 15px;
     }
 }
+
 /* 🔥 CORREÇÕES ESPECÍFICAS PARA ADMIN NA FAIXA 769px-850px */
 @media (min-width: 769px) and (max-width: 850px) {
+
     /* HEADER DO ADMIN COMPACTO */
     .desktop-header {
         padding: 0 10px;
     }
-    
+
     .header-content {
         padding: 0 !important;
         justify-content: space-between !important;
         min-height: 60px;
     }
-    
+
     .desktop-header h1 {
         font-size: 1.2rem;
         white-space: nowrap;
     }
-    
+
     /* NAV COMPACTA PARA ADMIN */
     .desktop-nav {
         gap: 6px;
         margin-left: auto;
     }
-    
+
     .nav-link {
         padding: 5px 8px;
         font-size: 0.75rem;
         white-space: nowrap;
     }
-    
+
     /* BOTÃO VOLTAR COMPACTO */
     .btn-flutuante-voltar {
         padding: 5px 8px !important;
         font-size: 0.75rem !important;
         white-space: nowrap;
     }
-    
+
     .btn-flutuante-voltar span {
-        display: none; /* Esconde texto, mostra apenas ícone */
+        display: none;
+        /* Esconde texto, mostra apenas ícone */
     }
-    
+
     .btn-flutuante-voltar i {
         margin-right: 0 !important;
     }
-    
+
     /* USER INFO COMPACTO */
     .user-info {
         font-size: 0.75rem;
         padding: 4px 8px;
         white-space: nowrap;
     }
-    
+
     /* BOTÃO SAIR COMPACTO */
     .btn-sair-desktop {
         padding: 6px !important;
         width: 35px;
         height: 35px;
     }
-    
+
     /* MAIN CONTENT */
     main.admin-dashboard {
         margin-top: 65px;
         padding: 15px;
     }
-    
+
     /* STATS GRID COMPACTO */
     .stats-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 15px;
     }
-    
+
     .stat-card {
         padding: 15px;
     }
-    
+
     .stat-card h3 {
         font-size: 0.9rem;
     }
-    
+
     .stat-number {
         font-size: 1.5rem;
     }
-    
+
     /* ACTIONS GRID COMPACTO */
     .actions-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 12px;
     }
-    
+
     .action-btn {
         padding: 15px;
     }
-    
+
     .action-btn span {
         font-size: 0.8rem;
     }
-    
+
     /* TABLE COMPACTA */
     .table-container {
         font-size: 0.8rem;
     }
-    
+
     .table-container th,
     .table-container td {
         padding: 8px 6px;
@@ -836,36 +844,37 @@ tr:hover {
     .desktop-nav {
         gap: 4px;
     }
-    
+
     .nav-link {
         padding: 4px 6px;
         font-size: 0.7rem;
     }
-    
+
     .btn-flutuante-voltar {
         padding: 4px 6px !important;
         font-size: 0.7rem !important;
     }
-    
+
     .user-info {
-        display: none; /* Esconde em telas muito estreitas */
+        display: none;
+        /* Esconde em telas muito estreitas */
     }
-    
+
     /* STATS MAIS COMPACTAS */
     .stats-grid {
         grid-template-columns: 1fr 1fr !important;
         gap: 10px;
     }
-    
+
     .stat-card {
         padding: 12px;
     }
-    
+
     .stat-icon {
         width: 40px;
         height: 40px;
     }
-    
+
     .stat-icon i {
         font-size: 1rem;
     }
@@ -876,11 +885,11 @@ tr:hover {
     .admin-dashboard .container {
         padding: 0 10px;
     }
-    
+
     .page-header h2 {
         font-size: 1.3rem;
     }
-    
+
     .quick-actions h3,
     .recent-section h3 {
         font-size: 1.1rem;
@@ -901,77 +910,81 @@ tr:hover {
         gap: 4px;
         transition: all 0.3s ease;
     }
-    
+
     .btn-flutuante-voltar:hover {
         background: rgba(255, 255, 255, 0.2) !important;
         transform: translateY(-1px);
     }
-    
+
     .btn-flutuante-voltar i {
         font-size: 0.8rem;
     }
 }
+
 /* 🔥 CORREÇÃO CONSERVADORA PARA 801px-850px */
 @media (min-width: 801px) and (max-width: 850px) {
     .desktop-header {
         padding: 0 15px;
     }
-    
+
     .header-content {
         padding: 0 !important;
         justify-content: space-between;
     }
-    
+
     .desktop-header h1 {
         font-size: 1.4rem;
     }
-    
+
     .desktop-nav {
         gap: 10px;
     }
-    
+
     .nav-link {
         padding: 8px 12px;
         font-size: 0.85rem;
     }
-    
+
     .btn-flutuante-voltar {
         padding: 8px 12px !important;
         font-size: 0.85rem !important;
     }
-    
+
     .user-info {
         font-size: 0.85rem;
         padding: 6px 12px;
     }
-    
+
     .btn-sair-desktop {
         padding: 8px;
         width: 38px;
         height: 38px;
     }
 }
+
 /* 🔥 CORREÇÃO PARA O BOTÃO DE LOGOUT NA FAIXA 801px-850px */
 @media (min-width: 801px) and (max-width: 850px) {
+
     /* HEADER COMPACTO */
     .desktop-header {
         padding: 0 10px;
-        overflow: hidden; /* Previne vazamento de elementos */
+        overflow: hidden;
+        /* Previne vazamento de elementos */
     }
-    
+
     .header-content {
         padding: 0 !important;
         justify-content: space-between;
         min-height: 60px;
         width: 100%;
     }
-    
+
     .desktop-header h1 {
         font-size: 1.3rem;
         white-space: nowrap;
         flex-shrink: 0;
     }
-    
+
     /* NAV COMPACTA - GARANTIR QUE TUDO CAIBA */
     .desktop-nav {
         gap: 6px;
@@ -979,16 +992,17 @@ tr:hover {
         flex-wrap: nowrap;
         justify-content: flex-end;
         align-items: center;
-        min-width: 0; /* Permite que encolha */
+        min-width: 0;
+        /* Permite que encolha */
     }
-    
+
     .nav-link {
         padding: 5px 8px;
         font-size: 0.75rem;
         white-space: nowrap;
         flex-shrink: 0;
     }
-    
+
     /* BOTÃO VOLTAR COMPACTO */
     .btn-flutuante-voltar {
         padding: 5px 8px !important;
@@ -996,24 +1010,26 @@ tr:hover {
         white-space: nowrap;
         flex-shrink: 0;
     }
-    
+
     .btn-flutuante-voltar span {
-        display: none; /* Esconde texto para economizar espaço */
+        display: none;
+        /* Esconde texto para economizar espaço */
     }
-    
+
     .btn-flutuante-voltar i {
         margin-right: 0 !important;
     }
-    
+
     /* USER INFO COMPACTO */
     .user-info {
         font-size: 0.75rem;
         padding: 4px 8px;
         white-space: nowrap;
         flex-shrink: 0;
-        display: none; /* Esconde em telas estreitas */
+        display: none;
+        /* Esconde em telas estreitas */
     }
-    
+
     /* 🔥 BOTÃO LOGOUT CORRIGIDO */
     .btn-sair-desktop {
         padding: 6px !important;
@@ -1022,7 +1038,7 @@ tr:hover {
         flex-shrink: 0;
         margin-left: 4px;
     }
-    
+
     .btn-sair-desktop i {
         font-size: 0.9rem;
     }
@@ -1035,16 +1051,16 @@ tr:hover {
         padding: 0;
         margin: 0;
     }
-    
+
     .header-content {
         /* Remove qualquer padding/margin extra */
         padding: 0;
         margin: 0;
         gap: 0;
     }
-    
+
     /* Previne quebra de linha */
-    .desktop-nav > * {
+    .desktop-nav>* {
         margin: 0;
     }
 }
@@ -1054,35 +1070,35 @@ tr:hover {
     .desktop-header {
         position: relative;
     }
-    
+
     .header-content {
         display: grid !important;
         grid-template-columns: auto 1fr auto;
         gap: 10px;
         align-items: center;
     }
-    
+
     .desktop-header h1 {
         grid-column: 1;
         justify-self: start;
     }
-    
+
     .desktop-nav {
         grid-column: 3;
         justify-self: end;
         display: flex !important;
         gap: 6px;
     }
-    
+
     /* Esconde elementos menos importantes */
     .user-info {
         display: none !important;
     }
-    
+
     .btn-flutuante-voltar span {
         display: none !important;
     }
-    
+
     /* Garante que o botão logout fique visível */
     .btn-sair-desktop {
         opacity: 1 !important;
@@ -1090,6 +1106,7 @@ tr:hover {
         position: static !important;
     }
 }
+
 /* Badges para tipos de usuário */
 .badge.aluno {
     background: #3498db;
@@ -1112,10 +1129,12 @@ tr:hover {
     font-size: 12px;
     margin: 2px;
 }
+
 .btn-action.small.perigo {
     background: red;
 }
-.btn-action.small.perigo:hover{
+
+.btn-action.small.perigo:hover {
     background: rgb(185, 75, 75);
     transition: all;
 }
@@ -1149,6 +1168,7 @@ tr:hover {
 .btn-secondary:hover {
     background: #7f8c8d;
 }
+
 /* 🔔 NOTIFICAÇÕES ESTILIZADAS */
 .custom-notification {
     position: relative;
@@ -1242,6 +1262,7 @@ tr:hover {
     background: #f8f9fa;
     color: #e74c3c;
 }
+
 /* 🔥 MENU HAMBURGER ADMIN - MOBILE */
 .mobile-nav {
     position: fixed;
@@ -1251,7 +1272,7 @@ tr:hover {
     height: calc(100vh - 60px);
     background: white;
     transition: left 0.3s ease;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
     z-index: 999;
     overflow-y: auto;
 }
@@ -1309,7 +1330,7 @@ tr:hover {
     left: 0;
     right: 0;
     z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .header-top {
@@ -1342,7 +1363,7 @@ tr:hover {
     background: #34495e;
     color: white;
     font-weight: 600;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Responsividade para tablets */
@@ -1351,30 +1372,30 @@ tr:hover {
         margin-top: 60px;
         padding: 1rem;
     }
-    
+
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .actions-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .page-header {
         flex-direction: column;
         gap: 1rem;
         align-items: flex-start;
     }
-    
+
     .section-header {
         flex-direction: column;
         gap: 1rem;
     }
-    
+
     .header-actions {
         width: 100%;
     }
-    
+
     .filter-select {
         width: 100%;
     }
@@ -1385,15 +1406,16 @@ tr:hover {
     .mobile-nav {
         width: 85%;
     }
-    
+
     .mobile-header h1 {
         font-size: 16px;
     }
-    
+
     .user-name {
         font-size: 12px;
     }
 }
+
 /* ==================== ADMIN PROFESSORES ==================== */
 
 /* Container Principal */
@@ -1452,7 +1474,7 @@ tr:hover {
     background: white;
     padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     margin-bottom: 2rem;
     border: 1px solid #e1e8ed;
     display: none;
@@ -1532,7 +1554,7 @@ tr:hover {
 .table-container {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     border: 1px solid #e1e8ed;
 }
@@ -1697,7 +1719,7 @@ tbody td {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1708,7 +1730,7 @@ tbody td {
 .modal-content {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     max-width: 600px;
     width: 100%;
     max-height: 90vh;
@@ -1787,7 +1809,7 @@ tbody td {
 
 .stat-card.mini:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .stat-card.mini .stat-icon {
@@ -1862,13 +1884,15 @@ tbody td {
 }
 
 /* Listas */
-.alunos-list, .aulas-list {
+.alunos-list,
+.aulas-list {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
 }
 
-.aluno-item, .aula-item {
+.aluno-item,
+.aula-item {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -1879,7 +1903,8 @@ tbody td {
     transition: all 0.3s ease;
 }
 
-.aluno-item:hover, .aula-item:hover {
+.aluno-item:hover,
+.aula-item:hover {
     background: #e3f2fd;
     transform: translateX(4px);
 }
@@ -1931,3 +1956,38 @@ tbody td {
     border: 2px dashed #bdc3c7;
 }
 
+
+.importbutton button {
+    background-color: #007BFF;
+    color: white;
+    font-size: 18px;
+    padding: 14px 32px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+}
+
+.btn-import {
+    background-color: #007BFF;
+    color: white;
+    font-size: 18px;
+    padding: 14px 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-import:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+.importbutton button:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 6px rgba(0, 86, 179, 0.3);
+}
