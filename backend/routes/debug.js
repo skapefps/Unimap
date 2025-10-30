@@ -16,6 +16,85 @@ router.get('/usuarios', authenticateToken, requireAdmin, (req, res) => {
     });
 });
 
+// Debug específico para sincronização professor-usuário
+router.get('/sync-professor-usuario/:professorId', authenticateToken, requireAdmin, (req, res) => {
+    const professorId = req.params.professorId;
+    
+    console.log(`🔍 DEBUG SINCRONIZAÇÃO: Professor ${professorId}`);
+    
+    // Buscar professor
+    db.get('SELECT id, nome, email, ativo FROM professores WHERE id = ?', [professorId], (err, professor) => {
+        if (err) {
+            console.error('❌ Erro ao buscar professor:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        if (!professor) {
+            return res.status(404).json({ error: 'Professor não encontrado' });
+        }
+        
+        console.log(`📊 Professor:`, professor);
+        
+        // Buscar usuário correspondente
+        db.get('SELECT id, nome, email, tipo FROM usuarios WHERE email = ? AND ativo = 1', [professor.email], (err, usuario) => {
+            if (err) {
+                console.error('❌ Erro ao buscar usuário:', err);
+                return res.status(500).json({ error: err.message });
+            }
+            
+            const sincronizado = usuario && (
+                (professor.ativo === 1 && usuario.tipo === 'professor') ||
+                (professor.ativo === 0 && usuario.tipo !== 'professor')
+            );
+            
+            res.json({
+                professor: professor,
+                usuario: usuario,
+                sincronizado: sincronizado,
+                status: sincronizado ? '✅ SINCRONIZADO' : '❌ NÃO SINCRONIZADO',
+                detalhes: {
+                    professorAtivo: professor.ativo === 1,
+                    usuarioTipo: usuario ? usuario.tipo : 'NÃO ENCONTRADO',
+                    emailsIguais: usuario ? professor.email === usuario.email : false
+                }
+            });
+        });
+    });
+});
+
+// Teste manual de sincronização
+router.post('/test-sync/:professorId', authenticateToken, requireAdmin, async (req, res) => {
+    const professorId = req.params.professorId;
+    const { acao } = req.body; // 'ativar' ou 'desativar'
+    
+    console.log(`🧪 TESTE MANUAL: ${acao} professor ${professorId}`);
+    
+    try {
+        const ativo = acao === 'ativar' ? 1 : 0;
+        
+        const response = await fetch(`http://localhost:${process.env.PORT || 3000}/api/professores/${professorId}/status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': req.headers.authorization
+            },
+            body: JSON.stringify({ ativo })
+        });
+        
+        const result = await response.json();
+        
+        res.json({
+            teste: acao,
+            professorId: professorId,
+            resultado: result
+        });
+        
+    } catch (error) {
+        console.error('❌ Erro no teste manual:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Debug de salas
 router.get('/salas', authenticateToken, requireAdmin, (req, res) => {
     const query = `

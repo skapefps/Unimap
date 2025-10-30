@@ -7,7 +7,7 @@ class AdminAPI {
     async request(endpoint, options = {}) {
         try {
             const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
-            
+
             const config = {
                 headers: {
                     'Content-Type': 'application/json',
@@ -28,13 +28,13 @@ class AdminAPI {
                         return this.request(alternativeEndpoint, options);
                     }
                 }
-                
+
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
             const contentType = response.headers.get('content-type');
             let data;
-            
+
             if (contentType && contentType.includes('application/json')) {
                 data = await response.json();
             } else {
@@ -55,12 +55,12 @@ class AdminAPI {
                     alunos: []
                 };
             }
-            
+
             if (endpoint.includes('/aulas/professor/')) {
                 console.log('🔄 Retornando dados de fallback para aulas');
                 return [];
             }
-            
+
             throw error;
         }
     }
@@ -93,6 +93,10 @@ class AdminAPI {
 
     async createProfessor(data) {
         return this.post('/api/professores', data);
+    }
+
+    async deleteProfessor(id) {
+        return this.delete(`/api/professores/${id}`);
     }
 
     async updateProfessor(id, data) {

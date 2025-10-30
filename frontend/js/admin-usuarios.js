@@ -553,6 +553,7 @@ async editarUsuario(usuarioId) {
 }
 
     // MÉTODO EXCLUIR USUÁRIO - VERSÃO CORRIGIDA
+// MÉTODO EXCLUIR USUÁRIO - VERSÃO ATUALIZADA
 async excluirUsuario(usuarioId) {
     // Verificar se o usuário existe na lista local
     const usuario = this.usuarios.find(u => u && u.id === usuarioId);
@@ -561,7 +562,22 @@ async excluirUsuario(usuarioId) {
         return;
     }
 
-    if (!confirm(`Tem certeza que deseja excluir o usuário "${usuario.nome}"? Esta ação não pode ser desfeita.`)) {
+    // 🔥 MENSAGEM DE CONFIRMAÇÃO ESPECÍFICA PARA PROFESSORES
+    let confirmMessage = `Tem certeza que deseja excluir o usuário "${usuario.nome}"? Esta ação não pode ser desfeita.`;
+    
+    if (usuario.tipo === 'professor') {
+        confirmMessage = `🚨 ATENÇÃO: EXCLUSÃO DE PROFESSOR\n\n` +
+                        `Você está prestes a excluir o professor "${usuario.nome}".\n\n` +
+                        `Esta ação irá:\n` +
+                        `• Desativar o usuário\n` +
+                        `• Excluir PERMANENTEMENTE o registro do professor\n` +
+                        `• Remover todas as aulas associadas\n` +
+                        `• Remover todos os favoritos dos alunos\n\n` +
+                        `Esta ação NÃO PODE ser desfeita!\n\n` +
+                        `Confirma a exclusão?`;
+    }
+
+    if (!confirm(confirmMessage)) {
         return;
     }
 
@@ -573,7 +589,24 @@ async excluirUsuario(usuarioId) {
         });
 
         if (response.success) {
-            this.showNotification('Usuário excluído com sucesso!', 'success');
+            let mensagemSucesso = 'Usuário excluído com sucesso!';
+            
+            // 🔥 MENSAGEM ESPECÍFICA PARA PROFESSORES
+            if (usuario.tipo === 'professor' && response.professor_excluido) {
+                mensagemSucesso = `Professor "${usuario.nome}" excluído permanentemente do sistema!`;
+                
+                if (response.aulas_removidas > 0 || response.favoritos_removidos > 0) {
+                    mensagemSucesso += `\nForam removidos automaticamente:`;
+                    if (response.aulas_removidas > 0) {
+                        mensagemSucesso += `\n• ${response.aulas_removidas} aula(s)`;
+                    }
+                    if (response.favoritos_removidos > 0) {
+                        mensagemSucesso += `\n• ${response.favoritos_removidos} favorito(s)`;
+                    }
+                }
+            }
+            
+            this.showNotification(mensagemSucesso, 'success');
             
             // Remover da lista local
             this.usuarios = this.usuarios.filter(u => u.id !== usuarioId);
@@ -581,6 +614,15 @@ async excluirUsuario(usuarioId) {
             
             this.atualizarEstatisticas();
             this.exibirUsuarios();
+
+            // 🔥 ATUALIZAR A LISTA DE PROFESSORES SE ESTIVER ABERTA
+            setTimeout(() => {
+                if (typeof professoresAdmin !== 'undefined' && typeof professoresAdmin.loadProfessores === 'function') {
+                    console.log('🔄 Atualizando lista de professores...');
+                    professoresAdmin.loadProfessores();
+                }
+            }, 500);
+
         } else {
             throw new Error(response.error || 'Erro ao excluir usuário');
         }

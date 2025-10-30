@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body>
     <header class="mobile-header">
         <div class="header-top">
@@ -48,7 +50,8 @@
                 <a href="admin.html" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 <a href="admin-cursos.html" class="nav-link"><i class="fas fa-graduation-cap"></i> Cursos</a>
                 <a href="admin-salas.html" class="nav-link"><i class="fas fa-door-open"></i> Salas</a>
-                <a href="admin-professores.html" class="nav-link active"><i class="fas fa-chalkboard-teacher"></i> Professores</a>
+                <a href="admin-professores.html" class="nav-link active"><i class="fas fa-chalkboard-teacher"></i>
+                    Professores</a>
                 <a href="admin-usuarios.html" class="nav-link"><i class="fas fa-users"></i> Usuários</a>
                 <a href="admin-turmas.html" class="nav-link"><i class="fas fa-users-class"></i> Turmas</a>
                 <span class="user-info" id="desktopUserName">Administrador</span>
@@ -68,19 +71,28 @@
                 </button>
             </div>
 
+            <div class="filtros-container">
+                <div class="filtros-group">
+                    <button id="filtroTodos" class="btn-filtro active">Todos</button>
+                    <button id="filtroAtivos" class="btn-filtro">Ativos</button>
+                    <button id="filtroInativos" class="btn-filtro">Inativos</button>
+                </div>
+                <div id="filtroContador" class="filtro-contador"></div>
+            </div>
+
             <div class="form-container" id="form-professor" style="display: none;">
                 <h3 id="form-title">Cadastrar Novo Professor</h3>
                 <form id="professor-form">
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Nome Completo:</label>
-                            <input type="text" id="professor-nome" required 
-                                   placeholder="Ex: Ana Maria Silva" class="form-control">
+                            <input type="text" id="professor-nome" required placeholder="Ex: Ana Maria Silva"
+                                class="form-control">
                         </div>
                         <div class="form-group">
                             <label>Email Institucional:</label>
-                            <input type="email" id="professor-email" required
-                                   placeholder="Ex: ana.silva@unipam.edu.br" class="form-control">
+                            <input type="email" id="professor-email" required placeholder="Ex: ana.silva@unipam.edu.br"
+                                class="form-control">
                         </div>
                     </div>
                     <div class="btn-group">
@@ -115,7 +127,7 @@
     <script src="js/auth.js"></script>
     <script src="js/admin-api.js"></script>
     <script src="js/admin-professores.js"></script>
-    
+
     <script>
         function toggleMenu() {
             const nav = document.getElementById('mobileNav');
@@ -127,18 +139,18 @@
             nav.classList.remove('active');
         }
 
-        document.addEventListener('click', function(event) {
+        document.addEventListener('click', function (event) {
             const nav = document.getElementById('mobileNav');
             const hamburger = document.querySelector('.menu-hamburger');
-            
-            if (nav.classList.contains('active') && 
-                !nav.contains(event.target) && 
+
+            if (nav.classList.contains('active') &&
+                !nav.contains(event.target) &&
                 !hamburger.contains(event.target)) {
                 nav.classList.remove('active');
             }
         });
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const userData = localStorage.getItem('userData');
             if (userData) {
                 try {
@@ -158,4 +170,5 @@
         });
     </script>
 </body>
+
 </html>

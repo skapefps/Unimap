@@ -1529,3 +1529,137 @@ tbody td {
     transform: scale(0.97);
     box-shadow: 0 2px 6px rgba(0, 86, 179, 0.3)
 }
+
+/* ==================== FILTROS E STATUS ==================== */
+
+/* Container de filtros */
+.filtros-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.filtros-group {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-filtro {
+    padding: 8px 16px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.btn-filtro.active,
+.btn-filtro:hover {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.filtro-contador {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.filtro-info {
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border-left: 4px solid #3498db;
+}
+
+/* Status badges */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-badge.active {
+    background: #27ae60;
+    color: white;
+}
+
+.status-badge.inactive {
+    background: #e74c3c;
+    color: white;
+}
+
+.inactive-row {
+    opacity: 0.6;
+    background-color: #f8f9fa;
+}
+
+.inactive-row:hover {
+    background-color: #e9ecef;
+    opacity: 0.8;
+}
+
+.professor-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-action.sucesso {
+    background: #27ae60 !important;
+}
+
+.btn-action.sucesso:hover {
+    background: #219653 !important;
+}
+
+.btn-action.perigo {
+    background: #e74c3c !important;
+}
+
+.btn-action.perigo:hover {
+    background: #c0392b !important;
+}
+
+/* Estilos para o botão de excluir */
+.btn-action.small.perigo {
+    background: #dc3545 !important;
+    border: 1px solid #dc3545;
+}
+
+.btn-action.small.perigo:hover {
+    background: #c82333 !important;
+    border-color: #bd2130;
+    transform: scale(1.1);
+}
+
+.excluindo-row {
+    background: #ffe6e6 !important;
+    border-left: 4px solid #dc3545;
+}
+
+.excluindo-row:hover {
+    background: #ffcccc !important;
+}
+
+.table-container table th:nth-child(4),
+.table-container table td:nth-child(4) {
+    width: 180px; 
+}
+
+.action-buttons {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+}
