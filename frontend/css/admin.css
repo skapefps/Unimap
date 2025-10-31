@@ -1663,3 +1663,74 @@ tbody td {
     justify-content: flex-start;
     flex-wrap: nowrap;
 }
+
+.tr.turma-inativa {
+    background-color: #f8f9fa;
+    opacity: 0.8;
+}
+
+.tr.turma-inativa:hover {
+    background-color: #e9ecef;
+}
+
+.turma-inativa .text-muted {
+    color: #6c757d !important;
+}
+
+.status-inativo {
+    display: inline-block;
+    background: #ffc107;
+    color: #856404;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    margin-top: 4px;
+}
+
+.status-inativo i {
+    margin-right: 4px;
+}
+
+.badge-inativo {
+    opacity: 0.7;
+}
+
+.categoria-turma {
+    background-color: #e9ecef;
+}
+
+.categoria-header {
+    padding: 12px 16px !important;
+    font-size: 1.1em;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.categoria-header i {
+    margin-right: 8px;
+}
+
+.categoria-header .badge {
+    margin-left: 12px;
+    font-size: 0.8em;
+}
+
+.turma-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.acoes-turma {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.btn-action.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-action.disabled:hover {
+    background-color: #6c757d;
+    transform: none;
+}
