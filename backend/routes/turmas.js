@@ -524,6 +524,29 @@ router.post('/:id/desvincular-todos', authenticateToken, requireAdmin, (req, res
     });
 });
 
+router.get('/curso/:curso/periodo/:periodo', authenticateToken, (req, res) => {
+    const { curso, periodo } = req.params;
+    
+    console.log(`📋 Buscando turmas para: ${curso} - ${periodo}° período`);
+    
+    const query = `
+        SELECT id, nome, curso, periodo, ano, ativa
+        FROM turmas 
+        WHERE curso = ? AND periodo = ? AND ativa = 1
+        ORDER BY nome
+    `;
+    
+    db.all(query, [curso, periodo], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar turmas:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        console.log(`✅ ${rows.length} turmas encontradas`);
+        res.json(rows);
+    });
+});
+
 // Obter turmas por curso e período
 router.get('/curso/:cursoId/periodo/:periodo', authenticateToken, (req, res) => {
     const { cursoId, periodo } = req.params;

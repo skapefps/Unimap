@@ -1,290 +1,434 @@
-// api.js - Serviço de API UNIMAP (VERSÃO CORRIGIDA)
+// api.js - Serviço de API UNIMAP (VERSÃO OTIMIZADA)
 class ApiService {
     constructor() {
         this.baseURL = window.location.origin + '/api';
+        this.cache = new Map();
+        this.requestQueue = new Map();
         console.log('🌐 API Base URL:', this.baseURL);
     }
 
-    // 🔧 MÉTODO PARA OBTER HEADERS COM TOKEN
-    getHeaders() {
+    // 🔧 MÉTODOS PRINCIPAIS OTIMIZADOS
+    getHeaders(additionalHeaders = {}) {
         const token = localStorage.getItem('authToken');
-        const headers = {
+        return {
             'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }),
+            ...additionalHeaders
         };
-        
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-        
-        return headers;
     }
 
-    async register(userData) {
+    async request(endpoint, options = {}) {
+        const cacheKey = `${endpoint}-${JSON.stringify(options)}`;
+        const queueKey = `${endpoint}-${Date.now()}`;
+
+        // 🔥 Cache para requisições GET
+        if (options.method === 'GET' && this.cache.has(cacheKey)) {
+            console.log('📦 Retornando do cache:', cacheKey);
+            return this.cache.get(cacheKey);
+        }
+
+        // 🔥 Prevenção de requisições duplicadas
+        if (this.requestQueue.has(queueKey)) {
+            return this.requestQueue.get(queueKey);
+        }
+
         try {
-            console.log('📤 Enviando dados para cadastro:', userData);
-            
-            const response = await fetch(`${this.baseURL}/auth/register`, {
-                method: 'POST',
-                headers: this.getHeaders(),
-                body: JSON.stringify(userData)
-            });
+            console.log('📤 Enviando requisição:', endpoint, options);
 
-            const data = await response.json();
-            console.log('📥 Resposta do cadastro:', data);
+            const requestPromise = (async () => {
+                const response = await fetch(`${this.baseURL}${endpoint}`, {
+                    headers: this.getHeaders(),
+                    ...options
+                });
 
-            if (response.ok) {
-                return { 
-                    success: true, 
-                    message: data.message,
-                    userId: data.userId 
-                };
-            } else {
-                return { 
-                    success: false, 
-                    error: data.error || 'Erro no cadastro' 
-                };
-            }
+                const result = await this.handleResponse(response, endpoint);
+
+                // Cache para respostas bem-sucedidas GET
+                if (options.method === 'GET' && result.success) {
+                    this.cache.set(cacheKey, result);
+                    setTimeout(() => this.cache.delete(cacheKey), 30000); // Cache de 30 segundos
+                }
+
+                return result;
+            })();
+
+            this.requestQueue.set(queueKey, requestPromise);
+            const result = await requestPromise;
+            this.requestQueue.delete(queueKey);
+
+            return result;
+
         } catch (error) {
-            console.error('❌ Erro na API de cadastro:', error);
-            return { 
-                success: false, 
-                error: 'Erro de conexão com o servidor' 
+            this.requestQueue.delete(queueKey);
+            console.error(`❌ Erro na requisição ${endpoint}:`, error);
+            return {
+                success: false,
+                error: error.message || 'Erro de conexão com o servidor'
             };
         }
     }
 
-   // api.js - método login corrigido
-async login(dadosLogin) {
-    try {
-        console.log('📤 Enviando dados para login:', dadosLogin);
-        
-        const response = await fetch(`${this.baseURL}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(dadosLogin)
-        });
+    async handleResponse(response, endpoint) {
+        console.log(`📥 Resposta de ${endpoint}:`, response.status);
 
-        // Verificar se a resposta é JSON
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            console.error('❌ Resposta não é JSON:', text.substring(0, 200));
-            throw new Error('Resposta do servidor não é JSON');
-        }
-
-        const data = await response.json();
-        
-        console.log('📥 Resposta do login:', data);
-
-        if (!response.ok) {
-            throw new Error(data.error || `Erro ${response.status}`);
-        }
-
-        return {
-            success: true,
-            user: data.user,
-            token: data.token
-        };
-    } catch (error) {
-        console.error('❌ Erro na API login:', error);
-        return {
-            success: false,
-            error: error.message
-        };
-    }
-}
-
-    async googleLogin(token) {
-        try {
-            console.log('📤 Enviando token Google para API...');
-            
-            const response = await fetch(`${this.baseURL}/auth/google`, {
-                method: 'POST',
-                headers: this.getHeaders(),
-                body: JSON.stringify({ token: token })
-            });
-
-            const data = await response.json();
-            console.log('📥 Resposta do Google OAuth:', data);
-
-            if (response.ok) {
-                return { 
-                    success: true, 
-                    user: data.user, 
-                    token: data.token 
-                };
-            } else {
-                return { 
-                    success: false, 
-                    error: data.error || 'Erro no login Google' 
-                };
-            }
-        } catch (error) {
-            console.error('❌ Erro na API Google OAuth:', error);
-            return { 
-                success: false, 
-                error: 'Erro de conexão com o servidor' 
-            };
-        }
-    }
-
-    // 🔧 NOVO: MÉTODO GENÉRICO PARA REQUISIÇÕES AUTENTICADAS
-    async authenticatedRequest(endpoint, options = {}) {
-    try {
-        const response = await fetch(`${this.baseURL}${endpoint}`, {
-            headers: this.getHeaders(),
-            ...options
-        });
-
-        // Verificar se a resposta é JSON
         const contentType = response.headers.get('content-type');
         let data;
-        
-        if (contentType && contentType.includes('application/json')) {
-            data = await response.json();
-        } else {
-            const text = await response.text();
-            throw new Error(`Resposta não é JSON: ${text.substring(0, 100)}`);
+
+        try {
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                throw new Error(`Resposta não é JSON: ${text.substring(0, 100)}`);
+            }
+        } catch (error) {
+            console.error('❌ Erro ao parsear resposta:', error);
+            return {
+                success: false,
+                error: 'Resposta inválida do servidor'
+            };
         }
 
         if (response.ok) {
             return { success: true, data };
         } else {
-            return { 
-                success: false, 
-                error: data.error || `Erro ${response.status}: ${response.statusText}` 
+            const errorMessage = data?.error ||
+                data?.message ||
+                `Erro ${response.status}: ${response.statusText}`;
+
+            console.error(`❌ Erro ${response.status} em ${endpoint}:`, errorMessage);
+            return { success: false, error: errorMessage };
+        }
+    }
+
+    // 🔥 MÉTODOS DE AUTENTICAÇÃO OTIMIZADOS
+    async register(userData) {
+        console.log('👤 Registrando usuário:', userData);
+        return this.request('/auth/register', {
+            method: 'POST',
+            body: JSON.stringify(userData)
+        });
+    }
+
+    async login(dadosLogin) {
+        console.log('🔐 Realizando login:', { ...dadosLogin, senha: '***' });
+
+        try {
+            const response = await fetch(`${this.baseURL}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dadosLogin)
+            });
+
+            const result = await this.handleResponse(response, '/auth/login');
+
+            if (result.success) {
+                console.log('✅ Login realizado com sucesso');
+                return {
+                    success: true,
+                    user: result.data.user,
+                    token: result.data.token
+                };
+            } else {
+                return result;
+            }
+        } catch (error) {
+            console.error('❌ Erro no login:', error);
+            return {
+                success: false,
+                error: error.message
             };
         }
-    } catch (error) {
-        console.error(`❌ Erro na requisição para ${endpoint}:`, error);
-        return { 
-            success: false, 
-            error: error.message || 'Erro de conexão com o servidor' 
-        };
     }
-}
 
-    // 🔧 MÉTODOS ESPECÍFICOS PARA SALAS
+    async googleLogin(token) {
+        console.log('🔐 Realizando login Google');
+        return this.request('/auth/google', {
+            method: 'POST',
+            body: JSON.stringify({ token })
+        });
+    }
+
+    // 🔥 MÉTODOS PARA SALAS OTIMIZADOS
     async getSalas() {
-        return await this.authenticatedRequest('/salas');
+        return this.request('/salas');
     }
 
     async getSalasPorBloco(bloco) {
-        return await this.authenticatedRequest(`/salas/bloco/${bloco}`);
+        return this.request(`/salas/bloco/${bloco}`);
     }
 
     async getSalasPorBlocoEAndar(bloco, andar) {
-        return await this.authenticatedRequest(`/salas/bloco/${bloco}/andar/${andar}`);
+        return this.request(`/salas/bloco/${bloco}/andar/${andar}`);
     }
 
     async getBlocos() {
-        return await this.authenticatedRequest('/salas/blocos');
+        return this.request('/salas/blocos');
     }
 
     async getAndaresPorBloco(bloco) {
-        return await this.authenticatedRequest(`/salas/bloco/${bloco}/andares`);
+        return this.request(`/salas/bloco/${bloco}/andares`);
     }
 
-    // 🔧 MÉTODOS PARA AULAS
+    // 🔥 MÉTODOS PARA AULAS OTIMIZADOS
     async getAulas() {
-        return await this.authenticatedRequest('/aulas');
+        return this.request('/aulas');
     }
 
     async getMinhasAulas() {
         const userData = localStorage.getItem('userData');
-        if (!userData) return { success: false, error: 'Usuário não autenticado' };
-        
+        if (!userData) {
+            return { success: false, error: 'Usuário não autenticado' };
+        }
+
         const user = JSON.parse(userData);
-        return await this.authenticatedRequest(`/aulas/usuario/${user.id}`);
+        return this.request(`/aulas/usuario/${user.id}`);
     }
 
     async criarAula(dadosAula) {
-        return await this.authenticatedRequest('/aulas', {
+        console.log('📝 Criando aula:', dadosAula);
+
+        // Limpar cache relacionado a aulas
+        this.clearCacheByPattern('/aulas');
+
+        return this.request('/aulas', {
             method: 'POST',
             body: JSON.stringify(dadosAula)
         });
     }
 
     async excluirAula(aulaId) {
-        return await this.authenticatedRequest(`/aulas/${aulaId}`, {
+        console.log('🗑️ Excluindo aula:', aulaId);
+
+        // Limpar cache relacionado a aulas
+        this.clearCacheByPattern('/aulas');
+
+        return this.request(`/aulas/${aulaId}`, {
             method: 'DELETE'
         });
     }
 
-    // 👨‍🏫 FUNÇÕES DO PROFESSOR
-    async getMinhasAulas() {
-        try {
-            const token = localStorage.getItem('authToken');
-            const userData = JSON.parse(localStorage.getItem('userData'));
-            
-            const response = await fetch('/api/aulas/usuario/' + userData.id, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const aulas = await response.json();
-                return { success: true, data: aulas };
-            } else {
-                const error = await response.json();
-                return { success: false, error: error.error };
-            }
-        } catch (error) {
-            console.error('Erro ao carregar aulas:', error);
-            return { success: false, error: 'Erro de conexão' };
-        }
-    }
-    // 🔥 NOVA FUNÇÃO ESPECÍFICA PARA PROFESSORES
+    // 🔥 MÉTODOS ESPECÍFICOS PARA PROFESSORES
     async getMinhasAulasProfessor() {
+        return this.request('/professor/minhas-aulas');
+    }
+
+    // 🔥 MÉTODOS PARA CURSOS OTIMIZADOS
+    async getCursos() {
+        return this.request('/cursos');
+    }
+
+    async getCursosComPeriodos() {
+        return this.request('/cursos/com-periodos');
+    }
+
+    async getTurmasPorCursoPeriodo(curso, periodo) {
+        return this.request(`/turmas/curso/${encodeURIComponent(curso)}/periodo/${periodo}`);
+    }
+
+    async getCursosDetalhados() {
+        return this.request('/cursos/detalhados');
+    }
+
+    // 🔧 MÉTODOS AUXILIARES AVANÇADOS
+    clearCacheByPattern(pattern) {
+        for (const key of this.cache.keys()) {
+            if (key.includes(pattern)) {
+                this.cache.delete(key);
+            }
+        }
+        console.log('🧹 Cache limpo para padrão:', pattern);
+    }
+
+    clearAllCache() {
+        this.cache.clear();
+        console.log('🧹 Todo o cache limpo');
+    }
+
+    getCacheStats() {
+        return {
+            size: this.cache.size,
+            keys: Array.from(this.cache.keys()),
+            queueSize: this.requestQueue.size
+        };
+    }
+
+    // 🔧 MÉTODO PARA REQUISIÇÕES EM LOTE
+    async batchRequests(requests) {
+        console.log('🔄 Executando lote de requisições:', requests.length);
+
+        const results = await Promise.allSettled(
+            requests.map(req => this.request(req.endpoint, req.options))
+        );
+
+        return results.map((result, index) => ({
+            request: requests[index],
+            success: result.status === 'fulfilled' && result.value.success,
+            data: result.status === 'fulfilled' ? result.value.data : null,
+            error: result.status === 'rejected' ? result.reason :
+                (result.status === 'fulfilled' && !result.value.success ? result.value.error : null)
+        }));
+    }
+
+    // 🔧 MÉTODO PARA HEALTH CHECK
+    async healthCheck() {
         try {
-            const token = localStorage.getItem('authToken');
-            const response = await fetch('/api/professor/minhas-aulas', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+            const startTime = Date.now();
+            const response = await fetch(`${this.baseURL}/health`, {
+                method: 'GET',
+                headers: this.getHeaders()
             });
+            const responseTime = Date.now() - startTime;
 
             if (response.ok) {
-                const aulas = await response.json();
-                return { success: true, data: aulas };
+                return {
+                    success: true,
+                    online: true,
+                    responseTime: responseTime,
+                    status: 'healthy'
+                };
             } else {
-                const error = await response.json();
-                return { success: false, error: error.error };
+                return {
+                    success: false,
+                    online: true,
+                    responseTime: responseTime,
+                    status: 'unhealthy',
+                    error: `Status ${response.status}`
+                };
             }
         } catch (error) {
-            console.error('Erro ao carregar aulas do professor:', error);
-            return { success: false, error: 'Erro de conexão' };
+            return {
+                success: false,
+                online: false,
+                responseTime: null,
+                status: 'offline',
+                error: error.message
+            };
         }
     }
-    // 🎓 FUNÇÕES DE CURSOS - CORRIGIDAS
-    async getCursos() {
-        try {
-            const token = localStorage.getItem('authToken');
-            const response = await fetch('/api/cursos', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+
+    // 🔧 MÉTODO PARA RETRY AUTOMÁTICO
+    async requestWithRetry(endpoint, options = {}, maxRetries = 3, delay = 1000) {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`🔄 Tentativa ${attempt}/${maxRetries} para ${endpoint}`);
+                const result = await this.request(endpoint, options);
+
+                if (result.success) {
+                    return result;
                 }
+
+                // Se não foi sucesso mas não é erro de conexão, não retry
+                if (!result.error.includes('conexão') && !result.error.includes('timeout')) {
+                    return result;
+                }
+
+                if (attempt < maxRetries) {
+                    console.log(`⏳ Aguardando ${delay}ms antes da próxima tentativa...`);
+                    await this.delay(delay);
+                    delay *= 2; // Exponential backoff
+                }
+            } catch (error) {
+                console.error(`❌ Tentativa ${attempt} falhou:`, error);
+                if (attempt === maxRetries) {
+                    throw error;
+                }
+                await this.delay(delay);
+                delay *= 2;
+            }
+        }
+
+        return { success: false, error: `Todas as ${maxRetries} tentativas falharam` };
+    }
+
+    // 🔧 UTILITÁRIOS
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // 🔧 MÉTODO PARA LOGOUT
+    async logout() {
+        console.log('🚪 Realizando logout');
+        this.clearAllCache();
+        this.requestQueue.clear();
+
+        // Limpar localStorage
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+
+        return { success: true, message: 'Logout realizado com sucesso' };
+    }
+
+    // 🔧 MÉTODO PARA VERIFICAÇÃO DE TOKEN
+    async verifyToken() {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            return { success: false, error: 'Token não encontrado' };
+        }
+
+        try {
+            const response = await fetch(`${this.baseURL}/auth/verify`, {
+                headers: this.getHeaders()
             });
 
             if (response.ok) {
-                const cursos = await response.json();
-                return { success: true, data: cursos };
+                return { success: true, valid: true };
             } else {
-                const error = await response.json();
-                return { success: false, error: error.error };
+                return { success: false, valid: false, error: 'Token inválido' };
             }
         } catch (error) {
-            console.error('Erro ao carregar cursos:', error);
-            return { success: false, error: 'Erro de conexão' };
+            return { success: false, valid: false, error: error.message };
         }
+    }
+
+    // 🔧 MÉTODO PARA ATUALIZAÇÃO DE DADOS DO USUÁRIO
+    async updateUserProfile(userData) {
+        console.log('👤 Atualizando perfil do usuário');
+        return this.request('/auth/profile', {
+            method: 'PUT',
+            body: JSON.stringify(userData)
+        });
+    }
+
+    async requestPasswordReset(email) {
+        console.log('🔑 Solicitando recuperação de senha para:', email);
+        return this.request('/auth/forgot-password', {
+            method: 'POST',
+            body: JSON.stringify({ email })
+        });
+    }
+
+    validateEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    validatePassword(password) {
+        return password && password.length >= 6;
     }
 }
 
-// ✅ INSTÂNCIA GLOBAL
 const api = new ApiService();
+
+if (typeof window !== 'undefined') {
+    window.api = api;
+
+    window.apiDebug = {
+        cacheStats: () => api.getCacheStats(),
+        clearCache: () => api.clearAllCache(),
+        healthCheck: () => api.healthCheck(),
+        batchTest: () => api.batchRequests([
+            { endpoint: '/cursos' },
+            { endpoint: '/salas' },
+            { endpoint: '/aulas' }
+        ])
+    };
+}
+
+console.log('🌐 API Service carregado com otimizações:', {
+    cache: api.cache.size,
+    baseURL: api.baseURL,
+    methods: Object.getOwnPropertyNames(ApiService.prototype)
+});

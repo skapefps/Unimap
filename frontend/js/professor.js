@@ -1,78 +1,80 @@
-// professor.js - Versão com melhor tratamento de erros
 class ProfessorManager {
     constructor() {
         this.currentUser = null;
         this.minhasAulas = [];
         this.salasDisponiveis = [];
         this.cursos = [];
+        this.turmas = [];
+        this.cursoChangeHandler = null;
+        this.cache = new Map();
         this.init();
     }
 
     async init() {
         console.log('👨‍🏫 Inicializando ProfessorManager...');
-        
-        // Verificar autenticação
+
         const userData = localStorage.getItem('userData');
-        if (userData) {
-            this.currentUser = JSON.parse(userData);
-            console.log('✅ Professor carregado:', this.currentUser);
-        } else {
+        if (!userData) {
             console.error('❌ Professor não autenticado');
             window.location.href = 'login.html';
             return;
         }
 
-        await this.carregarMinhasAulas();
-        await this.carregarSalasDisponiveis();
-        await this.carregarCursos();
+        this.currentUser = JSON.parse(userData);
+        console.log('✅ Professor carregado:', this.currentUser);
+
+        await Promise.allSettled([
+            this.carregarMinhasAulas(),
+            this.carregarSalasDisponiveis(),
+            this.carregarCursosDetalhados()
+        ]);
+
+        this.configurarEventosFormulario();
+        this.desabilitarPeriodo();
+        this.desabilitarTurma();
     }
 
-    // professor.js - Apenas a função carregarMinhasAulas corrigida
-async carregarMinhasAulas() {
-    try {
-        console.log('📚 Carregando aulas do professor...');
-        
-        // 🔥 TENTAR A ROTA ESPECÍFICA PARA PROFESSORES PRIMEIRO
-        const result = await api.getMinhasAulasProfessor();
-        
-        if (result && result.success) {
-            this.minhasAulas = result.data;
-            console.log(`✅ ${this.minhasAulas.length} aulas carregadas (rota específica)`);
-            this.renderizarAulas();
-            return;
-        }
-        
-        // 🔥 SE FALHAR, TENTAR A ROTA ALTERNATIVA
-        console.log('🔄 Tentando rota alternativa...');
-        const resultAlternativo = await api.getMinhasAulas();
-        
-        if (resultAlternativo && resultAlternativo.success) {
-            this.minhasAulas = resultAlternativo.data;
-            console.log(`✅ ${this.minhasAulas.length} aulas carregadas (rota alternativa)`);
-            this.renderizarAulas();
-        } else {
-            console.error('❌ Ambas as rotas falharam:', result?.error, resultAlternativo?.error);
+    // 🔥 MÉTODOS DE CARREGAMENTO
+    async carregarMinhasAulas() {
+        try {
+            console.log('📚 Carregando aulas do professor...');
+
+            const rotas = [
+                () => api.getMinhasAulasProfessor(),
+                () => api.getMinhasAulas()
+            ];
+
+            for (const rota of rotas) {
+                try {
+                    const result = await rota();
+                    if (result?.success) {
+                        this.minhasAulas = result.data;
+                        console.log(`✅ ${this.minhasAulas.length} aulas carregadas`);
+                        this.renderizarAulas();
+                        return;
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Rota falhou, tentando próxima...');
+                }
+            }
+            throw new Error('Todas as rotas falharam');
+        } catch (error) {
+            console.error('❌ Erro ao carregar aulas:', error);
             this.mostrarErro('Erro ao carregar aulas. Recarregue a página.');
         }
-        
-    } catch (error) {
-        console.error('❌ Erro ao carregar aulas:', error);
-        this.mostrarErro('Erro de conexão ao carregar aulas');
     }
-}
+
     async carregarSalasDisponiveis() {
         try {
             console.log('🏫 Carregando salas disponíveis...');
-            
             const result = await api.getSalas();
-            
-            if (result && result.success) {
+
+            if (result?.success) {
                 this.salasDisponiveis = result.data;
                 console.log(`✅ ${this.salasDisponiveis.length} salas carregadas`);
                 this.renderizarSalasSelect();
             } else {
-                console.error('❌ Erro ao carregar salas:', result?.error);
-                this.usarSalasPadrao();
+                throw new Error(result?.error);
             }
         } catch (error) {
             console.error('❌ Erro ao carregar salas:', error);
@@ -80,19 +82,17 @@ async carregarMinhasAulas() {
         }
     }
 
-    async carregarCursos() {
+    async carregarCursosDetalhados() {
         try {
-            console.log('🎓 Carregando cursos...');
-            
-            const result = await api.getCursos();
-            
-            if (result && result.success) {
+            console.log('🎓 Carregando cursos detalhados...');
+            const result = await api.getCursosDetalhados();
+
+            if (result?.success) {
                 this.cursos = result.data;
                 console.log(`✅ ${this.cursos.length} cursos carregados`);
                 this.popularSelectCursos();
             } else {
-                console.error('❌ Erro ao carregar cursos:', result?.error);
-                this.usarCursosPadrao();
+                throw new Error(result?.error);
             }
         } catch (error) {
             console.error('❌ Erro ao carregar cursos:', error);
@@ -100,8 +100,48 @@ async carregarMinhasAulas() {
         }
     }
 
+    async carregarTurmasPorCursoPeriodo(curso, periodo) {
+        try {
+            console.log(`📋 Buscando turmas para ${curso} - ${periodo}° período...`);
+            
+            const cacheKey = `turmas-${curso}-${periodo}`;
+            if (this.cache.has(cacheKey)) {
+                const turmas = this.cache.get(cacheKey);
+                this.popularSelectTurmas(turmas);
+                return;
+            }
+
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(`/api/turmas/curso/${encodeURIComponent(curso)}/periodo/${periodo}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const turmas = await response.json();
+                this.turmas = turmas;
+                this.cache.set(cacheKey, turmas);
+
+                if (turmas.length > 0) {
+                    this.popularSelectTurmas(turmas);
+                    this.habilitarTurma();
+                } else {
+                    this.desabilitarTurmaComMensagem('Nenhuma turma disponível para este curso/período');
+                }
+                console.log(`✅ ${turmas.length} turmas carregadas`);
+            } else {
+                throw new Error(`HTTP ${response.status}`);
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar turmas:', error);
+            this.desabilitarTurmaComMensagem('Erro de conexão');
+        }
+    }
+
+    // 🔥 MÉTODOS DE FALLBACK
     usarSalasPadrao() {
-        // Fallback para salas padrão
         this.salasDisponiveis = [
             { id: 1, numero: 'A101', bloco: 'A', tipo: 'Sala de Aula', capacidade: 40 },
             { id: 2, numero: 'A102', bloco: 'A', tipo: 'Sala de Aula', capacidade: 35 },
@@ -115,13 +155,244 @@ async carregarMinhasAulas() {
     }
 
     usarCursosPadrao() {
-        // Fallback para cursos padrão
         this.cursos = [
-            { id: 1, nome: 'Sistemas de Informação' },
-            { id: 2, nome: 'Administração' },
-            { id: 3, nome: 'Direito' }
+            { id: 1, nome: 'Sistemas de Informação', total_periodos: 8 },
+            { id: 2, nome: 'Administração', total_periodos: 8 },
+            { id: 3, nome: 'Direito', total_periodos: 8 }
         ];
         this.popularSelectCursos();
+    }
+
+    // 🔥 CONFIGURAÇÃO DE FORMULÁRIO
+    configurarEventosFormulario() {
+        this.configurarEventoCurso();
+        this.configurarEventoPeriodo();
+        this.configurarBuscaSalas();
+    }
+
+    configurarEventoCurso() {
+        const cursoSelect = document.getElementById('cursoSelect');
+        if (!cursoSelect) {
+            console.error('❌ cursoSelect não encontrado');
+            return;
+        }
+
+        cursoSelect.addEventListener('change', (e) => {
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            
+            if (selectedOption) {
+                const totalPeriodos = selectedOption.getAttribute('data-total-periodos') || 8;
+                this.habilitarPeriodo();
+                this.popularSelectPeriodos(parseInt(totalPeriodos));
+            } else {
+                this.desabilitarPeriodo();
+                this.desabilitarTurma();
+            }
+        });
+
+        if (cursoSelect.value) {
+            cursoSelect.dispatchEvent(new Event('change'));
+        }
+    }
+
+    configurarEventoPeriodo() {
+        const periodoSelect = document.getElementById('periodoSelect');
+        periodoSelect?.addEventListener('change', async (e) => {
+            const curso = document.getElementById('cursoSelect').value;
+            const periodo = e.target.value;
+
+            if (curso && periodo) {
+                await this.carregarTurmasPorCursoPeriodo(curso, periodo);
+            } else {
+                this.desabilitarTurma();
+            }
+        });
+    }
+
+    configurarBuscaSalas() {
+        const searchInput = document.getElementById('searchSala');
+        const salaSelect = document.getElementById('salaSelect');
+
+        if (!searchInput || !salaSelect) return;
+
+        searchInput.addEventListener('input', function () {
+            const searchTerm = this.value.toLowerCase();
+            const options = salaSelect.getElementsByTagName('option');
+            let foundAny = false;
+
+            for (let i = 0; i < options.length; i++) {
+                const text = options[i].textContent.toLowerCase();
+                const shouldShow = text.includes(searchTerm);
+                options[i].style.display = shouldShow ? '' : 'none';
+
+                if (shouldShow && i > 0) foundAny = true;
+                if (i === 0) options[i].style.display = '';
+            }
+
+            if (foundAny && searchTerm.length > 0) {
+                searchInput.style.borderColor = '#4CAF50';
+                searchInput.style.backgroundColor = '#f8fff8';
+            } else if (searchTerm.length > 0) {
+                searchInput.style.borderColor = '#ff4444';
+                searchInput.style.backgroundColor = '#fff8f8';
+            } else {
+                searchInput.style.borderColor = '#ccc';
+                searchInput.style.backgroundColor = '';
+            }
+        });
+
+        salaSelect.addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+
+            if (this.value && selectedOption) {
+                this.style.borderColor = '#4CAF50';
+                this.style.backgroundColor = '#f8fff8';
+                this.style.fontWeight = '600';
+                this.setAttribute('data-selected-text', selectedOption.textContent);
+
+                searchInput.value = selectedOption.textContent;
+                searchInput.style.borderColor = '#4CAF50';
+                searchInput.style.backgroundColor = '#f8fff8';
+            } else {
+                this.style.borderColor = '#ccc';
+                this.style.backgroundColor = '';
+                this.style.fontWeight = 'normal';
+                this.removeAttribute('data-selected-text');
+
+                searchInput.style.borderColor = '#ccc';
+                searchInput.style.backgroundColor = '';
+            }
+        });
+
+        searchInput.addEventListener('focus', function () {
+            this.select();
+        });
+
+        salaSelect.addEventListener('dblclick', function () {
+            this.selectedIndex = 0;
+            this.dispatchEvent(new Event('change'));
+            searchInput.value = '';
+            searchInput.focus();
+        });
+
+        this.adicionarEstiloSalaSelecionada();
+    }
+
+    // 🔥 MÉTODOS DE UI
+    habilitarPeriodo() {
+        const periodoSelect = document.getElementById('periodoSelect');
+        if (!periodoSelect) return;
+
+        periodoSelect.disabled = false;
+        periodoSelect.classList.remove('select-desabilitado');
+        periodoSelect.classList.add('select-habilitado');
+        periodoSelect.style.opacity = '1';
+        periodoSelect.style.cursor = 'pointer';
+        periodoSelect.style.backgroundColor = '';
+    }
+
+    desabilitarPeriodo() {
+        const periodoSelect = document.getElementById('periodoSelect');
+        if (!periodoSelect) return;
+
+        periodoSelect.disabled = true;
+        periodoSelect.innerHTML = '<option value="">Primeiro selecione o curso</option>';
+        periodoSelect.classList.add('select-desabilitado');
+        periodoSelect.classList.remove('select-habilitado');
+        periodoSelect.style.opacity = '0.7';
+        periodoSelect.style.cursor = 'not-allowed';
+        periodoSelect.style.backgroundColor = '#f9f9f9';
+    }
+
+    habilitarTurma() {
+        const turmaSelect = document.getElementById('turmaSelect');
+        if (turmaSelect) {
+            turmaSelect.disabled = false;
+            turmaSelect.style.opacity = '1';
+            turmaSelect.style.cursor = 'pointer';
+            turmaSelect.style.backgroundColor = '';
+            turmaSelect.classList.remove('select-desabilitado');
+            turmaSelect.classList.add('select-habilitado');
+        }
+    }
+
+    desabilitarTurma() {
+        const turmaSelect = document.getElementById('turmaSelect');
+        if (turmaSelect) {
+            turmaSelect.disabled = true;
+            turmaSelect.innerHTML = '<option value="">Primeiro selecione o curso e período</option>';
+            turmaSelect.style.opacity = '0.7';
+            turmaSelect.style.cursor = 'not-allowed';
+            turmaSelect.style.backgroundColor = '#f9f9f9';
+            turmaSelect.classList.add('select-desabilitado');
+            turmaSelect.classList.remove('select-habilitado');
+        }
+    }
+
+    desabilitarTurmaComMensagem(mensagem) {
+        const turmaSelect = document.getElementById('turmaSelect');
+        if (turmaSelect) {
+            turmaSelect.disabled = true;
+            turmaSelect.innerHTML = `<option value="">${mensagem}</option>`;
+            turmaSelect.style.opacity = '0.6';
+            turmaSelect.style.cursor = 'not-allowed';
+            turmaSelect.style.backgroundColor = '#fff8f8';
+        }
+    }
+
+    // 🔥 POPULAR SELECTS
+    popularSelectCursos() {
+        const select = document.getElementById('cursoSelect');
+        if (!select || !this.cursos) return;
+
+        select.innerHTML = '<option value="">Selecione o curso</option>' +
+            this.cursos.map(curso =>
+                `<option value="${curso.nome}" data-total-periodos="${curso.total_periodos || 8}">
+                    ${curso.nome} (${curso.total_periodos || 8} períodos)
+                </option>`
+            ).join('');
+
+        console.log('✅ Select de cursos populado com períodos');
+    }
+
+    popularSelectPeriodos(totalPeriodos) {
+        const periodoSelect = document.getElementById('periodoSelect');
+        if (!periodoSelect) return;
+
+        this.habilitarPeriodo();
+        periodoSelect.innerHTML = '';
+
+        const placeholderOption = document.createElement('option');
+        placeholderOption.value = '';
+        placeholderOption.textContent = 'Selecione o período';
+        periodoSelect.appendChild(placeholderOption);
+
+        for (let i = 1; i <= totalPeriodos; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = `${i}° Período`;
+            periodoSelect.appendChild(option);
+        }
+
+        console.log(`✅ ${totalPeriodos} períodos adicionados ao select`);
+    }
+
+    popularSelectTurmas(turmas) {
+        const turmaSelect = document.getElementById('turmaSelect');
+        if (!turmaSelect) return;
+
+        turmaSelect.innerHTML = '<option value="">Selecione a turma</option>';
+
+        turmas.forEach(turma => {
+            const option = document.createElement('option');
+            option.value = turma.nome;
+            option.textContent = turma.nome;
+            turmaSelect.appendChild(option);
+        });
+
+        if (turmas.length > 0) {
+            this.habilitarTurma();
+        }
     }
 
     renderizarSalasSelect() {
@@ -129,103 +400,49 @@ async carregarMinhasAulas() {
         if (!select || !this.salasDisponiveis) return;
 
         select.innerHTML = '<option value="">Selecione a sala</option>' +
-            this.salasDisponiveis.map(sala => 
+            this.salasDisponiveis.map(sala =>
                 `<option value="${sala.id}" data-bloco="${sala.bloco}" data-tipo="${sala.tipo}">
                     ${sala.numero} - Bloco ${sala.bloco} (${sala.tipo}) - ${sala.capacidade} lugares
                 </option>`
             ).join('');
-
-        // Configurar busca de salas
-        this.configurarBuscaSalas();
-    }
-    popularSelectTurmas() {
-    const select = document.getElementById('turmaSelect');
-    if (!select) return;
-
-    // Buscar turmas disponíveis da API
-    this.carregarTurmasDisponiveis().then(turmas => {
-        select.innerHTML = '<option value="">Selecione a turma</option>' +
-            turmas.map(turma => 
-                `<option value="${turma.id}">${turma.nome} - ${turma.curso} (${turma.periodo}° Período)</option>`
-            ).join('');
-    });
-}
-
-async carregarTurmasDisponiveis() {
-    try {
-        const token = localStorage.getItem('authToken');
-        const response = await fetch('/api/turmas', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.ok) {
-            const result = await response.json();
-            return result.data || [];
-        } else {
-            console.error('❌ Erro ao carregar turmas:', response.status);
-            return [];
-        }
-    } catch (error) {
-        console.error('❌ Erro ao carregar turmas:', error);
-        return [];
-    }
-}
-
-    popularSelectCursos() {
-        const select = document.getElementById('cursoSelect');
-        if (!select || !this.cursos) return;
-
-        select.innerHTML = '<option value="">Selecione o curso</option>' +
-            this.cursos.map(curso => 
-                `<option value="${curso.nome}">${curso.nome}</option>`
-            ).join('');
     }
 
-    configurarBuscaSalas() {
-        const searchInput = document.getElementById('searchSala');
-        const salaSelect = document.getElementById('salaSelect');
-        
-        if (searchInput && salaSelect) {
-            searchInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                const options = salaSelect.getElementsByTagName('option');
-                
-                for (let i = 0; i < options.length; i++) {
-                    const text = options[i].textContent.toLowerCase();
-                    options[i].style.display = text.includes(searchTerm) ? '' : 'none';
-                }
-                
-                // Manter o primeiro option sempre visível
-                if (options[0]) options[0].style.display = '';
-            });
-        }
-    }
-
+    // 🔥 RENDERIZAÇÃO DE AULAS
     renderizarAulas() {
         const container = document.getElementById('aulas-professor-grid');
         if (!container) return;
 
         if (this.minhasAulas.length === 0) {
-            container.innerHTML = `
-                <div class="professor-empty-state">
-                    <i class="fas fa-chalkboard-teacher fa-3x"></i>
-                    <p>Nenhuma aula encontrada</p>
-                    <p class="empty-subtitle">Crie sua primeira aula usando o botão acima</p>
-                </div>
-            `;
+            container.innerHTML = this.getHTMLAulasVazias();
             return;
         }
 
-        container.innerHTML = this.minhasAulas.map(aula => this.criarCardAula(aula)).join('');
+        // Usar batelamento para melhor performance com muitas aulas
+        const batchSize = 10;
+        const renderBatch = (startIndex = 0) => {
+            const endIndex = Math.min(startIndex + batchSize, this.minhasAulas.length);
+            const fragment = document.createDocumentFragment();
+
+            for (let i = startIndex; i < endIndex; i++) {
+                const card = this.criarCardAula(this.minhasAulas[i]);
+                fragment.appendChild(this.htmlToElement(card));
+            }
+
+            container.appendChild(fragment);
+
+            if (endIndex < this.minhasAulas.length) {
+                setTimeout(() => renderBatch(endIndex), 0);
+            }
+        };
+
+        container.innerHTML = '';
+        renderBatch();
     }
 
     criarCardAula(aula) {
         const status = this.getStatusAula(aula);
         const dias = this.formatarDiasSemana(aula.dia_semana);
-        
+
         return `
             <div class="professor-aula-card" data-aula-id="${aula.id}">
                 <div class="professor-aula-header">
@@ -263,6 +480,86 @@ async carregarTurmasDisponiveis() {
         `;
     }
 
+    // 🔥 GESTÃO DE AULAS
+    async criarAula(dadosAula, diasSelecionados) {
+        try {
+            console.log('📝 Validando e criando nova aula:', dadosAula);
+            console.log('📅 Dias recebidos:', diasSelecionados);
+
+            const erros = this.validarFormularioAula(dadosAula);
+            if (erros.length > 0) {
+                this.mostrarErro('Erros no formulário:\n' + erros.join('\n'));
+                return;
+            }
+
+            const diaParaNumero = {
+                'segunda': 1, 'terca': 2, 'quarta': 3, 'quinta': 4, 'sexta': 5
+            };
+
+            const aulasCriadas = [];
+            const promises = diasSelecionados.map(async (diaString) => {
+                const dadosFormatados = {
+                    disciplina: dadosAula.disciplina,
+                    sala_id: parseInt(dadosAula.sala_id),
+                    curso: dadosAula.curso,
+                    turma: dadosAula.turma,
+                    horario_inicio: dadosAula.horario_inicio,
+                    horario_fim: dadosAula.horario_fim,
+                    dia_semana: diaParaNumero[diaString]
+                };
+
+                console.log(`📤 Enviando aula para ${diaString}:`, dadosFormatados);
+                const result = await api.criarAula(dadosFormatados);
+
+                if (result?.success) {
+                    console.log(`✅ Aula criada para ${diaString}`);
+                    aulasCriadas.push({ dia: diaString, id: result.id });
+                } else {
+                    const mensagemErro = result?.error || 'Erro desconhecido ao criar aula';
+                    console.error(`❌ Erro para ${diaString}:`, mensagemErro);
+                    throw new Error(`Erro para ${diaString}: ${mensagemErro}`);
+                }
+            });
+
+            await Promise.all(promises);
+            console.log(`✅ ${aulasCriadas.length} aulas criadas com sucesso!`);
+            this.mostrarSucesso(`Aulas criadas com sucesso para ${aulasCriadas.length} dias!`);
+
+            await this.carregarMinhasAulas();
+            showSection('minhas-aulas-professor');
+            document.getElementById('formCriarAula')?.reset();
+            this.cache.clear(); // Limpar cache após mudanças
+
+        } catch (error) {
+            console.error('❌ Erro ao criar aula:', error);
+            this.mostrarErro(this.tratarErroAula(error));
+        }
+    }
+
+    async excluirAula(aulaId) {
+        if (!confirm('Tem certeza que deseja excluir esta aula?')) {
+            return;
+        }
+
+        try {
+            console.log('🗑️ Excluindo aula:', aulaId);
+            const result = await api.excluirAula(aulaId);
+
+            if (result?.success) {
+                console.log('✅ Aula excluída com sucesso!');
+                this.mostrarSucesso('Aula excluída com sucesso!');
+                await this.carregarMinhasAulas();
+                this.cache.clear();
+            } else {
+                throw new Error(result?.error || 'Erro ao excluir aula');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao excluir aula:', error);
+            this.mostrarErro('Erro ao excluir aula: ' + error.message);
+        }
+    }
+
+    // 🔥 VALIDAÇÃO
     validarFormularioAula(dados) {
         const erros = [];
 
@@ -286,104 +583,55 @@ async carregarTurmasDisponiveis() {
             erros.push('Selecione um horário');
         }
 
-        if (!dados.dia_semana || dados.dia_semana.length === 0) {
+        const diasSelecionados = Array.from(document.querySelectorAll('input[name="dias"]:checked'));
+        if (diasSelecionados.length === 0) {
             erros.push('Selecione pelo menos um dia da semana');
         }
 
         return erros;
     }
 
-    async criarAula(dadosAula) {
-        try {
-            console.log('📝 Validando e criando nova aula:', dadosAula);
-            
-            // Validar dados
-            const erros = this.validarFormularioAula(dadosAula);
-            if (erros.length > 0) {
-                this.mostrarErro('Erros no formulário:\n' + erros.join('\n'));
-                return;
-            }
+    tratarErroAula(error) {
+        const mensagens = {
+            'Professor não encontrado': 'Seu perfil de professor não foi encontrado. Entre em contato com a administração.',
+            'UNIQUE constraint failed': 'Já existe uma aula com esses dados. Verifique os horários e salas.',
+            'FOREIGN KEY constraint failed': 'Sala ou curso inválido. Verifique os dados selecionados.',
+            'NOT NULL constraint failed': 'Erro nos dados da aula. Verifique se todos os campos estão preenchidos corretamente.'
+        };
 
-            // 🔥 CORREÇÃO: Garantir que os dados estejam no formato correto
-            const dadosFormatados = {
-                disciplina: dadosAula.disciplina,
-                sala_id: parseInt(dadosAula.sala_id),
-                curso: dadosAula.curso,
-                turma: dadosAula.turma,
-                horario_inicio: dadosAula.horario_inicio,
-                horario_fim: dadosAula.horario_fim,
-                dia_semana: dadosAula.dia_semana
-            };
-
-            console.log('📤 Enviando dados para API:', dadosFormatados);
-
-            const result = await api.criarAula(dadosFormatados);
-            
-            if (result && result.success) {
-                console.log('✅ Aula criada com sucesso!');
-                this.mostrarSucesso('Aula criada com sucesso!');
-                
-                // Recarregar aulas
-                await this.carregarMinhasAulas();
-                
-                // Voltar para a lista de aulas
-                showSection('minhas-aulas-professor');
-                
-                // Limpar formulário
-                document.getElementById('formCriarAula')?.reset();
-                
-            } else {
-                // 🔥 CORREÇÃO MELHORADA: Mostrar erro específico da API
-                const mensagemErro = result?.error || 'Erro desconhecido ao criar aula';
-                console.error('❌ Erro da API:', mensagemErro);
-                throw new Error(mensagemErro);
-            }
-        } catch (error) {
-            console.error('❌ Erro ao criar aula:', error);
-            
-            // 🔥 CORREÇÃO: Mensagens de erro mais específicas
-            let mensagemErro = 'Erro ao criar aula: ' + error.message;
-            
-            if (error.message.includes('Professor não encontrado')) {
-                mensagemErro = 'Seu perfil de professor não foi encontrado. O sistema tentará criar automaticamente. Tente novamente.';
-            } else if (error.message.includes('UNIQUE constraint failed')) {
-                mensagemErro = 'Já existe uma aula com esses dados. Verifique os horários e salas.';
-            } else if (error.message.includes('FOREIGN KEY constraint failed')) {
-                mensagemErro = 'Sala ou curso inválido. Verifique os dados selecionados.';
-            }
-            
-            this.mostrarErro(mensagemErro);
+        for (const [chave, mensagem] of Object.entries(mensagens)) {
+            if (error.message.includes(chave)) return mensagem;
         }
+
+        return 'Erro ao criar aula: ' + error.message;
     }
 
-    async excluirAula(aulaId) {
-        if (!confirm('Tem certeza que deseja excluir esta aula?')) {
-            return;
-        }
-
-        try {
-            console.log('🗑️ Excluindo aula:', aulaId);
-            
-            const result = await api.excluirAula(aulaId);
-            
-            if (result && result.success) {
-                console.log('✅ Aula excluída com sucesso!');
-                this.mostrarSucesso('Aula excluída com sucesso!');
-                
-                // Recarregar aulas
-                await this.carregarMinhasAulas();
-            } else {
-                throw new Error(result?.error || 'Erro ao excluir aula');
-            }
-        } catch (error) {
-            console.error('❌ Erro ao excluir aula:', error);
-            this.mostrarErro('Erro ao excluir aula: ' + error.message);
-        }
-    }
-
-    // 🔧 MÉTODOS AUXILIARES
+    // 🔥 MÉTODOS AUXILIARES
     getStatusAula(aula) {
         // Lógica para determinar status da aula
+        const agora = new Date();
+        const hoje = agora.getDay();
+        const horaAtual = agora.getHours() + agora.getMinutes() / 60;
+
+        // Mapear dia da semana (0=Domingo, 1=Segunda, etc.)
+        const diaSemanaMap = { 'segunda': 1, 'terca': 2, 'quarta': 3, 'quinta': 4, 'sexta': 5 };
+        const diaAula = diaSemanaMap[aula.dia_semana];
+
+        if (diaAula === hoje) {
+            const [horaInicio, minutoInicio] = aula.horario_inicio.split(':').map(Number);
+            const [horaFim, minutoFim] = aula.horario_fim.split(':').map(Number);
+            const horaInicioDecimal = horaInicio + minutoInicio / 60;
+            const horaFimDecimal = horaFim + minutoFim / 60;
+
+            if (horaAtual >= horaInicioDecimal && horaAtual <= horaFimDecimal) {
+                return { classe: 'em-andamento', texto: 'Em Andamento', icone: 'fa-play-circle' };
+            } else if (horaAtual < horaInicioDecimal) {
+                return { classe: 'agendada', texto: 'Agendada', icone: 'fa-clock' };
+            } else {
+                return { classe: 'concluida', texto: 'Concluída', icone: 'fa-check-circle' };
+            }
+        }
+
         return { classe: 'ativa', texto: 'Ativa', icone: 'fa-check-circle' };
     }
 
@@ -393,11 +641,17 @@ async carregarTurmasDisponiveis() {
             'terca': 'Terça', 
             'quarta': 'Quarta',
             'quinta': 'Quinta',
-            'sexta': 'Sexta'
+            'sexta': 'Sexta',
+            1: 'Segunda',
+            2: 'Terça',
+            3: 'Quarta', 
+            4: 'Quinta',
+            5: 'Sexta'
         };
         return diasMap[diaSemana] || diaSemana;
     }
 
+    // 🔥 MÉTODOS DE VISUALIZAÇÃO
     verDetalhesAula(aulaId) {
         console.log('📖 Ver detalhes da aula:', aulaId);
         const aula = this.minhasAulas.find(a => a.id === aulaId);
@@ -424,12 +678,16 @@ async carregarTurmasDisponiveis() {
                             <p><strong>Dias:</strong> ${this.formatarDiasSemana(aula.dia_semana)}</p>
                             <p><strong>Sala:</strong> ${aula.sala_numero} - Bloco ${aula.sala_bloco}</p>
                             <p><strong>Status:</strong> ${aula.ativa ? 'Ativa' : 'Inativa'}</p>
+                            ${aula.descricao ? `<p><strong>Descrição:</strong> ${aula.descricao}</p>` : ''}
                         </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Fechar</button>
                     </div>
                 </div>
             </div>
         `;
-        
+
         document.querySelectorAll('.modal-overlay').forEach(modal => modal.remove());
         document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
@@ -437,7 +695,7 @@ async carregarTurmasDisponiveis() {
     abrirMapaSala(bloco, andar, sala) {
         console.log('🗺️ Abrindo mapa para:', bloco, andar, sala);
         showSection('mapa-blocos');
-        
+
         setTimeout(() => {
             if (window.mapaManager) {
                 window.mapaManager.mostrarSalas(bloco, andar);
@@ -445,6 +703,82 @@ async carregarTurmasDisponiveis() {
         }, 300);
     }
 
+    // 🔥 UTILITÁRIOS
+    htmlToElement(html) {
+        const template = document.createElement('template');
+        template.innerHTML = html.trim();
+        return template.content.firstChild;
+    }
+
+    getHTMLAulasVazias() {
+        return `
+            <div class="professor-empty-state">
+                <i class="fas fa-chalkboard-teacher fa-3x"></i>
+                <p>Nenhuma aula encontrada</p>
+                <p class="empty-subtitle">Crie sua primeira aula usando o botão acima</p>
+            </div>
+        `;
+    }
+
+    adicionarEstiloSalaSelecionada() {
+        if (document.getElementById('professor-sala-styles')) return;
+
+        const style = document.createElement('style');
+        style.id = 'professor-sala-styles';
+        style.textContent = `
+            .professor-sala-select option:checked {
+                background: linear-gradient(135deg, #4CAF50, #45a049);
+                color: white;
+                font-weight: bold;
+            }
+            
+            .professor-sala-select option:hover {
+                background-color: #e8f5e8 !important;
+            }
+            
+            .sala-selecionada-indicator {
+                display: inline-block;
+                margin-left: 10px;
+                padding: 2px 8px;
+                background: #4CAF50;
+                color: white;
+                border-radius: 12px;
+                font-size: 0.8rem;
+                font-weight: 600;
+            }
+
+            .select-desabilitado {
+                opacity: 0.7;
+                cursor: not-allowed;
+                background-color: #f9f9f9;
+            }
+
+            .select-habilitado {
+                opacity: 1;
+                cursor: pointer;
+                background-color: white;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    obterSiglaCurso(cursoNome) {
+        const siglas = {
+            'Sistemas de Informação': 'SI',
+            'Administração': 'ADM',
+            'Direito': 'DIR',
+            'Engenharia Civil': 'EC',
+            'Medicina': 'MED',
+            'Psicologia': 'PSI',
+            'Enfermagem': 'ENF',
+            'Educação Física': 'EDF',
+            'Ciências Contábeis': 'CC',
+            'Arquitetura e Urbanismo': 'ARQ'
+        };
+        return siglas[cursoNome] || 'TUR';
+    }
+
+    // 🔥 NOTIFICAÇÕES
     mostrarSucesso(mensagem) {
         if (window.showNotification) {
             showNotification(mensagem, 'success');
@@ -460,296 +794,66 @@ async carregarTurmasDisponiveis() {
             alert('❌ ' + mensagem);
         }
     }
-    // 🔧 FUNÇÃO DE DEBUG - Adicione ao professor.js
-async debugAulas() {
-    try {
-        console.log('🔍 DEBUG: Verificando aulas no banco...');
-        
-        const token = localStorage.getItem('authToken');
-        const userData = JSON.parse(localStorage.getItem('userData'));
-        
-        const response = await fetch('/api/debug/aulas-professor', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log('📊 DEBUG - Aulas no banco:', data);
-            alert(`DEBUG: ${data.aulas.length} aulas encontradas para ${userData.email}`);
-        }
-    } catch (error) {
-        console.error('❌ Erro no debug:', error);
-    }
-}
-// No método criarAula, garantir que curso e turma sejam salvos corretamente
-async criarAula(dadosAula) {
-    try {
-        console.log('📝 Validando e criando nova aula:', dadosAula);
-        
-        // Validar dados
-        const erros = this.validarFormularioAula(dadosAula);
-        if (erros.length > 0) {
-            this.mostrarErro('Erros no formulário:\n' + erros.join('\n'));
-            return;
-        }
 
-        // 🔥 GARANTIR QUE OS FILTROS ESTEJEM CORRETOS
-        const dadosFormatados = {
-            disciplina: dadosAula.disciplina,
-            sala_id: parseInt(dadosAula.sala_id),
-            curso: dadosAula.curso, // ✅ CURSO para filtro
-            turma: dadosAula.turma, // ✅ TURMA para filtro
-            horario_inicio: dadosAula.horario_inicio,
-            horario_fim: dadosAula.horario_fim,
-            dia_semana: dadosAula.dia_semana
+    // 🔥 DEBUG
+    async debugAulas() {
+        try {
+            console.log('🔍 DEBUG: Verificando aulas no banco...');
+
+            const token = localStorage.getItem('authToken');
+            const userData = JSON.parse(localStorage.getItem('userData'));
+
+            const response = await fetch('/api/debug/aulas-professor', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📊 DEBUG - Aulas no banco:', data);
+                alert(`DEBUG: ${data.aulas.length} aulas encontradas para ${userData.email}`);
+            }
+        } catch (error) {
+            console.error('❌ Erro no debug:', error);
+        }
+    }
+
+    debugCriarAula() {
+        console.log('🔧 DEBUG: Testando criarAula manualmente...');
+
+        const dadosTeste = {
+            disciplina: 'Teste Debug',
+            sala_id: 1,
+            curso: 'Sistemas de Informação',
+            turma: 'SI1N',
+            horario_inicio: '18:50',
+            horario_fim: '19:40',
+            dia_semana: 1
         };
 
-        console.log('📤 Enviando dados para API (com filtros):', dadosFormatados);
-
-        const result = await api.criarAula(dadosFormatados);
-        
-        if (result && result.success) {
-            console.log('✅ Aula criada com sucesso!');
-            this.mostrarSucesso('Aula criada com sucesso!');
-            
-            await this.carregarMinhasAulas();
-            showSection('minhas-aulas-professor');
-            document.getElementById('formCriarAula')?.reset();
-            
-        } else {
-            const mensagemErro = result?.error || 'Erro desconhecido ao criar aula';
-            throw new Error(mensagemErro);
-        }
-    } catch (error) {
-        console.error('❌ Erro ao criar aula:', error);
-        let mensagemErro = 'Erro ao criar aula: ' + error.message;
-        
-        if (error.message.includes('Professor não encontrado')) {
-            mensagemErro = 'Seu perfil de professor não foi encontrado. O sistema tentará criar automaticamente. Tente novamente.';
-        } else if (error.message.includes('UNIQUE constraint failed')) {
-            mensagemErro = 'Já existe uma aula com esses dados. Verifique os horários e salas.';
-        } else if (error.message.includes('FOREIGN KEY constraint failed')) {
-            mensagemErro = 'Sala ou curso inválido. Verifique os dados selecionados.';
-        }
-        
-        this.mostrarErro(mensagemErro);
+        console.log('📝 Dados de teste:', dadosTeste);
+        this.criarAula(dadosTeste, ['segunda']);
     }
-    
-}
-// Adicione estas funções ao ProfessoresManager no professores.js
 
-verDetalhesProfessor(professorId) {
-    console.log('📖 Ver detalhes do professor:', professorId);
-    
-    const professor = this.professores.find(p => p.id == professorId) || 
-                     this.favoritos.find(p => p.id == professorId);
-    
-    if (professor) {
-        this.mostrarAlertaDetalhes(professor);
-    } else {
-        this.mostrarMensagem('Professor não encontrado', 'error');
+    // 🔥 LIMPEZA
+    destruir() {
+        this.cache.clear();
+        document.removeEventListener('keydown', this.keyHandler);
+        console.log('🧹 ProfessorManager destruído');
     }
-}
-
-mostrarAlertaDetalhes(professor) {
-    // Criar overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'professor-alert-overlay';
-    overlay.innerHTML = this.gerarHTMLAlerta(professor);
-    
-    document.body.appendChild(overlay);
-    
-    // Mostrar com animação
-    setTimeout(() => {
-        overlay.classList.add('show');
-    }, 10);
-    
-    // Configurar event listeners
-    this.configurarEventListenersAlerta(overlay, professor);
-}
-
-gerarHTMLAlerta(professor) {
-    return `
-        <div class="professor-alert">
-            <div class="professor-alert-header">
-                <h2 class="professor-alert-title">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                    Detalhes do Professor
-                </h2>
-                <button class="professor-alert-close" aria-label="Fechar">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div class="professor-alert-content">
-                <div class="professor-details">
-                    <div class="professor-detail-group">
-                        <div class="professor-detail-icon">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="professor-detail-content">
-                            <div class="professor-detail-label">Nome Completo</div>
-                            <div class="professor-detail-value">${professor.nome}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="professor-detail-group">
-                        <div class="professor-detail-icon">
-                            <i class="fas fa-envelope"></i>
-                        </div>
-                        <div class="professor-detail-content">
-                            <div class="professor-detail-label">Email</div>
-                            <div class="professor-detail-value">${professor.email}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="professor-detail-group">
-                        <div class="professor-detail-icon">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="professor-detail-content">
-                            <div class="professor-detail-label">Status</div>
-                            <div class="professor-detail-value professor-status-${professor.ativo ? 'active' : 'inactive'}">
-                                ${professor.ativo ? 'Ativo' : 'Inativo'}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="professor-stats">
-                    <div class="professor-stat-card">
-                        <span class="professor-stat-number">${this.favoritos.filter(p => p.id === professor.id).length > 0 ? '⭐' : '0'}</span>
-                        <span class="professor-stat-label">Seu Favorito</span>
-                    </div>
-                    <div class="professor-stat-card">
-                        <span class="professor-stat-number">${professor.id}</span>
-                        <span class="professor-stat-label">ID</span>
-                    </div>
-                </div>
-                
-                <div class="professor-aulas-section">
-                    <h3 class="professor-section-title">
-                        <i class="fas fa-book"></i>
-                        Informações Adicionais
-                    </h3>
-                    <div class="professor-aulas-list">
-                        <div class="professor-aula-item">
-                            <div class="professor-aula-info">
-                                <p class="professor-aula-name">Disponível para contato</p>
-                                <p class="professor-aula-details">Via email institucional</p>
-                            </div>
-                            <span class="professor-aula-horario">Ativo</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="professor-alert-footer">
-                <button class="professor-alert-btn professor-alert-btn-outline" data-action="close">
-                    <i class="fas fa-times"></i> Fechar
-                </button>
-                ${this.favoritos.filter(p => p.id === professor.id).length === 0 ? 
-                    `<button class="professor-alert-btn professor-alert-btn-primary" data-action="favorite">
-                        <i class="fas fa-star"></i> Adicionar aos Favoritos
-                    </button>` : 
-                    `<button class="professor-alert-btn professor-alert-btn-outline" data-action="unfavorite">
-                        <i class="fas fa-trash"></i> Remover dos Favoritos
-                    </button>`
-                }
-            </div>
-        </div>
-    `;
-}
-
-configurarEventListenersAlerta(overlay, professor) {
-    // Fechar ao clicar no X
-    const closeBtn = overlay.querySelector('.professor-alert-close');
-    closeBtn.addEventListener('click', () => {
-        this.fecharAlerta(overlay);
-    });
-    
-    // Fechar ao clicar no overlay (fora do alerta)
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            this.fecharAlerta(overlay);
-        }
-    });
-    
-    // Fechar com ESC
-    const keyHandler = (e) => {
-        if (e.key === 'Escape') {
-            this.fecharAlerta(overlay);
-            document.removeEventListener('keydown', keyHandler);
-        }
-    };
-    document.addEventListener('keydown', keyHandler);
-    
-    // Ações dos botões
-    const buttons = overlay.querySelectorAll('.professor-alert-btn');
-    buttons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const action = btn.dataset.action;
-            this.executarAcaoAlerta(action, professor, overlay);
-        });
-    });
-}
-
-executarAcaoAlerta(action, professor, overlay) {
-    switch(action) {
-        case 'close':
-            this.fecharAlerta(overlay);
-            break;
-        case 'favorite':
-            this.adicionarProfessorFavoritoDireto(professor.id, overlay);
-            break;
-        case 'unfavorite':
-            this.removerFavoritoDireto(professor.id, overlay);
-            break;
-    }
-}
-
-adicionarProfessorFavoritoDireto(professorId, overlay) {
-    if (!this.user) return;
-    
-    // Simular adição (você pode integrar com a função existente)
-    this.mostrarMensagem('Professor adicionado aos favoritos!', 'success');
-    this.fecharAlerta(overlay);
-    
-    // Recarregar favoritos
-    setTimeout(() => {
-        this.carregarProfessoresFavoritos();
-    }, 500);
-}
-
-removerFavoritoDireto(professorId, overlay) {
-    if (!this.user) return;
-    
-    if (confirm('Tem certeza que deseja remover este professor dos favoritos?')) {
-        this.mostrarMensagem('Professor removido dos favoritos!', 'success');
-        this.fecharAlerta(overlay);
-        
-        // Recarregar favoritos
-        setTimeout(() => {
-            this.carregarProfessoresFavoritos();
-        }, 500);
-    }
-}
-
-fecharAlerta(overlay) {
-    overlay.classList.remove('show');
-    setTimeout(() => {
-        if (overlay.parentNode) {
-            overlay.parentNode.removeChild(overlay);
-        }
-    }, 300);
-}
-
-// Chame esta função no console do navegador para testar:
-// professorManager.debugAulas()
 }
 
 // ✅ INSTÂNCIA GLOBAL
 const professorManager = new ProfessorManager();
+
+// Debug global
+window.debugProfessor = professorManager;
+window.professorManager = professorManager;
+
+console.log('👨‍🏫 professorManager global carregado:', {
+    criarAula: typeof professorManager.criarAula,
+    carregarMinhasAulas: typeof professorManager.carregarMinhasAulas,
+    excluirAula: typeof professorManager.excluirAula
+});

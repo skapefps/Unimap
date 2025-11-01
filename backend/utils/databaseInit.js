@@ -7,7 +7,7 @@ function initializeDatabase() {
 
     db.serialize(() => {
         // ==================== TABELAS PRINCIPAIS ====================
-        
+
         // 1. Usuários
         db.run(`CREATE TABLE IF NOT EXISTS usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -136,29 +136,64 @@ function initializeDatabase() {
             }
         });
 
-        // 8. Aulas (estrutura do utils/databaseInit.js)
         db.run(`CREATE TABLE IF NOT EXISTS aulas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            disciplina_id INTEGER,
-            professor_id INTEGER NOT NULL,
-            sala_id INTEGER,
-            curso TEXT,
-            turma TEXT,
-            horario_inicio TIME NOT NULL,
-            horario_fim TIME NOT NULL,
-            dia_semana INTEGER NOT NULL,
-            data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
-            ativa BOOLEAN DEFAULT 1,
-            FOREIGN KEY (disciplina_id) REFERENCES disciplinas (id),
-            FOREIGN KEY (professor_id) REFERENCES professores (id),
-            FOREIGN KEY (sala_id) REFERENCES salas (id)
-        )`, (err) => {
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    disciplina TEXT NOT NULL,
+    professor_id INTEGER NOT NULL,
+    sala_id INTEGER,
+    curso TEXT,
+    turma TEXT,
+    horario_inicio TIME NOT NULL,
+    horario_fim TIME NOT NULL,
+    dia_semana INTEGER NOT NULL,
+    data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ativa BOOLEAN DEFAULT 1,
+    FOREIGN KEY (professor_id) REFERENCES professores (id),
+    FOREIGN KEY (sala_id) REFERENCES salas (id)
+)`, (err) => {
             if (err) {
                 console.error('❌ Erro ao criar tabela aulas:', err);
             } else {
                 console.log('✅ Tabela aulas verificada/criada');
+
+                verificarEAdicionarColunaDisciplina();
             }
         });
+
+        function verificarEAdicionarColunaDisciplina() {
+            console.log('🔍 Verificando se a coluna disciplina existe...');
+
+            db.all(`PRAGMA table_info(aulas)`, (err, rows) => {
+                if (err) {
+                    console.error('❌ Erro ao verificar estrutura da tabela aulas:', err);
+                    return;
+                }
+
+                if (!rows || !Array.isArray(rows)) {
+                    console.error('❌ Dados da tabela aulas não retornados corretamente');
+                    return;
+                }
+
+                const hasDisciplina = rows.some(row => row.name === 'disciplina');
+
+                if (!hasDisciplina) {
+                    console.log('🔄 Adicionando coluna disciplina na tabela aulas...');
+                    db.run(`ALTER TABLE aulas ADD COLUMN disciplina TEXT`, (alterErr) => {
+                        if (alterErr) {
+                            if (alterErr.message.includes('duplicate column name')) {
+                                console.log('✅ Coluna disciplina já existe');
+                            } else {
+                                console.error('❌ Erro ao adicionar coluna disciplina:', alterErr);
+                            }
+                        } else {
+                            console.log('✅ Coluna disciplina adicionada com sucesso!');
+                        }
+                    });
+                } else {
+                    console.log('✅ Coluna disciplina já existe na tabela aulas');
+                }
+            });
+        }
 
         // 9. Aluno_Turmas
         db.run(`CREATE TABLE IF NOT EXISTS aluno_turmas (
@@ -228,7 +263,7 @@ function initializeDatabase() {
         });
 
         // ==================== DADOS INICIAIS ====================
-        
+
         // Criar usuários padrão após um pequeno delay para garantir que a tabela existe
         setTimeout(() => {
             criarUsuarioAdmin();
@@ -236,7 +271,7 @@ function initializeDatabase() {
         }, 1000);
 
         console.log('✅ Estrutura do banco de dados UNIMAP inicializada com sucesso!');
-        
+
         // Verificar tabelas criadas
         setTimeout(() => {
             db.all("SELECT name FROM sqlite_master WHERE type='table'", (err, tables) => {
@@ -276,12 +311,12 @@ function popularBlocos() {
 
     db.get('SELECT COUNT(*) as total FROM blocos', [], (err, row) => {
         if (err) return;
-        
+
         if (!row || row.total === 0) {
             console.log('🏢 Populando tabela blocos...');
-            
+
             const stmt = db.prepare('INSERT OR IGNORE INTO blocos (letra, nome) VALUES (?, ?)');
-            
+
             blocos.forEach(bloco => {
                 stmt.run(bloco, (err) => {
                     if (err && !err.message.includes('UNIQUE')) {
@@ -289,7 +324,7 @@ function popularBlocos() {
                     }
                 });
             });
-            
+
             stmt.finalize();
             console.log('✅ Blocos populados com sucesso');
         }
@@ -299,7 +334,7 @@ function popularBlocos() {
 // Popular cursos básicos
 function popularCursosBasicos() {
     const cursos = [
-        ['Sistemas de Informação', 8, 'Integral', 8],
+        ['Sistemas de Informação', 8, 'Noturno', 8],
         ['Administração', 8, 'Noturno', 8],
         ['Direito', 10, 'Integral', 10],
         ['Engenharia Civil', 10, 'Integral', 10],
@@ -313,12 +348,12 @@ function popularCursosBasicos() {
 
     db.get('SELECT COUNT(*) as total FROM cursos', [], (err, row) => {
         if (err) return;
-        
+
         if (!row || row.total === 0) {
-            console.log('📚 Populando tabela cursos com dados básicos...');
-            
+            console.log('📚 Populando tabela cursos com períodos...');
+
             const stmt = db.prepare('INSERT OR IGNORE INTO cursos (nome, duracao, turno, total_periodos) VALUES (?, ?, ?, ?)');
-            
+
             cursos.forEach(curso => {
                 stmt.run(curso, (err) => {
                     if (err && !err.message.includes('UNIQUE')) {
@@ -326,9 +361,9 @@ function popularCursosBasicos() {
                     }
                 });
             });
-            
+
             stmt.finalize();
-            console.log('✅ Cursos básicos populados com sucesso');
+            console.log('✅ Cursos com períodos populados com sucesso');
         }
     });
 }
@@ -345,12 +380,12 @@ function popularProfessores() {
 
     db.get('SELECT COUNT(*) as total FROM professores', [], (err, row) => {
         if (err) return;
-        
+
         if (!row || row.total === 0) {
             console.log('👨‍🏫 Populando tabela professores...');
-            
+
             const stmt = db.prepare('INSERT OR IGNORE INTO professores (nome, email) VALUES (?, ?)');
-            
+
             professores.forEach(professor => {
                 stmt.run(professor, (err) => {
                     if (err && !err.message.includes('UNIQUE')) {
@@ -358,7 +393,7 @@ function popularProfessores() {
                     }
                 });
             });
-            
+
             stmt.finalize();
             console.log('✅ Professores populados com sucesso');
         }
@@ -380,12 +415,12 @@ function popularDisciplinas() {
 
     db.get('SELECT COUNT(*) as total FROM disciplinas', [], (err, row) => {
         if (err) return;
-        
+
         if (!row || row.total === 0) {
             console.log('📖 Populando tabela disciplinas...');
-            
+
             const stmt = db.prepare('INSERT OR IGNORE INTO disciplinas (nome, curso_id, periodo, carga_horaria) VALUES (?, ?, ?, ?)');
-            
+
             disciplinas.forEach(disciplina => {
                 stmt.run(disciplina, (err) => {
                     if (err && !err.message.includes('UNIQUE')) {
@@ -393,7 +428,7 @@ function popularDisciplinas() {
                     }
                 });
             });
-            
+
             stmt.finalize();
             console.log('✅ Disciplinas populadas com sucesso');
         }
@@ -417,12 +452,12 @@ function popularTurmas() {
 
     db.get('SELECT COUNT(*) as total FROM turmas', [], (err, row) => {
         if (err) return;
-        
+
         if (!row || row.total === 0) {
             console.log('👥 Populando tabela turmas...');
-            
+
             const stmt = db.prepare('INSERT OR IGNORE INTO turmas (nome, curso, periodo, ano) VALUES (?, ?, ?, ?)');
-            
+
             turmas.forEach(turma => {
                 stmt.run(turma, (err) => {
                     if (err && !err.message.includes('UNIQUE')) {
@@ -430,7 +465,7 @@ function popularTurmas() {
                     }
                 });
             });
-            
+
             stmt.finalize();
             console.log('✅ Turmas populadas com sucesso');
         }
@@ -452,12 +487,12 @@ function popularHorarios() {
 
     db.get('SELECT COUNT(*) as total FROM horarios', [], (err, row) => {
         if (err) return;
-        
+
         if (!row || row.total === 0) {
             console.log('🕐 Populando tabela horarios...');
-            
+
             const stmt = db.prepare('INSERT OR IGNORE INTO horarios (nome, horario_inicio, horario_fim) VALUES (?, ?, ?)');
-            
+
             horarios.forEach(horario => {
                 stmt.run(horario, (err) => {
                     if (err && !err.message.includes('UNIQUE')) {
@@ -465,7 +500,7 @@ function popularHorarios() {
                     }
                 });
             });
-            
+
             stmt.finalize();
             console.log('✅ Horários populados com sucesso');
         }
@@ -476,19 +511,19 @@ function popularHorarios() {
 function criarSalasExemplo() {
     db.get('SELECT COUNT(*) as total FROM salas', [], (err, row) => {
         if (err) return;
-        
+
         if (!row || row.total === 0) {
             console.log('🏫 Criando salas de exemplo...');
-            
+
             // Criar salas para blocos A a N
             const blocos = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
             const stmt = db.prepare(`
                 INSERT INTO salas (numero, bloco, andar, tipo, capacidade, recursos) 
                 VALUES (?, ?, ?, ?, ?, ?)
             `);
-            
+
             let salasCriadas = 0;
-            
+
             blocos.forEach(bloco => {
                 // Criar 5 salas por andar (Térreo, 1º, 2º, 3º andar)
                 for (let andar = 0; andar <= 3; andar++) {
@@ -497,7 +532,7 @@ function criarSalasExemplo() {
                         const tipo = andar === 3 ? 'Laboratório' : 'Sala de Aula';
                         const capacidade = andar === 3 ? 20 : 30;
                         const recursos = andar === 3 ? 'Computadores, Projetor' : 'Projetor, Quadro';
-                        
+
                         stmt.run([numero, bloco, andar, tipo, capacidade, recursos], (err) => {
                             if (err) {
                                 // Ignorar erros de duplicação
@@ -511,7 +546,7 @@ function criarSalasExemplo() {
                     }
                 }
             });
-            
+
             stmt.finalize(() => {
                 console.log(`✅ ${salasCriadas} salas de exemplo criadas`);
             });
@@ -523,21 +558,21 @@ function criarSalasExemplo() {
 function criarUsuarioAdmin() {
     db.get('SELECT COUNT(*) as total FROM usuarios WHERE tipo = "admin"', [], (err, row) => {
         if (err) return;
-        
+
         if (!row || row.total === 0) {
             console.log('👤 Criando usuário admin padrão...');
-            
+
             bcrypt.hash('admin123', 10, (err, senhaHash) => {
                 if (err) {
                     console.error('❌ Erro ao criar hash para admin:', err);
                     return;
                 }
-                
+
                 db.run(
                     `INSERT INTO usuarios (nome, email, senha_hash, tipo) 
                      VALUES (?, ?, ?, 'admin')`,
                     ['Administrador', 'admin@unipam.edu.br', senhaHash],
-                    function(err) {
+                    function (err) {
                         if (err) {
                             console.error('❌ Erro ao criar usuário admin:', err);
                         } else {
@@ -556,21 +591,21 @@ function criarUsuarioAdmin() {
 function criarUsuarioProfessor() {
     db.get('SELECT COUNT(*) as total FROM usuarios WHERE tipo = "professor"', [], (err, row) => {
         if (err) return;
-        
+
         if (!row || row.total === 0) {
             console.log('👨‍🏫 Criando usuário professor padrão...');
-            
+
             bcrypt.hash('prof123', 10, (err, senhaHash) => {
                 if (err) {
                     console.error('❌ Erro ao criar hash para professor:', err);
                     return;
                 }
-                
+
                 db.run(
                     `INSERT INTO usuarios (nome, email, senha_hash, tipo) 
                      VALUES (?, ?, ?, 'professor')`,
                     ['Professor Teste', 'professor@unipam.edu.br', senhaHash],
-                    function(err) {
+                    function (err) {
                         if (err) {
                             console.error('❌ Erro ao criar usuário professor:', err);
                         } else {
@@ -588,21 +623,21 @@ function criarUsuarioProfessor() {
 // Função para criar salas adicionais (opcional)
 function criarSalasAdicionais() {
     console.log('🏗️ Criando salas adicionais...');
-    
+
     const tiposSala = ['Sala de Aula', 'Laboratório', 'Auditório', 'Sala de Reunião'];
-    
+
     // Criar salas para os blocos A-N
     for (let blocoId = 1; blocoId <= 14; blocoId++) {
         const blocoLetra = String.fromCharCode(64 + blocoId); // A, B, C, ..., N
-        
+
         for (let andar = 0; andar <= 3; andar++) {
             const numSalas = Math.floor(Math.random() * 6) + 8; // 8-13 salas por andar
-            
+
             for (let i = 1; i <= numSalas; i++) {
                 const capacidade = Math.floor(Math.random() * 40) + 20; // 20-60 lugares
                 const tipo = tiposSala[Math.floor(Math.random() * tiposSala.length)];
                 const numeroSala = `${blocoLetra}${andar}${i.toString().padStart(2, '0')}`;
-                
+
                 db.run(
                     `INSERT OR IGNORE INTO salas 
                      (numero, bloco, andar, tipo, capacidade, recursos) 
@@ -615,7 +650,7 @@ function criarSalasAdicionais() {
                         capacidade,
                         'Projetor, Ar-condicionado, Quadro branco'
                     ],
-                    function(err) {
+                    function (err) {
                         if (err && !err.message.includes('UNIQUE')) {
                             console.error(`❌ Erro ao criar sala ${numeroSala}:`, err);
                         }
@@ -624,14 +659,14 @@ function criarSalasAdicionais() {
             }
         }
     }
-    
+
     console.log('✅ Salas adicionais criadas!');
 }
 
 // Função para verificar e criar tabela aluno_turmas se necessário
 function initializeAlunoTurmasTable() {
     console.log('🔄 Verificando tabela aluno_turmas...');
-    
+
     db.run(`CREATE TABLE IF NOT EXISTS aluno_turmas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         aluno_id INTEGER NOT NULL,
@@ -653,7 +688,7 @@ function initializeAlunoTurmasTable() {
 // Função para atualizar períodos dos cursos
 function atualizarPeriodosDosCursos() {
     console.log('📚 Atualizando períodos dos cursos existentes...');
-    
+
     const cursosPeriodos = {
         'Sistemas de Informação': 8,
         'Administração': 8,
@@ -666,12 +701,12 @@ function atualizarPeriodosDosCursos() {
         'Ciências Contábeis': 8,
         'Arquitetura e Urbanismo': 10
     };
-    
+
     Object.entries(cursosPeriodos).forEach(([nome, periodos]) => {
         db.run(
             'UPDATE cursos SET total_periodos = ? WHERE nome = ?',
             [periodos, nome],
-            function(err) {
+            function (err) {
                 if (err) {
                     console.error(`❌ Erro ao atualizar curso ${nome}:`, err);
                 } else if (this.changes > 0) {
