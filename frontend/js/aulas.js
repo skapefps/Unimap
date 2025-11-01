@@ -6,7 +6,7 @@ class AulasManager {
 
     async init() {
         console.log('📚 Inicializando AulasManager...');
-        await this.carregarAulas();
+        //await this.carregarAulas();
     }
 
     async carregarAulas() {

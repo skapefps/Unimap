@@ -1,4 +1,4 @@
-// api.js - Serviço de API UNIMAP (VERSÃO OTIMIZADA)
+// api.js - Serviço de API UNIMAP (VERSÃO CORRIGIDA)
 class ApiService {
     constructor() {
         this.baseURL = window.location.origin + '/api';
@@ -210,9 +210,39 @@ class ApiService {
         });
     }
 
-    // 🔥 MÉTODOS ESPECÍFICOS PARA PROFESSORES
+    async atualizarAula(aulaId, dadosAula) {
+        console.log('✏️ Atualizando aula:', aulaId, dadosAula);
+
+        // Limpar cache relacionado a aulas
+        this.clearCacheByPattern('/aulas');
+
+        return this.request(`/aulas/${aulaId}`, {
+            method: 'PUT',
+            body: JSON.stringify(dadosAula)
+        });
+    }
+
+    // 🔥 MÉTODOS PARA CANCELAR/REATIVAR AULA
+    async cancelarAula(aulaId) {
+        console.log('🚫 Cancelando aula:', aulaId);
+        this.clearCacheByPattern('/aulas');
+        return this.request(`/aulas/${aulaId}/cancelar`, {
+            method: 'PUT'
+        });
+    }
+
+    async reativarAula(aulaId) {
+        console.log('🔄 Reativando aula:', aulaId);
+        this.clearCacheByPattern('/aulas');
+        return this.request(`/aulas/${aulaId}/reativar`, {
+            method: 'PUT'
+        });
+    }
+
+    // 🔥 MÉTODOS ESPECÍFICOS PARA PROFESSORES - CORRIGIDOS
     async getMinhasAulasProfessor() {
-        return this.request('/professor/minhas-aulas');
+        // 🔥 CORREÇÃO: Rota correta para aulas do professor
+        return this.request('/aulas/professor/minhas-aulas');
     }
 
     // 🔥 MÉTODOS PARA CURSOS OTIMIZADOS

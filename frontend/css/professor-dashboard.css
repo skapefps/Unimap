@@ -1,7 +1,6 @@
 /* ===== ESTILOS OTIMIZADOS DO PROFESSOR DASHBOARD ===== */
-/* Prefixo: professor- para evitar conflitos - VERSÃO OTIMIZADA */
+/* Prefixo: professor- | Versão: 3.0 | Status: Otimizado */
 
-/* ===== VARIÁVEIS CSS ===== */
 :root {
     --professor-primary: #3498db;
     --professor-secondary: #2c3e50;
@@ -19,7 +18,7 @@
     --professor-transition: all 0.3s ease;
 }
 
-/* ===== RESET E ESTILOS BASE ===== */
+/* ===== RESET E BASE ===== */
 .professor-page-header,
 .professor-filters-container,
 .professor-salas-filters,
@@ -111,9 +110,7 @@
     width: 100%;
 }
 
-/* ESTILOS CORRIGIDOS PARA SELECTS DESABILITADOS */
-
-/* Remove completamente a seta padrão do select */
+/* ESTILOS CORRIGIDOS PARA SELECTS */
 .professor-form-control {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -121,13 +118,11 @@
     background-image: none !important;
 }
 
-/* Estilo base para todos os selects */
 select.professor-form-control {
     background: white url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23333' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") no-repeat right 12px center/16px !important;
     padding-right: 40px !important;
 }
 
-/* Estilo para selects desabilitados - SEM SETA */
 select.professor-form-control:disabled {
     background: #f9f9f9 !important;
     background-image: none !important;
@@ -137,17 +132,14 @@ select.professor-form-control:disabled {
     padding-right: 12px !important;
 }
 
-/* Remove qualquer seta residual no Firefox */
 select.professor-form-control:-moz-disabled {
     background-image: none !important;
 }
 
-/* Remove qualquer seta residual no Internet Explorer */
 select.professor-form-control:disabled::-ms-expand {
     display: none !important;
 }
 
-/* Estilo para campos desabilitados com aparência consistente */
 .professor-form-control:disabled {
     background-color: #f9f9f9 !important;
     color: #888 !important;
@@ -155,23 +147,16 @@ select.professor-form-control:disabled::-ms-expand {
     cursor: not-allowed !important;
 }
 
-/* Estados dos campos */
 .professor-form-control:focus {
     border-color: #4CAF50 !important;
     box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2) !important;
 }
 
-.professor-form-control:valid:not(:disabled) {
-    border-color: #4CAF50 !important;
-    background-color: #f8fff8 !important;
-}
-
-/* Indicador visual para campos preenchidos */
+.professor-form-control:valid:not(:disabled),
 .campo-preenchido {
     border-color: #4CAF50 !important;
     background-color: #f8fff8 !important;
 }
-
 
 .professor-filter-select:focus,
 .professor-filter-input:focus,
@@ -182,15 +167,6 @@ select.professor-form-control:disabled::-ms-expand {
 }
 
 /* ===== SISTEMA DE GRIDS ===== */
-.professor-aulas-grid,
-.professor-blocos-grid,
-.professor-andares-grid,
-.professor-salas-grid {
-    display: grid;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
 .professor-aulas-grid {
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
 }
@@ -205,6 +181,15 @@ select.professor-form-control:disabled::-ms-expand {
 
 .professor-salas-grid {
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+}
+
+.professor-aulas-grid,
+.professor-blocos-grid,
+.professor-andares-grid,
+.professor-salas-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 /* Cards Base */
@@ -238,7 +223,6 @@ select.professor-form-control:disabled::-ms-expand {
     border-left: 4px solid var(--professor-primary);
 }
 
-/* Efeitos Hover */
 .professor-aula-card:hover,
 .professor-bloco-card:hover,
 .professor-andar-card:hover,
@@ -606,102 +590,7 @@ select.professor-form-control:disabled::-ms-expand {
     font-weight: 500;
 }
 
-/* Campos de Formulário Otimizados */
-.professor-form-control:disabled {
-    background-color: #f5f5f5 !important;
-    color: #999 !important;
-    border-color: #ddd !important;
-    cursor: not-allowed !important;
-}
-
-.professor-sala-select option:checked {
-    background: linear-gradient(135deg, #4CAF50, #45a049) !important;
-    color: white !important;
-    font-weight: bold !important;
-}
-
-.professor-sala-select:focus {
-    border-color: #4CAF50 !important;
-    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2) !important;
-}
-
-.professor-form-control:valid:not(:disabled) {
-    border-color: #4CAF50 !important;
-    background-color: #f8fff8 !important;
-}
-
-.campo-preenchido {
-    border-color: #4CAF50 !important;
-    background-color: #f8fff8 !important;
-}
-
-.select-desabilitado {
-    position: relative;
-}
-
-.select-desabilitado::after {
-    content: "Selecione o curso primeiro";
-    position: absolute;
-    top: -25px;
-    left: 0;
-    background: #333;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity 0.3s;
-}
-
-.select-desabilitado:hover::after {
-    opacity: 1;
-}
-
-select.professor-form-control:disabled {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23888' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
-}
-
-/* Indicador de Progresso */
-.form-progress {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    position: relative;
-}
-
-.form-step {
-    flex: 1;
-    text-align: center;
-    padding: 10px;
-    background: #f5f5f5;
-    margin: 0 5px;
-    border-radius: 5px;
-    font-weight: 500;
-    position: relative;
-}
-
-.form-step.active {
-    background: #4CAF50;
-    color: white;
-}
-
-.form-step.completed {
-    background: #8BC34A;
-    color: white;
-}
-
-.form-step:first-child {
-    margin-left: 0;
-}
-
-.form-step:last-child {
-    margin-right: 0;
-}
-
-/* CLASSES ESPECÍFICAS PARA CONTROLE DE ESTADO DOS SELECTS */
-
-/* GARANTIR QUE AS CLASSES ESTÃO FUNCIONANDO */
+/* CLASSES PARA CONTROLE DE SELECTS */
 .select-habilitado {
     background: white url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23333' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") no-repeat right 12px center/16px !important;
     padding-right: 40px !important;
@@ -727,7 +616,6 @@ select.professor-form-control {
     padding-right: 12px !important;
 }
 
-/* Garantir que selects desabilitados não mostrem seta em todos os navegadores */
 select.professor-form-control:disabled,
 select.select-desabilitado {
     -webkit-appearance: none !important;
@@ -736,7 +624,6 @@ select.select-desabilitado {
     background-image: none !important;
 }
 
-/* Firefox specific fix */
 @-moz-document url-prefix() {
 
     select.professor-form-control:disabled,
@@ -748,7 +635,6 @@ select.select-desabilitado {
     }
 }
 
-/* Internet Explorer fix */
 @media all and (-ms-high-contrast: none),
 (-ms-high-contrast: active) {
 
@@ -762,6 +648,346 @@ select.select-desabilitado {
     }
 }
 
+/* ===== BOTÕES EM 2 FILEIRAS OTIMIZADOS ===== */
+.professor-aula-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    align-items: stretch;
+}
+
+.professor-btn-action {
+    padding: 10px 8px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 38px;
+    min-width: 0;
+    flex-direction: column;
+    text-align: center;
+}
+
+.professor-btn-action i {
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+}
+
+.professor-btn-action span {
+    font-size: 0.75rem;
+    line-height: 1.2;
+    display: block;
+}
+
+/* Cores dos botões otimizadas */
+.professor-btn-action {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
+}
+
+.professor-btn-action:hover {
+    background: linear-gradient(135deg, #2980b9, #2471a3);
+}
+
+.professor-btn-action.secundario {
+    background: linear-gradient(135deg, #27ae60, #219a52);
+    box-shadow: 0 2px 4px rgba(39, 174, 96, 0.3);
+}
+
+.professor-btn-action.secundario:hover {
+    background: linear-gradient(135deg, #219a52, #1e8449);
+}
+
+.professor-btn-action.editar {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    box-shadow: 0 2px 4px rgba(243, 156, 18, 0.3);
+}
+
+.professor-btn-action.editar:hover {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+}
+
+.professor-btn-action.cancelar {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+    color: #212529;
+}
+
+.professor-btn-action.cancelar:hover {
+    background: linear-gradient(135deg, #e0a800, #d39e00);
+}
+
+.professor-btn-action.reativar {
+    background: linear-gradient(135deg, #20c997, #1ba87e);
+    box-shadow: 0 2px 4px rgba(32, 201, 151, 0.3);
+    color: white;
+}
+
+.professor-btn-action.reativar:hover {
+    background: linear-gradient(135deg, #1ba87e, #189770);
+}
+
+.professor-btn-action.perigo {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+}
+
+.professor-btn-action.perigo:hover {
+    background: linear-gradient(135deg, #c0392b, #a93226);
+}
+
+.professor-btn-action:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Estados desabilitados */
+.professor-btn-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.professor-btn-action.loading {
+    position: relative;
+    color: transparent;
+}
+
+.professor-btn-action.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Layout específico para aulas canceladas */
+.professor-aula-card.aula-cancelada .professor-aula-actions {
+    grid-template-columns: 1fr 1fr;
+}
+
+/* ===== CARD DE AULA CLICÁVEL ===== */
+.professor-aula-card {
+    padding: 20px;
+    margin-bottom: 16px;
+    border-radius: 10px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    border: 2px solid transparent;
+}
+
+.professor-aula-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    border-color: #3498db;
+}
+
+.professor-aula-card:active {
+    transform: translateY(0);
+}
+
+.professor-aula-card-content {
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+.professor-aula-card::after {
+    content: 'Clique para ver detalhes';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.7rem;
+    color: #3498db;
+    background: rgba(52, 152, 219, 0.1);
+    padding: 2px 6px;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.professor-aula-card:hover::after {
+    opacity: 1;
+}
+
+/* Aula cancelada */
+.professor-aula-card.aula-cancelada {
+    opacity: 0.7;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-left: 4px solid #6c757d;
+}
+
+.professor-aula-card.aula-cancelada:hover {
+    border-color: #6c757d;
+}
+
+.professor-aula-card.aula-cancelada .professor-aula-header h3 {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+.professor-aula-card.aula-cancelada::after {
+    content: 'Clique para ver detalhes';
+    color: #6c757d;
+    background: rgba(108, 117, 125, 0.1);
+}
+
+.status-cancelada {
+    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+    color: white !important;
+}
+
+/* ===== MODAIS ===== */
+.modal-large {
+    max-width: 700px;
+    width: 90%;
+}
+
+.modal-extra-large {
+    max-width: 800px;
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    padding: 20px;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.modal-body {
+    padding: 25px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    background: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+    position: sticky;
+    bottom: 0;
+}
+
+/* Detalhes da Aula */
+.aula-detalhes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.detalhe-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid #3498db;
+}
+
+.detalhe-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.detalhe-item label {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.9rem;
+}
+
+.detalhe-item span {
+    color: #34495e;
+    font-size: 0.95rem;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-badge.em-andamento {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+}
+
+.status-badge.agendada {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+}
+
+.status-badge.concluida {
+    background: linear-gradient(135deg, #27ae60, #219a52);
+    color: white;
+}
+
+.status-badge.ativa {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+}
+
+.status-badge.status-cancelada {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: white;
+}
+
 /* ===== ANIMAÇÕES ===== */
 @keyframes fadeInUp {
     from {
@@ -772,6 +998,16 @@ select.select-desabilitado {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
     }
 }
 
@@ -863,6 +1099,31 @@ select.select-desabilitado {
         padding: 1.5rem;
         margin: 0 1rem;
     }
+
+    .professor-aula-actions {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    .professor-btn-action {
+        height: 36px;
+        padding: 8px 6px;
+        font-size: 0.75rem;
+    }
+
+    .professor-btn-action i {
+        font-size: 0.8rem;
+        margin-bottom: 1px;
+    }
+
+    .professor-btn-action span {
+        font-size: 0.7rem;
+    }
+
+    .professor-aula-card::after {
+        content: '👆 Detalhes';
+        font-size: 0.65rem;
+    }
 }
 
 /* Mobile Pequeno (até 480px) */
@@ -911,6 +1172,29 @@ select.select-desabilitado {
     .professor-form-container {
         padding: 1rem;
         margin: 0 0.5rem;
+    }
+
+    .professor-aula-actions {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+
+    .professor-btn-action {
+        height: 34px;
+        padding: 6px 4px;
+        flex-direction: row;
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    .professor-btn-action i {
+        margin-bottom: 0;
+        margin-right: 6px;
+        min-width: 16px;
+    }
+
+    .professor-btn-action span {
+        font-size: 0.7rem;
     }
 }
 
