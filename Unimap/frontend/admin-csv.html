@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIMAP - Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <header class="mobile-header">
+        <div class="header-top">
+            <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
+            <h1>UNIMAP - Admin</h1>
+            <span class="user-name" id="mobileUserName">Admin</span>
+        </div>
+
+        <nav class="mobile-nav" id="mobileNav">
+            <div class="nav-user" id="mobileNavUser">Administrador</div>
+            <a href="admin.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="admin-cursos.html"><i class="fas fa-graduation-cap"></i> Cursos</a>
+            <a href="admin-salas.html"><i class="fas fa-door-open"></i> Salas</a>
+            <a href="admin-professores.html"><i class="fas fa-chalkboard-teacher"></i> Professores</a>
+            <a href="admin-usuarios.html"><i class="fas fa-users"></i> Usuários</a>
+            <a href="admin-turmas.html"><i class="fas fa-users-class"></i> Turmas</a>
+            <a href="admin-csv.html" class="active"><i class="fa-solid fa-file-import"></i> CSV</a>
+            <a href="index.html" class="btn-voltar-app-mobile">
+                <i class="fas fa-arrow-left"></i> Voltar para o App
+            </a>
+            <a href="#" onclick="authManager.logout()">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </a>
+        </nav>
+    </header>
+
+    <header class="desktop-header">
+        <div class="header-content">
+            <a href="admin.html" class="logo-link">
+                <img src="images/unipam png.png" alt="UNIPAM" class="navbar-logo">
+                <h1>UNIMAP - Admin</h1>
+            </a>
+            <nav class="desktop-nav">
+                <a href="index.html" class="btn-flutuante-voltar" title="Voltar para o App">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Voltar para o App</span></a>
+                <a href="admin.html" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="admin-cursos.html" class="nav-link"><i class="fas fa-graduation-cap"></i> Cursos</a>
+                <a href="admin-salas.html" class="nav-link"><i class="fas fa-door-open"></i> Salas</a>
+                <a href="admin-professores.html" class="nav-link"><i class="fas fa-chalkboard-teacher"></i>
+                    Professores</a>
+                <a href="admin-usuarios.html" class="nav-link"><i class="fas fa-users"></i> Usuários</a>
+                <a href="admin-turmas.html" class="nav-link"><i class="fas fa-users-class"></i> Turmas</a>
+                <a href="admin-csv.html" class="nav-link active"><i class="fa-solid fa-file-import"></i> CSV</a>
+                <span class="user-info" id="desktopUserName">Administrador</span>
+                <button class="btn-sair-desktop-texto" onclick="authManager.logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="importbutton">
+            <label for="csvFile" class="btn-import">Importar CSV</label>
+            <input type="file" id="csvFile" accept=".csv" hidden>
+        </div>
+    </main>
+</body>
+
+</html>

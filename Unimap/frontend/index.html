@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIMAP - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="shortcut icon" type="imagex/png" href="../frontend/images/logo-unipam 2.png">
+    <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <header class="mobile-header">
+        <div class="header-top">
+            <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
+            <h1>UNIMAP</h1>
+            <span class="user-name" id="mobileUserName">Kaique Lucas</span>
+        </div>
+
+        <nav class="mobile-nav" id="mobileNav">
+            <div class="nav-user" id="mobileNavUser">Kaique Lucas</div>
+            <a href="#" onclick="showSection('aulas-mobile')">Aulas</a>
+            <a href="#" onclick="showSection('professores')">Professores</a>
+            <a href="#" onclick="showSection('mapa-blocos')">Mapa</a>
+
+            <a href="admin.html" class="admin-only" id="admin-dashboard-mobile" style="display: none;">
+                <i class="fas fa-cog"></i> Dashboard
+            </a>
+
+            <a href="#" onclick="logout()">Sair</a>
+        </nav>
+    </header>
+
+    <header class="desktop-header">
+        <div class="header-content">
+            <a href="index.html" class="logo-link">
+                <img src="images/unipam png.png" alt="UNIPAM" class="navbar-logo">
+                <h1>UNIMAP</h1>
+            </a>
+            <nav class="desktop-nav">
+                <a href="index.html" onclick="showSection('aulas')" class="nav-link">Minhas Aulas</a>
+                <a href="#" onclick="showSection('mapa-blocos')" class="nav-link">Mapa Salas</a>
+                <a href="#" onclick="showSection('professores')" class="nav-link">Professores</a>
+
+                <a href="admin.html" class="nav-link admin-only" id="admin-dashboard-link" style="display: none;">
+                    <i class="fas fa-cog"></i> Dashboard
+                </a>
+
+                <span class="user-info" id="desktopUserName">Kaique Lucas</span>
+
+                <button class="btn-sair-desktop-texto" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section id="aulas-mobile" class="section mobile-section active">
+            <div class="section-header">
+                <h2><i class="fas fa-book"></i> Minhas Aulas</h2>
+                <span class="semestre-tag">2024.1</span>
+            </div>
+
+            <div class="aulas-filters">
+                <select class="filter-select" onchange="filtrarAulas(this.value)">
+                    <option value="todas">Todas as aulas</option>
+                    <option value="hoje">Aulas de hoje</option>
+                    <option value="semana">Esta semana</option>
+                </select>
+            </div>
+
+            <div class="aulas-list">
+            </div>
+
+            <button class="btn-criar-aula" id="btnCriarAulaMobile" style="display: none;"
+                onclick="showSection('criar-aula-mobile')">
+                <i class="fas fa-plus-circle"></i> Criar Nova Aula
+            </button>
+        </section>
+
+
+        <section id="aulas-desktop" class="section desktop-section active">
+            <div class="section-header">
+                <h2><i class="fas fa-book"></i> Minhas Aulas - 2024.1</h2>
+                <div class="header-actions">
+                    <select class="filter-select" onchange="filtrarAulasDesktop(this.value)">
+                        <option value="todas">Todas as aulas</option>
+                        <option value="hoje">Hoje</option>
+                        <option value="semana">Esta semana</option>
+                        <option value="proximas">Próximas</option>
+                    </select>
+                    <button class="btn-primary" id="btnCriarAulaDesktop" style="display: none;"
+                        onclick="showSection('criar-aula-mobile')">
+                        <i class="fas fa-plus-circle"></i> Nova Aula
+                    </button>
+                </div>
+            </div>
+
+            <div class="aulas-grid">
+            </div>
+        </section>
+
+        <section id="mapa-blocos" class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-map-marked-alt"></i> Mapa</h2>
+                <p>Encontre salas, laboratórios e auditórios</p>
+            </div>
+
+
+            <div class="blocos-grid" id="blocos-grid-aluno">
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                    <p>Carregando blocos...</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="mapa-andares" class="section" style="display: none;">
+            <div class="section-header">
+                <button class="btn-voltar" onclick="voltarParaBlocosAluno()">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </button>
+                <h2 id="bloco-title-aluno">Bloco </h2>
+                <p>Selecione o andar</p>
+            </div>
+
+            <div class="andares-grid" id="andares-grid-aluno">
+            </div>
+        </section>
+
+        <section id="mapa-salas" class="section" style="display: none;">
+            <div class="section-header">
+                <button class="btn-voltar" onclick="voltarParaAndaresAluno()">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </button>
+                <h2 id="sala-title">Bloco A > 1° Andar</h2>
+                <p class="salas-counter">0 salas</p>
+            </div>
+
+            <div class="salas-filters" id="salas-filters" style="display: none;">
+                <div class="filter-group">
+                    <input type="text" id="searchSalaAluno" placeholder="Pesquisar sala..." class="search-input">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+
+            <div class="salas-grid" id="salas-grid-aluno">
+            </div>
+        </section>
+
+
+        <section id="professores" class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-chalkboard-teacher"></i> Professores</h2>
+                <p>Gerencie seus professores favoritos</p>
+            </div>
+
+            <div class="professores-tabs">
+                <button class="tab-btn active" onclick="openTab('meus-professores')">
+                    <i class="fas fa-star"></i> Meus Professores
+                </button>
+                <button class="tab-btn" onclick="openTab('adicionar-professor')">
+                    <i class="fas fa-plus"></i> Adicionar Professor
+                </button>
+            </div>
+
+            <div id="meus-professores" class="tab-content active">
+                <div class="professores-list">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin fa-3x"></i>
+                        <p>Carregando professores...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="adicionar-professor" class="tab-content">
+                <form class="add-professor-form">
+                    <div class="form-group select-with-icon">
+                        <label><i class="fas fa-graduation-cap"></i> Curso:</label>
+                        <select class="select-shadow" required>
+                            <option value="">Selecione seu curso</option>
+                            <option value="Sistemas de Informação">Sistemas de Informação</option>
+                            <option value="Administração">Administração</option>
+                            <option value="Direito">Direito</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group select-with-icon">
+                        <label><i class="fas fa-calendar-alt"></i> Período:</label>
+                        <select class="select-shadow" required>
+                            <option value="">Selecione o período</option>
+                            <option value="1">1° Período</option>
+                            <option value="2">2° Período</option>
+                            <option value="3">3° Período</option>
+                            <option value="4">4° Período</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group select-with-icon">
+                        <label><i class="fas fa-chalkboard-teacher"></i> Professor:</label>
+                        <select id="professor-select" class="select-shadow" required>
+                            <option value="">Selecione o professor</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-primary btn-full">
+                        <i class="fas fa-plus-circle"></i> Adicionar Professor
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <section id="turmas" class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-users"></i> Minhas Turmas</h2>
+                <p>Gerencie suas matrículas em turmas</p>
+            </div>
+
+            <div class="turmas-tabs">
+                <button class="tab-btn active" onclick="openTab('turmas-matriculadas')">
+                    <i class="fas fa-check-circle"></i> Turmas Matriculadas
+                </button>
+                <button class="tab-btn" onclick="openTab('turmas-disponiveis')">
+                    <i class="fas fa-search"></i> Turmas Disponíveis
+                </button>
+            </div>
+
+            <div id="turmas-matriculadas" class="tab-content active">
+                <div class="turmas-list" id="turmas-matriculadas">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin fa-3x"></i>
+                        <p>Carregando turmas...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="turmas-disponiveis" class="tab-content">
+                <div class="turmas-list" id="turmas-disponiveis">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin fa-3x"></i>
+                        <p>Carregando turmas disponíveis...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="criar-aula-mobile" class="section mobile-section" style="display: none;">
+            <h2>Criar Aula</h2>
+            <form class="criar-aula-form">
+                <div class="form-group">
+                    <label>Curso:</label>
+                    <select>
+                        <option>Selecione o curso</option>
+                        <option>Sistemas de Informação</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Período:</label>
+                    <select>
+                        <option>Selecione o período</option>
+                        <option>3° Periodo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Turma:</label>
+                    <select>
+                        <option>Selecione a turma</option>
+                        <option>SI3N</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Sala:</label>
+                    <select>
+                        <option>Selecione a sala</option>
+                        <option>Sala 101</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Horario:</label>
+                    <select>
+                        <option>Selecione o horário</option>
+                        <option>08:00-10:00</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Criar</button>
+            </form>
+            <button class="btn-voltar" onclick="showSection('aulas-mobile')">← Voltar</button>
+        </section>
+    </main>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/aulas.js"></script>
+    <script src="js/professores.js"></script>
+    <script src="js/mapa.js"></script>
+    <script src="js/selecao-periodo.js"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (authManager.isUserAuthenticated()) {
+                console.log('👋 Usuário logado:', authManager.getCurrentUser().nome);
+            } else {
+                console.log('👋 Visitante não logado');
+            }
+
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const user = authManager ? authManager.getCurrentUser() : null;
+
+            if (user && user.tipo === 'professor') {
+                console.log('🎯 Professor detectado na página de aluno. Redirecionando...');
+                setTimeout(() => {
+                    window.location.href = 'professor-dashboard.html';
+                }, 1000);
+
+            }
+
+        });
+
+
+
+    </script>
+</body>
+
+</html>
