@@ -512,6 +512,9 @@
         }
 
         // ==================== CONFIGURAÇÃO DO FORMULÁRIO ====================
+        // ==================== CONFIGURAÇÃO DO FORMULÁRIO ====================
+        let formSubmitHandler = null;
+
         function configurarFormularioAula() {
             const formCriarAula = document.getElementById('formCriarAula');
             console.log('🔍 Procurando formulário:', formCriarAula);
@@ -519,25 +522,44 @@
             if (formCriarAula) {
                 console.log('✅ Formulário encontrado, configurando evento submit...');
 
-                // 🔥 CORREÇÃO: Usar event delegation para garantir captura do evento
-                formCriarAula.addEventListener('submit', async function (e) {
+                // 🔥 CORREÇÃO: Remover event listener anterior se existir
+                if (formSubmitHandler) {
+                    formCriarAula.removeEventListener('submit', formSubmitHandler);
+                }
+
+                // 🔥 CORREÇÃO: Criar handler único e reutilizável
+                formSubmitHandler = async function (e) {
                     console.log('🎯 EVENTO SUBMIT DISPARADO!');
                     e.preventDefault();
+                    e.stopImmediatePropagation(); // 🔥 Impede múltiplas execuções
+
+                    const submitBtn = e.target.querySelector('button[type="submit"]');
+
+                    // 🔥 CORREÇÃO: Prevenir duplo clique
+                    if (submitBtn.disabled) {
+                        console.log('⚠️ Botão já está processando, ignorando clique...');
+                        return;
+                    }
 
                     try {
                         await handleFormSubmit(e);
                     } catch (error) {
                         console.error('❌ Erro no evento submit:', error);
                         showNotification('Erro ao processar formulário: ' + error.message, 'error');
-                    }
-                });
 
+                        // Reativar botão em caso de erro
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-save"></i> Criar Aula';
+                    }
+                };
+
+                formCriarAula.addEventListener('submit', formSubmitHandler);
                 console.log('✅ Evento submit configurado com sucesso!');
             } else {
                 console.error('❌ Formulário não encontrado!');
             }
 
-            // Configurar busca de salas
+            // Configurar busca de salas (mantido igual)
             const searchInput = document.getElementById('searchSala');
             const salaSelect = document.getElementById('salaSelect');
 
@@ -551,13 +573,11 @@
                         options[i].style.display = text.includes(searchTerm) ? '' : 'none';
                     }
 
-                    // Manter o primeiro option sempre visível
                     if (options[0]) options[0].style.display = '';
                 });
             }
         }
 
-        // 🔥 CORREÇÃO: Função separada para lidar com o submit do formulário
         // 🔥 CORREÇÃO: Função separada para lidar com o submit do formulário
         async function handleFormSubmit(e) {
             const form = e.target;

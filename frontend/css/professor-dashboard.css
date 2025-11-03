@@ -1,5 +1,5 @@
 /* ===== ESTILOS OTIMIZADOS DO PROFESSOR DASHBOARD ===== */
-/* Prefixo: professor- | Versão: 3.0 | Status: Otimizado */
+/* Prefixo: professor- | Versão: 4.0 | Status: Otimizado e Consolidado */
 
 :root {
     --professor-primary: #3498db;
@@ -110,63 +110,85 @@
     width: 100%;
 }
 
-/* ESTILOS CORRIGIDOS PARA SELECTS */
-.professor-form-control {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-image: none !important;
-}
-
-select.professor-form-control {
-    background: white url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23333' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") no-repeat right 12px center/16px !important;
-    padding-right: 40px !important;
-}
-
-select.professor-form-control:disabled {
-    background: #f9f9f9 !important;
-    background-image: none !important;
-    color: #888 !important;
-    border-color: #e0e0e0 !important;
-    cursor: not-allowed !important;
-    padding-right: 12px !important;
-}
-
-select.professor-form-control:-moz-disabled {
-    background-image: none !important;
-}
-
-select.professor-form-control:disabled::-ms-expand {
-    display: none !important;
-}
-
-.professor-form-control:disabled {
-    background-color: #f9f9f9 !important;
-    color: #888 !important;
-    border-color: #e0e0e0 !important;
-    cursor: not-allowed !important;
-}
-
-.professor-form-control:focus {
-    border-color: #4CAF50 !important;
-    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2) !important;
-}
-
-.professor-form-control:valid:not(:disabled),
-.campo-preenchido {
-    border-color: #4CAF50 !important;
-    background-color: #f8fff8 !important;
-}
-
 .professor-filter-select:focus,
 .professor-filter-input:focus,
 .professor-form-control:focus,
 .professor-search-input:focus {
     outline: none;
     border-color: var(--professor-primary);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* ESTILOS CORRIGIDOS PARA SELECTS */
+select.professor-form-control {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: white url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23333' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") no-repeat right 12px center/16px !important;
+    padding-right: 40px !important;
+}
+
+.select-habilitado {
+    opacity: 1 !important;
+    cursor: pointer !important;
+    background-color: white !important;
+}
+
+.select-desabilitado {
+    background: #f9f9f9 !important;
+    background-image: none !important;
+    padding-right: 12px !important;
+    opacity: 0.7 !important;
+    cursor: not-allowed !important;
+    color: #888 !important;
+    border-color: #e0e0e0 !important;
+}
+
+/* Remover seta padrão em todos os selects desabilitados */
+select.professor-form-control:disabled,
+select.select-desabilitado {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-image: none !important;
+}
+
+/* Firefox específico */
+@-moz-document url-prefix() {
+
+    select.professor-form-control:disabled,
+    select.select-desabilitado {
+        background-image: none !important;
+        text-indent: 0.01px;
+        text-overflow: '';
+        padding-right: 12px !important;
+    }
+}
+
+/* IE/Edge específico */
+@media all and (-ms-high-contrast: none),
+(-ms-high-contrast: active) {
+
+    select.professor-form-control:disabled,
+    select.select-desabilitado {
+        &::-ms-expand {
+            display: none !important;
+        }
+
+        padding-right: 12px !important;
+    }
 }
 
 /* ===== SISTEMA DE GRIDS ===== */
+.professor-aulas-grid,
+.professor-blocos-grid,
+.professor-andares-grid,
+.professor-salas-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
 .professor-aulas-grid {
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
 }
@@ -181,15 +203,6 @@ select.professor-form-control:disabled::-ms-expand {
 
 .professor-salas-grid {
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-}
-
-.professor-aulas-grid,
-.professor-blocos-grid,
-.professor-andares-grid,
-.professor-salas-grid {
-    display: grid;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
 }
 
 /* Cards Base */
@@ -209,14 +222,17 @@ select.professor-form-control:disabled::-ms-expand {
 
 .professor-aula-card {
     border-left: 6px solid var(--professor-primary);
+    cursor: pointer;
 }
 
 .professor-bloco-card {
     border-left: 6px solid var(--professor-primary);
+    cursor: pointer;
 }
 
 .professor-andar-card {
     border-left: 4px solid var(--professor-success);
+    cursor: pointer;
 }
 
 .professor-sala-card {
@@ -241,7 +257,7 @@ select.professor-form-control:disabled::-ms-expand {
     gap: 1rem;
 }
 
-.professor-aula-title,
+.professor-aula-header h3,
 .professor-sala-header h4 {
     color: var(--professor-secondary);
     margin: 0;
@@ -249,7 +265,7 @@ select.professor-form-control:disabled::-ms-expand {
     flex: 1;
 }
 
-.professor-aula-title {
+.professor-aula-header h3 {
     font-size: 1.2rem;
 }
 
@@ -258,8 +274,7 @@ select.professor-form-control:disabled::-ms-expand {
 }
 
 /* Badges e Status */
-.professor-aula-badge,
-.professor-sala-status {
+.professor-status-badge {
     padding: 0.5rem 1rem;
     border-radius: 20px;
     font-size: 0.75rem;
@@ -267,18 +282,32 @@ select.professor-form-control:disabled::-ms-expand {
     text-transform: uppercase;
     white-space: nowrap;
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
 }
 
-.professor-aula-badge.ativa,
+.professor-status-badge.ativa,
 .professor-sala-status.professor-disponivel {
     background: #d4edda;
     color: #155724;
 }
 
-.professor-aula-badge.inativa,
-.professor-sala-status.professor-ocupada {
+.professor-status-badge.inativa,
+.professor-sala-status.professor-ocupada,
+.professor-status-badge.status-cancelada {
     background: #f8d7da;
     color: #721c24;
+}
+
+.professor-status-badge.em-andamento {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.professor-status-badge.agendada {
+    background: #cce7ff;
+    color: #004085;
 }
 
 /* Informações de Cards */
@@ -324,6 +353,185 @@ select.professor-form-control:disabled::-ms-expand {
     min-width: 80px;
 }
 
+/* ===== BOTÕES EM 2 FILEIRAS OTIMIZADOS ===== */
+.professor-aula-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    align-items: stretch;
+}
+
+.professor-btn-action {
+    padding: 10px 8px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 38px;
+    min-width: 0;
+    flex-direction: column;
+    text-align: center;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
+}
+
+.professor-btn-action i {
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+}
+
+.professor-btn-action span {
+    font-size: 0.75rem;
+    line-height: 1.2;
+    display: block;
+}
+
+/* Cores dos botões otimizadas */
+.professor-btn-action.secundario {
+    background: linear-gradient(135deg, #27ae60, #219a52);
+    box-shadow: 0 2px 4px rgba(39, 174, 96, 0.3);
+}
+
+.professor-btn-action.editar {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    box-shadow: 0 2px 4px rgba(243, 156, 18, 0.3);
+}
+
+.professor-btn-action.cancelar {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+    color: #212529;
+}
+
+.professor-btn-action.reativar {
+    background: linear-gradient(135deg, #20c997, #1ba87e);
+    box-shadow: 0 2px 4px rgba(32, 201, 151, 0.3);
+    color: white;
+}
+
+.professor-btn-action.perigo {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+}
+
+.professor-btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.professor-btn-action.secundario:hover {
+    background: linear-gradient(135deg, #219a52, #1e8449);
+}
+
+.professor-btn-action.editar:hover {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+}
+
+.professor-btn-action.cancelar:hover {
+    background: linear-gradient(135deg, #e0a800, #d39e00);
+}
+
+.professor-btn-action.reativar:hover {
+    background: linear-gradient(135deg, #1ba87e, #189770);
+}
+
+.professor-btn-action.perigo:hover {
+    background: linear-gradient(135deg, #c0392b, #a93226);
+}
+
+/* Estados desabilitados */
+.professor-btn-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* ===== CARD DE AULA CLICÁVEL ===== */
+.professor-aula-card {
+    padding: 20px;
+    margin-bottom: 16px;
+    border-radius: 10px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    border: 2px solid transparent;
+}
+
+.professor-aula-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    border-color: #3498db;
+}
+
+.professor-aula-card:active {
+    transform: translateY(0);
+}
+
+.professor-aula-card-content {
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+.professor-aula-card::after {
+    content: 'Clique para ver detalhes';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.7rem;
+    color: #3498db;
+    background: rgba(52, 152, 219, 0.1);
+    padding: 2px 6px;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.professor-aula-card:hover::after {
+    opacity: 1;
+}
+
+/* Aula cancelada */
+.professor-aula-card.aula-cancelada {
+    opacity: 0.7;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-left: 4px solid #6c757d;
+}
+
+.professor-aula-card.aula-cancelada:hover {
+    border-color: #6c757d;
+}
+
+.professor-aula-card.aula-cancelada .professor-aula-header h3 {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+.professor-aula-card.aula-cancelada::after {
+    content: 'Clique para ver detalhes';
+    color: #6c757d;
+    background: rgba(108, 117, 125, 0.1);
+}
+
+.professor-aula-card.aula-cancelada .professor-aula-actions {
+    grid-template-columns: 1fr 1fr;
+}
+
 /* ===== FORMULÁRIOS ===== */
 .professor-form-container {
     background: white;
@@ -356,6 +564,10 @@ select.professor-form-control:disabled::-ms-expand {
     font-weight: 600;
     color: var(--professor-secondary);
     font-size: 0.9rem;
+}
+
+.professor-form-group-full {
+    grid-column: 1 / -1;
 }
 
 /* Sistema de Checkbox */
@@ -590,402 +802,110 @@ select.professor-form-control:disabled::-ms-expand {
     font-weight: 500;
 }
 
-/* CLASSES PARA CONTROLE DE SELECTS */
-.select-habilitado {
-    background: white url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23333' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") no-repeat right 12px center/16px !important;
-    padding-right: 40px !important;
-    opacity: 1 !important;
-    cursor: pointer !important;
+
+/* ===== DETALHES DA AULA ===== */
+.professor-detalhes-aula {
+    padding: 0;
 }
 
-.select-desabilitado {
-    background: #f9f9f9 !important;
-    background-image: none !important;
-    padding-right: 12px !important;
-    opacity: 0.7 !important;
-    cursor: not-allowed !important;
-    color: #888 !important;
-}
-
-/* REMOVER SETA PADRÃO EM TODOS OS SELECTS */
-select.professor-form-control {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-image: none !important;
-    padding-right: 12px !important;
-}
-
-select.professor-form-control:disabled,
-select.select-desabilitado {
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    appearance: none !important;
-    background-image: none !important;
-}
-
-@-moz-document url-prefix() {
-
-    select.professor-form-control:disabled,
-    select.select-desabilitado {
-        background-image: none !important;
-        text-indent: 0.01px;
-        text-overflow: '';
-        padding-right: 12px !important;
-    }
-}
-
-@media all and (-ms-high-contrast: none),
-(-ms-high-contrast: active) {
-
-    select.professor-form-control:disabled,
-    select.select-desabilitado {
-        &::-ms-expand {
-            display: none !important;
-        }
-
-        padding-right: 12px !important;
-    }
-}
-
-/* ===== BOTÕES EM 2 FILEIRAS OTIMIZADOS ===== */
-.professor-aula-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid #eee;
-    align-items: stretch;
-}
-
-.professor-btn-action {
-    padding: 10px 8px;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    text-decoration: none;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    height: 38px;
-    min-width: 0;
-    flex-direction: column;
-    text-align: center;
-}
-
-.professor-btn-action i {
-    font-size: 0.9rem;
-    margin-bottom: 2px;
-}
-
-.professor-btn-action span {
-    font-size: 0.75rem;
-    line-height: 1.2;
-    display: block;
-}
-
-/* Cores dos botões otimizadas */
-.professor-btn-action {
-    background: linear-gradient(135deg, #3498db, #2980b9);
-    color: white;
-    box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
-}
-
-.professor-btn-action:hover {
-    background: linear-gradient(135deg, #2980b9, #2471a3);
-}
-
-.professor-btn-action.secundario {
-    background: linear-gradient(135deg, #27ae60, #219a52);
-    box-shadow: 0 2px 4px rgba(39, 174, 96, 0.3);
-}
-
-.professor-btn-action.secundario:hover {
-    background: linear-gradient(135deg, #219a52, #1e8449);
-}
-
-.professor-btn-action.editar {
-    background: linear-gradient(135deg, #f39c12, #e67e22);
-    box-shadow: 0 2px 4px rgba(243, 156, 18, 0.3);
-}
-
-.professor-btn-action.editar:hover {
-    background: linear-gradient(135deg, #e67e22, #d35400);
-}
-
-.professor-btn-action.cancelar {
-    background: linear-gradient(135deg, #ffc107, #e0a800);
-    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
-    color: #212529;
-}
-
-.professor-btn-action.cancelar:hover {
-    background: linear-gradient(135deg, #e0a800, #d39e00);
-}
-
-.professor-btn-action.reativar {
-    background: linear-gradient(135deg, #20c997, #1ba87e);
-    box-shadow: 0 2px 4px rgba(32, 201, 151, 0.3);
-    color: white;
-}
-
-.professor-btn-action.reativar:hover {
-    background: linear-gradient(135deg, #1ba87e, #189770);
-}
-
-.professor-btn-action.perigo {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
-}
-
-.professor-btn-action.perigo:hover {
-    background: linear-gradient(135deg, #c0392b, #a93226);
-}
-
-.professor-btn-action:not(:disabled):hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Estados desabilitados */
-.professor-btn-action:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none !important;
-}
-
-.professor-btn-action.loading {
-    position: relative;
-    color: transparent;
-}
-
-.professor-btn-action.loading::after {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    border: 2px solid transparent;
-    border-top: 2px solid currentColor;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-/* Layout específico para aulas canceladas */
-.professor-aula-card.aula-cancelada .professor-aula-actions {
-    grid-template-columns: 1fr 1fr;
-}
-
-/* ===== CARD DE AULA CLICÁVEL ===== */
-.professor-aula-card {
-    padding: 20px;
-    margin-bottom: 16px;
-    border-radius: 10px;
-    background: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    cursor: pointer;
-    position: relative;
-    border: 2px solid transparent;
-}
-
-.professor-aula-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
-    border-color: #3498db;
-}
-
-.professor-aula-card:active {
-    transform: translateY(0);
-}
-
-.professor-aula-card-content {
-    cursor: pointer;
-    margin-bottom: 15px;
-}
-
-.professor-aula-card::after {
-    content: 'Clique para ver detalhes';
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 0.7rem;
-    color: #3498db;
-    background: rgba(52, 152, 219, 0.1);
-    padding: 2px 6px;
-    border-radius: 10px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.professor-aula-card:hover::after {
-    opacity: 1;
-}
-
-/* Aula cancelada */
-.professor-aula-card.aula-cancelada {
-    opacity: 0.7;
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    border-left: 4px solid #6c757d;
-}
-
-.professor-aula-card.aula-cancelada:hover {
-    border-color: #6c757d;
-}
-
-.professor-aula-card.aula-cancelada .professor-aula-header h3 {
-    text-decoration: line-through;
-    color: #6c757d;
-}
-
-.professor-aula-card.aula-cancelada::after {
-    content: 'Clique para ver detalhes';
-    color: #6c757d;
-    background: rgba(108, 117, 125, 0.1);
-}
-
-.status-cancelada {
-    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
-    color: white !important;
-}
-
-/* ===== MODAIS ===== */
-.modal-large {
-    max-width: 700px;
-    width: 90%;
-}
-
-.modal-extra-large {
-    max-width: 800px;
-    width: 95%;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.modal-header {
-    background: linear-gradient(135deg, #3498db, #2980b9);
-    color: white;
-    padding: 20px;
-    border-radius: 8px 8px 0 0;
+.professor-detalhes-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
 }
 
-.modal-header h3 {
+.professor-detalhes-header h4 {
     margin: 0;
-    font-size: 1.3rem;
+    color: #2c3e50;
+    font-size: 1.5rem;
+    font-weight: 600;
 }
 
-.modal-close {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 4px;
-    transition: background 0.3s ease;
-}
-
-.modal-close:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.modal-body {
-    padding: 25px;
-    max-height: 70vh;
-    overflow-y: auto;
-}
-
-.modal-footer {
-    padding: 20px;
-    border-top: 1px solid #eee;
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    background: #f8f9fa;
-    border-radius: 0 0 8px 8px;
-    position: sticky;
-    bottom: 0;
-}
-
-/* Detalhes da Aula */
-.aula-detalhes-grid {
+.professor-detalhes-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-top: 10px;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
-.detalhe-item {
+.professor-detalhes-coluna {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    padding: 10px;
+    gap: 1rem;
+}
+
+.professor-detalhes-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
     background: #f8f9fa;
-    border-radius: 6px;
-    border-left: 3px solid #3498db;
+    border-radius: 10px;
+    border-left: 4px solid #4CAF50;
+    transition: all 0.3s ease;
 }
 
-.detalhe-item.full-width {
-    grid-column: 1 / -1;
+.professor-detalhes-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
 }
 
-.detalhe-item label {
-    font-weight: 600;
-    color: #2c3e50;
-    font-size: 0.9rem;
-}
-
-.detalhe-item span {
-    color: #34495e;
-    font-size: 0.95rem;
-}
-
-.status-badge {
-    display: inline-flex;
+.professor-detalhes-icon {
+    width: 45px;
+    height: 45px;
+    background: #4CAF50;
+    border-radius: 10px;
+    display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+    font-size: 1.1rem;
+}
+
+.professor-detalhes-content label {
+    display: block;
     font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.status-badge.em-andamento {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-    color: white;
+.professor-detalhes-content p {
+    margin: 0;
+    color: #2c3e50;
+    font-weight: 500;
+    font-size: 1.1rem;
 }
 
-.status-badge.agendada {
-    background: linear-gradient(135deg, #3498db, #2980b9);
-    color: white;
+.professor-detalhes-content small {
+    color: #6c757d;
+    font-size: 0.85rem;
+    display: block;
+    margin-top: 0.25rem;
 }
 
-.status-badge.concluida {
-    background: linear-gradient(135deg, #27ae60, #219a52);
-    color: white;
+.professor-detalhes-alerta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 10px;
+    color: #856404;
+    margin-top: 1.5rem;
+    font-weight: 500;
 }
 
-.status-badge.ativa {
-    background: linear-gradient(135deg, #f39c12, #e67e22);
-    color: white;
-}
-
-.status-badge.status-cancelada {
-    background: linear-gradient(135deg, #6c757d, #5a6268);
-    color: white;
+.professor-detalhes-alerta i {
+    color: #f39c12;
+    font-size: 1.2rem;
 }
 
 /* ===== ANIMAÇÕES ===== */
@@ -1008,6 +928,18 @@ select.select-desabilitado {
 
     100% {
         transform: rotate(360deg);
+    }
+}
+
+@keyframes modalEnter {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
     }
 }
 
@@ -1052,6 +984,10 @@ select.select-desabilitado {
     .professor-blocos-grid,
     .professor-andares-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .professor-form-row {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -1123,6 +1059,34 @@ select.select-desabilitado {
     .professor-aula-card::after {
         content: '👆 Detalhes';
         font-size: 0.65rem;
+    }
+
+    .modal-large {
+        width: 95%;
+        margin: 1rem;
+    }
+
+    .professor-detalhes-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .professor-detalhes-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .professor-detalhes-item {
+        padding: 1rem;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+    }
+
+    .modal-footer button {
+        width: 100%;
     }
 }
 
@@ -1214,5 +1178,445 @@ select.select-desabilitado {
         box-shadow: none;
         border: 1px solid #000;
         break-inside: avoid;
+    }
+}
+
+/* ==================== MODAL STYLES - SISTEMA UNIMAP ==================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(44, 62, 80, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    visibility: visible;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+    padding: 20px;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow: hidden;
+    transform: scale(1);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 10000;
+    border: 1px solid #e9ecef;
+    animation: modalSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-large {
+    max-width: 700px;
+}
+
+.modal-extra-large {
+    max-width: 800px;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Header do Modal */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 24px 16px;
+    background: linear-gradient(135deg, var(--professor-primary) 0%, #2980b9 100%);
+    border-radius: 16px 16px 0 0;
+    position: relative;
+}
+
+.modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 24px;
+    right: 24px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header h3 i {
+    font-size: 1.3rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.modal-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    font-size: 1.3rem;
+    cursor: pointer;
+    color: white;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: rotate(90deg) scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Corpo do Modal */
+.modal-body {
+    padding: 28px;
+    max-height: 60vh;
+    overflow-y: auto;
+    background: white;
+}
+
+.modal-body label{
+    color: white !important;
+}
+
+/* Grid de Detalhes - Estilo Modernizado */
+.aula-detalhes-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.detalhe-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.detalhe-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--professor-primary);
+    border-radius: 4px 0 0 4px;
+}
+
+.detalhe-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--professor-shadow);
+    border-color: var(--professor-primary);
+}
+
+.detalhe-item label {
+    font-weight: 600;
+    color: var(--professor-secondary);
+    min-width: 140px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.95rem;
+}
+
+.detalhe-item label i {
+    width: 20px;
+    text-align: center;
+    color: var(--professor-primary);
+    font-size: 1.1rem;
+}
+
+.detalhe-item span {
+    text-align: right;
+    color: var(--professor-dark);
+    font-weight: 500;
+    font-size: 1rem;
+    flex: 1;
+}
+
+/* Status Badges - Estilo Melhorado */
+.status-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.status-badge.ativa {
+    background: linear-gradient(135deg, #27ae60, #219a52);
+    color: white;
+    border: 1px solid #1e8449;
+}
+
+.status-badge.em-andamento {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+    border: 1px solid #d35400;
+}
+
+.status-badge.cancelada {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    border: 1px solid #a93226;
+}
+
+.status-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Footer do Modal */
+.modal-footer {
+    padding: 20px 24px 24px;
+    text-align: right;
+    border-top: 2px solid var(--professor-light);
+    background: #f8f9fa;
+    border-radius: 0 0 16px 16px;
+}
+
+.btn-fechar {
+    background: linear-gradient(135deg, var(--professor-primary), #2980b9);
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.btn-fechar:hover {
+    background: linear-gradient(135deg, #2980b9, #21618c);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
+}
+
+.btn-fechar:active {
+    transform: translateY(0);
+}
+
+/* Scrollbar Personalizada */
+.modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--professor-primary), #2980b9);
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #2980b9, #21618c);
+}
+
+/* Efeitos de Foco e Acessibilidade */
+.modal-content:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .modal-overlay {
+        padding: 15px;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+    
+    .modal-large, .modal-extra-large {
+        max-width: 95%;
+    }
+    
+    .modal-header {
+        padding: 20px 20px 12px;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.3rem;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .detalhe-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+    }
+    
+    .detalhe-item::before {
+        width: 100%;
+        height: 3px;
+        border-radius: 4px 4px 0 0;
+    }
+    
+    .detalhe-item span {
+        text-align: left;
+        width: 100%;
+    }
+    
+    .modal-footer {
+        padding: 16px 20px 20px;
+        text-align: center;
+    }
+    
+    .btn-fechar {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-overlay {
+        padding: 10px;
+    }
+    
+    .modal-content {
+        width: 100%;
+        margin: 5px;
+    }
+    
+    .modal-header {
+        padding: 16px 16px 10px;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.2rem;
+        gap: 8px;
+    }
+    
+    .modal-body {
+        padding: 16px;
+    }
+    
+    .detalhe-item {
+        padding: 14px;
+    }
+    
+    .detalhe-item label {
+        min-width: auto;
+        font-size: 0.9rem;
+    }
+    
+    .status-badge {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Animações de Entrada e Saída */
+@keyframes modalFadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+}
+
+.modal-overlay.closing {
+    animation: modalFadeOut 0.3s ease forwards;
+}
+
+/* Melhorias de Acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+    .modal-content,
+    .detalhe-item,
+    .modal-close,
+    .btn-fechar,
+    .status-badge {
+        animation: none;
+        transition: none;
+    }
+}
+
+/* Suporte para Modo Escuro */
+@media (prefers-color-scheme: dark) {
+    .modal-content {
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        border-color: #4a5f7a;
+    }
+    
+    .modal-body {
+        background: #2c3e50;
+        color: #ecf0f1;
+    }
+    
+    .detalhe-item {
+        background: linear-gradient(135deg, #34495e, #2c3e50);
+        border-color: #4a5f7a;
+        color: #ecf0f1;
+    }
+    
+    .detalhe-item span {
+        color: #ecf0f1;
+    }
+    
+    .modal-footer {
+        background: #34495e;
+        border-top-color: #4a5f7a;
+    }
+    
+    .modal-body::-webkit-scrollbar-track {
+        background: #34495e;
     }
 }

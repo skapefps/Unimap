@@ -1,782 +1,622 @@
 const express = require('express');
 const db = require('../config/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const bcrypt = require('bcryptjs');
 const router = express.Router();
 
-// Listar todos os professores
-router.get('/', authenticateToken, (req, res) => {
-    console.log('📚 Buscando lista de professores...');
-    
-    db.all('SELECT * FROM professores ORDER BY ativo DESC, nome', [], (err, rows) => {
-        if (err) {
-            console.error('❌ Erro ao buscar professores:', err);
-            return res.status(500).json({ error: err.message });
+// 🔧 UTILITÁRIOS OTIMIZADOS
+const promisifyDb = {
+    run: (sql, params) => new Promise((resolve, reject) => {
+        db.run(sql, params, function (err) {
+            err ? reject(err) : resolve(this);
+        });
+    }),
+    get: (sql, params) => new Promise((resolve, reject) => {
+        db.get(sql, params, (err, row) => {
+            err ? reject(err) : resolve(row);
+        });
+    }),
+    all: (sql, params) => new Promise((resolve, reject) => {
+        db.all(sql, params, (err, rows) => {
+            err ? reject(err) : resolve(rows);
+        });
+    })
+};
+
+// 🔧 MIDDLEWARE DE VALIDAÇÃO
+const validateProfessorData = (req, res, next) => {
+    const { nome, email } = req.body;
+
+    if (!nome?.trim()) {
+        return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    if (!email?.trim()) {
+        return res.status(400).json({ error: 'Email é obrigatório' });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Email inválido' });
+    }
+
+    next();
+};
+
+// 🔧 OPERAÇÕES DE USUÁRIO
+const syncUserWithProfessor = async (professorData, operation = 'create') => {
+    const { nome, email, id } = professorData;
+
+    try {
+        // Buscar usuário existente
+        const usuarioExistente = await promisifyDb.get(
+            'SELECT id, tipo FROM usuarios WHERE email = ? AND ativo = 1',
+            [email]
+        );
+
+        if (usuarioExistente) {
+            // Atualizar usuário existente
+            await promisifyDb.run(
+                'UPDATE usuarios SET nome = ?, tipo = ? WHERE id = ?',
+                [nome, 'professor', usuarioExistente.id]
+            );
+            return {
+                usuarioId: usuarioExistente.id,
+                action: 'updated',
+                previousType: usuarioExistente.tipo
+            };
+        } else {
+            // Criar novo usuário
+            const senhaPadrao = 'prof123';
+            const senhaHash = await bcrypt.hash(senhaPadrao, 10);
+
+            const result = await promisifyDb.run(
+                `INSERT INTO usuarios (nome, email, senha_hash, tipo) 
+                 VALUES (?, ?, ?, 'professor')`,
+                [nome, email, senhaHash]
+            );
+
+            return {
+                usuarioId: result.lastID,
+                action: 'created',
+                previousType: null
+            };
         }
-        
-        console.log(`✅ ${rows.length} professores encontrados (ativos e inativos)`);
+    } catch (error) {
+        console.error('❌ Erro na sincronização de usuário:', error);
+        throw error;
+    }
+};
+
+const updateUserForProfessorStatus = async (professorEmail, shouldBeProfessor) => {
+    try {
+        const usuario = await promisifyDb.get(
+            'SELECT id, tipo FROM usuarios WHERE email = ? AND ativo = 1',
+            [professorEmail]
+        );
+
+        if (!usuario) {
+            console.log(`❌ Nenhum usuário encontrado para: ${professorEmail}`);
+            return null;
+        }
+
+        const targetType = shouldBeProfessor ? 'professor' : 'aluno';
+
+        if (usuario.tipo !== targetType) {
+            await promisifyDb.run(
+                `UPDATE usuarios SET tipo = ?, matricula = NULL, periodo = NULL, curso = NULL 
+                 WHERE id = ?`,
+                [targetType, usuario.id]
+            );
+            console.log(`✅ Usuário ${usuario.id} alterado para: ${targetType}`);
+            return { changed: true, from: usuario.tipo, to: targetType };
+        }
+
+        console.log(`ℹ️ Usuário já é ${usuario.tipo}, mantendo tipo`);
+        return { changed: false, currentType: usuario.tipo };
+    } catch (error) {
+        console.error('❌ Erro ao atualizar usuário:', error);
+        throw error;
+    }
+};
+
+// 🔧 OPERAÇÕES DE DEPENDÊNCIAS
+const checkAndCleanDependencies = async (professorId) => {
+    const dependencies = {
+        aulas: 0,
+        favoritos: 0
+    };
+
+    try {
+        // Verificar e contar dependências
+        const [aulasCount, favoritosCount] = await Promise.all([
+            promisifyDb.get('SELECT COUNT(*) as count FROM aulas WHERE professor_id = ?', [professorId]),
+            promisifyDb.get('SELECT COUNT(*) as count FROM professores_favoritos WHERE professor_id = ?', [professorId])
+        ]);
+
+        dependencies.aulas = aulasCount?.count || 0;
+        dependencies.favoritos = favoritosCount?.count || 0;
+
+        console.log(`📊 Dependências encontradas: ${dependencies.aulas} aulas, ${dependencies.favoritos} favoritos`);
+
+        // Limpar dependências se existirem
+        if (dependencies.aulas > 0) {
+            await promisifyDb.run('DELETE FROM aulas WHERE professor_id = ?', [professorId]);
+            console.log(`✅ ${dependencies.aulas} aulas excluídas`);
+        }
+
+        if (dependencies.favoritos > 0) {
+            await promisifyDb.run('DELETE FROM professores_favoritos WHERE professor_id = ?', [professorId]);
+            console.log(`✅ ${dependencies.favoritos} favoritos excluídos`);
+        }
+
+        return dependencies;
+    } catch (error) {
+        console.error('❌ Erro ao verificar dependências:', error);
+        throw error;
+    }
+};
+
+// 🚀 ROTAS OTIMIZADAS
+
+// Listar todos os professores
+router.get('/', authenticateToken, async (req, res) => {
+    console.log('📚 Buscando lista de professores...');
+
+    try {
+        const rows = await promisifyDb.all(
+            'SELECT * FROM professores ORDER BY ativo DESC, nome',
+            []
+        );
+
+        console.log(`✅ ${rows.length} professores encontrados`);
         res.json(rows);
-    });
+    } catch (error) {
+        console.error('❌ Erro ao buscar professores:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
-// Listar apenas professores ativos (para alunos)
-router.get('/ativos', authenticateToken, (req, res) => {
+// Listar apenas professores ativos
+router.get('/ativos', authenticateToken, async (req, res) => {
     console.log('📚 Buscando lista de professores ativos...');
-    
-    db.all('SELECT * FROM professores WHERE ativo = 1 ORDER BY nome', [], (err, rows) => {
-        if (err) {
-            console.error('❌ Erro ao buscar professores ativos:', err);
-            return res.status(500).json({ error: err.message });
-        }
-        
+
+    try {
+        const rows = await promisifyDb.all(
+            'SELECT * FROM professores WHERE ativo = 1 ORDER BY nome',
+            []
+        );
+
         console.log(`✅ ${rows.length} professores ativos encontrados`);
         res.json(rows);
-    });
+    } catch (error) {
+        console.error('❌ Erro ao buscar professores ativos:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // Adicionar professor aos favoritos
-router.post('/favoritos', authenticateToken, (req, res) => {
+router.post('/favoritos', authenticateToken, async (req, res) => {
     const { aluno_id, professor_id } = req.body;
-    
-    db.run(
-        'INSERT OR IGNORE INTO professores_favoritos (aluno_id, professor_id) VALUES (?, ?)',
-        [aluno_id, professor_id],
-        function(err) {
-            if (err) {
-                console.error('❌ Erro ao adicionar favorito:', err);
-                return res.status(400).json({ error: err.message });
-            }
-            res.json({ success: true, message: 'Professor adicionado aos favoritos!' });
-        }
-    );
+
+    try {
+        await promisifyDb.run(
+            'INSERT OR IGNORE INTO professores_favoritos (aluno_id, professor_id) VALUES (?, ?)',
+            [aluno_id, professor_id]
+        );
+
+        res.json({
+            success: true,
+            message: 'Professor adicionado aos favoritos!'
+        });
+    } catch (error) {
+        console.error('❌ Erro ao adicionar favorito:', error);
+        res.status(400).json({ error: error.message });
+    }
 });
 
 // Obter professores favoritos de um aluno
-router.get('/favoritos/:aluno_id', authenticateToken, (req, res) => {
+router.get('/favoritos/:aluno_id', authenticateToken, async (req, res) => {
     const { aluno_id } = req.params;
-    
-    db.all(
-        `SELECT p.* FROM professores p 
-         JOIN professores_favoritos pf ON p.id = pf.professor_id 
-         WHERE pf.aluno_id = ? AND p.ativo = 1`,
-        [aluno_id],
-        (err, rows) => {
-            if (err) {
-                console.error('❌ Erro ao buscar professores favoritos:', err);
-                return res.status(500).json({ error: err.message });
-            }
-            res.json(rows);
-        }
-    );
-});
-
-// Excluir professor permanentemente (apenas admin)
-// Excluir professor permanentemente (apenas admin)
-router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
-    const { id } = req.params;
-
-    console.log(`🗑️ Tentando excluir professor ID: ${id}`);
 
     try {
-        // Verificar se o professor existe
-        const professor = await new Promise((resolve, reject) => {
-            db.get('SELECT * FROM professores WHERE id = ?', [id], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
+        const rows = await promisifyDb.all(
+            `SELECT p.* FROM professores p 
+             JOIN professores_favoritos pf ON p.id = pf.professor_id 
+             WHERE pf.aluno_id = ? AND p.ativo = 1`,
+            [aluno_id]
+        );
 
-        if (!professor) {
-            return res.status(404).json({ error: 'Professor não encontrado' });
-        }
-
-        console.log(`📋 Professor a ser excluído:`, professor);
-
-        // 🔥 NOVA FUNCIONALIDADE: Buscar e atualizar o usuário correspondente
-        let usuarioAtualizado = false;
-        console.log(`📧 Buscando usuário com email: ${professor.email}`);
-        
-        const usuario = await new Promise((resolve, reject) => {
-            db.get('SELECT id, nome, email, tipo FROM usuarios WHERE email = ? AND ativo = 1', [professor.email], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-
-        if (usuario) {
-            console.log(`👤 Usuário encontrado:`, usuario);
-            
-            // 🔥 ALTERAR O TIPO DO USUÁRIO PARA "ALUNO"
-            if (usuario.tipo === 'professor') {
-                await new Promise((resolve, reject) => {
-                    db.run(
-                        'UPDATE usuarios SET tipo = "aluno", matricula = NULL, periodo = NULL, curso = NULL WHERE id = ?',
-                        [usuario.id],
-                        function(err) {
-                            if (err) {
-                                console.error('❌ Erro ao atualizar usuário para aluno:', err);
-                                reject(err);
-                            } else {
-                                console.log(`✅ Usuário ${usuario.id} alterado para aluno`);
-                                usuarioAtualizado = true;
-                                resolve(this);
-                            }
-                        }
-                    );
-                });
-            } else {
-                console.log(`ℹ️ Usuário já é do tipo "${usuario.tipo}", mantendo tipo atual`);
-            }
-        } else {
-            console.log(`❌ Nenhum usuário encontrado com o email: ${professor.email}`);
-        }
-
-        // 🔥 VERIFICAR DEPENDÊNCIAS ANTES DE EXCLUIR
-
-        // 1. Verificar se existem aulas associadas
-        const aulasCount = await new Promise((resolve, reject) => {
-            db.get('SELECT COUNT(*) as count FROM aulas WHERE professor_id = ?', [id], (err, row) => {
-                if (err) reject(err);
-                else resolve(row.count);
-            });
-        });
-
-        // 2. Verificar se existem favoritos associados
-        const favoritosCount = await new Promise((resolve, reject) => {
-            db.get('SELECT COUNT(*) as count FROM professores_favoritos WHERE professor_id = ?', [id], (err, row) => {
-                if (err) reject(err);
-                else resolve(row.count);
-            });
-        });
-
-        console.log(`📊 Dependências encontradas: ${aulasCount} aulas, ${favoritosCount} favoritos`);
-
-        // Se houver dependências, excluir em cascata
-        if (aulasCount > 0 || favoritosCount > 0) {
-            console.log(`⚠️ Professor tem dependências, excluindo em cascata...`);
-            
-            // Excluir aulas associadas
-            if (aulasCount > 0) {
-                await new Promise((resolve, reject) => {
-                    db.run('DELETE FROM aulas WHERE professor_id = ?', [id], function(err) {
-                        if (err) reject(err);
-                        else {
-                            console.log(`✅ ${this.changes} aulas excluídas`);
-                            resolve();
-                        }
-                    });
-                });
-            }
-
-            // Excluir favoritos associados
-            if (favoritosCount > 0) {
-                await new Promise((resolve, reject) => {
-                    db.run('DELETE FROM professores_favoritos WHERE professor_id = ?', [id], function(err) {
-                        if (err) reject(err);
-                        else {
-                            console.log(`✅ ${this.changes} favoritos excluídos`);
-                            resolve();
-                        }
-                    });
-                });
-            }
-        }
-
-        // 🔥 EXCLUIR O PROFESSOR
-        const result = await new Promise((resolve, reject) => {
-            db.run('DELETE FROM professores WHERE id = ?', [id], function(err) {
-                if (err) reject(err);
-                else resolve(this);
-            });
-        });
-
-        console.log(`✅ Professor ${id} excluído permanentemente. ${result.changes} linha(s) afetada(s)`);
-
-        // Mensagem de retorno baseada no que foi feito
-        let message = 'Professor excluído permanentemente com sucesso!';
-        
-        if (usuarioAtualizado) {
-            message += ' O usuário correspondente foi alterado para aluno.';
-        }
-
-        res.json({ 
-            success: true, 
-            message: message,
-            aulas_removidas: aulasCount,
-            favoritos_removidos: favoritosCount,
-            usuario_alterado: usuarioAtualizado
-        });
-
+        res.json(rows);
     } catch (error) {
-        console.error('❌ Erro ao excluir professor:', error);
-        res.status(500).json({ 
-            error: 'Erro interno do servidor ao excluir professor',
-            details: error.message 
-        });
+        console.error('❌ Erro ao buscar professores favoritos:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
 // Remover professor dos favoritos
-router.delete('/favoritos/:aluno_id/:professor_id', authenticateToken, (req, res) => {
+router.delete('/favoritos/:aluno_id/:professor_id', authenticateToken, async (req, res) => {
     const { aluno_id, professor_id } = req.params;
-    
-    db.run(
-        'DELETE FROM professores_favoritos WHERE aluno_id = ? AND professor_id = ?',
-        [aluno_id, professor_id],
-        function(err) {
-            if (err) {
-                console.error('❌ Erro ao remover favorito:', err);
-                return res.status(400).json({ error: err.message });
-            }
-            
-            if (this.changes === 0) {
-                return res.status(404).json({ error: 'Favorito não encontrado' });
-            }
-            
-            res.json({ success: true, message: 'Professor removido dos favoritos!' });
+
+    try {
+        const result = await promisifyDb.run(
+            'DELETE FROM professores_favoritos WHERE aluno_id = ? AND professor_id = ?',
+            [aluno_id, professor_id]
+        );
+
+        if (result.changes === 0) {
+            return res.status(404).json({ error: 'Favorito não encontrado' });
         }
-    );
+
+        res.json({
+            success: true,
+            message: 'Professor removido dos favoritos!'
+        });
+    } catch (error) {
+        console.error('❌ Erro ao remover favorito:', error);
+        res.status(400).json({ error: error.message });
+    }
 });
 
 // Criar professor (apenas admin)
-// Criar professor (apenas admin)
-router.post('/', authenticateToken, requireAdmin, async (req, res) => {
+router.post('/', authenticateToken, requireAdmin, validateProfessorData, async (req, res) => {
     const { nome, email } = req.body;
-    
-    if (!nome || !email) {
-        return res.status(400).json({ error: 'Nome e email são obrigatórios' });
-    }
 
     try {
-        // 🔥 NOVA FUNCIONALIDADE: Verificar se já existe um usuário com este email
-        const usuarioExistente = await new Promise((resolve, reject) => {
-            db.get('SELECT id, tipo FROM usuarios WHERE email = ? AND ativo = 1', [email], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-
-        let usuarioId = null;
-
-        if (usuarioExistente) {
-            console.log('👤 Usuário existente encontrado:', usuarioExistente);
-            
-            // Se o usuário existe mas não é professor, atualizar para professor
-            if (usuarioExistente.tipo !== 'professor') {
-                await new Promise((resolve, reject) => {
-                    db.run(
-                        'UPDATE usuarios SET tipo = ?, matricula = NULL, periodo = NULL, curso = NULL WHERE id = ?',
-                        ['professor', usuarioExistente.id],
-                        function(err) {
-                            if (err) reject(err);
-                            else resolve();
-                        }
-                    );
-                });
-                console.log('✅ Tipo de usuário atualizado para professor');
-            }
-            usuarioId = usuarioExistente.id;
-        } else {
-            console.log('👤 Criando novo usuário para o professor...');
-            
-            // 🔥 NOVA FUNCIONALIDADE: Criar usuário automaticamente
-            // Gerar uma senha padrão (pode ser alterada depois via "esqueci minha senha")
-            const senhaPadrao = 'prof123'; // Em produção, gere uma senha aleatória
-            const bcrypt = require('bcryptjs');
-            const senhaHash = await bcrypt.hash(senhaPadrao, 10);
-            
-            const resultUsuario = await new Promise((resolve, reject) => {
-                db.run(
-                    `INSERT INTO usuarios (nome, email, senha_hash, tipo) 
-                     VALUES (?, ?, ?, 'professor')`,
-                    [nome, email, senhaHash],
-                    function(err) {
-                        if (err) reject(err);
-                        else resolve(this);
-                    }
-                );
-            });
-            
-            usuarioId = resultUsuario.lastID;
-            console.log('✅ Novo usuário professor criado com ID:', usuarioId);
-        }
-
-        // Agora criar/atualizar o registro na tabela professores
-        const professorExistente = await new Promise((resolve, reject) => {
-            db.get('SELECT id FROM professores WHERE email = ?', [email], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
+        // Verificar se professor já existe
+        const professorExistente = await promisifyDb.get(
+            'SELECT id FROM professores WHERE email = ?',
+            [email]
+        );
 
         let professorId;
+        let usuarioSync;
 
         if (professorExistente) {
             // Atualizar professor existente
-            await new Promise((resolve, reject) => {
-                db.run(
-                    'UPDATE professores SET nome = ?, ativo = 1 WHERE id = ?',
-                    [nome, professorExistente.id],
-                    function(err) {
-                        if (err) reject(err);
-                        else resolve(this);
-                    }
-                );
-            });
+            await promisifyDb.run(
+                'UPDATE professores SET nome = ?, ativo = 1 WHERE id = ?',
+                [nome, professorExistente.id]
+            );
             professorId = professorExistente.id;
             console.log('✅ Professor existente atualizado');
         } else {
             // Criar novo professor
-            const resultProfessor = await new Promise((resolve, reject) => {
-                db.run(
-                    'INSERT INTO professores (nome, email) VALUES (?, ?)',
-                    [nome, email],
-                    function(err) {
-                        if (err) reject(err);
-                        else resolve(this);
-                    }
-                );
-            });
-            professorId = resultProfessor.lastID;
+            const result = await promisifyDb.run(
+                'INSERT INTO professores (nome, email) VALUES (?, ?)',
+                [nome, email]
+            );
+            professorId = result.lastID;
             console.log('✅ Novo professor criado com ID:', professorId);
         }
 
-        res.json({ 
-            success: true, 
-            message: 'Professor cadastrado com sucesso!' + (usuarioExistente ? ' Usuário existente atualizado para professor.' : ' Novo usuário criado automaticamente.'),
+        // Sincronizar com usuário
+        usuarioSync = await syncUserWithProfessor({ nome, email, id: professorId });
+
+        res.json({
+            success: true,
+            message: 'Professor cadastrado com sucesso!' +
+                (usuarioSync.action === 'updated' ?
+                    ' Usuário existente atualizado para professor.' :
+                    ' Novo usuário criado automaticamente.'),
             id: professorId,
-            usuario_id: usuarioId
+            usuario_id: usuarioSync.usuarioId
         });
 
     } catch (error) {
         console.error('❌ Erro ao adicionar professor:', error);
-        
+
         if (error.message.includes('UNIQUE')) {
             return res.status(400).json({ error: 'Este email já está cadastrado' });
         }
-        
-        return res.status(400).json({ error: error.message });
+
+        res.status(400).json({ error: error.message });
     }
 });
 
 // Atualizar professor (apenas admin)
-// Atualizar professor (apenas admin)
-router.put('/:id', authenticateToken, requireAdmin, async (req, res) => {
+router.put('/:id', authenticateToken, requireAdmin, validateProfessorData, async (req, res) => {
     const { id } = req.params;
     const { nome, email } = req.body;
 
     try {
         // Buscar dados atuais do professor
-        const professorAtual = await new Promise((resolve, reject) => {
-            db.get('SELECT email FROM professores WHERE id = ?', [id], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
+        const professorAtual = await promisifyDb.get(
+            'SELECT email FROM professores WHERE id = ?',
+            [id]
+        );
 
         if (!professorAtual) {
             return res.status(404).json({ error: 'Professor não encontrado' });
         }
 
-        // 🔥 NOVA FUNCIONALIDADE: Atualizar usuário correspondente se o email mudou
+        // Verificar se o novo email já está em uso por outro professor
         if (professorAtual.email !== email) {
-            console.log('📧 Email alterado, atualizando usuário correspondente...');
-            
-            const usuarioExistente = await new Promise((resolve, reject) => {
-                db.get('SELECT id FROM usuarios WHERE email = ? AND ativo = 1', [professorAtual.email], (err, row) => {
-                    if (err) reject(err);
-                    else resolve(row);
-                });
-            });
+            const emailEmUso = await promisifyDb.get(
+                'SELECT id FROM professores WHERE email = ? AND id != ?',
+                [email, id]
+            );
 
-            if (usuarioExistente) {
-                // Verificar se o novo email já está em uso por outro usuário
-                const usuarioComNovoEmail = await new Promise((resolve, reject) => {
-                    db.get('SELECT id FROM usuarios WHERE email = ? AND ativo = 1', [email], (err, row) => {
-                        if (err) reject(err);
-                        else resolve(row);
-                    });
-                });
-
-                if (usuarioComNovoEmail) {
-                    return res.status(400).json({ error: 'Este email já está em uso por outro usuário' });
-                }
-
-                // Atualizar email do usuário
-                await new Promise((resolve, reject) => {
-                    db.run(
-                        'UPDATE usuarios SET email = ? WHERE id = ?',
-                        [email, usuarioExistente.id],
-                        function(err) {
-                            if (err) reject(err);
-                            else resolve();
-                        }
-                    );
-                });
-                console.log('✅ Email do usuário atualizado');
+            if (emailEmUso) {
+                return res.status(400).json({ error: 'Este email já está em uso por outro professor' });
             }
         }
 
-        // Atualizar nome do usuário correspondente
-        const usuarioExistente = await new Promise((resolve, reject) => {
-            db.get('SELECT id FROM usuarios WHERE email = ? AND ativo = 1', [email], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
+        // Atualizar usuário correspondente se necessário
+        if (professorAtual.email !== email || nome) {
+            const usuarioExistente = await promisifyDb.get(
+                'SELECT id FROM usuarios WHERE email = ? AND ativo = 1',
+                [professorAtual.email]
+            );
 
-        if (usuarioExistente) {
-            await new Promise((resolve, reject) => {
-                db.run(
-                    'UPDATE usuarios SET nome = ? WHERE id = ?',
-                    [nome, usuarioExistente.id],
-                    function(err) {
-                        if (err) reject(err);
-                        else resolve();
-                    }
+            if (usuarioExistente) {
+                await promisifyDb.run(
+                    'UPDATE usuarios SET nome = ?, email = ? WHERE id = ?',
+                    [nome, email, usuarioExistente.id]
                 );
-            });
-            console.log('✅ Nome do usuário atualizado');
+                console.log('✅ Usuário atualizado');
+            }
         }
 
         // Atualizar professor
-        await new Promise((resolve, reject) => {
-            db.run(
-                'UPDATE professores SET nome = ?, email = ? WHERE id = ?',
-                [nome, email, id],
-                function(err) {
-                    if (err) reject(err);
-                    else resolve(this);
-                }
-            );
-        });
+        await promisifyDb.run(
+            'UPDATE professores SET nome = ?, email = ? WHERE id = ?',
+            [nome, email, id]
+        );
 
         console.log('✅ Professor e usuário atualizados com sucesso');
-        res.json({ success: true, message: 'Professor atualizado com sucesso!' });
+        res.json({
+            success: true,
+            message: 'Professor atualizado com sucesso!'
+        });
 
     } catch (error) {
         console.error('❌ Erro ao editar professor:', error);
-        return res.status(400).json({ error: error.message });
+        res.status(400).json({ error: error.message });
     }
 });
 
 // Alterar status do professor (apenas admin)
-// Alterar status do professor (apenas admin) - VERSÃO CORRIGIDA E TESTADA
 router.put('/:id/status', authenticateToken, requireAdmin, async (req, res) => {
     const { id } = req.params;
     const { ativo } = req.body;
 
-    console.log(`🔄 ALTERANDO STATUS DO PROFESSOR:`, {
-        professorId: id,
-        novoStatus: ativo,
-        tipoNovoStatus: typeof ativo,
-        bodyRecebido: req.body
-    });
+    console.log(`🔄 Alterando status do professor ${id} para:`, ativo);
 
     try {
-        // Buscar dados completos do professor
-        const professor = await new Promise((resolve, reject) => {
-            db.get('SELECT id, nome, email, ativo FROM professores WHERE id = ?', [id], (err, row) => {
-                if (err) {
-                    console.error('❌ Erro ao buscar professor:', err);
-                    reject(err);
-                } else {
-                    resolve(row);
-                }
-            });
-        });
+        // Buscar professor
+        const professor = await promisifyDb.get(
+            'SELECT id, nome, email, ativo FROM professores WHERE id = ?',
+            [id]
+        );
 
         if (!professor) {
-            console.error('❌ Professor não encontrado com ID:', id);
             return res.status(404).json({ error: 'Professor não encontrado' });
         }
 
-        console.log(`📊 PROFESSOR ENCONTRADO:`, professor);
-
-        // Converter ativo para número para garantir consistência (0 ou 1)
         const ativoNumero = ativo ? 1 : 0;
 
         // Atualizar status do professor
-        const resultadoProfessor = await new Promise((resolve, reject) => {
-            db.run(
-                'UPDATE professores SET ativo = ? WHERE id = ?',
-                [ativoNumero, id],
-                function(err) {
-                    if (err) {
-                        console.error('❌ Erro ao atualizar professor:', err);
-                        reject(err);
-                    } else {
-                        console.log(`✅ Professor atualizado: ${this.changes} linha(s) afetada(s)`);
-                        resolve(this);
-                    }
-                }
-            );
-        });
+        await promisifyDb.run(
+            'UPDATE professores SET ativo = ? WHERE id = ?',
+            [ativoNumero, id]
+        );
 
-        // 🔥 BUSCAR E ATUALIZAR USUÁRIO CORRESPONDENTE
-        console.log(`📧 Buscando usuário com email: ${professor.email}`);
-        
-        const usuario = await new Promise((resolve, reject) => {
-            db.get('SELECT id, nome, email, tipo FROM usuarios WHERE email = ? AND ativo = 1', [professor.email], (err, row) => {
-                if (err) {
-                    console.error('❌ Erro ao buscar usuário:', err);
-                    reject(err);
-                } else {
-                    resolve(row);
-                }
-            });
-        });
+        // Sincronizar usuário correspondente
+        const userUpdate = await updateUserForProfessorStatus(professor.email, ativo);
 
-        if (usuario) {
-            console.log(`👤 USUÁRIO ENCONTRADO:`, usuario);
-            
-            if (ativoNumero === 0) {
-                // 🔥 DESATIVANDO PROFESSOR: alterar tipo do usuário para aluno
-                if (usuario.tipo === 'professor') {
-                    await new Promise((resolve, reject) => {
-                        db.run(
-                            'UPDATE usuarios SET tipo = "aluno", matricula = NULL, periodo = NULL, curso = NULL WHERE id = ?',
-                            [usuario.id],
-                            function(err) {
-                                if (err) {
-                                    console.error('❌ Erro ao atualizar usuário para aluno:', err);
-                                    reject(err);
-                                } else {
-                                    console.log(`✅ Usuário ${usuario.id} alterado para aluno`);
-                                    resolve(this);
-                                }
-                            }
-                        );
-                    });
-                } else {
-                    console.log(`ℹ️ Usuário já é do tipo "${usuario.tipo}", mantendo tipo atual`);
-                }
-            } else {
-                // 🔥 ATIVANDO PROFESSOR: alterar tipo do usuário para professor
-                if (usuario.tipo !== 'professor') {
-                    await new Promise((resolve, reject) => {
-                        db.run(
-                            'UPDATE usuarios SET tipo = "professor", matricula = NULL, periodo = NULL, curso = NULL WHERE id = ?',
-                            [usuario.id],
-                            function(err) {
-                                if (err) {
-                                    console.error('❌ Erro ao atualizar usuário para professor:', err);
-                                    reject(err);
-                                } else {
-                                    console.log(`✅ Usuário ${usuario.id} alterado para professor`);
-                                    resolve(this);
-                                }
-                            }
-                        );
-                    });
-                } else {
-                    console.log(`ℹ️ Usuário já é professor, mantendo tipo`);
-                }
-            }
-        } else {
-            console.log(`❌ NENHUM USUÁRIO ENCONTRADO com o email: ${professor.email}`);
-            console.log(`💡 Dica: Verifique se o email do professor corresponde exatamente ao email do usuário`);
-        }
+        // Buscar dados atualizados
+        const professorAtualizado = await promisifyDb.get(
+            'SELECT * FROM professores WHERE id = ?',
+            [id]
+        );
 
-        // Buscar dados atualizados para retorno
-        const professorAtualizado = await new Promise((resolve, reject) => {
-            db.get('SELECT * FROM professores WHERE id = ?', [id], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
+        console.log(`✅ Status alterado: Professor ${id} -> ${ativoNumero ? 'Ativo' : 'Inativo'}`);
 
-        console.log(`🎯 STATUS ALTERADO COM SUCESSO: Professor ${id} -> ${ativoNumero ? 'Ativo' : 'Inativo'}`);
-
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             message: `Professor ${ativoNumero ? 'ativado' : 'desativado'} com sucesso!`,
-            data: professorAtualizado
+            data: professorAtualizado,
+            userUpdated: userUpdate
         });
 
     } catch (error) {
-        console.error('❌ ERRO CRÍTICO ao atualizar status do professor:', error);
-        res.status(500).json({ 
+        console.error('❌ Erro ao atualizar status do professor:', error);
+        res.status(500).json({
             error: 'Erro interno do servidor',
-            details: error.message 
+            details: error.message
         });
     }
 });
 
-// Obter contagem de favoritos de um professor
-router.get('/:id/favoritos-count', authenticateToken, requireAdmin, (req, res) => {
+// Excluir professor permanentemente (apenas admin)
+router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
     const { id } = req.params;
-    
-    console.log('⭐ Buscando favoritos do professor:', id);
-    
-    const query = `
-        SELECT 
-            COUNT(*) as count,
-            GROUP_CONCAT(u.nome) as nomes_alunos,
-            GROUP_CONCAT(u.curso) as cursos_alunos
-        FROM professores_favoritos pf
-        JOIN usuarios u ON pf.aluno_id = u.id
-        WHERE pf.professor_id = ? AND u.ativo = 1
-    `;
-    
-    db.get(query, [id], (err, result) => {
-        if (err) {
-            console.error('❌ Erro ao contar favoritos:', err);
-            return res.status(500).json({ error: 'Erro interno do servidor' });
+
+    console.log(`🗑️ Excluindo professor ID: ${id}`);
+
+    try {
+        // Verificar se o professor existe
+        const professor = await promisifyDb.get(
+            'SELECT * FROM professores WHERE id = ?',
+            [id]
+        );
+
+        if (!professor) {
+            return res.status(404).json({ error: 'Professor não encontrado' });
         }
-        
-        console.log('✅ Favoritos encontrados:', result);
-        
-        // Processar resultado
-        let alunos = [];
-        if (result && result.nomes_alunos) {
-            const nomes = result.nomes_alunos.split(',');
-            const cursos = result.cursos_alunos ? result.cursos_alunos.split(',') : [];
-            
-            alunos = nomes.map((nome, index) => ({
-                nome: nome.trim(),
-                curso: cursos[index] ? cursos[index].trim() : 'Sem curso'
-            }));
-        }
-        
+
+        // Limpar dependências
+        const dependencies = await checkAndCleanDependencies(id);
+
+        // Atualizar usuário correspondente para aluno
+        const userUpdate = await updateUserForProfessorStatus(professor.email, false);
+
+        // Excluir professor
+        const result = await promisifyDb.run(
+            'DELETE FROM professores WHERE id = ?',
+            [id]
+        );
+
+        console.log(`✅ Professor ${id} excluído permanentemente`);
+
         res.json({
-            count: result ? (result.count || 0) : 0,
-            alunos: alunos
+            success: true,
+            message: 'Professor excluído permanentemente com sucesso!' +
+                (userUpdate?.changed ? ' O usuário correspondente foi alterado para aluno.' : ''),
+            aulas_removidas: dependencies.aulas,
+            favoritos_removidos: dependencies.favoritos,
+            usuario_alterado: userUpdate?.changed || false
         });
-    });
+
+    } catch (error) {
+        console.error('❌ Erro ao excluir professor:', error);
+        res.status(500).json({
+            error: 'Erro interno do servidor ao excluir professor',
+            details: error.message
+        });
+    }
 });
 
-// Rota alternativa para favoritos
-router.get('/:id/favoritos', authenticateToken, requireAdmin, (req, res) => {
+// 🔧 ROTAS DE ESTATÍSTICAS E RELATÓRIOS
+
+// Obter contagem de favoritos de um professor
+router.get('/:id/favoritos-count', authenticateToken, requireAdmin, async (req, res) => {
     const { id } = req.params;
-    
-    console.log('⭐ Buscando favoritos (rota alternativa) para professor:', id);
-    
-    const query = `
-        SELECT 
-            u.id as aluno_id,
-            u.nome as aluno_nome,
-            u.email as aluno_email,
-            u.curso as aluno_curso,
-            u.periodo as aluno_periodo
-        FROM professores_favoritos pf
-        JOIN usuarios u ON pf.aluno_id = u.id
-        WHERE pf.professor_id = ? AND u.ativo = 1
-        ORDER BY u.nome
-    `;
-    
-    db.all(query, [id], (err, rows) => {
-        if (err) {
-            console.error('❌ Erro ao buscar favoritos (alternativa):', err);
-            return res.status(500).json({ error: 'Erro interno do servidor' });
-        }
-        
+
+    console.log('⭐ Buscando favoritos do professor:', id);
+
+    try {
+        const result = await promisifyDb.get(
+            `SELECT COUNT(*) as count FROM professores_favoritos pf
+             JOIN usuarios u ON pf.aluno_id = u.id
+             WHERE pf.professor_id = ? AND u.ativo = 1`,
+            [id]
+        );
+
+        res.json({
+            count: result?.count || 0
+        });
+    } catch (error) {
+        console.error('❌ Erro ao contar favoritos:', error);
+        res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+});
+
+// Lista detalhada de favoritos
+router.get('/:id/favoritos', authenticateToken, requireAdmin, async (req, res) => {
+    const { id } = req.params;
+
+    console.log('⭐ Buscando favoritos detalhados para professor:', id);
+
+    try {
+        const rows = await promisifyDb.all(
+            `SELECT 
+                u.id as aluno_id,
+                u.nome as aluno_nome,
+                u.email as aluno_email,
+                u.curso as aluno_curso,
+                u.periodo as aluno_periodo
+             FROM professores_favoritos pf
+             JOIN usuarios u ON pf.aluno_id = u.id
+             WHERE pf.professor_id = ? AND u.ativo = 1
+             ORDER BY u.nome`,
+            [id]
+        );
+
         console.log(`✅ ${rows.length} favoritos encontrados para professor ${id}`);
-        
+
         res.json({
             count: rows.length,
-            alunos: rows.map(row => ({
-                id: row.aluno_id,
-                nome: row.aluno_nome,
-                email: row.aluno_email,
-                curso: row.aluno_curso,
-                periodo: row.aluno_periodo
-            }))
+            alunos: rows
         });
-    });
+    } catch (error) {
+        console.error('❌ Erro ao buscar favoritos:', error);
+        res.status(500).json({ error: 'Erro interno do servidor' });
+    }
 });
 
 // Obter estatísticas de professores (apenas admin)
-router.get('/stats', authenticateToken, requireAdmin, (req, res) => {
+router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
     console.log('📊 Buscando estatísticas de professores...');
-    
-    const queries = [
-        'SELECT COUNT(*) as total FROM professores WHERE ativo = 1',
-        `SELECT COUNT(DISTINCT pf.professor_id) as total_com_favoritos 
-         FROM professores_favoritos pf 
-         JOIN professores p ON pf.professor_id = p.id 
-         WHERE p.ativo = 1`,
-        `SELECT p.id, p.nome, COUNT(pf.id) as total_favoritos
-         FROM professores p
-         LEFT JOIN professores_favoritos pf ON p.id = pf.professor_id
-         WHERE p.ativo = 1
-         GROUP BY p.id
-         ORDER BY total_favoritos DESC
-         LIMIT 5`
-    ];
-    
-    db.serialize(() => {
-        const results = {};
-        let completed = 0;
-        
-        // Total de professores
-        db.get(queries[0], [], (err, row) => {
-            if (err) {
-                console.error('❌ Erro ao buscar total de professores:', err);
-                results.total_professores = 0;
-            } else {
-                results.total_professores = row ? row.total : 0;
-            }
-            completed++;
-            checkComplete();
-        });
-        
-        // Professores com favoritos
-        db.get(queries[1], [], (err, row) => {
-            if (err) {
-                console.error('❌ Erro ao buscar professores com favoritos:', err);
-                results.professores_com_favoritos = 0;
-            } else {
-                results.professores_com_favoritos = row ? row.total_com_favoritos : 0;
-            }
-            completed++;
-            checkComplete();
-        });
-        
-        // Top professores
-        db.all(queries[2], [], (err, rows) => {
-            if (err) {
-                console.error('❌ Erro ao buscar top professores:', err);
-                results.top_professores = [];
-            } else {
-                results.top_professores = rows || [];
-            }
-            completed++;
-            checkComplete();
-        });
-        
-        function checkComplete() {
-            if (completed === queries.length) {
-                console.log('✅ Estatísticas carregadas:', results);
-                res.json(results);
-            }
-        }
-    });
+
+    try {
+        const [total, comFavoritos, topProfessores] = await Promise.all([
+            promisifyDb.get('SELECT COUNT(*) as total FROM professores WHERE ativo = 1'),
+            promisifyDb.get(`SELECT COUNT(DISTINCT pf.professor_id) as total_com_favoritos 
+                           FROM professores_favoritos pf 
+                           JOIN professores p ON pf.professor_id = p.id 
+                           WHERE p.ativo = 1`),
+            promisifyDb.all(`SELECT p.id, p.nome, COUNT(pf.id) as total_favoritos
+                           FROM professores p
+                           LEFT JOIN professores_favoritos pf ON p.id = pf.professor_id
+                           WHERE p.ativo = 1
+                           GROUP BY p.id
+                           ORDER BY total_favoritos DESC
+                           LIMIT 5`)
+        ]);
+
+        const results = {
+            total_professores: total?.total || 0,
+            professores_com_favoritos: comFavoritos?.total_com_favoritos || 0,
+            top_professores: topProfessores || []
+        };
+
+        console.log('✅ Estatísticas carregadas:', results);
+        res.json(results);
+
+    } catch (error) {
+        console.error('❌ Erro ao buscar estatísticas:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // Obter aulas de um professor específico
-router.get('/:id/aulas', authenticateToken, (req, res) => {
+router.get('/:id/aulas', authenticateToken, async (req, res) => {
     const { id } = req.params;
-    
-    const query = `
-        SELECT 
-            a.*, 
-            d.nome as disciplina_nome,
-            s.numero as sala_numero, 
-            s.bloco as sala_bloco
-        FROM aulas a
-        LEFT JOIN disciplinas d ON a.disciplina_id = d.id
-        LEFT JOIN salas s ON a.sala_id = s.id
-        WHERE a.professor_id = ? AND a.ativa = 1
-        ORDER BY a.dia_semana, a.horario_inicio
-    `;
-    
-    db.all(query, [id], (err, rows) => {
-        if (err) {
-            console.error('❌ Erro ao buscar aulas do professor:', err);
-            return res.status(500).json({ error: err.message });
-        }
+
+    try {
+        const rows = await promisifyDb.all(
+            `SELECT 
+                a.*, 
+                d.nome as disciplina_nome,
+                s.numero as sala_numero, 
+                s.bloco as sala_bloco
+             FROM aulas a
+             LEFT JOIN disciplinas d ON a.disciplina_id = d.id
+             LEFT JOIN salas s ON a.sala_id = s.id
+             WHERE a.professor_id = ? AND a.ativa = 1
+             ORDER BY a.dia_semana, a.horario_inicio`,
+            [id]
+        );
+
         res.json(rows);
-    });
+    } catch (error) {
+        console.error('❌ Erro ao buscar aulas do professor:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 🔧 ROTA DE HEALTH CHECK
+router.get('/health', async (req, res) => {
+    try {
+        const [profCount, activeCount] = await Promise.all([
+            promisifyDb.get('SELECT COUNT(*) as count FROM professores'),
+            promisifyDb.get('SELECT COUNT(*) as count FROM professores WHERE ativo = 1')
+        ]);
+
+        res.json({
+            status: 'healthy',
+            totalProfessores: profCount.count,
+            professoresAtivos: activeCount.count,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: 'unhealthy',
+            error: error.message
+        });
+    }
 });
 
 module.exports = router;
