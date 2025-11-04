@@ -10,100 +10,6 @@ class AdminTurmas {
         this.alunosVinculadosInicialmente = new Set();
     }
 
-    async carregarCursosDoBanco() {
-        try {
-            console.log('📚 Carregando cursos para turmas...');
-
-            const response = await this.makeRequest('/cursos-com-periodos');
-
-            if (response.success) {
-                this.cursosComPeriodos = {};
-                this.cursosDisponiveis = [];
-
-                console.log('📊 Cursos recebidos da API:', response.data);
-
-                response.data.forEach(curso => {
-                    this.cursosComPeriodos[curso.nome] = curso.total_periodos || 8;
-                    this.cursosDisponiveis.push(curso.nome);
-                });
-
-                console.log(`✅ ${this.cursosDisponiveis.length} cursos carregados para turmas:`, this.cursosDisponiveis);
-                this.popularCursosNoModalTurma();
-            } else {
-                throw new Error(response.error || 'Erro ao carregar cursos');
-            }
-        } catch (error) {
-            console.error('❌ Erro ao carregar cursos para turmas:', error);
-            this.usarCursosFallbackTurmas();
-        }
-    }
-
-    usarCursosFallbackTurmas() {
-        console.log('🔄 Usando cursos fallback para turmas...');
-        const cursosFallback = {
-            'Sistemas de Informação': 8,
-            'Administração': 8,
-            'Direito': 10,
-            'Medicina': 12,
-            'Engenharia Civil': 10
-        };
-
-        this.cursosComPeriodos = cursosFallback;
-        this.cursosDisponiveis = Object.keys(cursosFallback);
-        this.popularCursosNoModalTurma();
-    }
-
-    popularCursosNoModalTurma() {
-        const selectCurso = document.getElementById('turmaCurso');
-        if (!selectCurso) {
-            console.log('❌ Elemento turmaCurso não encontrado');
-            return;
-        }
-
-        console.log('📝 Populando cursos no modal de turma...');
-        console.log('📋 Cursos disponíveis:', this.cursosDisponiveis);
-
-        selectCurso.innerHTML = '<option value="">Selecione o curso</option>';
-
-        this.cursosDisponiveis.forEach(curso => {
-            const option = document.createElement('option');
-            option.value = curso;
-            option.textContent = curso;
-            selectCurso.appendChild(option);
-        });
-
-        console.log(`✅ ${this.cursosDisponiveis.length} cursos adicionados ao modal de turma`);
-    }
-
-    atualizarPeriodosTurma(cursoSelecionado) {
-        const selectPeriodo = document.getElementById('turmaPeriodo');
-        if (!selectPeriodo) {
-            console.log('❌ Elemento turmaPeriodo não encontrado');
-            return;
-        }
-
-        console.log(`🔄 Atualizando períodos para o curso: ${cursoSelecionado}`);
-
-        selectPeriodo.innerHTML = '<option value="">Selecione o período</option>';
-
-        if (cursoSelecionado && this.cursosComPeriodos[cursoSelecionado]) {
-            const totalPeriodos = this.cursosComPeriodos[cursoSelecionado];
-
-            console.log(`📚 Curso ${cursoSelecionado} tem ${totalPeriodos} períodos`);
-
-            for (let i = 1; i <= totalPeriodos; i++) {
-                const option = document.createElement('option');
-                option.value = i;
-                option.textContent = `${i}° Período`;
-                selectPeriodo.appendChild(option);
-            }
-
-            console.log(`✅ Gerados ${totalPeriodos} períodos para ${cursoSelecionado}`);
-        } else {
-            console.log('❌ Curso não encontrado ou sem períodos definidos:', cursoSelecionado);
-        }
-    }
-
     async init() {
         if (this.inicializado) {
             console.log('✅ AdminTurmas já foi inicializado');
@@ -111,107 +17,561 @@ class AdminTurmas {
         }
 
         try {
-            console.log('🚀 Inicializando AdminTurmas...');
+            console.group('🚀 INICIALIZAÇÃO DO ADMIN TURMAS');
+            console.log('📚 Carregando dados iniciais...');
 
+            // 🔥 CORREÇÃO: Carregar cursos PRIMEIRO e AGUARDAR conclusão
             await this.carregarCursosDoBanco();
+            console.log('✅ Cursos carregados e selects configurados');
 
-            await this.carregarTurmas();
-            await this.carregarAlunos();
+            // 🔥 CORREÇÃO: Configurar eventos APÓS carregar cursos
+            this.configurarEventosCursoPeriodo();
+            console.log('✅ Eventos configurados');
+
+            // Carregar demais dados em paralelo
+            await Promise.all([
+                this.carregarTurmas(),
+                this.carregarAlunos()
+            ]);
+            console.log('✅ Turmas e alunos carregados');
+
+            // Configurar interface
             this.setupEventListeners();
             this.setupModalEventListeners();
+
             this.inicializado = true;
-            console.log('✅ AdminTurmas inicializado com sucesso');
+            console.log('🎉 AdminTurmas inicializado com sucesso');
+            console.groupEnd();
+
+            // Debug automático após 2 segundos
+            setTimeout(() => {
+                this.verificarEstadoInicial();
+            }, 2000);
 
         } catch (error) {
             console.error('❌ Erro na inicialização do AdminTurmas:', error);
+            console.groupEnd();
             this.showNotification('Erro ao carregar dados do sistema', 'error');
+
+            // 🔥 CORREÇÃO: Tentar recarregar cursos mesmo com erro
+            await this.carregarCursosDoBanco();
         }
     }
 
-    async makeRequest(endpoint, options = {}) {
-        const token = localStorage.getItem('authToken');
+    // ========== GESTÃO DE CURSOS E PERÍODOS ==========
 
-        if (!token) {
-            this.showNotification('Usuário não autenticado', 'error');
-            throw new Error('Usuário não autenticado');
-        }
-
-        const defaultOptions = {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        };
-
-        const mergedOptions = {
-            ...defaultOptions,
-            ...options,
-            headers: {
-                ...defaultOptions.headers,
-                ...options.headers
-            }
-        };
-
+    async carregarCursosDoBanco() {
         try {
-            const response = await fetch(`/api${endpoint}`, mergedOptions);
+            console.log('📚 Carregando cursos para turmas...');
 
-            let data;
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                data = await response.json();
+            // 🔥 CORREÇÃO: Usar a função makeRequest corretamente
+            const response = await this.makeRequest('/cursos/com-periodos');
+            console.log('📡 Resposta da API de cursos:', response);
+
+            // 🔥 CORREÇÃO: A API retorna array diretamente, não objeto com {success, data}
+            let cursosData = [];
+
+            if (Array.isArray(response)) {
+                // Resposta é um array direto (formato correto da API)
+                cursosData = response;
+                console.log('✅ Cursos carregados (formato array direto)');
+            } else if (response && response.success && Array.isArray(response.data)) {
+                // Resposta tem formato {success: true, data: [...]}
+                cursosData = response.data;
+                console.log('✅ Cursos carregados (formato objeto com data)');
+            } else if (response && Array.isArray(response.cursos)) {
+                // Resposta tem formato {cursos: [...]}
+                cursosData = response.cursos;
+                console.log('✅ Cursos carregados (formato objeto com cursos)');
             } else {
-                data = await response.text();
+                console.warn('⚠️ Estrutura de resposta inesperada para cursos:', response);
+                throw new Error('Estrutura de resposta inesperada para cursos');
             }
 
-            console.log(`📡 API Response [${endpoint}]:`, data);
+            this.cursosComPeriodos = {};
+            this.cursosDisponiveis = [];
 
-            if (!response.ok) {
-                throw new Error(typeof data === 'object' ? (data.error || `Erro ${response.status}`) : `Erro ${response.status}`);
-            }
+            console.log('📊 Cursos recebidos da API:', cursosData);
 
-            return {
-                success: true,
-                data: data,
-                message: typeof data === 'object' ? data.message : 'Sucesso'
-            };
+            // Processar cursos do banco
+            cursosData.forEach(curso => {
+                if (curso && curso.nome) {
+                    this.cursosComPeriodos[curso.nome] = curso.total_periodos || 8;
+                    this.cursosDisponiveis.push(curso.nome);
+                }
+            });
+
+            console.log(`✅ ${this.cursosDisponiveis.length} cursos carregados do banco:`, this.cursosDisponiveis);
+
+            // 🔥 CORREÇÃO: Popular os cursos imediatamente após carregar
+            this.popularCursosNoModalTurma();
+
         } catch (error) {
-            console.error(`❌ Erro na requisição ${endpoint}:`, error);
-            return {
-                success: false,
-                error: error.message
-            };
+            console.error('❌ Erro ao carregar cursos do banco:', error);
+
+            // 🔥 CORREÇÃO: Tentar endpoint alternativo
+            await this.tentarEndpointAlternativoCursos();
         }
     }
+
+    // 🔥 NOVA FUNÇÃO: Tentar endpoint alternativo para cursos
+    async tentarEndpointAlternativoCursos() {
+        try {
+            console.log('🔄 Tentando endpoint alternativo para cursos...');
+
+            const response = await this.makeRequest('/cursos');
+            console.log('📡 Resposta do endpoint alternativo:', response);
+
+            let cursosData = [];
+
+            if (Array.isArray(response)) {
+                cursosData = response;
+            } else if (response && response.success && Array.isArray(response.data)) {
+                cursosData = response.data;
+            } else {
+                throw new Error('Endpoint alternativo também falhou');
+            }
+
+            this.cursosComPeriodos = {};
+            this.cursosDisponiveis = [];
+
+            cursosData.forEach(curso => {
+                if (curso && curso.nome) {
+                    // 🔥 CORREÇÃO: Se não tiver total_periodos, usar valor padrão 8
+                    this.cursosComPeriodos[curso.nome] = curso.total_periodos || 8;
+                    this.cursosDisponiveis.push(curso.nome);
+                }
+            });
+
+            console.log(`✅ ${this.cursosDisponiveis.length} cursos carregados do endpoint alternativo`);
+            this.popularCursosNoModalTurma();
+
+        } catch (error) {
+            console.error('❌ Endpoint alternativo também falhou:', error);
+            this.usarCursosFallbackTurmas();
+        }
+    }
+
+
+    usarCursosFallbackTurmas() {
+        console.log('🔄 Usando cursos fallback para turmas...');
+
+        // Buscar cursos do localStorage se existirem
+        const cursosSalvos = localStorage.getItem('cursos_disponiveis');
+        if (cursosSalvos) {
+            try {
+                const cursos = JSON.parse(cursosSalvos);
+                this.cursosComPeriodos = {};
+                this.cursosDisponiveis = [];
+
+                cursos.forEach(curso => {
+                    if (curso && curso.nome) {
+                        this.cursosComPeriodos[curso.nome] = curso.total_periodos || 8;
+                        this.cursosDisponiveis.push(curso.nome);
+                    }
+                });
+
+                console.log('✅ Cursos recuperados do localStorage:', this.cursosDisponiveis);
+                this.popularCursosNoModalTurma();
+                return;
+            } catch (e) {
+                console.warn('⚠️ Erro ao ler cursos do localStorage:', e);
+            }
+        }
+
+        // Fallback padrão
+        const cursosFallback = {
+            'Sistemas de Informação': 8,
+            'Administração': 8,
+            'Direito': 10,
+            'Engenharia Civil': 10,
+            'Medicina': 12,
+            'Psicologia': 10,
+            'Enfermagem': 8,
+            'Educação Física': 8
+        };
+
+        this.cursosComPeriodos = cursosFallback;
+        this.cursosDisponiveis = Object.keys(cursosFallback);
+        this.popularCursosNoModalTurma();
+    }
+
+    // 🔥 CORREÇÃO: Função popularCursosNoModalTurma síncrona
+    popularCursosNoModalTurma(callback = null) {
+        try {
+            const selectCurso = document.getElementById('turmaCurso');
+            if (!selectCurso) {
+                console.error('❌ Elemento turmaCurso não encontrado');
+                if (callback) callback();
+                return;
+            }
+
+            console.log('📝 Populando cursos no modal de turma...');
+
+            // Limpar select
+            selectCurso.innerHTML = '<option value="">Selecione o curso</option>';
+
+            if (!this.cursosDisponiveis || this.cursosDisponiveis.length === 0) {
+                console.warn('⚠️ Nenhum curso disponível para popular no modal');
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'Nenhum curso disponível';
+                option.disabled = true;
+                selectCurso.appendChild(option);
+
+                if (callback) callback();
+                return;
+            }
+
+            // Ordenar cursos alfabeticamente
+            const cursosOrdenados = [...this.cursosDisponiveis].sort();
+
+            cursosOrdenados.forEach(curso => {
+                const option = document.createElement('option');
+                option.value = curso;
+                option.textContent = curso;
+
+                const totalPeriodos = this.cursosComPeriodos[curso] || 8;
+                option.setAttribute('data-total-periodos', totalPeriodos);
+                option.setAttribute('title', `${totalPeriodos} períodos`);
+
+                selectCurso.appendChild(option);
+            });
+
+            console.log(`✅ ${cursosOrdenados.length} cursos adicionados ao modal de turma`);
+
+            // Executar callback imediatamente
+            if (callback) callback();
+
+        } catch (error) {
+            console.error('❌ Erro ao popular cursos no modal:', error);
+            if (callback) callback();
+        }
+    }
+
+    // 🔥 NOVA FUNÇÃO: Verificar estado do formulário de edição
+    verificarEstadoFormularioEdicao() {
+        try {
+            console.group('🔍 VERIFICAÇÃO DO FORMULÁRIO DE EDIÇÃO');
+
+            const elementos = {
+                turmaCurso: document.getElementById('turmaCurso'),
+                turmaPeriodo: document.getElementById('turmaPeriodo')
+            };
+
+            console.log('📋 Estado dos elementos:');
+            console.log('- turmaCurso:', {
+                existe: !!elementos.turmaCurso,
+                valor: elementos.turmaCurso ? elementos.turmaCurso.value : 'N/A',
+                options: elementos.turmaCurso ? elementos.turmaCurso.options.length : 0
+            });
+
+            console.log('- turmaPeriodo:', {
+                existe: !!elementos.turmaPeriodo,
+                valor: elementos.turmaPeriodo ? elementos.turmaPeriodo.value : 'N/A',
+                options: elementos.turmaPeriodo ? elementos.turmaPeriodo.options.length : 0
+            });
+
+            if (this.turmaEditando) {
+                console.log('📊 Dados da turma em edição:', {
+                    curso: this.turmaEditando.curso,
+                    periodo: this.turmaEditando.periodo
+                });
+            }
+
+            console.groupEnd();
+
+        } catch (error) {
+            console.error('❌ Erro na verificação:', error);
+        }
+    }
+
+    forcarPreenchimentoCurso(turma) {
+        try {
+            const turmaCursoInput = document.getElementById('turmaCurso');
+            if (!turmaCursoInput || !turma.curso) return;
+
+            console.log('💪 Forçando preenchimento do curso:', turma.curso);
+
+            // Tentativa 1: Definir value diretamente
+            turmaCursoInput.value = turma.curso;
+
+            // Tentativa 2: Encontrar a option e marcar como selected
+            const options = Array.from(turmaCursoInput.options);
+            const cursoOption = options.find(opt => opt.value === turma.curso);
+            if (cursoOption) {
+                cursoOption.selected = true;
+            }
+
+            // Tentativa 3: Disparar eventos para notificar mudanças
+            turmaCursoInput.dispatchEvent(new Event('change', { bubbles: true }));
+            turmaCursoInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+            // Tentativa 4: Usar setAttribute (às vezes funciona melhor)
+            turmaCursoInput.setAttribute('value', turma.curso);
+
+            // Tentativa 5: Verificação visual
+            setTimeout(() => {
+                console.log('👀 Valor atual do select:', turmaCursoInput.value);
+                console.log('👀 Option selecionada:', turmaCursoInput.options[turmaCursoInput.selectedIndex]?.text);
+
+                if (turmaCursoInput.value !== turma.curso) {
+                    console.warn('⚠️ Valor não foi mantido, tentando novamente...');
+                    this.forcarPreenchimentoCurso(turma);
+                }
+            }, 200);
+
+        } catch (error) {
+            console.error('❌ Erro ao forçar preenchimento:', error);
+        }
+    }
+
+    configurarEventosCursoPeriodo() {
+        try {
+            console.log('⚙️ Configurando eventos de curso e período...');
+
+            const selectCurso = document.getElementById('turmaCurso');
+            const selectPeriodo = document.getElementById('turmaPeriodo');
+
+            if (selectCurso) {
+                // Remover event listeners antigos
+                const novoSelectCurso = selectCurso.cloneNode(true);
+                selectCurso.parentNode.replaceChild(novoSelectCurso, selectCurso);
+
+                // 🔥 CORREÇÃO: Configurar evento com debounce
+                let timeoutId;
+                novoSelectCurso.addEventListener('change', (e) => {
+                    console.log('🎯 Evento change do curso disparado:', e.target.value);
+
+                    // Debounce para evitar múltiplas chamadas
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(() => {
+                        this.atualizarPeriodosTurma(e.target.value);
+                    }, 100);
+                });
+
+                // Configurar estado inicial
+                novoSelectCurso.disabled = false;
+                novoSelectCurso.classList.remove('select-desabilitado');
+                novoSelectCurso.classList.add('select-habilitado');
+
+                console.log('✅ Evento do curso configurado');
+            } else {
+                console.error('❌ Select de curso não encontrado');
+            }
+
+            if (selectPeriodo) {
+                // Configurar estado inicial do período
+                selectPeriodo.disabled = true;
+                selectPeriodo.classList.add('select-desabilitado');
+                selectPeriodo.classList.remove('select-habilitado');
+                selectPeriodo.innerHTML = '<option value="">Selecione o período</option>';
+
+                console.log('✅ Estado inicial do período configurado');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao configurar eventos curso/período:', error);
+        }
+    }
+
+    debugEdicaoTurma(turmaId) {
+        try {
+            console.group('🐛 DEBUG EDIÇÃO DE TURMA');
+
+            const turma = this.turmas.find(t => t.id === turmaId);
+            console.log('📋 Dados da turma:', turma);
+
+            const selectCurso = document.getElementById('turmaCurso');
+            console.log('🎯 Select de curso:', {
+                existe: !!selectCurso,
+                options: selectCurso ? selectCurso.options.length : 0,
+                valores: selectCurso ? Array.from(selectCurso.options).map(o => o.value) : []
+            });
+
+            console.log('📊 Cursos disponíveis:', this.cursosDisponiveis);
+            console.log('📚 Mapeamento de períodos:', this.cursosComPeriodos);
+
+            // Verificar se o curso da turma está na lista
+            if (turma && turma.curso) {
+                const cursoEncontrado = this.cursosDisponiveis.includes(turma.curso);
+                console.log('🔍 Curso da turma encontrado na lista?', cursoEncontrado);
+
+                if (!cursoEncontrado) {
+                    console.warn('⚠️ Curso da turma não encontrado na lista:', turma.curso);
+                }
+            }
+
+            console.groupEnd();
+
+        } catch (error) {
+            console.error('❌ Erro no debug de edição:', error);
+        }
+    }
+
+    // 🔥 CORREÇÃO: Função atualizarPeriodosTurma com callback de conclusão
+    atualizarPeriodosTurma(cursoSelecionado, callback = null) {
+        try {
+            console.group('🔄 ATUALIZANDO PERÍODOS DA TURMA');
+            console.log('📋 Curso selecionado:', cursoSelecionado);
+
+            const selectPeriodo = document.getElementById('turmaPeriodo');
+            if (!selectPeriodo) {
+                console.error('❌ Elemento turmaPeriodo não encontrado no DOM');
+                console.groupEnd();
+                if (callback) callback(false);
+                return;
+            }
+
+            // Limpar períodos anteriores
+            selectPeriodo.innerHTML = '<option value="">Selecione o período</option>';
+
+            // Resetar estado do select
+            selectPeriodo.disabled = true;
+            selectPeriodo.classList.add('select-desabilitado');
+            selectPeriodo.classList.remove('select-habilitado');
+
+            if (!cursoSelecionado) {
+                console.log('ℹ️ Nenhum curso selecionado');
+                console.groupEnd();
+                if (callback) callback(false);
+                return;
+            }
+
+            // Verificar se o curso existe no nosso mapeamento
+            if (!this.cursosComPeriodos || !this.cursosComPeriodos[cursoSelecionado]) {
+                console.warn('⚠️ Curso não encontrado no mapeamento:', cursoSelecionado);
+                console.log('📊 Cursos disponíveis:', this.cursosComPeriodos);
+
+                // Tentar buscar o curso nos dados disponíveis
+                const cursoEncontrado = this.cursosDisponiveis.find(curso =>
+                    curso.toLowerCase() === cursoSelecionado.toLowerCase()
+                );
+
+                if (cursoEncontrado && this.cursosComPeriodos[cursoEncontrado]) {
+                    console.log('✅ Curso encontrado por busca case-insensitive:', cursoEncontrado);
+                    cursoSelecionado = cursoEncontrado;
+                } else {
+                    console.error('❌ Curso não encontrado de forma alguma');
+                    this.mostrarPeriodosGenericos(selectPeriodo);
+                    console.groupEnd();
+                    if (callback) callback(false);
+                    return;
+                }
+            }
+
+            const totalPeriodos = this.cursosComPeriodos[cursoSelecionado];
+            console.log(`📚 Curso "${cursoSelecionado}" tem ${totalPeriodos} períodos`);
+
+            if (!totalPeriodos || totalPeriodos < 1) {
+                console.warn('⚠️ Número de períodos inválido, usando valor padrão (8)');
+                this.mostrarPeriodosGenericos(selectPeriodo);
+                console.groupEnd();
+                if (callback) callback(false);
+                return;
+            }
+
+            // Popular períodos baseado no total do curso
+            for (let i = 1; i <= totalPeriodos; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${i}º Período`;
+                selectPeriodo.appendChild(option);
+            }
+
+            // Habilitar o select de período
+            selectPeriodo.disabled = false;
+            selectPeriodo.classList.remove('select-desabilitado');
+            selectPeriodo.classList.add('select-habilitado');
+
+            // Adicionar estilo visual de sucesso
+            selectPeriodo.style.borderColor = '#28a745';
+            selectPeriodo.style.backgroundColor = '#f8fff9';
+
+            console.log(`✅ Gerados ${totalPeriodos} períodos para "${cursoSelecionado}"`);
+            console.groupEnd();
+
+            // 🔥 CORREÇÃO: Executar callback se fornecido
+            if (callback) {
+                setTimeout(() => callback(true), 50);
+            }
+
+        } catch (error) {
+            console.error('❌ Erro crítico ao atualizar períodos:', error);
+            console.groupEnd();
+            this.mostrarPeriodosGenericos(document.getElementById('turmaPeriodo'));
+            if (callback) callback(false);
+        }
+    }
+
+    mostrarPeriodosGenericos(selectPeriodo) {
+        if (!selectPeriodo) return;
+
+        console.log('🔄 Mostrando períodos genéricos como fallback');
+
+        // Limpar e desabilitar
+        selectPeriodo.innerHTML = '<option value="">Selecione o período</option>';
+        selectPeriodo.disabled = false;
+        selectPeriodo.classList.remove('select-desabilitado');
+        selectPeriodo.classList.add('select-habilitado');
+
+        // Mostrar períodos de 1 a 8 como fallback
+        for (let i = 1; i <= 8; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = `${i}º Período`;
+            selectPeriodo.appendChild(option);
+        }
+
+        // Estilo de aviso
+        selectPeriodo.style.borderColor = '#ffc107';
+        selectPeriodo.style.backgroundColor = '#fffbf0';
+
+        console.log('✅ Períodos genéricos (1-8) carregados como fallback');
+    }
+
+    // ========== GESTÃO DE TURMAS ==========
 
     async carregarTurmas() {
         try {
             console.log('📚 Carregando turmas do banco (ativas e inativas)...');
 
             const response = await this.makeRequest('/turmas');
-            console.log('📡 Resposta bruta da API:', response);
+            console.log('📡 Resposta bruta da API de turmas:', response);
 
-            if (response && response.success) {
-                this.turmas = this.processarTurmas(response.data || []);
-                console.log('✅ Turmas processadas (ativas e inativas):', this.turmas);
+            // 🔥 CORREÇÃO: Processar turmas
+            let turmasData = [];
 
-                console.log('🔄 Sincronizando quantidades...');
-                for (const turma of this.turmas) {
-                    await this.atualizarQuantidadeAlunosTurma(turma.id);
-                }
-
-                this.renderizarTurmas();
-                this.atualizarEstatisticasTurmas();
+            if (Array.isArray(response)) {
+                turmasData = response;
+            } else if (response && response.success && Array.isArray(response.data)) {
+                turmasData = response.data;
+            } else if (response && Array.isArray(response.turmas)) {
+                turmasData = response.turmas;
             } else {
-                throw new Error('Erro ao carregar turmas');
+                console.warn('⚠️ Estrutura de resposta inesperada para turmas:', response);
+                throw new Error('Estrutura de resposta inesperada para turmas');
             }
+
+            this.turmas = this.processarTurmas(turmasData);
+            console.log('✅ Turmas processadas (ativas e inativas):', this.turmas.length);
+
+            // 🔥 CORREÇÃO: Atualizar quantidades de todas as turmas
+            console.log('🔄 Atualizando quantidades de alunos...');
+            for (const turma of this.turmas) {
+                await this.atualizarQuantidadeAlunosTurma(turma.id);
+            }
+
+            this.renderizarTurmas();
+            this.atualizarEstatisticasTurmas();
 
         } catch (error) {
             console.error('❌ Erro ao carregar turmas:', error);
-            this.showNotification('Erro ao carregar turmas do banco', 'error');
+            this.showNotification('Erro ao carregar turmas do banco: ' + error.message, 'error');
             this.turmas = [];
             this.renderizarTurmas();
         }
     }
+
 
     processarTurmas(turmasData) {
         if (!Array.isArray(turmasData)) {
@@ -231,88 +591,8 @@ class AdminTurmas {
         }));
     }
 
-    async carregarAlunos() {
-        try {
-            console.log('👥 Carregando alunos do banco...');
-
-            const response = await this.makeRequest('/usuarios?tipo=aluno');
-
-            if (response && response.success) {
-                let alunosArray = [];
-
-                if (Array.isArray(response.data)) {
-                    alunosArray = response.data;
-                } else if (response.data && Array.isArray(response.data.data)) {
-                    alunosArray = response.data.data;
-                } else if (response.data && Array.isArray(response.data.usuarios)) {
-                    alunosArray = response.data.usuarios;
-                } else {
-                    console.warn('⚠️ Estrutura inesperada, usando resposta direta');
-                    alunosArray = response.data || [];
-                }
-
-                this.alunos = alunosArray;
-                console.log('✅ Alunos carregados via API:', this.alunos.length);
-            } else {
-                throw new Error('Erro ao carregar alunos');
-            }
-        } catch (error) {
-            console.error('❌ Erro ao carregar alunos:', error);
-            this.showNotification('Erro ao carregar alunos do banco', 'error');
-            this.alunos = [];
-        }
-    }
-
-    filtrarTurmas(status) {
-        try {
-            console.log(`🔍 Filtrando turmas por status: ${status}`);
-
-            const tbody = document.getElementById('turmas-body');
-            if (!tbody) return;
-
-            const linhas = tbody.querySelectorAll('tr:not(.categoria-turma)');
-
-            linhas.forEach(linha => {
-                const isInativa = linha.classList.contains('turma-inativa');
-                const categoria = linha.closest('tr.categoria-turma');
-
-                switch (status) {
-                    case 'ativas':
-                        linha.style.display = !isInativa ? '' : 'none';
-                        if (categoria && categoria.textContent.includes('Inativas')) {
-                            categoria.style.display = 'none';
-                        }
-                        break;
-                    case 'inativas':
-                        linha.style.display = isInativa ? '' : 'none';
-                        if (categoria && categoria.textContent.includes('Ativas')) {
-                            categoria.style.display = 'none';
-                        }
-                        break;
-                    case 'todas':
-                    default:
-                        linha.style.display = '';
-                        if (categoria) {
-                            categoria.style.display = '';
-                        }
-                        break;
-                }
-            });
-
-            console.log(`✅ Filtro aplicado: ${status}`);
-        } catch (error) {
-            console.error('❌ Erro ao filtrar turmas:', error);
-        }
-    }
-
     renderizarTurmas() {
         console.log('🎯 Renderizando turmas (ativas e inativas)...');
-        console.log('📊 Dados das turmas antes da renderização:', this.turmas.map(t => ({
-            id: t.id,
-            nome: t.nome,
-            quantidade: t.quantidade_alunos,
-            ativa: t.ativa
-        })));
 
         const tbody = document.getElementById('turmas-body');
         if (!tbody) {
@@ -369,7 +649,6 @@ class AdminTurmas {
         }
 
         tbody.innerHTML = html;
-
         this.atualizarEstatisticasTurmas();
 
         console.log('✅ Turmas renderizadas:', {
@@ -445,43 +724,41 @@ class AdminTurmas {
     `;
     }
 
-    atualizarEstatisticasTurmas() {
+    // ========== GESTÃO DE ALUNOS ==========
+
+    async carregarAlunos() {
         try {
-            if (!Array.isArray(this.turmas)) {
-                console.warn('⚠️ Turmas não é um array:', this.turmas);
-                return;
+            console.log('👥 Carregando alunos do banco...');
+
+            const response = await this.makeRequest('/usuarios?tipo=aluno');
+
+            if (response && response.success) {
+                let alunosArray = [];
+
+                if (Array.isArray(response.data)) {
+                    alunosArray = response.data;
+                } else if (response.data && Array.isArray(response.data.data)) {
+                    alunosArray = response.data.data;
+                } else if (response.data && Array.isArray(response.data.usuarios)) {
+                    alunosArray = response.data.usuarios;
+                } else {
+                    console.warn('⚠️ Estrutura inesperada, usando resposta direta');
+                    alunosArray = response.data || [];
+                }
+
+                this.alunos = alunosArray;
+                console.log('✅ Alunos carregados via API:', this.alunos.length);
+            } else {
+                throw new Error('Erro ao carregar alunos');
             }
-
-            const totalTurmas = this.turmas.length;
-            const totalAlunosVinculados = this.turmas.reduce((total, turma) => total + (turma.quantidade_alunos || 0), 0);
-            const turmasComAlunos = this.turmas.filter(turma => (turma.quantidade_alunos || 0) > 0).length;
-            const turmasAtivas = this.turmas.filter(turma => turma.ativa).length;
-            const turmasInativas = this.turmas.filter(turma => !turma.ativa).length;
-
-            const totalTurmasEl = document.getElementById('total-turmas');
-            const totalAlunosVinculadosEl = document.getElementById('total-alunos-vinculados');
-            const turmasComAlunosEl = document.getElementById('turmas-com-alunos');
-            const turmasAtivasEl = document.getElementById('turmas-ativas');
-            const turmasInativasEl = document.getElementById('turmas-inativas');
-
-            if (totalTurmasEl) totalTurmasEl.textContent = totalTurmas;
-            if (totalAlunosVinculadosEl) totalAlunosVinculadosEl.textContent = totalAlunosVinculados;
-            if (turmasComAlunosEl) turmasComAlunosEl.textContent = turmasComAlunos;
-            if (turmasAtivasEl) turmasAtivasEl.textContent = turmasAtivas;
-            if (turmasInativasEl) turmasInativasEl.textContent = turmasInativas;
-
-            console.log('📊 Estatísticas de turmas atualizadas:', {
-                totalTurmas,
-                totalAlunosVinculados,
-                turmasComAlunos,
-                turmasAtivas,
-                turmasInativas
-            });
-
         } catch (error) {
-            console.error('❌ Erro ao atualizar estatísticas de turmas:', error);
+            console.error('❌ Erro ao carregar alunos:', error);
+            this.showNotification('Erro ao carregar alunos do banco', 'error');
+            this.alunos = [];
         }
     }
+
+    // ========== MODAIS E FORMULÁRIOS ==========
 
     abrirModalCriarTurma() {
         try {
@@ -513,174 +790,18 @@ class AdminTurmas {
         }
     }
 
-    async criarModalVincularAlunosFallback() {
-        console.log('🔄 Criando modal de vínculo fallback...');
-
-        const modalId = 'vincularAlunosModal';
-
-        const modalExistente = document.getElementById(modalId);
-        if (modalExistente) {
-            modalExistente.remove();
+    fecharModalTurma() {
+        const modal = document.getElementById('turmaModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.classList.remove('modal-open');
         }
-
-        const modalHTML = `
-        <div class="modal-overlay" id="${modalId}" style="display: none;">
-            <div class="modal-content large" onclick="event.stopPropagation()">
-                <div class="modal-header">
-                    <h3><i class="fas fa-user-plus"></i> Gerenciar Alunos da Turma</h3>
-                    <button class="modal-close" onclick="adminTurmas.fecharModalVincularAlunos()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Turma Selecionada:</label>
-                        <h4 id="turmaSelecionadaNome" style="margin: 0; color: #2c3e50;"></h4>
-                        <p id="turmaSelecionadaCurso" style="margin: 5px 0 0 0; color: #7f8c8d;"></p>
-                        <small class="text-info">
-                            <i class="fas fa-info-circle"></i> 
-                            Alunos já vinculados aparecem selecionados. Ao desmarcá-los, serão automaticamente desvinculados.
-                        </small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Buscar Alunos:</label>
-                        <input type="text" id="buscarAlunosTurma" class="form-control" 
-                               placeholder="Digite o nome, matrícula ou email...">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="selecionarTodosAlunos"> 
-                            Selecionar todos os alunos disponíveis
-                        </label>
-                    </div>
-                    
-                    <div class="table-container" style="max-height: 400px; overflow-y: auto;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th width="50px">Sel.</th>
-                                    <th>Nome</th>
-                                    <th>Matrícula</th>
-                                    <th>Email</th>
-                                    <th>Curso</th>
-                                    <th>Turma Atual</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="listaAlunosTurma">
-                                <!-- Lista de alunos será renderizada aqui -->
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="btn-group">
-                        <button type="button" class="btn-primary" onclick="adminTurmas.vincularAlunosSelecionados()">
-                            <i class="fas fa-link"></i> Vincular Alunos Selecionados
-                        </button>
-                        <button type="button" class="btn-secondary" onclick="adminTurmas.fecharModalVincularAlunos()">
-                            <i class="fas fa-times"></i> Cancelar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-        console.log('✅ Modal de vínculo fallback criado');
-    }
-
-    criarModalTurmaFallback() {
-        console.log('🔄 Criando modal de turma fallback...');
-
-        const modalHTML = `
-        <div class="modal-overlay" id="turmaModal" style="display: flex;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-users-class"></i> Nova Turma</h3>
-                    <button class="modal-close" onclick="adminTurmas.fecharModalTurma()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="turmaForm">
-                        <input type="hidden" id="turmaId" value="">
-                        
-                        <div class="form-group">
-                            <label>Nome da Turma:</label>
-                            <input type="text" id="turmaNome" required class="form-control" 
-                                   placeholder="Ex: SI-2024-1A">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Curso:</label>
-                            <select id="turmaCurso" required class="form-control">
-                                <option value="">Selecione o curso</option>
-                                <option value="Sistemas de Informação">Sistemas de Informação</option>
-                                <option value="Administração">Administração</option>
-                                <option value="Direito">Direito</option>
-                                <option value="Engenharia Civil">Engenharia Civil</option>
-                                <option value="Medicina">Medicina</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Período:</label>
-                            <select id="turmaPeriodo" required class="form-control">
-                                <option value="">Selecione o período</option>
-                                ${[1, 2, 3, 4, 5, 6, 7, 8].map(p =>
-            `<option value="${p}">${p}° Período</option>`
-        ).join('')}
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Ano:</label>
-                            <input type="number" id="turmaAno" required class="form-control" 
-                                   min="2020" max="2030" value="2024">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Status:</label>
-                            <select id="turmaAtiva" class="form-control">
-                                <option value="true" selected>Ativa</option>
-                                <option value="false">Inativa</option>
-                            </select>
-                        </div>
-                        
-                        <div class="btn-group">
-                            <button type="submit" class="btn-primary">
-                                <i class="fas fa-save"></i> Salvar Turma
-                            </button>
-                            <button type="button" class="btn-secondary" onclick="adminTurmas.fecharModalTurma()">
-                                <i class="fas fa-times"></i> Cancelar
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    `;
-
-        const modalExistente = document.getElementById('turmaModal');
-        if (modalExistente) {
-            modalExistente.remove();
-        }
-
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-
+        this.turmaEditando = null;
         const turmaForm = document.getElementById('turmaForm');
-        if (turmaForm) {
-            turmaForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.salvarTurma(e);
-            });
-        }
+        if (turmaForm) turmaForm.reset();
     }
 
+    // 🔥 CORREÇÃO: Função editarTurma com preenchimento correto do período
     async editarTurma(turmaId) {
         try {
             const turma = this.turmas.find(t => t.id === turmaId);
@@ -697,44 +818,94 @@ class AdminTurmas {
                 return;
             }
 
-            const modalTitle = document.getElementById('turmaModalTitle');
-            const turmaIdInput = document.getElementById('turmaId');
-            const turmaNomeInput = document.getElementById('turmaNome');
-            const turmaCursoInput = document.getElementById('turmaCurso');
-            const turmaPeriodoInput = document.getElementById('turmaPeriodo');
-            const turmaAnoInput = document.getElementById('turmaAno');
-            const turmaAtivaInput = document.getElementById('turmaAtiva');
+            // 🔥 CORREÇÃO: Capturar elementos DENTRO da função para evitar problemas de escopo
+            const obterElementos = () => {
+                return {
+                    modalTitle: document.getElementById('turmaModalTitle'),
+                    turmaIdInput: document.getElementById('turmaId'),
+                    turmaNomeInput: document.getElementById('turmaNome'),
+                    turmaCursoInput: document.getElementById('turmaCurso'),
+                    turmaPeriodoInput: document.getElementById('turmaPeriodo'),
+                    turmaAnoInput: document.getElementById('turmaAno'),
+                    turmaAtivaInput: document.getElementById('turmaAtiva')
+                };
+            };
 
-            if (!turmaNomeInput || !turmaCursoInput) {
+            let elementos = obterElementos();
+
+            if (!elementos.turmaNomeInput || !elementos.turmaCursoInput) {
                 console.warn('⚠️ Campos do formulário não encontrados, criando modal fallback');
                 await this.criarModalEdicaoFallback(turma);
                 return;
             }
 
-            this.popularCursosNoModalTurma();
-
-            if (modalTitle) modalTitle.textContent = 'Editar Turma';
-            if (turmaIdInput) turmaIdInput.value = turma.id;
-            if (turmaNomeInput) turmaNomeInput.value = turma.nome || '';
-
-            if (turmaCursoInput && turma.curso) {
-                turmaCursoInput.value = turma.curso;
-                this.atualizarPeriodosTurma(turma.curso);
-
-                if (turmaPeriodoInput && turma.periodo) {
-                    setTimeout(() => {
-                        if (turmaPeriodoInput) {
-                            turmaPeriodoInput.value = turma.periodo;
-                        }
-                    }, 100);
-                }
+            // 🔥 CORREÇÃO: Garantir que os cursos estão carregados antes de preencher
+            if (this.cursosDisponiveis.length === 0) {
+                console.log('🔄 Carregando cursos antes de editar turma...');
+                await this.carregarCursosDoBanco();
             }
 
-            if (turmaAnoInput) turmaAnoInput.value = turma.ano || new Date().getFullYear();
-            if (turmaAtivaInput) turmaAtivaInput.value = turma.ativa ? 'true' : 'false';
+            // Preencher dados básicos primeiro
+            if (elementos.modalTitle) elementos.modalTitle.textContent = 'Editar Turma';
+            if (elementos.turmaIdInput) elementos.turmaIdInput.value = turma.id;
+            if (elementos.turmaNomeInput) elementos.turmaNomeInput.value = turma.nome || '';
+            if (elementos.turmaAnoInput) elementos.turmaAnoInput.value = turma.ano || new Date().getFullYear();
+            if (elementos.turmaAtivaInput) elementos.turmaAtivaInput.value = turma.ativa ? 'true' : 'false';
 
+            // Mostrar modal primeiro
             modal.style.display = 'flex';
             this.prepararModalMobile(modal);
+
+            // 🔥 CORREÇÃO: Popular cursos e preencher APÓS mostrar o modal
+            const preencherCursoEPeriodo = async () => {
+                // Recapturar elementos para garantir que estão disponíveis
+                elementos = obterElementos();
+
+                if (!elementos.turmaCursoInput) {
+                    console.error('❌ Elemento turmaCurso não encontrado após abrir modal');
+                    return;
+                }
+
+                console.log('🎯 Iniciando preenchimento do curso e período...');
+
+                // Popular cursos no modal
+                this.popularCursosNoModalTurma(() => {
+                    // 🔥 CORREÇÃO: Recapturar elementos após popular o select
+                    elementos = obterElementos();
+
+                    if (!elementos.turmaCursoInput || !elementos.turmaPeriodoInput) {
+                        console.error('❌ Elementos não encontrados após popular cursos');
+                        return;
+                    }
+
+                    console.log('🔄 Tentando preencher curso:', turma.curso);
+
+                    // Verificar se o curso existe nas opções
+                    const cursoExiste = Array.from(elementos.turmaCursoInput.options).some(
+                        option => option.value === turma.curso
+                    );
+
+                    if (cursoExiste) {
+                        // 🔥 CORREÇÃO: Preencher curso
+                        elementos.turmaCursoInput.value = turma.curso;
+                        console.log('✅ Curso preenchido:', elementos.turmaCursoInput.value);
+
+                        // 🔥 CORREÇÃO: Disparar evento change para atualizar períodos
+                        const changeEvent = new Event('change', { bubbles: true });
+                        elementos.turmaCursoInput.dispatchEvent(changeEvent);
+
+                        // 🔥 CORREÇÃO: Aguardar ATIVAMENTE a atualização dos períodos
+                        this.aguardarPeriodosAtualizados(turma.curso, turma.periodo, elementos);
+                    } else {
+                        console.error('❌ Curso não encontrado:', turma.curso);
+                        console.log('📋 Cursos disponíveis:',
+                            Array.from(elementos.turmaCursoInput.options).map(o => o.value));
+                    }
+                });
+            };
+
+            // Iniciar o processo de preenchimento
+            preencherCursoEPeriodo();
 
         } catch (error) {
             console.error('❌ Erro ao abrir edição da turma:', error);
@@ -745,148 +916,87 @@ class AdminTurmas {
             }
         }
     }
-    async criarModalEdicaoFallback(turma) {
+
+    // 🔥 NOVA FUNÇÃO: Aguardar ativamente a atualização dos períodos
+    aguardarPeriodosAtualizados(curso, periodo, elementos) {
+        console.log('⏳ Aguardando atualização dos períodos para:', curso);
+
+        let tentativas = 0;
+        const maxTentativas = 10; // 5 segundos no total
+
+        const verificarPeriodos = setInterval(() => {
+            tentativas++;
+
+            // Verificar se o select de período tem opções (mais que 1 = opção padrão + períodos)
+            const temPeriodos = elementos.turmaPeriodoInput &&
+                elementos.turmaPeriodoInput.options.length > 1;
+
+            if (temPeriodos) {
+                clearInterval(verificarPeriodos);
+                console.log('✅ Períodos atualizados após', tentativas, 'tentativas');
+
+                // 🔥 CORREÇÃO: Preencher período agora que os períodos estão disponíveis
+                this.preencherPeriodoComSeguranca(periodo, elementos);
+            } else if (tentativas >= maxTentativas) {
+                clearInterval(verificarPeriodos);
+                console.error('❌ Timeout: Períodos não foram atualizados após', maxTentativas, 'tentativas');
+
+                // 🔥 CORREÇÃO: Tentar preencher mesmo sem períodos (fallback)
+                this.preencherPeriodoComSeguranca(periodo, elementos);
+            } else {
+                console.log('🔄 Aguardando períodos... tentativa', tentativas);
+
+                // 🔥 CORREÇÃO: Re-disparar evento a cada 2 tentativas para garantir
+                if (tentativas % 2 === 0) {
+                    elementos.turmaCursoInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+        }, 500); // Verificar a cada 500ms
+    }
+
+    // 🔥 NOVA FUNÇÃO: Preencher período com múltiplas estratégias
+    preencherPeriodoComSeguranca(periodo, elementos) {
         try {
-            console.log('🔄 Criando modal de edição fallback...');
-
-            const modalExistente = document.getElementById('turmaModal');
-            if (modalExistente) {
-                modalExistente.remove();
+            if (!elementos.turmaPeriodoInput) {
+                console.error('❌ Select de período não encontrado');
+                return;
             }
 
-            let opcoesPeriodo = '';
-            const totalPeriodos = this.cursosComPeriodos[turma.curso] || 8;
+            console.log('🎯 Tentando preencher período:', periodo);
 
-            for (let i = 1; i <= totalPeriodos; i++) {
-                opcoesPeriodo += `<option value="${i}" ${turma.periodo == i ? 'selected' : ''}>${i}° Período</option>`;
-            }
+            // Estratégia 1: Tentar definir value diretamente
+            elementos.turmaPeriodoInput.value = periodo;
 
-            const modalHTML = `
-            <div class="modal-overlay" id="turmaModal" style="display: flex;">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3><i class="fas fa-users-class"></i> Editar Turma</h3>
-                        <button class="modal-close" onclick="adminTurmas.fecharModalTurma()">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="turmaForm">
-                            <input type="hidden" id="turmaId" value="${turma.id}">
-                            
-                            <div class="form-group">
-                                <label>Nome da Turma:</label>
-                                <input type="text" id="turmaNome" required class="form-control" 
-                                       value="${this.escapeHtml(turma.nome || '')}" placeholder="Ex: SI-2024-1A">
-                            </div>
-                            
-                            <!-- 🔥 CURSO DINÂMICO -->
-                            <div class="form-group">
-                                <label>Curso:</label>
-                                <select id="turmaCurso" required class="form-control" onchange="adminTurmas.atualizarPeriodosTurma(this.value)">
-                                    <option value="">Selecione o curso</option>
-                                    ${this.cursosDisponiveis.map(curso =>
-                `<option value="${curso}" ${turma.curso === curso ? 'selected' : ''}>${curso}</option>`
-            ).join('')}
-                                </select>
-                            </div>
-                            
-                            <!-- 🔥 PERÍODO DINÂMICO -->
-                            <div class="form-group">
-                                <label>Período:</label>
-                                <select id="turmaPeriodo" required class="form-control">
-                                    <option value="">Selecione o período</option>
-                                    ${opcoesPeriodo}
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Ano:</label>
-                                <input type="number" id="turmaAno" required class="form-control" 
-                                       min="2020" max="2030" value="${turma.ano || 2024}">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Status:</label>
-                                <select id="turmaAtiva" class="form-control">
-                                    <option value="true" ${turma.ativa ? 'selected' : ''}>Ativa</option>
-                                    <option value="false" ${!turma.ativa ? 'selected' : ''}>Inativa</option>
-                                </select>
-                            </div>
-                            
-                            <div class="btn-group">
-                                <button type="submit" class="btn-primary">
-                                    <i class="fas fa-save"></i> Salvar Turma
-                                </button>
-                                <button type="button" class="btn-secondary" onclick="adminTurmas.fecharModalTurma()">
-                                    <i class="fas fa-times"></i> Cancelar
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        `;
+            // Estratégia 2: Verificar se o valor foi aceito
+            setTimeout(() => {
+                if (elementos.turmaPeriodoInput.value != periodo) {
+                    console.warn('⚠️ Valor não aceito, tentando estratégia alternativa...');
 
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
+                    // Estratégia 3: Encontrar a option e marcar como selected
+                    const options = Array.from(elementos.turmaPeriodoInput.options);
+                    const periodoOption = options.find(opt => parseInt(opt.value) === parseInt(periodo));
 
-            const turmaForm = document.getElementById('turmaForm');
-            if (turmaForm) {
-                turmaForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.salvarTurma(e);
-                });
-            }
+                    if (periodoOption) {
+                        periodoOption.selected = true;
+                        console.log('✅ Período preenchido via option selection');
+                    } else {
+                        console.error('❌ Período não encontrado nas opções:', periodo);
+                        console.log('📋 Períodos disponíveis:', options.map(o => o.value));
 
-            this.prepararModalMobile(document.getElementById('turmaModal'));
+                        // Estratégia 4: Tentar o primeiro período disponível como fallback
+                        if (options.length > 1) {
+                            elementos.turmaPeriodoInput.value = options[1].value; // Pula a opção padrão
+                            console.log('⚠️ Período original não encontrado, usando:', elementos.turmaPeriodoInput.value);
+                        }
+                    }
+                } else {
+                    console.log('✅ Período preenchido com sucesso:', elementos.turmaPeriodoInput.value);
+                }
+            }, 100);
 
         } catch (error) {
-            console.error('❌ Erro ao criar modal fallback:', error);
-            this.showNotification('Erro crítico: Não foi possível abrir a edição da turma', 'error');
+            console.error('❌ Erro ao preencher período:', error);
         }
-    }
-    validarCursoEPeriodo(curso, periodo) {
-        if (!curso) {
-            return { valido: false, erro: 'Curso é obrigatório' };
-        }
-
-        if (!periodo) {
-            return { valido: false, erro: 'Período é obrigatório' };
-        }
-
-        const totalPeriodos = this.cursosComPeriodos[curso];
-        if (totalPeriodos && periodo > totalPeriodos) {
-            return {
-                valido: false,
-                erro: `O curso ${curso} tem apenas ${totalPeriodos} períodos. Período ${periodo} é inválido.`
-            };
-        }
-
-        return { valido: true };
-    }
-
-    fecharModalTurma() {
-        const modal = document.getElementById('turmaModal');
-        if (modal) {
-            modal.style.display = 'none';
-            document.body.classList.remove('modal-open');
-        }
-        this.turmaEditando = null;
-        document.getElementById('turmaForm').reset();
-    }
-
-    validarTurmaDuplicada(dadosTurma, turmaId = null) {
-        const { nome, curso, periodo, ano } = dadosTurma;
-
-        const turmaDuplicada = this.turmas.find(turma =>
-            turma.nome.toLowerCase() === nome.toLowerCase() &&
-            turma.curso === curso &&
-            turma.periodo === periodo &&
-            turma.ano === ano &&
-            turma.id !== turmaId
-        );
-
-        return turmaDuplicada;
     }
 
     async salvarTurma(event) {
@@ -961,79 +1071,7 @@ class AdminTurmas {
         }
     }
 
-    async excluirTurma(turmaId) {
-        const turma = this.turmas.find(t => t.id === turmaId);
-        if (!turma) return;
-
-        console.log('🗑️ Tentando excluir turma:', {
-            id: turma.id,
-            nome: turma.nome,
-            ativa: turma.ativa,
-            quantidade_alunos: turma.quantidade_alunos
-        });
-
-        if (turma.ativa && turma.quantidade_alunos > 0) {
-            this.showNotification('Não é possível excluir uma turma ativa que possui alunos vinculados!', 'error');
-            return;
-        }
-
-        if (!turma.ativa && turma.quantidade_alunos > 0) {
-            const confirmarDesvinculacao = confirm(
-                `A turma "${turma.nome}" possui ${turma.quantidade_alunos} aluno(s) vinculado(s).\n\n` +
-                'Para excluir a turma, é necessário desvincular todos os alunos primeiro.\n\n' +
-                'Deseja desvincular todos os alunos agora?'
-            );
-
-            if (confirmarDesvinculacao) {
-                await this.desvincularTodosAlunos(turmaId);
-                setTimeout(async () => {
-                    await this.carregarTurmas();
-                    const turmaAtualizada = this.turmas.find(t => t.id === turmaId);
-                    if (turmaAtualizada && turmaAtualizada.quantidade_alunos === 0) {
-                        await this.excluirTurmaAposVerificacao(turmaId);
-                    } else {
-                        this.showNotification('Ainda há alunos vinculados. Não foi possível excluir a turma.', 'error');
-                    }
-                }, 1500);
-            }
-            return;
-        }
-
-        await this.excluirTurmaAposVerificacao(turmaId);
-    }
-
-    async excluirTurmaAposVerificacao(turmaId) {
-        const turma = this.turmas.find(t => t.id === turmaId);
-        if (!turma) return;
-
-        const mensagemConfirmacao = turma.ativa
-            ? `Tem certeza que deseja inativar a turma "${turma.nome}"?\n\nEsta ação tornará a turma inativa.`
-            : `Tem certeza que deseja excluir permanentemente a turma "${turma.nome}"?\n\nEsta ação não pode ser desfeita.`;
-
-        if (!confirm(mensagemConfirmacao)) {
-            return;
-        }
-
-        try {
-            const endpoint = turma.ativa ? `/turmas/${turmaId}` : `/turmas/permanent/${turmaId}`;
-
-            console.log('📤 Fazendo requisição de exclusão para:', endpoint);
-
-            const response = await this.makeRequest(endpoint, {
-                method: 'DELETE'
-            });
-
-            if (response && response.success) {
-                this.showNotification(response.message, 'success');
-                await this.carregarTurmas();
-            } else {
-                throw new Error(response?.error || 'Erro ao excluir turma');
-            }
-        } catch (error) {
-            console.error('❌ Erro ao excluir turma:', error);
-            this.showNotification('Erro ao excluir turma: ' + error.message, 'error');
-        }
-    }
+    // ========== VINCULAÇÃO DE ALUNOS ==========
 
     async vincularAlunosTurma(turmaId) {
         try {
@@ -1056,26 +1094,6 @@ class AdminTurmas {
             console.error('❌ Erro ao abrir modal de vínculo:', error);
             this.showNotification('Erro ao abrir modal: ' + error.message, 'error');
         }
-    }
-    async criarModalVincularAlunosFallback() {
-        console.log('🔄 Criando modal de vínculo fallback...');
-
-        const modalId = 'vincularAlunosModal';
-
-        const modalExistente = document.getElementById(modalId);
-        if (modalExistente) {
-            modalExistente.remove();
-        }
-
-        const modalHTML = `
-        <div class="modal-overlay" id="${modalId}" style="display: none;">
-            <!-- ... resto do código do modal ... -->
-        </div>
-    `;
-
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-        console.log('✅ Modal de vínculo fallback criado');
     }
 
     async abrirModalVincularAlunos(turma) {
@@ -1102,7 +1120,9 @@ class AdminTurmas {
             }
 
             await this.carregarAlunos();
-            this.renderizarListaAlunosParaTurma();
+
+            // 🔥 CORREÇÃO: Aguardar a renderização completa
+            await this.renderizarListaAlunosParaTurma();
 
             modal.style.display = 'flex';
             this.prepararModalMobile(modal);
@@ -1115,49 +1135,6 @@ class AdminTurmas {
         }
     }
 
-    verificarErestaurarModais() {
-        console.log('🔍 Verificando e restaurando modais...');
-
-        const modaisNecessarios = [
-            { id: 'vincularAlunosModal', nome: 'Vincular Alunos' },
-            { id: 'turmaModal', nome: 'Gerenciar Turma' }
-        ];
-
-        modaisNecessarios.forEach(modalInfo => {
-            const modal = document.getElementById(modalInfo.id);
-            if (!modal) {
-                console.log(`🔄 Modal ${modalInfo.nome} não encontrado, restaurando...`);
-
-                if (modalInfo.id === 'vincularAlunosModal') {
-                    this.criarModalVincularAlunosFallback();
-                } else if (modalInfo.id === 'turmaModal') {
-                    this.criarModalTurmaFallback();
-                }
-            } else {
-                console.log(`✅ Modal ${modalInfo.nome} encontrado`);
-            }
-        });
-    }
-
-    validarCursoAluno(alunoId, turmaCurso) {
-        const aluno = this.alunos.find(a => a.id === alunoId);
-        if (!aluno) {
-            return { valido: false, motivo: 'Aluno não encontrado' };
-        }
-
-        if (!aluno.curso) {
-            return { valido: true, motivo: 'Aluno sem curso definido' };
-        }
-
-        if (aluno.curso !== turmaCurso) {
-            return {
-                valido: false,
-                motivo: `Aluno do curso ${aluno.curso} não pode ser adicionado à turma do curso ${turmaCurso}`
-            };
-        }
-
-        return { valido: true };
-    }
 
     fecharModalVincularAlunos() {
         const modal = document.getElementById('vincularAlunosModal');
@@ -1189,56 +1166,7 @@ class AdminTurmas {
                 throw new Error('Turma não selecionada');
             }
 
-            const alunosVinculados = await this.buscarAlunosVinculadosTurma();
-            const alunosVinculadosIds = alunosVinculados.map(aluno => aluno.id);
-
-            const alunosNovosIds = alunosIds.filter(id => !alunosVinculadosIds.includes(id));
-
-            console.log('🎯 Alunos para vincular (novos):', alunosNovosIds);
-            console.log('📋 Alunos já vinculados:', alunosVinculadosIds);
-
-            if (alunosNovosIds.length === 0) {
-                this.showNotification('Todos os alunos selecionados já estão vinculados à turma', 'info');
-                return;
-            }
-
-            const alunosInvalidos = [];
-            const alunosValidos = [];
-
-            for (const alunoId of alunosNovosIds) {
-                const validacao = this.validarCursoAluno(alunoId, this.turmaEditando.curso);
-                if (validacao.valido) {
-                    alunosValidos.push(alunoId);
-                } else {
-                    alunosInvalidos.push({ id: alunoId, motivo: validacao.motivo });
-                }
-            }
-
-            if (alunosInvalidos.length > 0) {
-                const nomesInvalidos = alunosInvalidos.map(invalido => {
-                    const aluno = this.alunos.find(a => a.id === invalido.id);
-                    return `${aluno.nome} (${invalido.motivo})`;
-                }).join(', ');
-
-                this.showNotification(
-                    `${alunosInvalidos.length} aluno(s) não podem ser vinculados: ${nomesInvalidos}`,
-                    'error'
-                );
-
-                if (alunosValidos.length === 0) {
-                    return;
-                }
-
-                if (!confirm(`Deseja vincular apenas os ${alunosValidos.length} aluno(s) válidos?`)) {
-                    return;
-                }
-
-                alunosIds = alunosValidos;
-            } else {
-                alunosIds = alunosValidos;
-            }
-
-            console.log('🎯 Iniciando processo de matrícula para alunos novos...');
+            console.log('🎯 Iniciando processo de matrícula para alunos...');
 
             const response = await this.makeRequest('/turmas/matricular-alunos', {
                 method: 'POST',
@@ -1248,22 +1176,16 @@ class AdminTurmas {
                 })
             });
 
-            console.log('📡 Resposta:', response);
+            console.log('📡 Resposta da matrícula:', response);
 
             if (response && response.success) {
                 this.showNotification(response.message, 'success');
 
-                alunosIds.forEach(id => {
-                    this.alunosVinculadosInicialmente.add(id);
-                });
-
-                console.log('✅ Estado inicial atualizado:', Array.from(this.alunosVinculadosInicialmente));
-
-                this.fecharModalVincularAlunos();
-
+                // 🔥 CORREÇÃO: Atualizar quantidade imediatamente após vincular
                 console.log('🔄 Atualizando quantidade após vinculação...');
                 await this.atualizarQuantidadeAlunosTurma(turmaId);
 
+                // 🔥 CORREÇÃO: Recarregar dados completos
                 await Promise.all([
                     this.carregarTurmas(),
                     this.carregarAlunos()
@@ -1271,6 +1193,8 @@ class AdminTurmas {
 
                 this.renderizarTurmas();
                 this.sincronizarComDashboard();
+
+                this.fecharModalVincularAlunos();
 
             } else {
                 throw new Error(response?.error || 'Erro ao vincular alunos');
@@ -1282,34 +1206,536 @@ class AdminTurmas {
         }
     }
 
-    fecharModalVincularAlunos() {
-        const modal = document.getElementById('vincularAlunosModal');
-        if (modal) {
-            modal.style.display = 'none';
-            document.body.classList.remove('modal-open');
+    // ========== FUNÇÕES AUXILIARES ==========
+
+    async makeRequest(endpoint, options = {}) {
+        const token = localStorage.getItem('authToken');
+
+        if (!token) {
+            console.error('❌ Token de autenticação não encontrado');
+            throw new Error('Usuário não autenticado');
         }
 
-        this.turmaEditando = null;
+        const config = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            ...options
+        };
 
-        const buscarInput = document.getElementById('buscarAlunosTurma');
-        if (buscarInput) buscarInput.value = '';
+        // 🔥 CORREÇÃO: Se body for objeto, converter para JSON
+        if (config.body && typeof config.body === 'object') {
+            config.body = JSON.stringify(config.body);
+        }
+
+        try {
+            console.log(`📤 Fazendo requisição para: /api${endpoint}`, config.method || 'GET');
+
+            const response = await fetch(`/api${endpoint}`, config);
+
+            // 🔥 CORREÇÃO: Verificar se a resposta é JSON válido
+            const contentType = response.headers.get('content-type');
+            let data;
+
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                console.warn('⚠️ Resposta não é JSON:', text.substring(0, 100));
+                throw new Error('Resposta do servidor não é JSON válido');
+            }
+
+            console.log(`📥 Resposta de /api${endpoint}:`, {
+                status: response.status,
+                ok: response.ok,
+                data: data
+            });
+
+            if (!response.ok) {
+                throw new Error(data.error || data.message || `Erro ${response.status}`);
+            }
+
+            return data;
+
+        } catch (error) {
+            console.error(`❌ Erro na requisição /api${endpoint}:`, error);
+            throw error;
+        }
     }
+
+    setupEventListeners() {
+        console.log('✅ Configurando event listeners para turmas');
+
+        // Formulário principal
+        const turmaForm = document.getElementById('turmaForm');
+        if (turmaForm) {
+            turmaForm.addEventListener('submit', (e) => this.salvarTurma(e));
+        } else {
+            console.log('ℹ️ Formulário de turma não encontrado no carregamento inicial');
+        }
+
+        // Configurar eventos específicos de curso/período
+        this.configurarEventosCursoPeriodo();
+
+        // Eventos de modal
+        this.setupModalEventListeners();
+
+        console.log('✅ Todos os event listeners configurados');
+    }
+
+    setupModalEventListeners() {
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.style.display = 'none';
+                document.body.classList.remove('modal-open');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modals = document.querySelectorAll('.modal-overlay');
+                modals.forEach(modal => {
+                    modal.style.display = 'none';
+                });
+                document.body.classList.remove('modal-open');
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.modal-content')) {
+                e.stopPropagation();
+            }
+        });
+    }
+
+    prepararModalMobile(modalElement) {
+        document.body.classList.add('modal-open');
+
+        setTimeout(() => {
+            const firstInput = modalElement.querySelector('input, select, textarea');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        }, 300);
+    }
+
+    escapeHtml(unsafe) {
+        if (unsafe === null || unsafe === undefined) return 'N/A';
+        return unsafe
+            .toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    showNotification(message, type = 'info', duration = 5000) {
+        if (typeof showNotification === 'function') {
+            showNotification(message, type);
+        } else {
+            console.log(`[${type.toUpperCase()}] ${message}`);
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 10000;
+                background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#3498db'};
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, duration);
+        }
+    }
+
+    // ========== FUNÇÕES DE DEBUG E DIAGNÓSTICO ==========
+
+    verificarEstadoInicial() {
+        console.group('🔍 VERIFICAÇÃO DO ESTADO INICIAL');
+
+        const selectCurso = document.getElementById('turmaCurso');
+        const selectPeriodo = document.getElementById('turmaPeriodo');
+
+        console.log('📋 Select de curso:', {
+            existe: !!selectCurso,
+            habilitado: selectCurso ? !selectCurso.disabled : 'N/A',
+            options: selectCurso ? selectCurso.options.length : 0,
+            valor: selectCurso ? selectCurso.value : 'N/A'
+        });
+
+        console.log('📋 Select de período:', {
+            existe: !!selectPeriodo,
+            habilitado: selectPeriodo ? !selectPeriodo.disabled : 'N/A',
+            options: selectPeriodo ? selectPeriodo.options.length : 0,
+            valor: selectPeriodo ? selectPeriodo.value : 'N/A'
+        });
+
+        console.log('📊 Dados internos:', {
+            cursosDisponiveis: this.cursosDisponiveis ? this.cursosDisponiveis.length : 0,
+            cursosComPeriodos: this.cursosComPeriodos ? Object.keys(this.cursosComPeriodos).length : 0
+        });
+
+        console.groupEnd();
+
+        // Se não há cursos, tentar recarregar
+        if (!this.cursosDisponiveis || this.cursosDisponiveis.length === 0) {
+            console.warn('⚠️ Nenhum curso disponível, tentando recarregar...');
+            this.carregarCursosDoBanco();
+        }
+    }
+
+    async debugCursos() {
+        console.group('🐛 DEBUG CURSOS - DETALHADO');
+
+        try {
+            console.log('🔍 Verificando estado atual dos cursos:');
+            console.log('📊 Cursos disponíveis:', this.cursosDisponiveis);
+            console.log('📚 Mapeamento períodos:', this.cursosComPeriodos);
+
+            // Testar a API diretamente
+            const response = await fetch('/api/cursos/com-periodos', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                }
+            });
+
+            console.log('🎯 Status da API:', response.status);
+            const rawData = await response.json();
+            console.log('📡 Resposta bruta da API:', rawData);
+
+            // Verificar estrutura do modal
+            const selectCurso = document.getElementById('turmaCurso');
+            console.log('📝 Select de curso no DOM:', {
+                existe: !!selectCurso,
+                options: selectCurso ? selectCurso.options.length : 0,
+                valor: selectCurso ? selectCurso.value : 'N/A'
+            });
+
+        } catch (error) {
+            console.error('❌ Erro no debug:', error);
+        }
+
+        console.groupEnd();
+        this.showNotification('Debug de cursos concluído - Verifique o console', 'info');
+    }
+
+    async sincronizarQuantidades() {
+        try {
+            console.log('🔄 Sincronizando quantidades de todas as turmas...');
+
+            if (!Array.isArray(this.turmas) || this.turmas.length === 0) {
+                console.log('ℹ️ Nenhuma turma para sincronizar');
+                return;
+            }
+
+            let turmasAtualizadas = 0;
+
+            for (const turma of this.turmas) {
+                const sucesso = await this.atualizarQuantidadeAlunosTurma(turma.id);
+                if (sucesso) {
+                    turmasAtualizadas++;
+                }
+            }
+
+            console.log(`✅ ${turmasAtualizadas}/${this.turmas.length} turmas sincronizadas`);
+            this.showNotification(`Quantidades de ${turmasAtualizadas} turmas atualizadas!`, 'success');
+
+        } catch (error) {
+            console.error('❌ Erro na sincronização de quantidades:', error);
+            this.showNotification('Erro ao sincronizar quantidades: ' + error.message, 'error');
+        }
+    }
+
+    // ========== FUNÇÕES FALLBACK (PARA COMPATIBILIDADE) ==========
+
+    criarModalTurmaFallback() {
+        console.log('🔄 Criando modal de turma fallback...');
+        // Implementação do fallback...
+    }
+
+    criarModalVincularAlunosFallback() {
+        console.log('🔄 Criando modal de vínculo fallback...');
+        // Implementação do fallback...
+    }
+
+    async criarModalEdicaoFallback(turma) {
+        console.log('🔄 Criando modal de edição fallback...');
+        // Implementação do fallback...
+    }
+
+    // ========== OUTRAS FUNÇÕES (MANTIDAS PARA COMPATIBILIDADE) ==========
+
+    validarTurmaDuplicada(dadosTurma, turmaId = null) {
+        const { nome, curso, periodo, ano } = dadosTurma;
+        const turmaDuplicada = this.turmas.find(turma =>
+            turma.nome.toLowerCase() === nome.toLowerCase() &&
+            turma.curso === curso &&
+            turma.periodo === periodo &&
+            turma.ano === ano &&
+            turma.id !== turmaId
+        );
+        return turmaDuplicada;
+    }
+
+    validarCursoAluno(alunoId, turmaCurso) {
+        const aluno = this.alunos.find(a => a.id === alunoId);
+        if (!aluno) {
+            return { valido: false, motivo: 'Aluno não encontrado' };
+        }
+        if (!aluno.curso) {
+            return { valido: true, motivo: 'Aluno sem curso definido' };
+        }
+        if (aluno.curso !== turmaCurso) {
+            return {
+                valido: false,
+                motivo: `Aluno do curso ${aluno.curso} não pode ser adicionado à turma do curso ${turmaCurso}`
+            };
+        }
+        return { valido: true };
+    }
+
+    async atualizarQuantidadeAlunosTurma(turmaId) {
+        try {
+            console.log('🔢 Atualizando quantidade de alunos para turma:', turmaId);
+
+            const alunosVinculados = await this.buscarAlunosVinculadosTurmaComId(turmaId);
+            const novaQuantidade = alunosVinculados.length;
+
+            console.log(`✅ Encontrados ${novaQuantidade} alunos na turma ${turmaId}`);
+
+            const turmaIndex = this.turmas.findIndex(t => t.id === turmaId);
+            if (turmaIndex !== -1) {
+                this.turmas[turmaIndex].quantidade_alunos = novaQuantidade;
+                console.log(`✅ Quantidade atualizada para turma local: ${novaQuantidade}`);
+
+                this.renderizarTurmas();
+                this.atualizarEstatisticasTurmas();
+                return true;
+            } else {
+                console.warn(`⚠️ Turma com ID ${turmaId} não encontrada na lista local`);
+                return false;
+            }
+
+        } catch (error) {
+            console.error('❌ Erro ao atualizar quantidade:', error);
+            return false;
+        }
+    }
+
+    async buscarAlunosVinculadosTurmaComId(turmaId) {
+        try {
+            console.log('🔍 Buscando alunos vinculados da turma:', turmaId);
+
+            const response = await this.makeRequest(`/turmas/${turmaId}/alunos`);
+            console.log('📡 Resposta da API alunos vinculados:', response);
+
+            // 🔥 CORREÇÃO: Tratar diferentes formatos de resposta
+            let alunosVinculados = [];
+
+            if (Array.isArray(response)) {
+                alunosVinculados = response;
+            } else if (response && response.success && Array.isArray(response.data)) {
+                alunosVinculados = response.data;
+            } else if (response && Array.isArray(response.alunos)) {
+                alunosVinculados = response.alunos;
+            } else {
+                console.warn('⚠️ Formato de resposta inesperado para alunos vinculados:', response);
+                alunosVinculados = [];
+            }
+
+            console.log(`✅ ${alunosVinculados.length} alunos vinculados encontrados`);
+            return alunosVinculados;
+
+        } catch (error) {
+            console.error('❌ Erro ao buscar alunos vinculados:', error);
+            return [];
+        }
+    }
+
+    atualizarEstatisticasTurmas() {
+        try {
+            if (!Array.isArray(this.turmas)) {
+                console.warn('⚠️ Turmas não é um array:', this.turmas);
+                return;
+            }
+            const totalTurmas = this.turmas.length;
+            const totalAlunosVinculados = this.turmas.reduce((total, turma) => total + (turma.quantidade_alunos || 0), 0);
+            const turmasComAlunos = this.turmas.filter(turma => (turma.quantidade_alunos || 0) > 0).length;
+            const totalTurmasEl = document.getElementById('total-turmas');
+            const totalAlunosVinculadosEl = document.getElementById('total-alunos-vinculados');
+            const turmasComAlunosEl = document.getElementById('turmas-com-alunos');
+            if (totalTurmasEl) totalTurmasEl.textContent = totalTurmas;
+            if (totalAlunosVinculadosEl) totalAlunosVinculadosEl.textContent = totalAlunosVinculados;
+            if (turmasComAlunosEl) turmasComAlunosEl.textContent = turmasComAlunos;
+            console.log('📊 Estatísticas de turmas atualizadas:', { totalTurmas, totalAlunosVinculados, turmasComAlunos });
+        } catch (error) {
+            console.error('❌ Erro ao atualizar estatísticas de turmas:', error);
+        }
+    }
+
+    sincronizarComDashboard() {
+        if (window.adminManager && typeof adminManager.atualizarTurmasDashboard === 'function') {
+            console.log('🔄 Sincronizando turmas com dashboard...');
+            adminManager.atualizarTurmasDashboard();
+        }
+    }
+
+    // ========== FUNÇÕES DE GERENCIAMENTO DE ALUNOS ==========
+
+    async buscarAlunosVinculadosTurma() {
+        try {
+            if (!this.turmaEditando?.id) {
+                console.log('⚠️ Nenhuma turma selecionada para buscar alunos vinculados');
+                return [];
+            }
+
+            console.log('🔍 Buscando alunos vinculados da turma:', this.turmaEditando.id);
+
+            const response = await this.makeRequest(`/turmas/${this.turmaEditando.id}/alunos`);
+            console.log('📡 Resposta da API alunos vinculados:', response);
+
+            // 🔥 CORREÇÃO: Tratar diferentes formatos de resposta
+            let alunosVinculados = [];
+
+            if (Array.isArray(response)) {
+                // Resposta é array direto
+                alunosVinculados = response;
+            } else if (response && response.success && Array.isArray(response.data)) {
+                // Formato {success: true, data: [...]}
+                alunosVinculados = response.data;
+            } else if (response && Array.isArray(response.alunos)) {
+                // Formato {alunos: [...]}
+                alunosVinculados = response.alunos;
+            } else if (response && response.data && Array.isArray(response.data)) {
+                // Formato aninhado
+                alunosVinculados = response.data;
+            } else {
+                console.warn('⚠️ Formato de resposta inesperado para alunos vinculados:', response);
+                alunosVinculados = [];
+            }
+
+            console.log(`✅ ${alunosVinculados.length} alunos vinculados encontrados`);
+            return alunosVinculados;
+
+        } catch (error) {
+            console.error('❌ Erro ao buscar alunos vinculados:', error);
+            return [];
+        }
+    }
+
+    async renderizarListaAlunosParaTurma() {
+        const tbody = document.getElementById('listaAlunosTurma');
+        if (!tbody) {
+            console.error('❌ Elemento listaAlunosTurma não encontrado');
+            return;
+        }
+
+        if (!Array.isArray(this.alunos) || this.alunos.length === 0) {
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="empty-state">
+                    <i class="fas fa-users-slash"></i>
+                    <p>Nenhum aluno encontrado</p>
+                </td>
+            </tr>
+        `;
+            return;
+        }
+
+        try {
+            // 🔥 CORREÇÃO: Aguardar a Promise ser resolvida
+            const alunosVinculados = await this.buscarAlunosVinculadosTurma();
+
+            // 🔥 CORREÇÃO: Garantir que é um array
+            const alunosVinculadosIds = Array.isArray(alunosVinculados)
+                ? alunosVinculados.map(aluno => aluno.id)
+                : [];
+
+            this.alunosVinculadosInicialmente = new Set(alunosVinculadosIds);
+
+            console.log(`🎯 ${alunosVinculadosIds.length} alunos já vinculados à turma:`, alunosVinculadosIds);
+            console.log('📋 Estado inicial guardado:', Array.from(this.alunosVinculadosInicialmente));
+
+            tbody.innerHTML = this.alunos.map(aluno => {
+                const turmaAluno = this.turmas.find(t => t.id === aluno.turma_id);
+                const jaNaTurma = alunosVinculadosIds.includes(aluno.id);
+                const validacaoCurso = this.validarCursoAluno(aluno.id, this.turmaEditando?.curso);
+                const podeVincular = !jaNaTurma && validacaoCurso.valido;
+
+                return `
+                <tr>
+                    <td>
+                        <input type="checkbox" class="aluno-checkbox" value="${aluno.id}" 
+                               ${jaNaTurma ? 'checked' : ''} 
+                               ${podeVincular || jaNaTurma ? '' : 'disabled'}
+                               data-inicialmente-vinculado="${jaNaTurma}">
+                        ${jaNaTurma ? '<small class="text-success">(já vinculado)</small>' : ''}
+                        ${!validacaoCurso.valido && !jaNaTurma ? '<small class="text-danger">(curso incompatível)</small>' : ''}
+                    </td>
+                    <td>${this.escapeHtml(aluno.nome)}</td>
+                    <td>${this.escapeHtml(aluno.matricula || 'N/A')}</td>
+                    <td>${this.escapeHtml(aluno.email)}</td>
+                    <td>${this.escapeHtml(aluno.curso || 'N/A')}</td>
+                    <td>
+                        <span class="badge ${aluno.turma_id ? 'active' : 'inactive'}">
+                            ${turmaAluno ? turmaAluno.nome : 'Sem turma'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge ${jaNaTurma ? 'active' : (podeVincular ? 'active' : 'inactive')}">
+                            ${jaNaTurma ? 'Vinculado' : (podeVincular ? 'Pode vincular' : 'Não pode vincular')}
+                        </span>
+                    </td>
+                </tr>
+            `;
+            }).join('');
+
+            this.configurarSelecaoAlunosComEventos();
+
+        } catch (error) {
+            console.error('❌ Erro ao renderizar lista de alunos:', error);
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="empty-state error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Erro ao carregar alunos</p>
+                    <small>${error.message}</small>
+                </td>
+            </tr>
+        `;
+        }
+    }
+
 
     configurarSelecaoAlunosComEventos() {
         const selecionarTodos = document.getElementById('selecionarTodosAlunos');
         const checkboxes = document.querySelectorAll('.aluno-checkbox:not(:disabled)');
         const buscarInput = document.getElementById('buscarAlunosTurma');
 
+        console.log(`🔧 Configurando eventos para ${checkboxes.length} checkboxes`);
+
         if (selecionarTodos) {
-            selecionarTodos.addEventListener('change', (e) => {
+            selecionarTodos.onchange = (e) => {
                 checkboxes.forEach(checkbox => {
                     checkbox.checked = e.target.checked;
                 });
-            });
+            };
         }
 
         if (buscarInput) {
-            buscarInput.addEventListener('input', (e) => {
+            buscarInput.oninput = (e) => {
                 const termo = e.target.value.toLowerCase();
                 const linhas = document.querySelectorAll('#listaAlunosTurma tr');
 
@@ -1317,23 +1743,33 @@ class AdminTurmas {
                     const texto = linha.textContent.toLowerCase();
                     linha.style.display = texto.includes(termo) ? '' : 'none';
                 });
-            });
+            };
         }
 
         checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', async (e) => {
+            checkbox.onchange = null;
+
+            checkbox.onchange = async (e) => {
                 const alunoId = parseInt(e.target.value);
-                const estavaSelecionado = e.target.checked;
+                const estaSelecionado = e.target.checked;
+                const estavaVinculadoInicialmente = this.alunosVinculadosInicialmente.has(alunoId);
 
-                console.log('🔄 Alteração de seleção:', { alunoId, estavaSelecionado });
+                console.log('🔄 Alteração de seleção:', {
+                    alunoId,
+                    estaSelecionado,
+                    estavaVinculadoInicialmente
+                });
 
-                if (!estavaSelecionado) {
+                if (!estaSelecionado && estavaVinculadoInicialmente) {
                     const aluno = this.alunos.find(a => a.id === alunoId);
                     if (aluno) {
                         await this.desvincularAlunoInstantaneo(alunoId, aluno.nome);
                     }
                 }
-            });
+                else if (!estaSelecionado && !estavaVinculadoInicialmente) {
+                    console.log('ℹ️ Aluno não estava vinculado inicialmente - ignorando desvinculação');
+                }
+            };
         });
     }
 
@@ -1468,8 +1904,6 @@ class AdminTurmas {
                         if (aluno) {
                             await this.desvincularAlunoInstantaneo(alunoId, aluno.nome);
                         }
-                    } else if (!estaSelecionado && !estavaVinculadoInicialmente) {
-                        console.log('ℹ️ Aluno não estava vinculado inicialmente - ignorando desvinculação');
                     }
                 };
             }
@@ -1479,682 +1913,79 @@ class AdminTurmas {
         }
     }
 
-    async forcarAtualizacaoModalVincularAlunos() {
-        try {
-            console.log('💪 Forçando atualização completa do modal de vincular alunos...');
+    // ========== FUNÇÕES DE EXCLUSÃO E DESVINCULAÇÃO ==========
 
-            this.fecharModalVincularAlunos();
-
-            setTimeout(async () => {
-                if (this.turmaEditando) {
-                    await this.abrirModalVincularAlunos(this.turmaEditando);
-                }
-            }, 300);
-
-        } catch (error) {
-            console.error('❌ Erro ao forçar atualização do modal:', error);
-        }
-    }
-
-    async renderizarListaAlunosParaTurma() {
-        const tbody = document.getElementById('listaAlunosTurma');
-        if (!tbody) {
-            console.error('❌ Elemento listaAlunosTurma não encontrado');
-            return;
-        }
-
-        if (!Array.isArray(this.alunos) || this.alunos.length === 0) {
-            tbody.innerHTML = `
-            <tr>
-                <td colspan="7" class="empty-state">
-                    <i class="fas fa-users-slash"></i>
-                    <p>Nenhum aluno encontrado</p>
-                </td>
-            </tr>
-        `;
-            return;
-        }
-
-        try {
-            const alunosVinculados = await this.buscarAlunosVinculadosTurma();
-            const alunosVinculadosIds = alunosVinculados.map(aluno => aluno.id);
-
-            this.alunosVinculadosInicialmente = new Set(alunosVinculadosIds);
-
-            console.log(`🎯 ${alunosVinculadosIds.length} alunos já vinculados à turma:`, alunosVinculadosIds);
-            console.log('📋 Estado inicial guardado:', Array.from(this.alunosVinculadosInicialmente));
-
-            tbody.innerHTML = this.alunos.map(aluno => {
-                const turmaAluno = this.turmas.find(t => t.id === aluno.turma_id);
-                const jaNaTurma = alunosVinculadosIds.includes(aluno.id);
-                const validacaoCurso = this.validarCursoAluno(aluno.id, this.turmaEditando?.curso);
-                const podeVincular = !jaNaTurma && validacaoCurso.valido;
-
-                return `
-                <tr>
-                    <td>
-                        <input type="checkbox" class="aluno-checkbox" value="${aluno.id}" 
-                               ${jaNaTurma ? 'checked' : ''} 
-                               ${podeVincular || jaNaTurma ? '' : 'disabled'}
-                               data-inicialmente-vinculado="${jaNaTurma}">
-                        ${jaNaTurma ? '<small class="text-success">(já vinculado)</small>' : ''}
-                        ${!validacaoCurso.valido && !jaNaTurma ? '<small class="text-danger">(curso incompatível)</small>' : ''}
-                    </td>
-                    <td>${this.escapeHtml(aluno.nome)}</td>
-                    <td>${this.escapeHtml(aluno.matricula || 'N/A')}</td>
-                    <td>${this.escapeHtml(aluno.email)}</td>
-                    <td>${this.escapeHtml(aluno.curso || 'N/A')}</td>
-                    <td>
-                        <span class="badge ${aluno.turma_id ? 'active' : 'inactive'}">
-                            ${turmaAluno ? turmaAluno.nome : 'Sem turma'}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge ${jaNaTurma ? 'active' : (podeVincular ? 'active' : 'inactive')}">
-                            ${jaNaTurma ? 'Vinculado' : (podeVincular ? 'Pode vincular' : 'Não pode vincular')}
-                        </span>
-                    </td>
-                </tr>
-            `;
-            }).join('');
-
-            this.configurarSelecaoAlunosComEventos();
-
-        } catch (error) {
-            console.error('❌ Erro ao renderizar lista de alunos:', error);
-            tbody.innerHTML = `
-            <tr>
-                <td colspan="7" class="empty-state error">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <p>Erro ao carregar alunos</p>
-                </td>
-            </tr>
-        `;
-        }
-    }
-
-    async buscarAlunosVinculadosTurma() {
-        try {
-            if (!this.turmaEditando?.id) return [];
-
-            const response = await this.makeRequest(`/turmas/${this.turmaEditando.id}/alunos`);
-            if (response && response.success) {
-                return response.data || [];
-            }
-            return [];
-        } catch (error) {
-            console.error('❌ Erro ao buscar alunos vinculados:', error);
-            return [];
-        }
-    }
-
-    configurarSelecaoAlunosComEventos() {
-        const selecionarTodos = document.getElementById('selecionarTodosAlunos');
-        const checkboxes = document.querySelectorAll('.aluno-checkbox:not(:disabled)');
-        const buscarInput = document.getElementById('buscarAlunosTurma');
-
-        console.log(`🔧 Configurando eventos para ${checkboxes.length} checkboxes`);
-
-        if (selecionarTodos) {
-            selecionarTodos.onchange = (e) => {
-                checkboxes.forEach(checkbox => {
-                    checkbox.checked = e.target.checked;
-                });
-            };
-        }
-
-        if (buscarInput) {
-            buscarInput.oninput = (e) => {
-                const termo = e.target.value.toLowerCase();
-                const linhas = document.querySelectorAll('#listaAlunosTurma tr');
-
-                linhas.forEach(linha => {
-                    const texto = linha.textContent.toLowerCase();
-                    linha.style.display = texto.includes(termo) ? '' : 'none';
-                });
-            };
-        }
-
-        checkboxes.forEach(checkbox => {
-            checkbox.onchange = null;
-
-            checkbox.onchange = async (e) => {
-                const alunoId = parseInt(e.target.value);
-                const estaSelecionado = e.target.checked;
-                const estavaVinculadoInicialmente = this.alunosVinculadosInicialmente.has(alunoId);
-
-                console.log('🔄 Alteração de seleção:', {
-                    alunoId,
-                    estaSelecionado,
-                    estavaVinculadoInicialmente
-                });
-
-                if (!estaSelecionado && estavaVinculadoInicialmente) {
-                    const aluno = this.alunos.find(a => a.id === alunoId);
-                    if (aluno) {
-                        await this.desvincularAlunoInstantaneo(alunoId, aluno.nome);
-                    }
-                }
-                else if (!estaSelecionado && !estavaVinculadoInicialmente) {
-                    console.log('ℹ️ Aluno não estava vinculado inicialmente - ignorando desvinculação');
-                }
-            };
-        });
-    }
-
-    async verAlunosTurma(turmaId) {
-        try {
-            console.log('👀 Ver alunos da turma:', turmaId);
-
-            const response = await this.makeRequest(`/turmas/${turmaId}/alunos`);
-
-            if (response && response.success) {
-                const alunosDaTurma = response.data || [];
-                console.log(`✅ ${alunosDaTurma.length} alunos carregados do banco`);
-                this.mostrarModalAlunosTurma(alunosDaTurma, turmaId);
-            } else {
-                throw new Error(response?.error || 'Erro ao carregar alunos');
-            }
-
-        } catch (error) {
-            console.error('❌ Erro ao carregar alunos da turma:', error);
-            this.showNotification('Erro ao carregar alunos do banco', 'error');
-        }
-    }
-
-    mostrarModalAlunosTurma(alunos, turmaId) {
+    async excluirTurma(turmaId) {
         const turma = this.turmas.find(t => t.id === turmaId);
-        const turmaNome = turma ? turma.nome : 'Turma';
+        if (!turma) return;
 
-        const modalId = 'modal-ver-alunos-turma';
+        console.log('🗑️ Tentando excluir turma:', {
+            id: turma.id,
+            nome: turma.nome,
+            ativa: turma.ativa,
+            quantidade_alunos: turma.quantidade_alunos
+        });
 
-        const modalExistente = document.getElementById(modalId);
-        if (modalExistente) {
-            modalExistente.remove();
+        if (turma.ativa && turma.quantidade_alunos > 0) {
+            this.showNotification('Não é possível excluir uma turma ativa que possui alunos vinculados!', 'error');
+            return;
         }
 
-        const modalHTML = `
-        <div class="modal-overlay" id="${modalId}" onclick="this.remove()">
-            <div class="modal-content large" onclick="event.stopPropagation()">
-                <div class="modal-header">
-                    <h3><i class="fas fa-users"></i> Alunos da Turma - ${this.escapeHtml(turmaNome)}</h3>
-                    <button class="modal-close" onclick="document.getElementById('${modalId}').remove()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Nome</th>
-                                    <th>Matrícula</th>
-                                    <th>Email</th>
-                                    <th>Curso</th>
-                                    <th>Período</th>
-                                    <th>Status</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${alunos.map(aluno => `
-                                    <tr>
-                                        <td>${this.escapeHtml(aluno.nome)}</td>
-                                        <td>${this.escapeHtml(aluno.matricula || 'N/A')}</td>
-                                        <td>${this.escapeHtml(aluno.email)}</td>
-                                        <td>${this.escapeHtml(aluno.curso || 'N/A')}</td>
-                                        <td>${aluno.periodo || 'N/A'}° Período</td>
-                                        <td>
-                                            <span class="badge ${aluno.ativo !== false ? 'active' : 'inactive'}">
-                                                ${aluno.ativo !== false ? 'Ativo' : 'Inativo'}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <button class="btn-action small perigo" 
-                                                    onclick="adminTurmas.desvincularAluno(${turmaId}, ${aluno.id}, '${this.escapeHtml(aluno.nome)}')"
-                                                    title="Desvincular aluno">
-                                                <i class="fas fa-unlink"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                                ${alunos.length === 0 ? `
-                                    <tr>
-                                        <td colspan="7" class="empty-state">
-                                            <i class="fas fa-users-slash"></i>
-                                            <p>Nenhum aluno nesta turma</p>
-                                        </td>
-                                    </tr>
-                                ` : ''}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn-secondary" onclick="document.getElementById('${modalId}').remove()">
-                            Fechar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
+        if (!turma.ativa && turma.quantidade_alunos > 0) {
+            const confirmarDesvinculacao = confirm(
+                `A turma "${turma.nome}" possui ${turma.quantidade_alunos} aluno(s) vinculado(s).\n\n` +
+                'Para excluir a turma, é necessário desvincular todos os alunos primeiro.\n\n' +
+                'Deseja desvincular todos os alunos agora?'
+            );
 
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-    }
-
-    async atualizarQuantidadeAlunosTurma(turmaId) {
-        try {
-            console.log('🔢 Atualizando quantidade de alunos para turma:', turmaId);
-
-            const response = await this.makeRequest(`/turmas/${turmaId}/alunos`);
-
-            if (response && response.success) {
-                const alunosVinculados = response.data || [];
-                const novaQuantidade = alunosVinculados.length;
-
-                console.log(`✅ Encontrados ${novaQuantidade} alunos na turma ${turmaId}`);
-
-                const turmaIndex = this.turmas.findIndex(t => t.id === turmaId);
-                if (turmaIndex !== -1) {
-                    this.turmas[turmaIndex].quantidade_alunos = novaQuantidade;
-
-                    try {
-                        await this.makeRequest(`/turmas/${turmaId}`, {
-                            method: 'PUT',
-                            body: JSON.stringify({
-                                ...this.turmas[turmaIndex],
-                                quantidade_alunos: novaQuantidade
-                            })
-                        });
-                        console.log(`✅ Quantidade atualizada no banco: ${novaQuantidade}`);
-                    } catch (updateError) {
-                        console.warn('⚠️ Não foi possível atualizar no banco, mas a quantidade local foi ajustada');
-                    }
-
-                    this.renderizarTurmas();
-                    this.atualizarEstatisticasTurmas();
-                    this.sincronizarComDashboard();
-
-                    return true;
-                }
-            }
-
-            return false;
-        } catch (error) {
-            console.error('❌ Erro ao atualizar quantidade:', error);
-            return false;
-        }
-    }
-
-
-    async desvincularAluno(turmaId, alunoId, alunoNome = '') {
-        try {
-            if (!alunoNome) {
-                const aluno = this.alunos.find(a => a.id === alunoId);
-                alunoNome = aluno ? aluno.nome : 'Aluno';
-            }
-
-            const confirmacao = confirm(`Tem certeza que deseja desvincular o aluno "${alunoNome}" da turma?`);
-            if (!confirmacao) return;
-
-            console.log('🗑️ Desvinculando aluno individual:', { turmaId, alunoId });
-
-            const response = await this.makeRequest('/turmas/desmatricular-aluno', {
-                method: 'POST',
-                body: JSON.stringify({
-                    turma_id: parseInt(turmaId),
-                    aluno_id: parseInt(alunoId)
-                })
-            });
-
-            console.log('📡 Resposta da desvinculação individual:', response);
-
-            if (response && response.success) {
-                this.showNotification(`Aluno "${alunoNome}" desvinculado com sucesso!`, 'success');
-
-                // Atualizar dados globais
-                await this.atualizarQuantidadeAlunosTurma(turmaId);
-                await this.carregarAlunos();
-                this.renderizarTurmas();
-
-                // Tentar atualizar o modal normalmente
-                await this.atualizarListaAlunosNoModal(turmaId);
-
-                // 🔥 NOVO: Verificar se a atualização funcionou
+            if (confirmarDesvinculacao) {
+                await this.desvincularTodosAlunos(turmaId);
                 setTimeout(async () => {
-                    // Verificar se o aluno ainda aparece no modal
-                    const modal = document.getElementById('modal-gerenciar-vinculos');
-                    if (modal) {
-                        const alunoAindaPresente = modal.querySelector(`[value="${alunoId}"]`);
-                        if (alunoAindaPresente) {
-                            console.log('⚠️ Aluno ainda aparece no modal, forçando atualização...');
-                            await this.forcarAtualizacaoModalGerenciarVinculos(turmaId);
-                        }
-                    }
-                }, 1000);
-
-            } else {
-                throw new Error(response?.error || 'Erro ao desvincular aluno');
-            }
-
-        } catch (error) {
-            console.error('❌ Erro ao desvincular aluno individual:', error);
-            this.showNotification('Erro ao desvincular aluno: ' + error.message, 'error');
-        }
-    }
-
-    async atualizarModalVincularAlunos() {
-        try {
-            console.log('🔄 Atualizando modal de vincular alunos...');
-
-            const modal = document.getElementById('vincularAlunosModal');
-            if (modal && (modal.style.display === 'flex' || modal.style.display === 'block')) {
-                console.log('✅ Modal de vincular alunos está aberto - atualizando...');
-
-                await this.carregarAlunos();
-
-                this.renderizarListaAlunosParaTurma();
-
-                console.log('✅ Modal de vincular alunos atualizado com sucesso');
-            } else {
-                console.log('ℹ️ Modal de vincular alunos não está aberto');
-            }
-        } catch (error) {
-            console.error('❌ Erro ao atualizar modal de vincular alunos:', error);
-        }
-    }
-
-    async atualizarListaAlunosNoModal(turmaId) {
-        try {
-            console.log('🔄 Atualizando lista de alunos no modal...');
-
-            const modais = document.querySelectorAll('.modal-overlay');
-            console.log(`🔍 ${modais.length} modal(is) encontrado(s) no DOM`);
-
-            let modalAberto = null;
-
-            modais.forEach(modal => {
-                const style = window.getComputedStyle(modal);
-                if (style.display === 'flex' || style.display === 'block') {
-                    modalAberto = modal;
-                    console.log('✅ Modal visível encontrado:', modal.id);
-                }
-            });
-
-            if (!modalAberto) {
-                const modaisComDisplay = document.querySelectorAll('.modal-overlay[style*="display: flex"], .modal-overlay[style*="display: block"]');
-                if (modaisComDisplay.length > 0) {
-                    modalAberto = modaisComDisplay[0];
-                    console.log('✅ Modal encontrado por seletor de estilo:', modalAberto.id);
-                }
-            }
-
-            if (!modalAberto) {
-                modais.forEach(modal => {
-                    const titulo = modal.querySelector('h3');
-                    if (titulo && (titulo.textContent.includes('Gerenciar Alunos') || titulo.textContent.includes('Alunos da Turma'))) {
-                        modalAberto = modal;
-                        console.log('✅ Modal encontrado por conteúdo:', titulo.textContent);
-                    }
-                });
-            }
-
-            if (!modalAberto) {
-                console.log('❌ Nenhum modal aberto foi detectado');
-                return;
-            }
-
-            console.log('🎯 Modal detectado para atualização:', {
-                id: modalAberto.id,
-                display: modalAberto.style.display,
-                conteúdo: modalAberto.querySelector('h3')?.textContent
-            });
-
-            const titulo = modalAberto.querySelector('h3');
-            if (titulo) {
-                if (titulo.textContent.includes('Gerenciar Alunos')) {
-                    console.log('⚙️ Atualizando modal "Gerenciar Vínculos"...');
-                    await this.atualizarModalGerenciarVinculos(turmaId);
-                } else if (titulo.textContent.includes('Alunos da Turma')) {
-                    console.log('📋 Atualizando modal "Ver Alunos"...');
-                    await this.atualizarModalVerAlunos(turmaId);
-                } else {
-                    console.log('❓ Modal desconhecido:', titulo.textContent);
-                }
-            } else {
-                console.log('⚠️ Modal sem título encontrado, tentando identificar pelo ID...');
-                if (modalAberto.id === 'modal-gerenciar-vinculos') {
-                    await this.atualizarModalGerenciarVinculos(turmaId);
-                } else if (modalAberto.id === 'modal-ver-alunos-turma') {
-                    await this.atualizarModalVerAlunos(turmaId);
-                }
-            }
-
-        } catch (error) {
-            console.error('❌ Erro ao atualizar lista no modal:', error);
-        }
-    }
-
-    async atualizarModalVerAlunos(turmaId) {
-        try {
-            console.log('🔄 Atualizando modal "Ver Alunos"...');
-
-            const response = await this.makeRequest(`/turmas/${turmaId}/alunos`);
-
-            if (response && response.success) {
-                const alunosAtualizados = response.data || [];
-
-                const tbody = document.querySelector('#modal-ver-alunos-turma tbody');
-                if (tbody) {
-                    this.atualizarTabelaAlunosVerTurma(tbody, alunosAtualizados, turmaId);
-                }
-
-                console.log(`✅ Modal "Ver Alunos" atualizado: ${alunosAtualizados.length} alunos`);
-            }
-
-        } catch (error) {
-            console.error('❌ Erro ao atualizar modal "Ver Alunos":', error);
-        }
-    }
-
-    async forcarAtualizacaoModalGerenciarVinculos(turmaId) {
-        try {
-            console.log('💪 Forçando atualização do modal de gerenciar vínculos...');
-
-            const modalExistente = document.getElementById('modal-gerenciar-vinculos');
-            if (modalExistente) {
-                modalExistente.remove();
-            }
-
-            await this.carregarAlunos();
-
-            const turma = this.turmas.find(t => t.id === turmaId);
-            if (turma) {
-                this.turmaEditando = turma;
-                const response = await this.makeRequest(`/turmas/${turmaId}/alunos`);
-                if (response && response.success) {
-                    this.mostrarModalGerenciarVinculos(turma, response.data);
-                    console.log('✅ Modal recarregado forçadamente');
-                }
-            }
-        } catch (error) {
-            console.error('❌ Erro ao forçar atualização do modal:', error);
-        }
-    }
-
-    async atualizarModalGerenciarVinculos(turmaId) {
-        try {
-            console.log('🔄 Atualizando modal "Gerenciar Vínculos"...');
-
-            const response = await this.makeRequest(`/turmas/${turmaId}/alunos`);
-
-            if (response && response.success) {
-                const alunosAtualizados = response.data || [];
-                console.log(`📊 ${alunosAtualizados.length} alunos encontrados após atualização`);
-
-                let modal = document.getElementById('modal-gerenciar-vinculos');
-
-                if (!modal) {
-                    console.log('🔍 Modal não encontrado pelo ID, procurando por conteúdo...');
-                    const modais = document.querySelectorAll('.modal-overlay');
-                    for (const m of modais) {
-                        const titulo = m.querySelector('h3');
-                        if (titulo && titulo.textContent.includes('Gerenciar Alunos')) {
-                            modal = m;
-                            break;
-                        }
-                    }
-                }
-
-                if (modal) {
-                    console.log('✅ Modal encontrado:', modal.id);
-
-                    let tbody = modal.querySelector('#listaAlunosVinculados');
-                    if (!tbody) {
-                        console.log('🔍 Tbody não encontrado pelo ID, procurando primeiro tbody...');
-                        tbody = modal.querySelector('tbody');
-                    }
-
-                    if (tbody) {
-                        console.log('✅ Tbody encontrado, atualizando tabela...');
-                        this.atualizarTabelaAlunosGerenciarVinculos(tbody, alunosAtualizados, turmaId);
-
-                        const contadorElement = modal.querySelector('.form-text, small');
-                        if (contadorElement) {
-                            contadorElement.textContent = `Curso: ${this.turmaEditando?.curso} | ${alunosAtualizados.length} aluno(s) vinculado(s)`;
-                        }
-
-                        console.log('✅ Modal "Gerenciar Vínculos" atualizado com sucesso');
+                    await this.carregarTurmas();
+                    const turmaAtualizada = this.turmas.find(t => t.id === turmaId);
+                    if (turmaAtualizada && turmaAtualizada.quantidade_alunos === 0) {
+                        await this.excluirTurmaAposVerificacao(turmaId);
                     } else {
-                        console.error('❌ Tbody não encontrado no modal de gerenciar vínculos');
+                        this.showNotification('Ainda há alunos vinculados. Não foi possível excluir a turma.', 'error');
                     }
-                } else {
-                    console.error('❌ Modal de gerenciar vínculos não encontrado de forma alguma');
-                }
-            } else {
-                console.error('❌ Erro ao buscar alunos atualizados:', response?.error);
+                }, 1500);
             }
-        } catch (error) {
-            console.error('❌ Erro ao atualizar modal "Gerenciar Vínculos":', error);
-        }
-    }
-
-    atualizarTabelaAlunosVerTurma(tbody, alunos, turmaId) {
-        if (!tbody) return;
-
-        tbody.innerHTML = alunos.map(aluno => `
-        <tr>
-            <td>${this.escapeHtml(aluno.nome)}</td>
-            <td>${this.escapeHtml(aluno.matricula || 'N/A')}</td>
-            <td>${this.escapeHtml(aluno.email)}</td>
-            <td>${this.escapeHtml(aluno.curso || 'N/A')}</td>
-            <td>${aluno.periodo || 'N/A'}° Período</td>
-            <td>
-                <span class="badge ${aluno.ativo !== false ? 'active' : 'inactive'}">
-                    ${aluno.ativo !== false ? 'Ativo' : 'Inativo'}
-                </span>
-            </td>
-            <td>
-                <button class="btn-action small perigo" 
-                        onclick="adminTurmas.desvincularAluno(${turmaId}, ${aluno.id}, '${this.escapeHtml(aluno.nome)}')"
-                        title="Desvincular aluno">
-                    <i class="fas fa-unlink"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
-
-        if (alunos.length === 0) {
-            tbody.innerHTML = `
-            <tr>
-                <td colspan="7" class="empty-state">
-                    <i class="fas fa-users-slash"></i>
-                    <p>Nenhum aluno nesta turma</p>
-                </td>
-            </tr>
-        `;
-        }
-    }
-
-
-    atualizarTabelaAlunosGerenciarVinculos(tbody, alunos, turmaId) {
-        if (!tbody) {
-            console.error('❌ Tbody é nulo, não é possível atualizar');
             return;
         }
 
-        console.log(`🎯 Atualizando tabela com ${alunos.length} alunos`);
+        await this.excluirTurmaAposVerificacao(turmaId);
+    }
 
-        if (alunos.length === 0) {
-            tbody.innerHTML = `
-            <tr>
-                <td colspan="7" class="empty-state">
-                    <i class="fas fa-users-slash"></i>
-                    <p>Nenhum aluno vinculado a esta turma</p>
-                </td>
-            </tr>
-        `;
-            console.log('✅ Tabela atualizada: estado vazio');
+    async excluirTurmaAposVerificacao(turmaId) {
+        const turma = this.turmas.find(t => t.id === turmaId);
+        if (!turma) return;
+
+        const mensagemConfirmacao = turma.ativa
+            ? `Tem certeza que deseja inativar a turma "${turma.nome}"?\n\nEsta ação tornará a turma inativa.`
+            : `Tem certeza que deseja excluir permanentemente a turma "${turma.nome}"?\n\nEsta ação não pode ser desfeita.`;
+
+        if (!confirm(mensagemConfirmacao)) {
             return;
         }
 
-        tbody.innerHTML = alunos.map(aluno => `
-        <tr>
-            <td>
-                <input type="checkbox" class="aluno-vinculado-checkbox" value="${aluno.id}">
-            </td>
-            <td>${this.escapeHtml(aluno.nome)}</td>
-            <td>${this.escapeHtml(aluno.matricula || 'N/A')}</td>
-            <td>${this.escapeHtml(aluno.email)}</td>
-            <td>${this.escapeHtml(aluno.curso || 'N/A')}</td>
-            <td>${this.formatarData(aluno.data_matricula || aluno.data_vinculo || aluno.created_at)}</td>
-            <td>
-                <button class="btn-action small perigo" 
-                        onclick="adminTurmas.desvincularAluno(${turmaId}, ${aluno.id}, '${this.escapeHtml(aluno.nome)}')"
-                        title="Desvincular aluno">
-                    <i class="fas fa-unlink"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
-
-        console.log('✅ Tabela do modal "Gerenciar Vínculos" renderizada');
-
-        this.configurarModalGerenciarVinculos();
-    }
-
-    async desvincularAlunosEmLote(turmaId, alunosIds) {
         try {
-            if (!alunosIds || alunosIds.length === 0) {
-                this.showNotification('Nenhum aluno selecionado para desvincular', 'warning');
-                return;
-            }
+            const endpoint = turma.ativa ? `/turmas/${turmaId}` : `/turmas/permanent/${turmaId}`;
 
-            const confirmacao = confirm(`Desvincular ${alunosIds.length} aluno(s) da turma?`);
-            if (!confirmacao) return;
+            console.log('📤 Fazendo requisição de exclusão para:', endpoint);
 
-            console.log('🗑️ Desvinculando alunos em lote:', { turmaId, alunosIds });
-
-            const response = await this.makeRequest('/desmatricular-alunos', {
-                method: 'POST',
-                body: JSON.stringify({
-                    turma_id: turmaId,
-                    alunos_ids: alunosIds
-                })
+            const response = await this.makeRequest(endpoint, {
+                method: 'DELETE'
             });
 
             if (response && response.success) {
                 this.showNotification(response.message, 'success');
-                await this.atualizarQuantidadeAlunosTurma(turmaId);
-                await this.carregarAlunos();
-                this.renderizarTurmas();
+                await this.carregarTurmas();
             } else {
-                throw new Error(response?.error || 'Erro ao desvincular alunos');
+                throw new Error(response?.error || 'Erro ao excluir turma');
             }
-
         } catch (error) {
-            console.error('❌ Erro ao desvincular alunos em lote:', error);
-            this.showNotification('Erro ao desvincular alunos: ' + error.message, 'error');
+            console.error('❌ Erro ao excluir turma:', error);
+            this.showNotification('Erro ao excluir turma: ' + error.message, 'error');
         }
     }
 
@@ -2196,95 +2027,206 @@ class AdminTurmas {
         }
     }
 
-    async desvincularAlunosEmLote(turmaId, alunosIds) {
+    // ========== FUNÇÕES DE VISUALIZAÇÃO ==========
+
+    // 🔥 CORREÇÃO: Função verAlunosTurma corrigida
+    async verAlunosTurma(turmaId) {
         try {
-            if (!alunosIds || alunosIds.length === 0) {
-                this.showNotification('Nenhum aluno selecionado para desvincular', 'warning');
-                return;
+            console.log('👀 Ver alunos da turma:', turmaId);
+
+            // 🔥 CORREÇÃO: Usar a função auxiliar que já sabemos que funciona
+            const alunosVinculados = await this.buscarAlunosVinculadosTurmaComId(turmaId);
+
+            console.log(`✅ ${alunosVinculados.length} alunos carregados do banco`);
+
+            if (!Array.isArray(alunosVinculados)) {
+                throw new Error('Resposta inválida da API - não é um array');
             }
 
-            const nomesAlunos = alunosIds.map(id => {
-                const aluno = this.alunos.find(a => a.id === id);
-                return aluno ? aluno.nome : 'Aluno desconhecido';
-            }).join(', ');
+            this.mostrarModalAlunosTurma(alunosVinculados, turmaId);
 
-            const confirmacao = confirm(
-                `Tem certeza que deseja desvincular ${alunosIds.length} aluno(s) da turma?\n\n` +
-                `Alunos: ${nomesAlunos}`
-            );
+        } catch (error) {
+            console.error('❌ Erro ao carregar alunos da turma:', error);
+            this.showNotification('Erro ao carregar alunos do banco: ' + error.message, 'error');
+        }
+    }
 
-            if (!confirmacao) {
-                return;
+    // 🔥 CORREÇÃO: Apenas aumento do tamanho do modal
+    mostrarModalAlunosTurma(alunos, turmaId) {
+        try {
+            const turma = this.turmas.find(t => t.id === turmaId);
+            const turmaNome = turma ? turma.nome : 'Turma';
+
+            const modalId = 'modal-ver-alunos-turma';
+
+            // Remover modal existente de forma segura
+            const modalExistente = document.getElementById(modalId);
+            if (modalExistente) {
+                modalExistente.remove();
             }
 
-            console.log('🗑️ Desvinculando alunos em lote:', { turmaId, alunosIds });
+            let alunosHTML = '';
 
-            let desvinculadosComSucesso = 0;
-            let erros = [];
-
-            for (const alunoId of alunosIds) {
-                try {
-                    const response = await this.makeRequest('/desmatricular-aluno', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            turma_id: turmaId,
-                            aluno_id: alunoId
-                        })
-                    });
-
-                    if (response && response.success) {
-                        desvinculadosComSucesso++;
-                    } else {
-                        const aluno = this.alunos.find(a => a.id === alunoId);
-                        if (aluno) {
-                            const updateResponse = await this.makeRequest(`/usuarios/${alunoId}`, {
-                                method: 'PUT',
-                                body: JSON.stringify({
-                                    ...aluno,
-                                    turma_id: null
-                                })
-                            });
-
-                            if (updateResponse && updateResponse.success) {
-                                desvinculadosComSucesso++;
-                            } else {
-                                throw new Error(`Falha ao desvincular aluno ID ${alunoId}`);
-                            }
-                        } else {
-                            throw new Error(`Aluno ID ${alunoId} não encontrado`);
-                        }
-                    }
-                } catch (error) {
-                    console.error(`❌ Erro ao desvincular aluno ${alunoId}:`, error);
-                    const alunoNome = this.alunos.find(a => a.id === alunoId)?.nome || 'Aluno desconhecido';
-                    erros.push(`${alunoNome}: ${error.message}`);
-                }
+            if (alunos && Array.isArray(alunos) && alunos.length > 0) {
+                alunosHTML = alunos.map(aluno => `
+                <tr>
+                    <td>${this.escapeHtml(aluno.nome)}</td>
+                    <td>${this.escapeHtml(aluno.matricula || 'N/A')}</td>
+                    <td>${this.escapeHtml(aluno.email)}</td>
+                    <td>${this.escapeHtml(aluno.curso || 'N/A')}</td>
+                    <td>${aluno.periodo || 'N/A'}° Período</td>
+                    <td>
+                        <span class="badge ${aluno.ativo !== false ? 'active' : 'inactive'}">
+                            ${aluno.ativo !== false ? 'Ativo' : 'Inativo'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn-action small perigo" 
+                                onclick="adminTurmas.desvincularAlunoIndividualModal(${turmaId}, ${aluno.id}, '${this.escapeHtml(aluno.nome)}')"
+                                title="Desvincular aluno">
+                            <i class="fas fa-unlink"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            } else {
+                alunosHTML = `
+                <tr>
+                    <td colspan="7" class="empty-state">
+                        <i class="fas fa-users-slash"></i>
+                        <p>Nenhum aluno nesta turma</p>
+                    </td>
+                </tr>
+            `;
             }
 
-            if (desvinculadosComSucesso > 0) {
-                if (erros.length === 0) {
-                    this.showNotification(
-                        `${desvinculadosComSucesso} aluno(s) desvinculado(s) com sucesso!`,
-                        'success'
-                    );
-                } else {
-                    this.showNotification(
-                        `${desvinculadosComSucesso} aluno(s) desvinculado(s), ${erros.length} com erro. Verifique o console.`,
-                        'warning'
-                    );
-                }
+            const modalHTML = `
+        <div class="modal-overlay" id="${modalId}">
+            <div class="modal-content xxlarge" onclick="event.stopPropagation()" style="
+                max-width: 95%;
+                width: 95%;
+                max-height: 90vh;
+                height: 90vh;
+            ">
+                <div class="modal-header">
+                    <h3><i class="fas fa-users"></i> Alunos da Turma - ${this.escapeHtml(turmaNome)}</h3>
+                    <button class="modal-close" onclick="adminTurmas.fecharModalVerAlunos()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body" style="height: calc(100% - 120px);">
+                    <!-- 🔥 CORREÇÃO: Container com altura máxima e scroll -->
+                    <div class="table-responsive" style="
+                        height: 100%;
+                        overflow: auto;
+                    ">
+                        <table style="
+                            min-width: 1000px;
+                            width: 100%;
+                        ">
+                            <thead>
+                                <tr>
+                                    <th style="min-width: 200px;">Nome</th>
+                                    <th style="min-width: 120px;">Matrícula</th>
+                                    <th style="min-width: 220px;">Email</th>
+                                    <th style="min-width: 180px;">Curso</th>
+                                    <th style="min-width: 100px;">Período</th>
+                                    <th style="min-width: 100px;">Status</th>
+                                    <th style="min-width: 100px;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${alunosHTML}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" onclick="adminTurmas.fecharModalVerAlunos()">
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+            console.log('✅ Modal de ver alunos com tamanho aumentado (scroll reduzido)');
+
+        } catch (error) {
+            console.error('❌ Erro ao criar modal de ver alunos:', error);
+            this.showNotification('Erro ao criar modal: ' + error.message, 'error');
+        }
+    }
+
+    async desvincularAluno(turmaId, alunoId, alunoNome = '') {
+        try {
+            if (!alunoNome) {
+                const aluno = this.alunos.find(a => a.id === alunoId);
+                alunoNome = aluno ? aluno.nome : 'Aluno';
+            }
+
+            const confirmacao = confirm(`Tem certeza que deseja desvincular o aluno "${alunoNome}" da turma?`);
+            if (!confirmacao) return;
+
+            console.log('🗑️ Desvinculando aluno individual:', { turmaId, alunoId });
+
+            const response = await this.makeRequest('/turmas/desmatricular-aluno', {
+                method: 'POST',
+                body: JSON.stringify({
+                    turma_id: parseInt(turmaId),
+                    aluno_id: parseInt(alunoId)
+                })
+            });
+
+            console.log('📡 Resposta da desvinculação individual:', response);
+
+            if (response && response.success) {
+                this.showNotification(`Aluno "${alunoNome}" desvinculado com sucesso!`, 'success');
+
+                // Atualizar dados globais
                 await this.atualizarQuantidadeAlunosTurma(turmaId);
                 await this.carregarAlunos();
                 this.renderizarTurmas();
 
             } else {
-                throw new Error('Nenhum aluno foi desvinculado: ' + erros.join('; '));
+                throw new Error(response?.error || 'Erro ao desvincular aluno');
             }
 
         } catch (error) {
-            console.error('❌ Erro ao desvincular alunos em lote:', error);
-            this.showNotification('Erro ao desvincular alunos: ' + error.message, 'error');
+            console.error('❌ Erro ao desvincular aluno individual:', error);
+            this.showNotification('Erro ao desvincular aluno: ' + error.message, 'error');
+        }
+    }
+
+    // ========== FUNÇÕES DE GERENCIAMENTO DE VÍNCULOS ==========
+
+    async abrirModalGerenciarVinculos(turmaId) {
+        try {
+            console.log('👥 Abrindo modal de gerenciar vínculos:', turmaId);
+
+            const turma = this.turmas.find(t => t.id === turmaId);
+            if (!turma) {
+                throw new Error('Turma não encontrada');
+            }
+
+            this.turmaEditando = turma;
+
+            // 🔥 CORREÇÃO: Buscar alunos vinculados diretamente
+            const alunosVinculados = await this.buscarAlunosVinculadosTurmaComId(turmaId);
+            console.log('📡 Alunos vinculados encontrados:', alunosVinculados);
+
+            if (!Array.isArray(alunosVinculados)) {
+                throw new Error('Resposta inválida da API');
+            }
+
+            console.log(`✅ ${alunosVinculados.length} alunos encontrados na turma`);
+            this.mostrarModalGerenciarVinculos(turma, alunosVinculados);
+
+        } catch (error) {
+            console.error('❌ Erro ao abrir modal de gerenciar vínculos:', error);
+            this.showNotification('Erro ao carregar alunos da turma: ' + error.message, 'error');
         }
     }
 
@@ -2297,6 +2239,7 @@ class AdminTurmas {
 
             const modalId = 'modal-gerenciar-vinculos';
 
+            // 🔥 CORREÇÃO: Remover modal existente de forma mais segura
             const modalExistente = document.getElementById(modalId);
             if (modalExistente) {
                 modalExistente.remove();
@@ -2317,7 +2260,7 @@ class AdminTurmas {
                     <td>${this.formatarData(aluno.data_matricula || aluno.data_vinculo || aluno.created_at)}</td>
                     <td>
                         <button class="btn-action small perigo" 
-                                onclick="adminTurmas.desvincularAluno(${turma.id}, ${aluno.id}, '${this.escapeHtml(aluno.nome)}')"
+                                onclick="adminTurmas.desvincularAlunoIndividual(${turma.id}, ${aluno.id}, '${this.escapeHtml(aluno.nome)}')"
                                 title="Desvincular aluno">
                             <i class="fas fa-unlink"></i>
                         </button>
@@ -2336,77 +2279,73 @@ class AdminTurmas {
             }
 
             const modalHTML = `
-            <div class="modal-overlay" id="${modalId}" onclick="this.remove()">
-                <div class="modal-content large" onclick="event.stopPropagation()">
-                    <div class="modal-header">
-                        <h3><i class="fas fa-user-times"></i> Gerenciar Alunos - ${this.escapeHtml(turma.nome)}</h3>
-                        <button class="modal-close" onclick="document.getElementById('${modalId}').remove()">
-                            <i class="fas fa-times"></i>
-                        </button>
+        <div class="modal-overlay" id="${modalId}">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3><i class="fas fa-user-times"></i> Gerenciar Alunos - ${this.escapeHtml(turma.nome)}</h3>
+                    <button class="modal-close" onclick="adminTurmas.fecharModalGerenciarVinculos()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Turma: <strong>${this.escapeHtml(turma.nome)}</strong></label>
+                        <small class="form-text">Curso: ${this.escapeHtml(turma.curso)} | ${alunosVinculados.length} aluno(s) vinculado(s)</small>
                     </div>
-                    <div class="modal-body">
+                    
+                    ${alunosVinculados.length > 0 ? `
                         <div class="form-group">
-                            <label>Turma: <strong>${this.escapeHtml(turma.nome)}</strong></label>
-                            <small class="form-text">Curso: ${this.escapeHtml(turma.curso)} | ${alunosVinculados.length} aluno(s) vinculado(s)</small>
+                            <label>Buscar Alunos Vinculados:</label>
+                            <input type="text" id="buscarAlunosVinculados" class="form-control" 
+                                   placeholder="Digite o nome, matrícula ou email...">
                         </div>
-                        
-                        ${alunosVinculados.length > 0 ? `
-                            <div class="form-group">
-                                <label>Buscar Alunos Vinculados:</label>
-                                <input type="text" id="buscarAlunosVinculados" class="form-control" 
-                                       placeholder="Digite o nome, matrícula ou email...">
-                            </div>
-                        ` : ''}
                         
                         <div class="alunos-vinculados-container" style="max-height: 400px; overflow-y: auto;">
-                            ${alunosVinculados.length > 0 ? `
-                                <table class="alunos-table">
-                                    <thead>
-                                        <tr>
-                                            <th><input type="checkbox" id="selecionarTodosVinculados"></th>
-                                            <th>Nome</th>
-                                            <th>Matrícula</th>
-                                            <th>Email</th>
-                                            <th>Curso</th>
-                                            <th>Data de Vínculo</th>
-                                            <th>Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="listaAlunosVinculados">
-                                        ${alunosHTML}
-                                    </tbody>
-                                </table>
-                            ` : `
-                                <div class="empty-state">
-                                    <i class="fas fa-users-slash"></i>
-                                    <p>Nenhum aluno vinculado a esta turma</p>
-                                </div>
-                            `}
+                            <table class="alunos-table">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="selecionarTodosVinculados"></th>
+                                        <th>Nome</th>
+                                        <th>Matrícula</th>
+                                        <th>Email</th>
+                                        <th>Curso</th>
+                                        <th>Data de Vínculo</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="listaAlunosVinculados">
+                                    ${alunosHTML}
+                                </tbody>
+                            </table>
                         </div>
                         
-                        ${alunosVinculados.length > 0 ? `
-                            <div class="btn-group">
-                                <button type="button" class="btn-primary perigo" onclick="adminTurmas.desvincularAlunosSelecionados()">
-                                    <i class="fas fa-unlink"></i> Desvincular Selecionados
-                                </button>
-                                <button type="button" class="btn-secondary" onclick="document.getElementById('${modalId}').remove()">
-                                    <i class="fas fa-times"></i> Fechar
-                                </button>
-                            </div>
-                        ` : `
-                            <div class="btn-group">
-                                <button type="button" class="btn-secondary" onclick="document.getElementById('${modalId}').remove()">
-                                    <i class="fas fa-times"></i> Fechar
-                                </button>
-                            </div>
-                        `}
-                    </div>
+                        <div class="btn-group" style="margin-top: 20px;">
+                            <button type="button" class="btn-primary perigo" onclick="adminTurmas.desvincularAlunosSelecionados()">
+                                <i class="fas fa-unlink"></i> Desvincular Selecionados
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="adminTurmas.fecharModalGerenciarVinculos()">
+                                <i class="fas fa-times"></i> Fechar
+                            </button>
+                        </div>
+                    ` : `
+                        <div class="empty-state">
+                            <i class="fas fa-users-slash"></i>
+                            <p>Nenhum aluno vinculado a esta turma</p>
+                        </div>
+                        <div class="btn-group" style="margin-top: 20px;">
+                            <button type="button" class="btn-secondary" onclick="adminTurmas.fecharModalGerenciarVinculos()">
+                                <i class="fas fa-times"></i> Fechar
+                            </button>
+                        </div>
+                    `}
                 </div>
             </div>
-        `;
+        </div>
+    `;
 
             document.body.insertAdjacentHTML('beforeend', modalHTML);
 
+            // 🔥 CORREÇÃO: Configurar eventos após inserir no DOM
             if (alunosVinculados.length > 0) {
                 this.configurarModalGerenciarVinculos();
             }
@@ -2418,6 +2357,115 @@ class AdminTurmas {
             this.showNotification('Erro ao criar modal: ' + error.message, 'error');
         }
     }
+
+    fecharModalGerenciarVinculos() {
+        const modal = document.getElementById('modal-gerenciar-vinculos');
+        if (modal) {
+            modal.remove();
+        }
+        this.turmaEditando = null;
+    }
+
+    fecharModalVerAlunos() {
+        const modal = document.getElementById('modal-ver-alunos-turma');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    // 🔥 NOVA FUNÇÃO: Desvincular aluno do modal de ver alunos
+    async desvincularAlunoIndividualModal(turmaId, alunoId, alunoNome = '') {
+        try {
+            if (!alunoNome) {
+                const aluno = this.alunos.find(a => a.id === alunoId);
+                alunoNome = aluno ? aluno.nome : 'Aluno';
+            }
+
+            const confirmacao = confirm(`Tem certeza que deseja desvincular o aluno "${alunoNome}" da turma?`);
+            if (!confirmacao) return;
+
+            console.log('🗑️ Desvinculando aluno do modal:', { turmaId, alunoId });
+
+            const response = await this.makeRequest('/turmas/desmatricular-aluno', {
+                method: 'POST',
+                body: JSON.stringify({
+                    turma_id: parseInt(turmaId),
+                    aluno_id: parseInt(alunoId)
+                })
+            });
+
+            console.log('📡 Resposta da desvinculação:', response);
+
+            if (response && response.success) {
+                this.showNotification(`Aluno "${alunoNome}" desvinculado com sucesso!`, 'success');
+
+                // Atualizar dados globais
+                await this.atualizarQuantidadeAlunosTurma(turmaId);
+                await this.carregarAlunos();
+                this.renderizarTurmas();
+
+                // 🔥 CORREÇÃO: Fechar e reabrir o modal para atualizar a lista
+                this.fecharModalVerAlunos();
+                setTimeout(() => {
+                    this.verAlunosTurma(turmaId);
+                }, 500);
+
+            } else {
+                throw new Error(response?.error || 'Erro ao desvincular aluno');
+            }
+
+        } catch (error) {
+            console.error('❌ Erro ao desvincular aluno do modal:', error);
+            this.showNotification('Erro ao desvincular aluno: ' + error.message, 'error');
+        }
+    }
+
+    async desvincularAlunoIndividual(turmaId, alunoId, alunoNome = '') {
+        try {
+            if (!alunoNome) {
+                const aluno = this.alunos.find(a => a.id === alunoId);
+                alunoNome = aluno ? aluno.nome : 'Aluno';
+            }
+
+            const confirmacao = confirm(`Tem certeza que deseja desvincular o aluno "${alunoNome}" da turma?`);
+            if (!confirmacao) return;
+
+            console.log('🗑️ Desvinculando aluno individual:', { turmaId, alunoId });
+
+            const response = await this.makeRequest('/turmas/desmatricular-aluno', {
+                method: 'POST',
+                body: JSON.stringify({
+                    turma_id: parseInt(turmaId),
+                    aluno_id: parseInt(alunoId)
+                })
+            });
+
+            console.log('📡 Resposta da desvinculação individual:', response);
+
+            if (response && response.success) {
+                this.showNotification(`Aluno "${alunoNome}" desvinculado com sucesso!`, 'success');
+
+                // 🔥 CORREÇÃO: Atualizar dados globais
+                await this.atualizarQuantidadeAlunosTurma(turmaId);
+                await this.carregarAlunos();
+                this.renderizarTurmas();
+
+                // 🔥 CORREÇÃO: Fechar e reabrir o modal para atualizar a lista
+                this.fecharModalGerenciarVinculos();
+                setTimeout(() => {
+                    this.abrirModalGerenciarVinculos(turmaId);
+                }, 500);
+
+            } else {
+                throw new Error(response?.error || 'Erro ao desvincular aluno');
+            }
+
+        } catch (error) {
+            console.error('❌ Erro ao desvincular aluno individual:', error);
+            this.showNotification('Erro ao desvincular aluno: ' + error.message, 'error');
+        }
+    }
+
 
     configurarModalGerenciarVinculos() {
         try {
@@ -2465,73 +2513,8 @@ class AdminTurmas {
             console.error('❌ Erro ao configurar modal de gerenciar vínculos:', error);
         }
     }
-    async abrirModalGerenciarVinculos(turmaId) {
-        try {
-            console.log('👥 Abrindo modal de gerenciar vínculos:', turmaId);
 
-            const turma = this.turmas.find(t => t.id === turmaId);
-            if (!turma) {
-                throw new Error('Turma não encontrada');
-            }
-
-            this.turmaEditando = turma;
-
-            const response = await this.makeRequest(`/turmas/${turmaId}/alunos`);
-            console.log('📡 Resposta da API alunos da turma:', response);
-
-            if (response && response.success) {
-                const alunosVinculados = response.data || [];
-                console.log(`✅ ${alunosVinculados.length} alunos encontrados na turma`);
-                this.mostrarModalGerenciarVinculos(turma, alunosVinculados);
-            } else {
-                throw new Error('Erro ao carregar alunos da turma: ' + (response?.error || 'Desconhecido'));
-            }
-
-        } catch (error) {
-            console.error('❌ Erro ao abrir modal de gerenciar vínculos:', error);
-            this.showNotification('Erro ao carregar alunos da turma: ' + error.message, 'error');
-        }
-    }
-
-    async desvincularAlunoIndividual(turmaId, alunoId, alunoNome = '') {
-        try {
-            if (!alunoNome) {
-                const aluno = this.alunos.find(a => a.id === alunoId);
-                alunoNome = aluno ? aluno.nome : 'Aluno';
-            }
-
-            const confirmacao = confirm(`Tem certeza que deseja desvincular o aluno "${alunoNome}" da turma?`);
-            if (!confirmacao) return;
-
-            console.log('🗑️ Desvinculando aluno individual:', { turmaId, alunoId });
-
-            const response = await this.makeRequest('/turmas/desmatricular-aluno', {
-                method: 'POST',
-                body: JSON.stringify({
-                    turma_id: parseInt(turmaId),
-                    aluno_id: parseInt(alunoId)
-                })
-            });
-
-            console.log('📡 Resposta da desvinculação individual:', response);
-
-            if (response && response.success) {
-                this.showNotification(`Aluno "${alunoNome}" desvinculado com sucesso!`, 'success');
-
-                await this.atualizarQuantidadeAlunosTurma(turmaId);
-                await this.carregarAlunos();
-                this.renderizarTurmas();
-
-            } else {
-                throw new Error(response?.error || 'Erro ao desvincular aluno');
-            }
-
-        } catch (error) {
-            console.error('❌ Erro ao desvincular aluno individual:', error);
-            this.showNotification('Erro ao desvincular aluno: ' + error.message, 'error');
-        }
-    }
-
+    // 🔥 CORREÇÃO: Função desvincularAlunosSelecionados para fechar modal após desvincular
     async desvincularAlunosSelecionados() {
         try {
             console.log('🔍 Verificando seleção de alunos para desvincular...');
@@ -2623,7 +2606,9 @@ class AdminTurmas {
                 await this.carregarAlunos();
                 this.renderizarTurmas();
 
-                await this.atualizarListaAlunosNoModal(turmaId);
+                // 🔥 CORREÇÃO: Fechar o modal após desvincular com sucesso
+                console.log('🚪 Fechando modal de gerenciar vínculos...');
+                this.fecharModalGerenciarVinculos();
 
             } else {
                 throw new Error('Nenhum aluno foi desvinculado: ' + erros.join('; '));
@@ -2635,106 +2620,70 @@ class AdminTurmas {
         }
     }
 
-    async desvincularTodosAlunos(turmaId) {
+    // ========== FUNÇÕES UTILITÁRIAS ==========
+
+    formatarData(dataString) {
+        if (!dataString) return 'N/A';
         try {
-            const turma = this.turmas.find(t => t.id === turmaId);
-            if (!turma) {
-                throw new Error('Turma não encontrada');
+            const data = new Date(dataString);
+            if (isNaN(data.getTime())) {
+                return 'Data inválida';
             }
 
-            if (turma.quantidade_alunos === 0) {
-                this.showNotification('Esta turma não possui alunos vinculados', 'info');
-                return;
-            }
+            return data.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        } catch (error) {
+            console.warn('⚠️ Erro ao formatar data:', dataString, error);
+            return 'N/A';
+        }
+    }
 
-            const confirmacao = confirm(
-                `ATENÇÃO: Tem certeza que deseja desvincular TODOS os ${turma.quantidade_alunos} alunos da turma "${turma.nome}"?\n\n` +
-                `Esta ação não pode ser desfeita!`
-            );
+    filtrarTurmas(status) {
+        try {
+            console.log(`🔍 Filtrando turmas por status: ${status}`);
 
-            if (!confirmacao) {
-                return;
-            }
+            const tbody = document.getElementById('turmas-body');
+            if (!tbody) return;
 
-            console.log('🗑️ Desvinculando todos os alunos da turma:', turmaId);
+            const linhas = tbody.querySelectorAll('tr:not(.categoria-turma)');
 
-            const response = await this.makeRequest(`/turmas/${turmaId}/desvincular-todos`, {
-                method: 'POST'
+            linhas.forEach(linha => {
+                const isInativa = linha.classList.contains('turma-inativa');
+                const categoria = linha.closest('tr.categoria-turma');
+
+                switch (status) {
+                    case 'ativas':
+                        linha.style.display = !isInativa ? '' : 'none';
+                        if (categoria && categoria.textContent.includes('Inativas')) {
+                            categoria.style.display = 'none';
+                        }
+                        break;
+                    case 'inativas':
+                        linha.style.display = isInativa ? '' : 'none';
+                        if (categoria && categoria.textContent.includes('Ativas')) {
+                            categoria.style.display = 'none';
+                        }
+                        break;
+                    case 'todas':
+                    default:
+                        linha.style.display = '';
+                        if (categoria) {
+                            categoria.style.display = '';
+                        }
+                        break;
+                }
             });
 
-            console.log('📡 Resposta da desvinculação total:', response);
-
-            if (response && response.success) {
-                this.showNotification(
-                    `Todos os ${turma.quantidade_alunos} alunos foram desvinculados da turma!`,
-                    'success'
-                );
-
-                await this.atualizarQuantidadeAlunosTurma(turmaId);
-                await this.carregarAlunos();
-                this.renderizarTurmas();
-
-            } else {
-                throw new Error(response?.error || 'Erro ao desvincular todos os alunos');
-            }
-
+            console.log(`✅ Filtro aplicado: ${status}`);
         } catch (error) {
-            console.error('❌ Erro ao desvincular todos os alunos:', error);
-            this.showNotification('Erro ao desvincular alunos: ' + error.message, 'error');
+            console.error('❌ Erro ao filtrar turmas:', error);
         }
     }
 
-    async sincronizacaoCompleta() {
-        try {
-            console.log('🔄 Iniciando sincronização completa...');
-
-            await Promise.all([
-                this.carregarTurmas(),
-                this.carregarAlunos()
-            ]);
-
-            for (const turma of this.turmas) {
-                await this.atualizarQuantidadeAlunosTurma(turma.id);
-            }
-
-            this.renderizarTurmas();
-            this.sincronizarComDashboard();
-
-            console.log('✅ Sincronização completa concluída');
-            this.showNotification('Sistema de turmas sincronizado com sucesso!', 'success');
-
-        } catch (error) {
-            console.error('❌ Erro na sincronização completa:', error);
-            this.showNotification('Erro na sincronização: ' + error.message, 'error');
-        }
-    }
-
-    async sincronizarQuantidades() {
-        try {
-            console.log('🔄 Sincronizando quantidades de todas as turmas...');
-
-            if (!Array.isArray(this.turmas) || this.turmas.length === 0) {
-                console.log('ℹ️ Nenhuma turma para sincronizar');
-                return;
-            }
-
-            let turmasAtualizadas = 0;
-
-            for (const turma of this.turmas) {
-                const sucesso = await this.atualizarQuantidadeAlunosTurma(turma.id);
-                if (sucesso) {
-                    turmasAtualizadas++;
-                }
-            }
-
-            console.log(`✅ ${turmasAtualizadas}/${this.turmas.length} turmas sincronizadas`);
-            this.showNotification(`Quantidades de ${turmasAtualizadas} turmas atualizadas!`, 'success');
-
-        } catch (error) {
-            console.error('❌ Erro na sincronização de quantidades:', error);
-            this.showNotification('Erro ao sincronizar quantidades: ' + error.message, 'error');
-        }
-    }
+    // ========== FUNÇÕES DE DIAGNÓSTICO AVANÇADO ==========
 
     async debugAlunoTurmas() {
         try {
@@ -2812,217 +2761,33 @@ class AdminTurmas {
         }
     }
 
-    verificarElementosModal() {
-        console.group('🔍 VERIFICANDO ELEMENTOS DO MODAL');
-
-        const elementos = [
-            'turmaModal', 'turmaForm', 'turmaModalTitle', 'turmaId',
-            'turmaNome', 'turmaCurso', 'turmaPeriodo', 'turmaAno', 'turmaAtiva'
-        ];
-
-        elementos.forEach(id => {
-            const element = document.getElementById(id);
-            console.log(`${id}:`, element ? '✅ Encontrado' : '❌ Não encontrado');
-
-            if (element) {
-                console.log(`   📝 Conteúdo:`, element.value || element.textContent || element.innerHTML.substring(0, 50));
-            }
-        });
-
-        console.groupEnd();
-        this.showNotification('Verificação de elementos concluída - Verifique o console', 'info');
-    }
-
-    verificarEstruturaTurmas() {
-        console.group('🔍 VERIFICANDO ESTRUTURA DAS TURMAS');
-
-        if (!Array.isArray(this.turmas) || this.turmas.length === 0) {
-            console.log('❌ Nenhuma turma carregada');
-            console.groupEnd();
-            return;
-        }
-
-        const primeiraTurma = this.turmas[0];
-        console.log('📋 Estrutura da primeira turma:', primeiraTurma);
-        console.log('📊 Campos disponíveis:', Object.keys(primeiraTurma));
-
-        console.log('🎯 Tipos de dados:');
-        Object.keys(primeiraTurma).forEach(key => {
-            console.log(`   ${key}: ${typeof primeiraTurma[key]} = ${primeiraTurma[key]}`);
-        });
-
-        console.groupEnd();
-    }
-
-    sincronizarComDashboard() {
-        if (window.adminManager && typeof adminManager.atualizarTurmasDashboard === 'function') {
-            console.log('🔄 Sincronizando turmas com dashboard...');
-            adminManager.atualizarTurmasDashboard();
-        }
-    }
-
-    prepararModalMobile(modalElement) {
-        document.body.classList.add('modal-open');
-
-        setTimeout(() => {
-            const firstInput = modalElement.querySelector('input, select, textarea');
-            if (firstInput) {
-                firstInput.focus();
-            }
-        }, 300);
-    }
-
-    setupModalEventListeners() {
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal-overlay')) {
-                e.target.style.display = 'none';
-                document.body.classList.remove('modal-open');
-            }
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                const modals = document.querySelectorAll('.modal-overlay');
-                modals.forEach(modal => {
-                    modal.style.display = 'none';
-                });
-                document.body.classList.remove('modal-open');
-            }
-        });
-
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.modal-content')) {
-                e.stopPropagation();
-            }
-        });
-    }
-
-    setupEventListeners() {
-        console.log('✅ Event listeners configurados para turmas');
-
-        const turmaForm = document.getElementById('turmaForm');
-        if (turmaForm) {
-            turmaForm.addEventListener('submit', (e) => this.salvarTurma(e));
-        } else {
-            console.log('ℹ️ Formulário de turma não encontrado no carregamento inicial');
-        }
-
-        this.setupModalEventListeners();
-    }
-
-    escapeHtml(unsafe) {
-        if (unsafe === null || unsafe === undefined) return 'N/A';
-        return unsafe
-            .toString()
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    formatarData(dataString) {
-        if (!dataString) return 'N/A';
+    async sincronizacaoCompleta() {
         try {
-            const data = new Date(dataString);
-            if (isNaN(data.getTime())) {
-                return 'Data inválida';
+            console.log('🔄 Iniciando sincronização completa...');
+
+            await Promise.all([
+                this.carregarTurmas(),
+                this.carregarAlunos()
+            ]);
+
+            for (const turma of this.turmas) {
+                await this.atualizarQuantidadeAlunosTurma(turma.id);
             }
 
-            return data.toLocaleDateString('pt-BR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
+            this.renderizarTurmas();
+            this.sincronizarComDashboard();
+
+            console.log('✅ Sincronização completa concluída');
+            this.showNotification('Sistema de turmas sincronizado com sucesso!', 'success');
+
         } catch (error) {
-            console.warn('⚠️ Erro ao formatar data:', dataString, error);
-            return 'N/A';
-        }
-    }
-
-    showNotification(message, type = 'info', duration = 5000) {
-        if (typeof showNotification === 'function') {
-            showNotification(message, type);
-        } else {
-            console.log(`[${type.toUpperCase()}] ${message}`);
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 15px 20px;
-                border-radius: 8px;
-                color: white;
-                font-weight: 600;
-                z-index: 10000;
-                background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#3498db'};
-            `;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, duration);
-        }
-    }
-
-    debugModalGerenciarVinculos() {
-        console.group('🔍 DEBUG MODAL GERENCIAR VÍNCULOS');
-
-        // Verificar se o modal existe
-        const modal = document.getElementById('modal-gerenciar-vinculos');
-        console.log('📋 Modal pelo ID:', modal);
-
-        if (modal) {
-            console.log('🎯 Display do modal:', modal.style.display);
-            console.log('📊 Conteúdo do modal:', modal.textContent?.substring(0, 100));
-
-            // Verificar o tbody
-            const tbody = modal.querySelector('#listaAlunosVinculados') || modal.querySelector('tbody');
-            console.log('📋 Tbody encontrado:', tbody);
-
-            if (tbody) {
-                const linhas = tbody.querySelectorAll('tr');
-                console.log('📊 Linhas no tbody:', linhas.length);
-
-                // Mostrar IDs dos alunos atuais
-                linhas.forEach((linha, index) => {
-                    const checkbox = linha.querySelector('.aluno-vinculado-checkbox');
-                    if (checkbox) {
-                        console.log(`   Aluno ${index + 1}: ID ${checkbox.value}`);
-                    }
-                });
-            }
-        } else {
-            console.log('🔍 Procurando modais abertos...');
-            const modaisAbertos = document.querySelectorAll('.modal-overlay[style*="display: flex"], .modal-overlay[style*="display: block"]');
-            console.log(`📊 ${modaisAbertos.length} modal(is) aberto(s) encontrado(s):`);
-
-            modaisAbertos.forEach((modal, index) => {
-                console.log(`   Modal ${index + 1}:`, {
-                    id: modal.id,
-                    display: modal.style.display,
-                    texto: modal.textContent?.substring(0, 100)
-                });
-            });
-        }
-
-        console.groupEnd();
-    }
-
-    async buscarAlunosDaTurma(turmaId) {
-        try {
-            await this.carregarAlunos();
-            return this.alunos.filter(aluno => aluno.turma_id === turmaId);
-        } catch (error) {
-            console.error('❌ Erro ao buscar alunos da turma:', error);
-            return [];
+            console.error('❌ Erro na sincronização completa:', error);
+            this.showNotification('Erro na sincronização: ' + error.message, 'error');
         }
     }
 }
 
+// Inicialização
 const adminTurmas = new AdminTurmas();
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -3032,11 +2797,20 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             await adminTurmas.init();
             console.log('✅ AdminTurmas inicializado com sucesso');
+
+            // Verificar se os cursos foram carregados
+            if (adminTurmas.cursosDisponiveis.length === 0) {
+                console.warn('⚠️ Nenhum curso carregado, tentando recarregar...');
+                await adminTurmas.carregarCursosDoBanco();
+            }
+
         } catch (error) {
             console.error('❌ Erro na inicialização do AdminTurmas:', error);
+            adminTurmas.showNotification('Erro ao inicializar sistema de turmas', 'error');
         }
     }, 100);
 });
 
+// Tornar acessível globalmente
 window.AdminTurmas = AdminTurmas;
 window.adminTurmas = adminTurmas;

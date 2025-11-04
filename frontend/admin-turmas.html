@@ -27,6 +27,7 @@
             <a href="admin-professores.html"><i class="fas fa-chalkboard-teacher"></i> Professores</a>
             <a href="admin-usuarios.html"><i class="fas fa-users"></i> Usuários</a>
             <a href="admin-turmas.html" class="active"><i class="fas fa-users-class"></i> Turmas</a>
+            <a href="admin-turmas.html" ><i class="fa-solid fa-file-import"></i> CSV</a>
             <a href="index.html" class="btn-voltar-app-mobile">
                 <i class="fas fa-arrow-left"></i> Voltar para o App
             </a>
@@ -53,6 +54,7 @@
                     Professores</a>
                 <a href="admin-usuarios.html" class="nav-link"><i class="fas fa-users"></i> Usuários</a>
                 <a href="admin-turmas.html" class="nav-link active"><i class="fas fa-users-class"></i> Turmas</a>
+                <a href="admin-csv.html" class="nav-link"><i class="fa-solid fa-file-import"></i> CSV</a>
                 <span class="user-info" id="desktopUserName">Administrador</span>
                 <button class="btn-sair-desktop-texto" onclick="authManager.logout()">
                     <i class="fas fa-sign-out-alt"></i> Sair
@@ -125,25 +127,6 @@
                     <tbody id="turmas-body">
                     </tbody>
                 </table>
-            </div>
-
-            <div class="debug-actions"
-                style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #3498db;">
-                <h4><i class="fas fa-tools"></i> Ferramentas de Diagnóstico</h4>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-                    <button class="btn-secondary" onclick="adminTurmas.debugAlunoTurmas()">
-                        <i class="fas fa-bug"></i> Debug Básico
-                    </button>
-                    <button class="btn-secondary" onclick="adminTurmas.sincronizarQuantidades()">
-                        <i class="fas fa-sync"></i> Sincronizar Quantidades
-                    </button>
-                    <button class="btn-secondary" onclick="adminTurmas.diagnosticoCompletoTurmas()">
-                        <i class="fas fa-stethoscope"></i> Diagnóstico Completo
-                    </button>
-                    <button class="btn-secondary" onclick="adminTurmas.sincronizacaoCompleta()">
-                        <i class="fas fa-sync-alt"></i> Sincronização Completa
-                    </button>
-                </div>
             </div>
     </main>
 
