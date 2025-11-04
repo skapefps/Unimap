@@ -131,14 +131,13 @@ const criarAulaParaDia = async (professorId, aulaData, dia) => {
 
 // 🚀 ROTAS OTIMIZADAS
 
-// Criar aula (apenas professores) - VERSÃO SIMPLIFICADA
 router.post('/', authenticateToken, requireProfessor, validateAulaData, async (req, res) => {
     const aulaData = req.body;
-    console.log('📝 Criando aulas para dias:', aulaData.dia_semana);
+    console.log('📝 Criando aula com período:', aulaData.periodo, 'para professor:', req.user.email);
 
     try {
-        // Buscar professor
-        const professor = await dbGet('SELECT id FROM professores WHERE email = ?', [req.user.email]);
+        // Buscar professor pelo email do usuário logado
+        const professor = await dbGet('SELECT id, nome FROM professores WHERE email = ?', [req.user.email]);
         if (!professor) {
             return res.status(404).json({ error: 'Professor não encontrado' });
         }
@@ -147,7 +146,7 @@ router.post('/', authenticateToken, requireProfessor, validateAulaData, async (r
             aulaData.dia_semana :
             aulaData.dia_semana.split(',');
 
-        console.log('📅 Dias a processar:', diasArray);
+        console.log('📅 Dias a processar:', diasArray, 'Professor ID:', professor.id);
 
         const aulasCriadas = [];
         const aulasDuplicadas = [];
@@ -177,35 +176,36 @@ router.post('/', authenticateToken, requireProfessor, validateAulaData, async (r
 
                 if (duplicata) {
                     aulasDuplicadas.push({ dia });
-                    console.log(`⚠️ Aula duplicada para ${dia}`);
                     continue;
                 }
 
-                // Criar aula
+                // 🔥 SALVAR COM PROFESSOR_ID
                 const result = await dbRun(
                     `INSERT INTO aulas (disciplina, professor_id, sala_id, curso, turma, 
-                     horario_inicio, horario_fim, dia_semana, ativa) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+                     horario_inicio, horario_fim, dia_semana, periodo, ativa) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
                     [
                         aulaData.disciplina, professor.id, aulaData.sala_id,
                         aulaData.curso, aulaData.turma, aulaData.horario_inicio,
-                        aulaData.horario_fim, diaNumero
+                        aulaData.horario_fim, diaNumero, aulaData.periodo
                     ]
                 );
 
-                // Buscar aula criada
+                // Buscar aula criada com informações do professor
                 const aulaCriada = await dbGet(`
-                    SELECT a.*, s.numero as sala_numero, s.bloco as sala_bloco
-                    FROM aulas a LEFT JOIN salas s ON a.sala_id = s.id 
+                    SELECT a.*, s.numero as sala_numero, s.bloco as sala_bloco,
+                           p.nome as professor_nome, p.email as professor_email
+                    FROM aulas a 
+                    LEFT JOIN salas s ON a.sala_id = s.id 
+                    LEFT JOIN professores p ON a.professor_id = p.id
                     WHERE a.id = ?
                 `, [result.lastID]);
 
                 aulasCriadas.push(aulaCriada);
-                console.log(`✅ Aula criada para ${dia} - ID: ${result.lastID}`);
+                console.log(`✅ Aula criada para ${dia} pelo professor ${professor.nome}`);
 
             } catch (error) {
                 console.error(`❌ Erro em ${dia}:`, error);
-                // Continuar com os próximos dias mesmo com erro em um
             }
         }
 
@@ -214,23 +214,20 @@ router.post('/', authenticateToken, requireProfessor, validateAulaData, async (r
             return res.status(400).json({
                 success: false,
                 error: aulasDuplicadas.length > 0 ?
-                    'Todas as aulas já existem para os dias selecionados' :
+                    'Todas as aulas já existem' :
                     'Erro ao criar aulas'
             });
         }
 
-        const mensagem = `${aulasCriadas.length} aula(s) criada(s) com sucesso` +
-            (aulasDuplicadas.length > 0 ? ` (${aulasDuplicadas.length} já existiam)` : '');
-
         res.json({
             success: true,
-            message: mensagem,
+            message: `Criadas ${aulasCriadas.length} aula(s)`,
             aulasCriadas,
             aulasDuplicadas
         });
 
     } catch (error) {
-        console.error('❌ Erro ao criar aulas:', error);
+        console.error('❌ Erro geral:', error);
         res.status(500).json({
             success: false,
             error: 'Erro interno do servidor'
@@ -238,7 +235,7 @@ router.post('/', authenticateToken, requireProfessor, validateAulaData, async (r
     }
 });
 
-// Atualizar aula
+// Atualizar aula - GARANTIR QUE O PERÍODO SEJA SALVO
 router.put('/:id', authenticateToken, requireProfessor, validateAulaData, async (req, res) => {
     const { id } = req.params;
     const aulaData = req.body;
@@ -246,20 +243,29 @@ router.put('/:id', authenticateToken, requireProfessor, validateAulaData, async 
     console.log('✏️ Atualizando aula:', id, aulaData);
 
     try {
+        // VERIFICAR SE O PERÍODO ESTÁ SENDO RECEBIDO
+        if (!aulaData.periodo) {
+            return res.status(400).json({
+                success: false,
+                error: 'Período é obrigatório'
+            });
+        }
+
         const result = await dbRun(
             `UPDATE aulas SET 
                 disciplina = ?, sala_id = ?, curso = ?, turma = ?, 
-                horario_inicio = ?, horario_fim = ?, dia_semana = ?
+                horario_inicio = ?, horario_fim = ?, dia_semana = ?, periodo = ?
              WHERE id = ?`,
             [aulaData.disciplina, aulaData.sala_id, aulaData.curso, aulaData.turma,
-            aulaData.horario_inicio, aulaData.horario_fim, aulaData.dia_semana, id]
+            aulaData.horario_inicio, aulaData.horario_fim, aulaData.dia_semana,
+            aulaData.periodo, id] // 🔥 GARANTIR QUE PERÍODO SEJA SALVO
         );
 
         if (result.changes === 0) {
             return res.status(404).json({ error: 'Aula não encontrada' });
         }
 
-        console.log('✅ Aula atualizada com sucesso');
+        console.log('✅ Aula atualizada com período:', aulaData.periodo);
         res.json({
             success: true,
             message: 'Aula atualizada com sucesso!'
@@ -311,20 +317,21 @@ router.put('/:id/reativar', authenticateToken, requireProfessor, (req, res) => {
 
 // 🔧 CONSULTAS OTIMIZADAS
 
-// Query base para aulas
 const getAulasBaseQuery = (filtroProfessor = false) => `
     SELECT 
         a.*, 
         s.numero as sala_numero, 
         s.bloco as sala_bloco,
         s.andar as sala_andar,
-        p.nome as professor_nome
+        p.nome as professor_nome,
+        p.email as professor_email
     FROM aulas a
     LEFT JOIN salas s ON a.sala_id = s.id
     LEFT JOIN professores p ON a.professor_id = p.id
     ${filtroProfessor ? 'WHERE p.email = ?' : ''}
     ORDER BY a.ativa DESC, a.dia_semana, a.horario_inicio
 `;
+
 
 // Obter aulas do usuário
 router.get('/usuario/:usuario_id', authenticateToken, async (req, res) => {
@@ -382,7 +389,6 @@ router.get('/usuario/:usuario_id', authenticateToken, async (req, res) => {
     }
 });
 
-// Aulas do professor (incluindo canceladas)
 router.get('/professor/minhas-aulas', authenticateToken, requireProfessor, async (req, res) => {
     console.log('📚 Buscando aulas do professor:', req.user.email);
 
@@ -399,6 +405,29 @@ router.get('/professor/minhas-aulas', authenticateToken, requireProfessor, async
 
     } catch (error) {
         console.error('❌ Erro ao buscar aulas do professor:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 🔧 NOVA ROTA PARA OBTER DADOS DO PROFESSOR LOGADO
+router.get('/meu-perfil', authenticateToken, requireProfessor, async (req, res) => {
+    try {
+        const professor = await dbGet(
+            'SELECT id, nome, email, telefone, departamento FROM professores WHERE email = ?',
+            [req.user.email]
+        );
+
+        if (!professor) {
+            return res.status(404).json({ error: 'Professor não encontrado' });
+        }
+
+        res.json({
+            success: true,
+            data: professor
+        });
+
+    } catch (error) {
+        console.error('❌ Erro ao buscar dados do professor:', error);
         res.status(500).json({ error: error.message });
     }
 });

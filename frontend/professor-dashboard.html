@@ -77,28 +77,95 @@
                 </button>
             </div>
 
-            <div class="professor-filters-container">
-                <div class="professor-filter-group">
-                    <label for="filterCurso">Curso:</label>
-                    <select id="filterCurso" class="professor-filter-select">
-                        <option value="">Todos os cursos</option>
-                        <option value="si">Sistemas de Informação</option>
-                        <option value="adm">Administração</option>
-                        <option value="dir">Direito</option>
-                    </select>
+            <!-- Container de Filtros -->
+            <div class="filtros-container">
+                <div class="filtros-header">
+                    <h3 class="filtros-title">
+                        <i class="fas fa-filter"></i> Filtros de Busca
+                    </h3>
+                    <div id="contadorAulas" class="contador-aulas">Total: 0 aulas</div>
                 </div>
-                <div class="professor-filter-group">
-                    <label for="filterStatus">Status:</label>
-                    <select id="filterStatus" class="professor-filter-select">
-                        <option value="">Todas</option>
-                        <option value="ativa">Ativas</option>
-                        <option value="inativa">Inativas</option>
-                    </select>
+
+                <div class="filtros-grid">
+                    <!-- Filtro por Disciplina -->
+                    <div class="filtro-group">
+                        <label for="filtroDisciplina" class="filtro-label">
+                            <i class="fas fa-book"></i> Disciplina
+                        </label>
+                        <input type="text" id="filtroDisciplina" class="filtro-input"
+                            placeholder="Digite o nome da disciplina">
+                    </div>
+
+                    <!-- Filtro por Curso (AGORA É SELECT) -->
+                    <div class="filtro-group">
+                        <label for="filtroCurso" class="filtro-label">
+                            <i class="fas fa-graduation-cap"></i> Curso
+                        </label>
+                        <select id="filtroCurso" class="filtro-select">
+                            <option value="">Todos os cursos</option>
+                            <!-- Os cursos serão carregados via JavaScript -->
+                        </select>
+                    </div>
+
+                    <!-- Filtro por Professor -->
+                    <div class="filtro-group">
+                        <label for="filtroProfessor" class="filtro-label">
+                            <i class="fas fa-chalkboard-teacher"></i> Professor
+                        </label>
+                        <select id="filtroProfessor" class="filtro-select">
+                            <option value="">Todos os professores</option>
+                            <!-- Os professores serão carregados via JavaScript -->
+                        </select>
+                    </div>
+
+                    <!-- Filtro por Turma -->
+                    <div class="filtro-group">
+                        <label for="filtroTurma" class="filtro-label">
+                            <i class="fas fa-users"></i> Turma
+                        </label>
+                        <input type="text" id="filtroTurma" class="filtro-input" placeholder="Digite a turma">
+                    </div>
+
+                    <!-- Filtro por Sala -->
+                    <div class="filtro-group">
+                        <label for="filtroSala" class="filtro-label">
+                            <i class="fas fa-door-open"></i> Sala
+                        </label>
+                        <input type="text" id="filtroSala" class="filtro-input" placeholder="Número ou bloco da sala">
+                    </div>
+
+                    <!-- Filtro por Dia da Semana -->
+                    <div class="filtro-group">
+                        <label for="filtroDia" class="filtro-label">
+                            <i class="fas fa-calendar-day"></i> Dia da Semana
+                        </label>
+                        <select id="filtroDia" class="filtro-select">
+                            <option value="">Todos os dias</option>
+                            <option value="1">Segunda-feira</option>
+                            <option value="2">Terça-feira</option>
+                            <option value="3">Quarta-feira</option>
+                            <option value="4">Quinta-feira</option>
+                            <option value="5">Sexta-feira</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro por Status -->
+                    <div class="filtro-group">
+                        <label for="filtroStatus" class="filtro-label">
+                            <i class="fas fa-info-circle"></i> Status
+                        </label>
+                        <select id="filtroStatus" class="filtro-select">
+                            <option value="">Todos os status</option>
+                            <option value="ativa">Aulas Ativas</option>
+                            <option value="cancelada">Aulas Canceladas</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="professor-filter-group">
-                    <label for="searchAula">Pesquisar:</label>
-                    <input type="text" id="searchAula" class="professor-filter-input"
-                        placeholder="Disciplina, turma...">
+
+                <div class="filtros-actions">
+                    <button type="button" id="btnLimparFiltros" class="btn-filtro btn-limpar">
+                        <i class="fas fa-times"></i> Limpar Filtros
+                    </button>
                 </div>
             </div>
 

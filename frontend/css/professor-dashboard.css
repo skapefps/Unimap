@@ -641,7 +641,6 @@ select.select-desabilitado {
 .professor-btn-voltar-sala {
     background: var(--professor-gray);
     color: white;
-    border: none;
     padding: 1rem 2rem;
     border-radius: 8px;
     cursor: pointer;
@@ -1229,6 +1228,7 @@ select.select-desabilitado {
         opacity: 0;
         transform: translateY(-30px) scale(0.95);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -1304,7 +1304,7 @@ select.select-desabilitado {
     background: white;
 }
 
-.modal-body label{
+.modal-body label {
     color: white !important;
 }
 
@@ -1472,51 +1472,52 @@ select.select-desabilitado {
     .modal-overlay {
         padding: 15px;
     }
-    
+
     .modal-content {
         width: 95%;
         margin: 10px;
     }
-    
-    .modal-large, .modal-extra-large {
+
+    .modal-large,
+    .modal-extra-large {
         max-width: 95%;
     }
-    
+
     .modal-header {
         padding: 20px 20px 12px;
     }
-    
+
     .modal-header h3 {
         font-size: 1.3rem;
     }
-    
+
     .modal-body {
         padding: 20px;
     }
-    
+
     .detalhe-item {
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
         padding: 16px;
     }
-    
+
     .detalhe-item::before {
         width: 100%;
         height: 3px;
         border-radius: 4px 4px 0 0;
     }
-    
+
     .detalhe-item span {
         text-align: left;
         width: 100%;
     }
-    
+
     .modal-footer {
         padding: 16px 20px 20px;
         text-align: center;
     }
-    
+
     .btn-fechar {
         width: 100%;
         justify-content: center;
@@ -1527,34 +1528,34 @@ select.select-desabilitado {
     .modal-overlay {
         padding: 10px;
     }
-    
+
     .modal-content {
         width: 100%;
         margin: 5px;
     }
-    
+
     .modal-header {
         padding: 16px 16px 10px;
     }
-    
+
     .modal-header h3 {
         font-size: 1.2rem;
         gap: 8px;
     }
-    
+
     .modal-body {
         padding: 16px;
     }
-    
+
     .detalhe-item {
         padding: 14px;
     }
-    
+
     .detalhe-item label {
         min-width: auto;
         font-size: 0.9rem;
     }
-    
+
     .status-badge {
         padding: 6px 12px;
         font-size: 0.8rem;
@@ -1567,6 +1568,7 @@ select.select-desabilitado {
         opacity: 1;
         transform: translateY(0) scale(1);
     }
+
     to {
         opacity: 0;
         transform: translateY(-20px) scale(0.95);
@@ -1579,6 +1581,7 @@ select.select-desabilitado {
 
 /* Melhorias de Acessibilidade */
 @media (prefers-reduced-motion: reduce) {
+
     .modal-content,
     .detalhe-item,
     .modal-close,
@@ -1595,28 +1598,287 @@ select.select-desabilitado {
         background: linear-gradient(135deg, #2c3e50, #34495e);
         border-color: #4a5f7a;
     }
-    
+
     .modal-body {
         background: #2c3e50;
         color: #ecf0f1;
     }
-    
+
     .detalhe-item {
         background: linear-gradient(135deg, #34495e, #2c3e50);
         border-color: #4a5f7a;
         color: #ecf0f1;
     }
-    
+
     .detalhe-item span {
         color: #ecf0f1;
     }
-    
+
     .modal-footer {
         background: #34495e;
         border-top-color: #4a5f7a;
     }
-    
+
     .modal-body::-webkit-scrollbar-track {
         background: #34495e;
     }
+}
+
+/* ========== ESTILOS DOS FILTROS ========== */
+.filtros-container {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #e9ecef;
+}
+
+.filtros-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.filtros-title {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.contador-aulas {
+    font-size: 0.9em;
+    color: #6c757d;
+    background: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    border: 1px solid #dee2e6;
+}
+
+.contador-aulas.filtro-ativo {
+    background: #fff3cd;
+    color: #856404;
+    border-color: #ffeaa7;
+    font-weight: 600;
+}
+
+.filtros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.filtro-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filtro-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+.filtro-input,
+.filtro-select {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.filtro-input:focus,
+.filtro-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.filtro-input:not(:placeholder-shown) {
+    background-color: #f8fff8;
+    border-color: #4CAF50;
+}
+
+.filtros-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.btn-filtro {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.btn-limpar {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-limpar:hover {
+    background: #5a6268;
+}
+
+.btn-aplicar {
+    background: #667eea;
+    color: white;
+}
+
+.btn-aplicar:hover {
+    background: #5a6fd8;
+}
+
+/* ========== ESTADO VAZIO MELHORADO ========== */
+.professor-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 40px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 20px;
+    border: 2px dashed #dee2e6;
+    margin: 30px 0;
+    min-height: 400px;
+    transition: all 0.3s ease;
+}
+
+.professor-empty-state i {
+    font-size: 4em;
+    color: #6c757d;
+    margin-bottom: 25px;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+}
+
+.professor-empty-state p {
+    font-size: 1.4em;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.professor-empty-state .empty-subtitle {
+    font-size: 1em;
+    font-weight: 400;
+    color: #6c757d;
+    margin-bottom: 35px;
+    max-width: 400px;
+    line-height: 1.5;
+}
+
+/* ========== BOTÃO LIMPAR FILTROS MELHORADO ========== */
+.btn-limpar-filtros-empty {
+    background: red;
+    color: white;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-top: 20px;
+    transition: all 0.4s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 200px;
+    justify-content: center;
+}
+
+.btn-limpar-filtros-empty::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: red;
+    transition: left 0.5s ease;
+}
+
+.btn-limpar-filtros-empty:hover::before {
+    left: 100%;
+}
+
+.btn-limpar-filtros-empty:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    background: white;
+    color: red;
+}
+
+.btn-limpar-filtros-empty:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-limpar-filtros-empty i {
+    font-size: 1.2em;
+    transition: transform 0.3s ease;
+}
+
+.btn-limpar-filtros-empty:hover i {
+    transform: rotate(90deg);
+}
+
+.professor-empty-state {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* ========== RESPONSIVIDADE ========== */
+@media (max-width: 768px) {
+    .professor-empty-state {
+        padding: 40px 20px;
+        min-height: 300px;
+        margin: 20px 0;
+    }
+
+    .professor-empty-state i {
+        font-size: 3em;
+    }
+
+    .professor-empty-state p {
+        font-size: 1.2em;
+    }
+
+    .professor-empty-state .empty-subtitle {
+        font-size: 0.9em;
+        margin-bottom: 25px;
+    }
+
+    .btn-limpar-filtros-empty {
+        padding: 14px 28px;
+        font-size: 1em;
+        min-width: 180px;
+    }
+}
+
+/* ========== EFEITO DE FOCO ========== */
+.btn-limpar-filtros-empty:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
+/* ========== ESTADO DE CARREGAMENTO PARA O BOTÃO ========== */
+.btn-limpar-filtros-empty.loading {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.btn-limpar-filtros-empty.loading i {
+    animation: spin 1s linear infinite;
 }

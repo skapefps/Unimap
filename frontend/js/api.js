@@ -21,6 +21,71 @@ class ApiService {
         return baseHeaders;
     }
 
+    async getProfessoresAtivos() {
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) throw new Error('Token não encontrado');
+
+            const response = await fetch('/api/professores/ativos', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erro HTTP: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return {
+                success: true,
+                data: result // Sua API já retorna o array diretamente
+            };
+
+        } catch (error) {
+            console.error('Erro ao buscar professores ativos:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    // API para todos os professores (se necessário)
+    async getProfessores() {
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) throw new Error('Token não encontrado');
+
+            const response = await fetch('/api/professores', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erro HTTP: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return {
+                success: true,
+                data: result 
+            };
+
+        } catch (error) {
+            console.error('Erro ao buscar professores:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
     async request(endpoint, options = {}) {
         const cacheKey = this.generateCacheKey(endpoint, options);
         const queueKey = this.generateQueueKey(endpoint);
