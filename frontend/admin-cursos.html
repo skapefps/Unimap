@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIMAP - Gerenciar Cursos</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <header class="mobile-header">
+        <div class="header-top">
+            <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
+            <h1>UNIMAP - Cursos</h1>
+            <span class="user-name" id="mobileUserName">Admin</span>
+        </div>
+
+        <nav class="mobile-nav" id="mobileNav">
+            <div class="nav-user" id="mobileNavUser">Administrador</div>
+            <a href="admin.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="admin-cursos.html" class="active"><i class="fas fa-graduation-cap"></i> Cursos</a>
+            <a href="admin-salas.html"><i class="fas fa-door-open"></i> Salas</a>
+            <a href="admin-professores.html"><i class="fas fa-chalkboard-teacher"></i> Professores</a>
+            <a href="admin-usuarios.html"><i class="fas fa-users"></i> Usuários</a>
+            <a href="admin-turmas.html"><i class="fas fa-users-class"></i> Turmas</a>
+            <a href="index.html" class="btn-voltar-app-mobile">
+                <i class="fas fa-arrow-left"></i> Voltar para o App
+            </a>
+            <a href="#" onclick="authManager.logout()">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </a>
+        </nav>
+    </header>
+
+    <header class="desktop-header">
+        <div class="header-content">
+            <a href="admin.html" class="logo-link">
+                <img src="images/unipam png.png" alt="UNIPAM" class="navbar-logo">
+                <h1>UNIMAP - Cursos</h1>
+            </a>
+            <nav class="desktop-nav">
+                <a href="index.html" class="btn-flutuante-voltar" title="Voltar para o App">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Voltar para o App</span>
+                </a>
+                <a href="admin.html" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="admin-cursos.html" class="nav-link active"><i class="fas fa-graduation-cap"></i> Cursos</a>
+                <a href="admin-salas.html" class="nav-link"><i class="fas fa-door-open"></i> Salas</a>
+                <a href="admin-professores.html" class="nav-link"><i class="fas fa-chalkboard-teacher"></i>
+                    Professores</a>
+                <a href="admin-usuarios.html" class="nav-link"><i class="fas fa-users"></i> Usuários</a>
+                <a href="admin-turmas.html" class="nav-link"><i class="fas fa-users-class"></i> Turmas</a>
+                <span class="user-info" id="desktopUserName">Administrador</span>
+                <button class="btn-sair-desktop-texto" onclick="authManager.logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="admin-dashboard">
+        <div class="container">
+            <div class="page-header">
+                <h2>Gerenciar Cursos</h2>
+                <button class="btn-primary" onclick="adminCursos.abrirModalCriarCurso()">
+                    <i class="fas fa-plus"></i> Novo Curso
+                </button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total de Cursos</h3>
+                        <div class="stat-number" id="total-cursos">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Cursos Ativos</h3>
+                        <div class="stat-number" id="cursos-ativos">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Cursos Inativos</h3>
+                        <div class="stat-number" id="cursos-inativos">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="cursos-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome do Curso</th>
+                            <th>Períodos</th>
+                            <th>Turno</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cursos-body">
+                        <tr>
+                            <td colspan="7" class="text-center">Nenhum curso cadastrado</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Ferramentas de Gestão -->
+            <div class="debug-actions"
+                style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #3498db;">
+                <h4><i class="fas fa-tools"></i> Ferramentas de Gestão</h4>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                    <button class="btn-secondary" onclick="adminCursos.carregarCursos()">
+                        <i class="fas fa-sync"></i> Recarregar Cursos
+                    </button>
+                    <button class="btn-secondary" onclick="adminCursos.exportarCursos()">
+                        <i class="fas fa-download"></i> Exportar Lista
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para Criar/Editar Curso -->
+    <div class="modal-overlay" id="cursoModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-graduation-cap"></i> <span id="cursoModalTitle">Novo Curso</span></h3>
+                <button class="modal-close" onclick="adminCursos.fecharModalCurso()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="cursoForm">
+                    <input type="hidden" id="cursoId">
+
+                    <div class="form-group">
+                        <label>Nome do Curso:</label>
+                        <input type="text" id="cursoNome" required class="form-control"
+                            placeholder="Ex: Ciência da Computação">
+                        <small class="form-text">Digite o nome completo do curso</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Turno:</label>
+                            <select id="cursoTurno" required class="form-control">
+                                <option value="">Selecione o turno</option>
+                                <option value="Matutino">Matutino</option>
+                                <option value="Noturno">Noturno</option>
+                                <option value="Integral">Integral</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Total de Períodos:</label>
+                            <input type="number" id="cursoPeriodos" required class="form-control" min="1" max="12"
+                                value="8">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status:</label>
+                        <select id="cursoAtivo" class="form-control">
+                            <option value="true">Ativo</option>
+                            <option value="false">Inativo</option>
+                        </select>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i> Salvar Curso
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="adminCursos.fecharModalCurso()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin-cursos.js"></script>
+
+    <script>
+        function toggleMenu() {
+            const nav = document.getElementById('mobileNav');
+            nav.classList.toggle('active');
+        }
+
+        function closeMenu() {
+            const nav = document.getElementById('mobileNav');
+            nav.classList.remove('active');
+        }
+
+        document.addEventListener('click', function (event) {
+            const nav = document.getElementById('mobileNav');
+            const hamburger = document.querySelector('.menu-hamburger');
+
+            if (nav.classList.contains('active') &&
+                !nav.contains(event.target) &&
+                !hamburger.contains(event.target)) {
+                nav.classList.remove('active');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const userData = localStorage.getItem('userData');
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    const desktopUser = document.getElementById('desktopUserName');
+                    if (desktopUser) {
+                        desktopUser.innerHTML = `${user.nome} <span class="user-type-badge admin">ADMIN</span>`;
+                    }
+                    const mobileUser = document.getElementById('mobileUserName');
+                    const navUser = document.getElementById('mobileNavUser');
+                    if (mobileUser) mobileUser.textContent = user.nome;
+                    if (navUser) navUser.textContent = user.nome;
+                } catch (error) {
+                    console.error('Erro ao carregar usuário:', error);
+                }
+            }
+
+            // Inicializar gerenciador de cursos
+            if (window.adminCursos) {
+                adminCursos.init();
+            }
+        });
+    </script>
+</body>
+
+</html>

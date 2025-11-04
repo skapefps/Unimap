@@ -3,10 +3,10 @@ const db = require('../config/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const router = express.Router();
 
-// Listar todos os cursos
+// Listar todos os cursos (ativos)
 router.get('/', authenticateToken, (req, res) => {
     const query = `SELECT id, nome FROM cursos WHERE ativo = 1 ORDER BY nome`;
-    
+
     db.all(query, [], (err, rows) => {
         if (err) {
             console.error('❌ Erro ao buscar cursos:', err);
@@ -31,6 +31,7 @@ router.get('/com-periodos', authenticateToken, (req, res) => {
     });
 });
 
+// Listar cursos detalhados (ativos)
 router.get('/detalhados', authenticateToken, (req, res) => {
     console.log('📚 Buscando cursos detalhados...');
 
@@ -58,6 +59,32 @@ router.get('/detalhados', authenticateToken, (req, res) => {
     });
 });
 
+// Listar TODOS os cursos (ativos E inativos)
+router.get('/todos', authenticateToken, (req, res) => {
+    console.log('📚 Buscando TODOS os cursos (ativos e inativos)...');
+
+    const query = `
+        SELECT 
+            id,
+            nome,
+            total_periodos,
+            duracao,
+            turno,
+            ativo
+        FROM cursos 
+        ORDER BY id
+    `;
+
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar todos os cursos:', err);
+            return res.status(500).json({ error: err.message });
+        }
+
+        console.log(`✅ ${rows.length} cursos encontrados (ativos + inativos)`);
+        res.json(rows);
+    });
+});
 
 // Obter curso por ID
 router.get('/:id', authenticateToken, (req, res) => {
@@ -79,7 +106,7 @@ router.get('/:id', authenticateToken, (req, res) => {
     });
 });
 
-// Criar novo curso (apenas admin)
+// ⭐⭐ CRIAR NOVO CURSO - VERSÃO CORRIGIDA (IDS SEQUENCIAIS) ⭐⭐
 router.post('/', authenticateToken, requireAdmin, (req, res) => {
     const { nome, duracao, turno, total_periodos } = req.body;
 
@@ -89,26 +116,38 @@ router.post('/', authenticateToken, requireAdmin, (req, res) => {
         return res.status(400).json({ error: 'Nome do curso é obrigatório' });
     }
 
-    db.run(
-        'INSERT INTO cursos (nome, duracao, turno, total_periodos) VALUES (?, ?, ?, ?)',
-        [nome, duracao, turno, total_periodos || 8],
-        function (err) {
-            if (err) {
-                console.error('❌ Erro ao criar curso:', err);
-                if (err.message.includes('UNIQUE')) {
-                    return res.status(400).json({ error: 'Já existe um curso com este nome' });
-                }
-                return res.status(400).json({ error: err.message });
-            }
-
-            console.log('✅ Curso criado com ID:', this.lastID);
-            res.json({
-                success: true,
-                message: 'Curso criado com sucesso!',
-                id: this.lastID
-            });
+    // Calcular o próximo ID manualmente
+    db.get('SELECT MAX(id) as maxId FROM cursos', (err, row) => {
+        if (err) {
+            console.error('❌ Erro ao obter máximo ID:', err);
+            return res.status(500).json({ error: err.message });
         }
-    );
+
+        const nextId = (row.maxId || 0) + 1;
+        console.log('🔢 Próximo ID calculado:', nextId);
+
+        // Inserir com ID específico
+        db.run(
+            'INSERT INTO cursos (id, nome, duracao, turno, total_periodos, ativo) VALUES (?, ?, ?, ?, ?, 1)',
+            [nextId, nome, duracao, turno, total_periodos || 10],
+            function (err) {
+                if (err) {
+                    console.error('❌ Erro ao criar curso:', err);
+                    if (err.message.includes('UNIQUE')) {
+                        return res.status(400).json({ error: 'Já existe um curso com este nome' });
+                    }
+                    return res.status(400).json({ error: err.message });
+                }
+
+                console.log('✅ Curso criado com ID:', nextId);
+                res.json({
+                    success: true,
+                    message: 'Curso criado com sucesso!',
+                    id: nextId
+                });
+            }
+        );
+    });
 });
 
 // Atualizar curso (apenas admin)
@@ -145,7 +184,7 @@ router.put('/:id', authenticateToken, requireAdmin, (req, res) => {
 router.delete('/:id', authenticateToken, requireAdmin, (req, res) => {
     const { id } = req.params;
 
-    console.log('🗑️ Excluindo curso:', id);
+    console.log('🗑️ Excluindo curso (soft delete):', id);
 
     db.run(
         'UPDATE cursos SET ativo = 0 WHERE id = ?',
@@ -162,10 +201,50 @@ router.delete('/:id', authenticateToken, requireAdmin, (req, res) => {
 
             res.json({
                 success: true,
-                message: 'Curso excluído com sucesso!'
+                message: 'Curso desativado com sucesso!'
             });
         }
     );
+});
+
+// Excluir curso permanentemente (hard delete)
+router.delete('/admin/excluir-permanentemente/:id', authenticateToken, requireAdmin, (req, res) => {
+    const { id } = req.params;
+
+    console.log('🔥 Excluindo permanentemente curso:', id);
+
+    db.get('SELECT id, ativo, nome FROM cursos WHERE id = ?', [id], (err, row) => {
+        if (err) {
+            console.error('❌ Erro ao verificar curso:', err);
+            return res.status(500).json({ error: err.message });
+        }
+
+        if (!row) {
+            return res.status(404).json({ error: 'Curso não encontrado' });
+        }
+
+        if (row.ativo === 1) {
+            return res.status(400).json({
+                error: 'Não é possível excluir permanentemente um curso ativo. Desative o curso primeiro.'
+            });
+        }
+
+        db.run('DELETE FROM cursos WHERE id = ?', [id], function (err) {
+            if (err) {
+                console.error('❌ Erro ao excluir curso:', err);
+                return res.status(500).json({ error: err.message });
+            }
+
+            if (this.changes === 0) {
+                return res.status(404).json({ error: 'Curso não encontrado' });
+            }
+
+            res.json({
+                success: true,
+                message: 'Curso excluído permanentemente com sucesso!'
+            });
+        });
+    });
 });
 
 // Estatísticas dos cursos
@@ -184,7 +263,6 @@ router.get('/:id/estatisticas', authenticateToken, requireAdmin, (req, res) => {
         const results = {};
         let completed = 0;
 
-        // Total de alunos
         db.get(queries[0], [id], (err, row) => {
             if (err) {
                 console.error('❌ Erro ao buscar total de alunos:', err);
@@ -196,7 +274,6 @@ router.get('/:id/estatisticas', authenticateToken, requireAdmin, (req, res) => {
             checkComplete();
         });
 
-        // Total de disciplinas
         db.get(queries[1], [id], (err, row) => {
             if (err) {
                 console.error('❌ Erro ao buscar total de disciplinas:', err);
@@ -208,7 +285,6 @@ router.get('/:id/estatisticas', authenticateToken, requireAdmin, (req, res) => {
             checkComplete();
         });
 
-        // Total de turmas
         db.get(queries[2], [id], (err, row) => {
             if (err) {
                 console.error('❌ Erro ao buscar total de turmas:', err);
