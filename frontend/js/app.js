@@ -10,11 +10,36 @@ class UnimapApp {
 
     init() {
         console.log('🚀 Inicializando UNIMAP App...');
-        this.checkAuth();
+
+        // 🔥 CORREÇÃO: Verificar autenticação primeiro
+        this.checkAuthAndRedirect();
         this.showSection('aulas-mobile');
         this.setupEventListeners();
         this.setupGlobalFunctions();
-        this.initMapaAluno(); // ✅ Inicializar mapa do aluno
+        this.initMapaAluno();
+    }
+
+    checkAuthAndRedirect() {
+        const userData = localStorage.getItem('unimap_user') || localStorage.getItem('userData');
+        const token = localStorage.getItem('authToken');
+
+        if (!userData || !token) {
+            console.log('🔐 Usuário não autenticado - Redirecionando para login');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        try {
+            this.user = JSON.parse(userData);
+            this.updateUserInfo();
+            this.checkAdminPermissions();
+        } catch (error) {
+            console.error('❌ Erro ao carregar usuário:', error);
+            localStorage.removeItem('unimap_user');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('authToken');
+            window.location.href = 'login.html';
+        }
     }
 
     // ✅ CONFIGURAR FUNÇÕES GLOBAIS
@@ -34,7 +59,7 @@ class UnimapApp {
             console.log('⚠️ Usuário não autenticado');
             return;
         }
-        
+
         try {
             this.user = JSON.parse(userData);
             this.updateUserInfo();
@@ -48,7 +73,7 @@ class UnimapApp {
         const mobileUser = document.getElementById('mobileUserName');
         const desktopUser = document.getElementById('desktopUserName');
         const navUser = document.querySelector('.nav-user');
-        
+
         if (mobileUser) mobileUser.textContent = this.user?.nome || 'Usuário';
         if (desktopUser) desktopUser.textContent = this.user?.nome || 'Usuário';
         if (navUser) navUser.textContent = this.user?.nome || 'Usuário';
@@ -56,26 +81,26 @@ class UnimapApp {
 
     checkAdminPermissions() {
         console.log('🔍 Verificando permissões de admin...');
-        
+
         if (!this.user) {
             console.log('⚠️ Nenhum usuário para verificar permissões');
             return;
         }
-        
+
         console.log('👤 Usuário:', this.user.nome, '- Tipo:', this.user.tipo);
-        
+
         const isAdmin = this.user.tipo === 'admin' || this.user.tipo === 'professor';
         console.log(`🎯 É admin/professor: ${isAdmin}`);
-        
+
         // Mostrar/ocultar elementos admin
         const adminElements = document.querySelectorAll('.admin-only');
         adminElements.forEach(element => {
             element.style.display = isAdmin ? 'block' : 'none';
         });
-        
+
         const adminDashboardMobile = document.getElementById('admin-dashboard-mobile');
         const adminDashboardLink = document.getElementById('admin-dashboard-link');
-        
+
         if (adminDashboardMobile) {
             adminDashboardMobile.style.display = isAdmin ? 'block' : 'none';
         }
@@ -93,7 +118,7 @@ class UnimapApp {
 
     showSection(sectionId) {
         console.log('📱 Mostrando seção:', sectionId);
-        
+
         // Esconder todas as seções
         document.querySelectorAll('.section').forEach(section => {
             section.style.display = 'none';
@@ -110,7 +135,7 @@ class UnimapApp {
 
         // Atualizar navegação ativa
         this.updateActiveNav(sectionId);
-        
+
         // Fechar menu mobile se estiver aberto
         this.closeMenu();
 
@@ -119,36 +144,36 @@ class UnimapApp {
     }
 
     carregarDadosDaSecao(sectionId) {
-    switch(sectionId) {
-        case 'aulas-mobile':
-        case 'aulas-desktop':
-            if (typeof aulasManager !== 'undefined') {
-                setTimeout(() => {
-                    aulasManager.carregarMinhasAulas().catch(error => {
-                        console.error('❌ Erro ao recarregar aulas:', error);
-                    });
-                }, 150);
-            }
-            break;
-        case 'professores':
-            if (typeof professoresManager !== 'undefined') {
-                setTimeout(() => {
-                    // ✅ CORREÇÃO: Verificar se a função existe antes de chamar
-                    if (professoresManager.loadMeusProfessores) {
-                        professoresManager.loadMeusProfessores();
-                    } else {
-                        console.warn('⚠️ professoresManager.loadMeusProfessores não existe');
-                        // Tentar carregar de outra forma
-                        professoresManager.init();
-                    }
-                }, 150);
-            }
-            break;
-        case 'mapa-blocos':
-            // Já carregado pelo initMapaAluno()
-            break;
+        switch (sectionId) {
+            case 'aulas-mobile':
+            case 'aulas-desktop':
+                if (typeof aulasManager !== 'undefined') {
+                    setTimeout(() => {
+                        aulasManager.carregarMinhasAulas().catch(error => {
+                            console.error('❌ Erro ao recarregar aulas:', error);
+                        });
+                    }, 150);
+                }
+                break;
+            case 'professores':
+                if (typeof professoresManager !== 'undefined') {
+                    setTimeout(() => {
+                        // ✅ CORREÇÃO: Verificar se a função existe antes de chamar
+                        if (professoresManager.loadMeusProfessores) {
+                            professoresManager.loadMeusProfessores();
+                        } else {
+                            console.warn('⚠️ professoresManager.loadMeusProfessores não existe');
+                            // Tentar carregar de outra forma
+                            professoresManager.init();
+                        }
+                    }, 150);
+                }
+                break;
+            case 'mapa-blocos':
+                // Já carregado pelo initMapaAluno()
+                break;
+        }
     }
-}
 
     updateActiveNav(sectionId) {
         document.querySelectorAll('.nav-link').forEach(link => {
@@ -189,7 +214,7 @@ class UnimapApp {
     async carregarBlocosAluno() {
         try {
             console.log('📡 Carregando blocos para aluno...');
-            
+
             // Usar a API global se disponível, senão fazer fetch direto
             let blocos;
             if (typeof api !== 'undefined' && api.getBlocos) {
@@ -205,7 +230,7 @@ class UnimapApp {
                 const response = await fetch('/api/salas/blocos', {
                     headers: token ? { 'Authorization': `Bearer ${token}` } : {}
                 });
-                
+
                 if (!response.ok) throw new Error('Erro na requisição');
                 blocos = await response.json();
             }
@@ -213,7 +238,7 @@ class UnimapApp {
             console.log('✅ Blocos carregados para aluno:', blocos);
             this.blocosData = blocos;
             this.renderizarBlocosAluno(blocos);
-            
+
         } catch (error) {
             console.error('❌ Erro ao carregar blocos para aluno:', error);
             this.usarBlocosPadraoAluno();
@@ -284,16 +309,16 @@ class UnimapApp {
         console.log(`🏢 Aluno selecionando bloco: ${bloco}`);
         this.currentBloco = bloco;
         sessionStorage.setItem('blocoSelecionado', bloco);
-        
+
         // Atualizar título
         const blocoTitle = document.getElementById('bloco-title-aluno');
         if (blocoTitle) {
             blocoTitle.textContent = `Bloco ${bloco}`;
         }
-        
+
         // Mostrar loading
         this.showLoadingAndaresAluno(bloco);
-        
+
         // Carregar andares
         await this.carregarAndaresAluno(bloco);
     }
@@ -302,7 +327,7 @@ class UnimapApp {
     async carregarAndaresAluno(bloco) {
         try {
             console.log(`📡 Carregando andares do bloco ${bloco} para aluno...`);
-            
+
             let andares;
             if (typeof api !== 'undefined' && api.getAndaresPorBloco) {
                 const result = await api.getAndaresPorBloco(bloco);
@@ -317,7 +342,7 @@ class UnimapApp {
                 const response = await fetch(`/api/salas/bloco/${bloco}/andares`, {
                     headers: token ? { 'Authorization': `Bearer ${token}` } : {}
                 });
-                
+
                 if (!response.ok) throw new Error('Erro na requisição');
                 andares = await response.json();
             }
@@ -325,7 +350,7 @@ class UnimapApp {
             console.log(`✅ Andares carregados para aluno:`, andares);
             this.renderizarAndaresAluno(andares);
             this.showSection('mapa-andares');
-            
+
         } catch (error) {
             console.error('❌ Erro ao carregar andares para aluno:', error);
             this.showErrorAndaresAluno('Erro ao carregar andares: ' + error.message);
@@ -365,10 +390,10 @@ class UnimapApp {
         console.log(`🚪 Aluno selecionando andar: ${andar}`);
         const bloco = this.currentBloco || sessionStorage.getItem('blocoSelecionado') || 'A';
         this.currentAndar = andar;
-        
+
         // Mostrar loading
         this.showLoadingSalasAluno(bloco, andar);
-        
+
         // Usar o MapaManager existente para mostrar salas
         if (typeof mapaManager !== 'undefined') {
             try {
@@ -377,11 +402,11 @@ class UnimapApp {
                     console.log('🔄 Carregando salas...');
                     await mapaManager.carregarSalas();
                 }
-                
+
                 // Mostrar salas usando o MapaManager
                 await mapaManager.mostrarSalas(bloco, andar);
                 this.mostrarFiltrosSalas();
-                
+
             } catch (error) {
                 console.error('❌ Erro ao carregar salas:', error);
                 this.showErrorSalasAluno('Erro ao carregar salas: ' + error.message);
@@ -418,11 +443,11 @@ class UnimapApp {
     showLoadingSalasAluno(bloco, andar) {
         const container = document.getElementById('salas-grid-aluno');
         const title = document.getElementById('sala-title');
-        
+
         if (title) {
             title.innerHTML = `Bloco ${bloco} > ${andar}° Andar <span class="salas-counter">carregando...</span>`;
         }
-        
+
         if (container) {
             container.innerHTML = `
                 <div class="empty-state">
@@ -431,13 +456,13 @@ class UnimapApp {
                 </div>
             `;
         }
-        
+
         // Esconder filtros durante o loading
         const filters = document.getElementById('salas-filters');
         if (filters) {
             filters.style.display = 'none';
         }
-        
+
         this.showSection('mapa-salas');
     }
 
@@ -509,7 +534,7 @@ class UnimapApp {
     filtrarSalasAluno(termo) {
         const salas = document.querySelectorAll('#salas-grid-aluno .sala-card');
         const termoLower = termo.toLowerCase();
-        
+
         salas.forEach(sala => {
             const texto = sala.textContent.toLowerCase();
             sala.style.display = texto.includes(termoLower) ? 'block' : 'none';
@@ -519,13 +544,13 @@ class UnimapApp {
     // ✅ FILTRAR SALAS POR TIPO (ALUNO)
     filtrarSalasPorTipoAluno(tipo) {
         const salas = document.querySelectorAll('#salas-grid-aluno .sala-card');
-        
+
         salas.forEach(sala => {
             if (!tipo) {
                 sala.style.display = 'block';
                 return;
             }
-            
+
             const tipoElement = sala.querySelector('p:nth-child(1)');
             if (tipoElement) {
                 const tipoTexto = tipoElement.textContent.toLowerCase();
@@ -552,7 +577,7 @@ class UnimapApp {
         console.log('🏢 Mostrando andares do bloco:', bloco);
         this.currentBloco = bloco;
         sessionStorage.setItem('blocoSelecionado', bloco);
-        
+
         const blocoTitle = document.getElementById('bloco-title');
         if (blocoTitle) {
             blocoTitle.textContent = `Bloco ${bloco}`;
@@ -562,22 +587,22 @@ class UnimapApp {
 
     async showSalas(andar) {
         console.log('🚪 Mostrando salas do andar:', andar);
-        
+
         const bloco = this.currentBloco || sessionStorage.getItem('blocoSelecionado') || 'A';
         this.currentAndar = andar;
-        
+
         this.showLoadingSalas(bloco, andar);
-        
+
         if (typeof mapaManager !== 'undefined') {
             try {
                 if (mapaManager.salas.length === 0) {
                     console.log('🔄 Forçando carregamento de salas...');
                     await mapaManager.carregarSalas();
                 }
-                
+
                 await mapaManager.mostrarSalas(bloco, andar);
                 this.showSection('mapa-salas');
-                
+
             } catch (error) {
                 console.error('❌ Erro ao carregar salas:', error);
                 this.showErrorSalas('Erro ao carregar salas: ' + error.message);
@@ -591,11 +616,11 @@ class UnimapApp {
     showLoadingSalas(bloco, andar) {
         const container = document.querySelector('#mapa-salas .salas-grid');
         const title = document.getElementById('sala-title');
-        
+
         if (title) {
             title.innerHTML = `Bloco ${bloco} > ${andar}° Andar <span class="salas-counter">carregando...</span>`;
         }
-        
+
         if (container) {
             container.innerHTML = `
                 <div class="empty-state">
@@ -604,7 +629,7 @@ class UnimapApp {
                 </div>
             `;
         }
-        
+
         this.showSection('mapa-salas');
     }
 
@@ -625,11 +650,11 @@ class UnimapApp {
 
     openTab(tabId) {
         console.log('📑 Abrindo aba:', tabId);
-        
+
         document.querySelectorAll('.tab-content').forEach(tab => {
             tab.classList.remove('active');
         });
-        
+
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('active');
         });
@@ -726,9 +751,9 @@ function verDetalhesAula(idAula) {
 
 function abrirMapaSala(bloco, andar, sala) {
     console.log('🗺️ Abrindo mapa para:', bloco, andar, sala);
-    
+
     showSection('mapa-blocos');
-    
+
     setTimeout(() => {
         showAndares(bloco);
         setTimeout(() => {
@@ -762,7 +787,7 @@ window.addEventListener('resize', () => {
 });
 
 // ✅ FUNÇÕES DE DEBUG
-window.debugApp = function() {
+window.debugApp = function () {
     console.log('🔍 DEBUG App:');
     console.log('- Seção atual:', window.app?.currentSection);
     console.log('- Bloco atual:', window.app?.currentBloco);
@@ -774,7 +799,7 @@ window.debugApp = function() {
     }
 };
 
-window.testarMapa = function(bloco = 'A', andar = '1º Andar') {
+window.testarMapa = function (bloco = 'A', andar = '1º Andar') {
     console.log(`🧪 Testando mapa: Bloco ${bloco}, Andar ${andar}`);
     if (window.app) {
         window.app.selecionarBlocoAluno(bloco);
@@ -788,12 +813,12 @@ window.testarMapa = function(bloco = 'A', andar = '1º Andar') {
 window.addEventListener('DOMContentLoaded', () => {
     console.log('📄 DOM carregado, inicializando app...');
     window.app = new UnimapApp();
-    
+
     // Inicializar managers se existirem
     if (typeof aulasManager !== 'undefined') {
         aulasManager.init();
     }
-    
+
     if (typeof professoresManager !== 'undefined') {
         setTimeout(() => {
             professoresManager.init();

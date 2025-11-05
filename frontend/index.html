@@ -297,33 +297,6 @@
     <script src="js/professores.js"></script>
     <script src="js/mapa.js"></script>
     <script src="js/selecao-periodo.js"></script>
-    <script>
-
-        document.addEventListener('DOMContentLoaded', function () {
-            if (authManager.isUserAuthenticated()) {
-                console.log('👋 Usuário logado:', authManager.getCurrentUser().nome);
-            } else {
-                console.log('👋 Visitante não logado');
-            }
-
-        });
-
-        document.addEventListener('DOMContentLoaded', function () {
-            const user = authManager ? authManager.getCurrentUser() : null;
-
-            if (user && user.tipo === 'professor') {
-                console.log('🎯 Professor detectado na página de aluno. Redirecionando...');
-                setTimeout(() => {
-                    window.location.href = 'professor-dashboard.html';
-                }, 1000);
-
-            }
-
-        });
-
-
-
-    </script>
 </body>
 
 </html>
