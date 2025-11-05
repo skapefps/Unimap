@@ -147,32 +147,106 @@ class UnimapApp {
         switch (sectionId) {
             case 'aulas-mobile':
             case 'aulas-desktop':
-                if (typeof aulasManager !== 'undefined') {
-                    setTimeout(() => {
-                        aulasManager.carregarMinhasAulas().catch(error => {
-                            console.error('❌ Erro ao recarregar aulas:', error);
-                        });
-                    }, 150);
-                }
+                console.log('📚 [APP] Carregando seção de aulas:', sectionId);
+
+                // ✅ CORREÇÃO: Pequeno delay para garantir que o DOM está pronto
+                setTimeout(() => {
+                    if (typeof carregarAulas === 'function') {
+                        // Determinar container automaticamente
+                        const isMobile = window.innerWidth < 768;
+                        const containerId = isMobile ? 'aulas-list-mobile' : 'aulas-list-desktop';
+
+                        console.log('🎯 [APP] Chamando carregarAulas para container:', containerId);
+                        carregarAulas(containerId);
+                    } else {
+                        console.error('❌ [APP] Função carregarAulas não encontrada');
+
+                        // Fallback: carregar diretamente
+                        if (aulasManager && aulasManager.carregarERenderizarAulas) {
+                            const isMobile = window.innerWidth < 768;
+                            const containerId = isMobile ? 'aulas-list-mobile' : 'aulas-list-desktop';
+                            aulasManager.carregarERenderizarAulas(containerId);
+                        }
+                    }
+                }, 300); // ✅ Aumentei o delay para garantir que o DOM está pronto
                 break;
+
             case 'professores':
                 if (typeof professoresManager !== 'undefined') {
                     setTimeout(() => {
-                        // ✅ CORREÇÃO: Verificar se a função existe antes de chamar
                         if (professoresManager.loadMeusProfessores) {
                             professoresManager.loadMeusProfessores();
                         } else {
-                            console.warn('⚠️ professoresManager.loadMeusProfessores não existe');
-                            // Tentar carregar de outra forma
                             professoresManager.init();
                         }
                     }, 150);
                 }
                 break;
             case 'mapa-blocos':
-                // Já carregado pelo initMapaAluno()
                 break;
         }
+    }
+
+    async verificarCadastroCompletoAluno() {
+        try {
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            if (!userData || userData.tipo !== 'aluno') return true;
+
+            const response = await fetch(`/api/aluno/dados-completos/${userData.id}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                if (!data.cadastro_completo) {
+                    console.log('⚠️ Cadastro do aluno incompleto');
+                    this.mostrarModalCompletarCadastro();
+                    return false;
+                }
+
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('❌ Erro ao verificar cadastro:', error);
+            return true; // Continua mesmo com erro
+        }
+    }
+
+    // ✅ MOSTRAR MODAL PARA COMPLETAR CADASTRO
+    mostrarModalCompletarCadastro() {
+        const modalHTML = `
+        <div class="modal-overlay" id="modalCompletarCadastro">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-user-plus"></i> Complete seu Cadastro</h3>
+                </div>
+                <div class="modal-body">
+                    <p>Para visualizar suas aulas, é necessário completar seu cadastro com:</p>
+                    <ul>
+                        <li>✅ Curso</li>
+                        <li>✅ Período</li>  
+                        <li>✅ Turma</li>
+                    </ul>
+                    <p>Clique no botão abaixo para completar seu cadastro.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-primary" onclick="window.location.href='perfil.html'">
+                        <i class="fas fa-user-edit"></i> Completar Cadastro
+                    </button>
+                    <button class="btn-secondary" onclick="document.getElementById('modalCompletarCadastro').remove()">
+                        <i class="fas fa-times"></i> Mais Tarde
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
 
     updateActiveNav(sectionId) {
@@ -355,6 +429,171 @@ class UnimapApp {
             console.error('❌ Erro ao carregar andares para aluno:', error);
             this.showErrorAndaresAluno('Erro ao carregar andares: ' + error.message);
         }
+    }
+
+    // ✅ ATUALIZAR FUNÇÃO CARREGAR AULAS DO ALUNO
+    async carregarAulasAluno() {
+        try {
+            // Verificar se cadastro está completo
+            const cadastroCompleto = await this.verificarCadastroCompletoAluno();
+            if (!cadastroCompleto) {
+                console.log('⏳ Cadastro incompleto - aguardando completar');
+                return;
+            }
+
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            if (!userData || userData.tipo !== 'aluno') {
+                console.log('⚠️ Não é aluno ou usuário não autenticado');
+                return;
+            }
+
+            console.log('🎓 Carregando aulas para aluno:', userData.id);
+
+            const response = await fetch(`/api/aluno/${userData.id}/aulas`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erro HTTP: ${response.status}`);
+            }
+
+            const aulas = await response.json();
+            console.log(`✅ ${aulas.length} aulas carregadas para o aluno`);
+
+            // Renderizar as aulas no frontend
+            this.renderizarAulasAluno(aulas);
+
+        } catch (error) {
+            console.error('❌ Erro ao carregar aulas do aluno:', error);
+            this.mostrarErro('Erro ao carregar aulas: ' + error.message);
+        }
+    }
+
+    // ✅ MOSTRAR ERRO
+    mostrarErro(mensagem) {
+        console.error('❌ Erro:', mensagem);
+
+        // Usar notification system se disponível, senão usar alert
+        if (typeof showNotification === 'function') {
+            showNotification(mensagem, 'error');
+        } else {
+            alert('❌ ' + mensagem);
+        }
+    }
+
+    // ✅ RENDERIZAR AULAS DO ALUNO
+    renderizarAulasAluno(aulas) {
+        // Para mobile
+        const containerMobile = document.getElementById('aulas-list-mobile');
+        // Para desktop  
+        const containerDesktop = document.getElementById('aulas-list-desktop');
+
+        if (!containerMobile && !containerDesktop) {
+            console.error('❌ Containers de aulas não encontrados');
+            return;
+        }
+
+        const htmlAulas = this.gerarHTMLAulasAluno(aulas);
+
+        if (containerMobile) containerMobile.innerHTML = htmlAulas;
+        if (containerDesktop) containerDesktop.innerHTML = htmlAulas;
+    }
+
+    // ✅ GERAR HTML DAS AULAS DO ALUNO
+    gerarHTMLAulasAluno(aulas) {
+        if (!aulas || aulas.length === 0) {
+            return `
+            <div class="empty-state">
+                <i class="fas fa-calendar-times fa-3x"></i>
+                <h3>Nenhuma aula encontrada</h3>
+                <p>Você não tem aulas agendadas para sua turma no momento.</p>
+                <p class="empty-subtitle">Verifique se seu cadastro está completo com curso e turma.</p>
+            </div>
+        `;
+        }
+
+        // Agrupar aulas por dia da semana
+        const aulasPorDia = this.agruparAulasPorDia(aulas);
+        return this.gerarHTMLAulasPorDia(aulasPorDia);
+    }
+
+    // ✅ AGRUPAR AULAS POR DIA DA SEMANA
+    agruparAulasPorDia(aulas) {
+        const dias = {
+            1: { nome: 'Segunda-feira', aulas: [] },
+            2: { nome: 'Terça-feira', aulas: [] },
+            3: { nome: 'Quarta-feira', aulas: [] },
+            4: { nome: 'Quinta-feira', aulas: [] },
+            5: { nome: 'Sexta-feira', aulas: [] }
+        };
+
+        aulas.forEach(aula => {
+            const diaNumero = parseInt(aula.dia_semana);
+            if (dias[diaNumero]) {
+                dias[diaNumero].aulas.push(aula);
+            }
+        });
+
+        // Ordenar aulas por horário em cada dia
+        Object.values(dias).forEach(dia => {
+            dia.aulas.sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
+        });
+
+        return dias;
+    }
+
+    // ✅ GERAR HTML DAS AULAS AGRUPADAS POR DIA
+    gerarHTMLAulasPorDia(aulasPorDia) {
+        let html = '';
+
+        for (const [diaNumero, diaInfo] of Object.entries(aulasPorDia)) {
+            if (diaInfo.aulas.length > 0) {
+                html += `
+                <div class="dia-aulas">
+                    <h3 class="dia-titulo">${diaInfo.nome}</h3>
+                    <div class="aulas-list">
+                        ${diaInfo.aulas.map(aula => `
+                            <div class="aula-card" data-aula-id="${aula.id}">
+                                <div class="aula-header">
+                                    <h4>${aula.disciplina || aula.disciplina_nome || 'Disciplina'}</h4>
+                                    <span class="aula-horario">
+                                        ${aula.horario_inicio} - ${aula.horario_fim}
+                                    </span>
+                                </div>
+                                <div class="aula-info">
+                                    <p><strong>Professor:</strong> ${aula.professor_nome || 'N/A'}</p>
+                                    <p><strong>Sala:</strong> ${aula.sala_numero} - Bloco ${aula.sala_bloco}</p>
+                                    <p><strong>Turma:</strong> ${aula.turma || 'N/A'}</p>
+                                    ${aula.periodo ? `<p><strong>Período:</strong> ${aula.periodo}º</p>` : ''}
+                                </div>
+                                <div class="aula-actions">
+                                    <button class="btn-localizar" 
+                                            onclick="abrirMapaSala('${aula.sala_bloco}', ${aula.sala_andar || 1}, '${aula.sala_numero}')">
+                                        <i class="fas fa-map-marker-alt"></i> Localizar Sala
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            }
+        }
+
+        if (html === '') {
+            html = `
+            <div class="empty-state">
+                <i class="fas fa-calendar-times fa-3x"></i>
+                <h3>Nenhuma aula esta semana</h3>
+                <p>Não há aulas agendadas para os dias atuais.</p>
+            </div>
+        `;
+        }
+
+        return html;
     }
 
     // ✅ RENDERIZAR ANDARES (ALUNO)

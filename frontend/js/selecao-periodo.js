@@ -11,14 +11,14 @@ class SelecaoPeriodoManager {
 
     init() {
         if (this.isInitialized) return;
-        
+
         console.log('🎯 DEBUG: Inicializando SelecaoPeriodoManager...');
         this.setupEventListeners();
-        
+
         setTimeout(() => {
             this.verificarSelecaoNecessaria();
         }, 1000);
-        
+
         this.isInitialized = true;
     }
 
@@ -27,7 +27,7 @@ class SelecaoPeriodoManager {
             if (e.target.id === 'modalSelecaoPeriodo') {
                 this.ocultarModal();
             }
-            
+
             if (e.target.id === 'salvarSelecaoPeriodo' || e.target.closest('#salvarSelecaoPeriodo')) {
                 this.salvarSelecao();
             }
@@ -62,18 +62,18 @@ class SelecaoPeriodoManager {
 
             const user = JSON.parse(userData);
             console.log('👤 DEBUG: Usuário logado:', user.nome, '- Tipo:', user.tipo, '- ID:', user.id);
-            
+
             if (user.tipo !== 'aluno') {
                 console.log('✅ DEBUG: Não é aluno, não precisa de seleção');
                 return;
             }
 
             console.log('🎯 DEBUG: É aluno, verificando dados no BANCO...');
-            
+
             // VERIFICAÇÃO DIRETA NO BANCO
             const precisaSelecionar = await this.verificarDadosAlunoNoBanco(user.id);
             console.log('🎯 DEBUG: RESULTADO FINAL DA VERIFICAÇÃO - precisaSelecionar =', precisaSelecionar);
-            
+
             if (precisaSelecionar && !this.modalAberto) {
                 console.log('🚀 DEBUG: MOSTRANDO MODAL - Aluno precisa completar cadastro');
                 this.mostrarModal();
@@ -91,51 +91,59 @@ class SelecaoPeriodoManager {
     }
 
     async verificarDadosAlunoNoBanco(alunoId) {
-    try {
-        console.log('🔍 DEBUG: Chamando API /aluno/dados-completos/' + alunoId);
-        
-        const resultado = await api.authenticatedRequest(`/aluno/dados-completos/${alunoId}`);
-        
-        console.log('📊 DEBUG: Resposta COMPLETA da API:', resultado);
-        
-        if (resultado.success && resultado.data) {
-            // ❌ CORREÇÃO: O data real está dentro de resultado.data.data
-            const aluno = resultado.data.data || resultado.data;
-            
-            console.log('📊 DEBUG: Dados REAIS do aluno:', aluno);
-            
-            // VERIFICAÇÃO CORRIGIDA
-            const temCurso = aluno.curso && aluno.curso.trim() !== '';
-            const temPeriodo = aluno.periodo !== null && aluno.periodo !== undefined;
-            const temTurma = aluno.turma_id !== null && aluno.turma_id !== undefined;
-            
-            const precisaSelecionar = !temCurso || !temPeriodo || !temTurma;
-            
-            console.log('🎯 DEBUG: Análise CORRIGIDA:', {
-                temCurso: temCurso,
-                temPeriodo: temPeriodo,
-                temTurma: temTurma,
-                precisaSelecionar: precisaSelecionar,
-                'curso value': aluno.curso,
-                'periodo value': aluno.periodo,
-                'turma_id value': aluno.turma_id
+        try {
+            console.log('🔍 DEBUG: Chamando API /api/aluno/dados-completos/' + alunoId);
+
+            const token = authManager ? authManager.getToken() : localStorage.getItem('authToken');
+            const response = await fetch(`/api/aluno/dados-completos/${alunoId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
-            
-            return precisaSelecionar;
-        } else {
-            console.error('❌ DEBUG: API não retornou dados válidos. Resultado:', resultado);
+
+            if (!response.ok) {
+                throw new Error(`Erro HTTP: ${response.status}`);
+            }
+
+            const resultado = await response.json();
+
+            console.log('📊 DEBUG: Resposta COMPLETA da API:', resultado);
+
+            if (resultado.success && resultado.data) {
+                const aluno = resultado.data;
+
+                console.log('📊 DEBUG: Dados REAIS do aluno:', aluno);
+
+                const temCurso = aluno.curso && aluno.curso.trim() !== '';
+                const temPeriodo = aluno.periodo !== null && aluno.periodo !== undefined;
+                const temTurma = aluno.turma_id !== null && aluno.turma_id !== undefined;
+
+                const precisaSelecionar = !temCurso || !temPeriodo || !temTurma;
+
+                console.log('🎯 DEBUG: Análise CORRIGIDA:', {
+                    temCurso: temCurso,
+                    temPeriodo: temPeriodo,
+                    temTurma: temTurma,
+                    precisaSelecionar: precisaSelecionar
+                });
+
+                return precisaSelecionar;
+            } else {
+                console.error('❌ DEBUG: API não retornou dados válidos');
+                return true;
+            }
+
+        } catch (error) {
+            console.error('❌ DEBUG: Erro na verificação do banco:', error);
             return true;
         }
-        
-    } catch (error) {
-        console.error('❌ DEBUG: Erro na verificação do banco:', error);
-        return true;
     }
-}
 
     async mostrarModal() {
         console.log('🔄 DEBUG: Tentando mostrar modal...');
-        
+
         if (this.modalAberto) {
             console.log('⚠️ DEBUG: Modal já está aberto, ignorando...');
             return;
@@ -149,7 +157,7 @@ class SelecaoPeriodoManager {
         }
 
         console.log('🏗️ DEBUG: Criando modal HTML...');
-        
+
         if (!modalExistente) {
             this.criarModalHTML();
         }
@@ -160,7 +168,7 @@ class SelecaoPeriodoManager {
             document.body.style.overflow = 'hidden';
             this.modalAberto = true;
             console.log('✅ DEBUG: Modal aberto com sucesso!');
-            
+
             await this.carregarDadosIniciais();
         } else {
             console.error('❌ DEBUG: Modal não foi criado corretamente');
@@ -256,11 +264,11 @@ class SelecaoPeriodoManager {
             cursoSelect.disabled = true;
 
             const result = await api.getCursos();
-            
+
             if (result.success && result.data) {
                 this.cursos = result.data;
                 cursoSelect.innerHTML = '<option value="">Selecione seu curso</option>';
-                
+
                 this.cursos.forEach(curso => {
                     const option = document.createElement('option');
                     option.value = curso.id;
@@ -268,7 +276,7 @@ class SelecaoPeriodoManager {
                     option.dataset.duracao = curso.duracao_periodos || curso.total_periodos || 8;
                     cursoSelect.appendChild(option);
                 });
-                
+
                 cursoSelect.disabled = false;
                 this.atualizarProgresso(1);
                 console.log(`✅ DEBUG: ${this.cursos.length} cursos carregados`);
@@ -297,18 +305,18 @@ class SelecaoPeriodoManager {
         }
 
         const cursoSelecionado = this.cursos.find(curso => curso.id == cursoId);
-        const duracaoPeriodos = cursoSelecionado ? 
+        const duracaoPeriodos = cursoSelecionado ?
             (cursoSelecionado.duracao_periodos || cursoSelecionado.total_periodos || 8) : 8;
 
         periodoSelect.disabled = true;
         periodoSelect.innerHTML = '<option value="">Carregando períodos...</option>';
-        
+
         await this.carregarPeriodos(duracaoPeriodos);
-        
+
         periodoSelect.disabled = false;
         turmaSelect.disabled = true;
         turmaSelect.innerHTML = '<option value="">Selecione a turma</option>';
-        
+
         this.validarFormulario();
         this.atualizarProgresso(2);
     }
@@ -331,9 +339,9 @@ class SelecaoPeriodoManager {
             }
 
             this.periodos = periodos;
-            
+
             periodoSelect.innerHTML = '<option value="">Selecione o período</option>';
-            
+
             this.periodos.forEach(periodo => {
                 const option = document.createElement('option');
                 option.value = periodo.numero;
@@ -342,15 +350,15 @@ class SelecaoPeriodoManager {
             });
 
             periodoSelect.disabled = false;
-            
+
         } catch (error) {
             console.error('❌ DEBUG: Erro ao carregar períodos:', error);
-            
+
             const periodoSelect = document.getElementById('periodoSelect');
             if (periodoSelect) {
                 periodoSelect.innerHTML = '<option value="">Erro ao carregar períodos</option>';
             }
-            
+
             this.mostrarMensagemStatus('Erro ao carregar períodos.', 'error');
         }
     }
@@ -391,19 +399,19 @@ class SelecaoPeriodoManager {
 
             try {
                 const response = await fetch('/api/turmas/public');
-                
+
                 if (response.ok) {
                     const todasTurmas = await response.json();
-                    
+
                     turmasEncontradas = todasTurmas.filter(turma => {
-                        const cursoBate = turma.curso && 
-                            (turma.curso === cursoNome || 
-                             turma.curso.includes(cursoNome) || 
-                             cursoNome.includes(turma.curso));
-                        
-                        const periodoBate = turma.periodo && 
+                        const cursoBate = turma.curso &&
+                            (turma.curso === cursoNome ||
+                                turma.curso.includes(cursoNome) ||
+                                cursoNome.includes(turma.curso));
+
+                        const periodoBate = turma.periodo &&
                             turma.periodo.toString() === periodo.toString();
-                        
+
                         return cursoBate && periodoBate;
                     });
                 } else {
@@ -417,7 +425,7 @@ class SelecaoPeriodoManager {
             this.turmas = turmasEncontradas;
 
             turmaSelect.innerHTML = '<option value="">Selecione a turma</option>';
-            
+
             if (this.turmas.length === 0) {
                 turmaSelect.innerHTML = '<option value="">Nenhuma turma disponível</option>';
                 this.mostrarMensagemStatus(`Nenhuma turma disponível para ${cursoNome}, período ${periodo}.`, 'warning');
@@ -429,18 +437,18 @@ class SelecaoPeriodoManager {
                     turmaSelect.appendChild(option);
                 });
             }
-            
+
             turmaSelect.disabled = false;
 
         } catch (error) {
             console.error('❌ DEBUG: Erro ao carregar turmas:', error);
-            
+
             const turmaSelect = document.getElementById('turmaSelect');
             if (turmaSelect) {
                 turmaSelect.innerHTML = '<option value="">Erro ao carregar turmas</option>';
                 turmaSelect.disabled = false;
             }
-            
+
             this.mostrarMensagemStatus('Erro ao carregar turmas. Tente novamente.', 'error');
             this.turmas = [];
         }
@@ -448,13 +456,13 @@ class SelecaoPeriodoManager {
 
     getTurmasFallback(cursoId, periodo) {
         const cursoNome = this.getCursoNome(cursoId);
-        
+
         const turmasFallback = [
             { id: 1, nome: `Turma ${periodo}A`, curso: cursoNome, periodo: periodo },
             { id: 2, nome: `Turma ${periodo}B`, curso: cursoNome, periodo: periodo },
             { id: 3, nome: `Turma ${periodo}C`, curso: cursoNome, periodo: periodo }
         ];
-        
+
         return turmasFallback;
     }
 
@@ -490,7 +498,7 @@ class SelecaoPeriodoManager {
         try {
             const userData = localStorage.getItem('userData');
             const authToken = localStorage.getItem('authToken');
-            
+
             if (!userData || !authToken) {
                 console.error('❌ DEBUG: Usuário não autenticado');
                 this.mostrarMensagemStatus('Erro de autenticação. Faça login novamente.', 'error');
@@ -514,29 +522,36 @@ class SelecaoPeriodoManager {
                 turma_id: turmaSelect.value
             };
 
-            console.log('💾 DEBUG: Salvando seleção no banco:', selecao);
+            console.log('💾 DEBUG: Salvando seleção:', selecao);
 
             this.mostrarLoading(true);
 
-            const resultado = await api.authenticatedRequest('/aluno/completar-cadastro', {
+            // 🔥 FALLBACK: Usar fetch direto
+            const response = await fetch('/api/aluno/completar-cadastro', {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
                 body: JSON.stringify(selecao)
             });
 
+            const resultado = await response.json();
+
             if (resultado.success) {
                 console.log('✅ DEBUG: Dados salvos no banco!');
-                
+
                 if (resultado.user) {
                     localStorage.setItem('userData', JSON.stringify(resultado.user));
                     console.log('✅ DEBUG: localStorage atualizado');
                 }
-                
+
                 this.mostrarMensagemStatus('Cadastro completado com sucesso!', 'success');
-                
+
                 setTimeout(() => {
                     this.ocultarModal();
                     this.mostrarAlertaSucesso();
-                    
+
                     setTimeout(() => {
                         console.log('🔄 DEBUG: Recarregando página...');
                         window.location.reload();
@@ -575,7 +590,7 @@ class SelecaoPeriodoManager {
 
         statusElement.textContent = mensagem;
         statusElement.className = 'status-message';
-        
+
         if (tipo === 'success') {
             statusElement.classList.add('status-success');
         } else if (tipo === 'error') {
@@ -583,9 +598,9 @@ class SelecaoPeriodoManager {
         } else if (tipo === 'warning') {
             statusElement.classList.add('status-warning');
         }
-        
+
         statusElement.style.display = 'block';
-        
+
         if (tipo === 'success') {
             setTimeout(() => {
                 statusElement.style.display = 'none';

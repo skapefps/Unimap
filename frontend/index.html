@@ -42,7 +42,6 @@
             <nav class="desktop-nav">
                 <a href="index.html" onclick="showSection('aulas')" class="nav-link">Minhas Aulas</a>
                 <a href="#" onclick="showSection('mapa-blocos')" class="nav-link">Mapa Salas</a>
-                <a href="#" onclick="showSection('professores')" class="nav-link">Professores</a>
 
                 <a href="admin.html" class="nav-link admin-only" id="admin-dashboard-link" style="display: none;">
                     <i class="fas fa-cog"></i> Dashboard
@@ -72,7 +71,7 @@
                 </select>
             </div>
 
-            <div class="aulas-list">
+            <div class="aulas-list" id="aulas-list-mobile">
             </div>
 
             <button class="btn-criar-aula" id="btnCriarAulaMobile" style="display: none;"
@@ -99,7 +98,7 @@
                 </div>
             </div>
 
-            <div class="aulas-grid">
+            <div class="aulas-grid" id="aulas-list-desktop">
             </div>
         </section>
 
