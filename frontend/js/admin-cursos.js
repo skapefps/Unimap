@@ -76,53 +76,58 @@ class AdminCursos {
         tbody.innerHTML = this.cursos.map(curso => {
             const isAtivo = curso.ativo === 1;
 
+            // Formatar turnos para exibição
+            const turnosExibicao = curso.turno ?
+                curso.turno.split(',').map(t => `<span class="turno-badge">${t}</span>`).join('') :
+                '-';
+
             return `
-            <tr>
-                <td><strong>${curso.id}</strong></td>
-                <td>
-                    <div class="curso-info">
-                        <div class="curso-nome">${curso.nome}</div>
-                        <small class="curso-detalhes">
-                            ${curso.turno ? `${curso.turno}` : ''}
-                            ${curso.total_periodos ? ` • ${curso.total_periodos} períodos` : ''}
-                        </small>
-                    </div>
-                </td>
-                <td>${curso.total_periodos || '-'} períodos</td>
-                <td>${curso.turno || '-'}</td>
-                <td>
-                    <span class="status-badge ${isAtivo ? 'status-ativo' : 'status-inativo'}">
-                        ${isAtivo ? 'Ativo' : 'Inativo'}
-                    </span>
-                </td>
-                <td class="actions-cell">
-                    <!-- Botão Editar -->
-                    <button class="btn-action btn-edit" onclick="adminCursos.editarCurso(${curso.id})" title="Editar Curso">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    
-                    <!-- Botão Ver Disciplinas -->
-                    <button class="btn-action btn-view" onclick="adminCursos.verDisciplinas(${curso.id})" title="Ver Disciplinas">
-                        <i class="fas fa-book"></i>
-                    </button>
-                    
-                    <!-- Botão Ativar/Desativar -->
-                    <button class="btn-action ${isAtivo ? 'btn-deactivate' : 'btn-activate'}" 
-                            onclick="adminCursos.${isAtivo ? 'desativarCurso' : 'ativarCurso'}(${curso.id})" 
-                            title="${isAtivo ? 'Desativar Curso' : 'Ativar Curso'}">
-                        <i class="fas ${isAtivo ? 'fa-eye-slash' : 'fa-eye'}"></i>
-                    </button>
-                    
-                    <!-- Botão Excluir Permanentemente -->
-                    <button class="btn-action btn-delete-permanent" 
-                            onclick="adminCursos.excluirPermanentemente(${curso.id})" 
-                            title="Excluir Permanentemente"
-                            ${isAtivo ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </td>
-            </tr>
-            `;
+        <tr>
+            <td><strong>${curso.id}</strong></td>
+            <td>
+                <div class="curso-info">
+                    <div class="curso-nome">${curso.nome}</div>
+                    <small class="curso-detalhes">
+                        ${curso.total_periodos ? `${curso.total_periodos} períodos` : ''}
+                    </small>
+                </div>
+            </td>
+            <td>${curso.total_periodos || '-'} períodos</td>
+            <td>
+                <div class="turnos-display">
+                    ${turnosExibicao}
+                </div>
+            </td>
+            <td>
+                <span class="status-badge ${isAtivo ? 'status-ativo' : 'status-inativo'}">
+                    ${isAtivo ? 'Ativo' : 'Inativo'}
+                </span>
+            </td>
+            <td class="actions-cell">
+                <!-- Botões permanecem iguais -->
+                <button class="btn-action btn-edit" onclick="adminCursos.editarCurso(${curso.id})" title="Editar Curso">
+                    <i class="fas fa-edit"></i>
+                </button>
+                
+                <button class="btn-action btn-view" onclick="adminCursos.verDisciplinas(${curso.id})" title="Ver Disciplinas">
+                    <i class="fas fa-book"></i>
+                </button>
+                
+                <button class="btn-action ${isAtivo ? 'btn-deactivate' : 'btn-activate'}" 
+                        onclick="adminCursos.${isAtivo ? 'desativarCurso' : 'ativarCurso'}(${curso.id})" 
+                        title="${isAtivo ? 'Desativar Curso' : 'Ativar Curso'}">
+                    <i class="fas ${isAtivo ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                </button>
+                
+                <button class="btn-action btn-delete-permanent" 
+                        onclick="adminCursos.excluirPermanentemente(${curso.id})" 
+                        title="Excluir Permanentemente"
+                        ${isAtivo ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        </tr>
+        `;
         }).join('');
     }
 
@@ -157,8 +162,15 @@ class AdminCursos {
         document.getElementById('cursoModalTitle').textContent = 'Editar Curso';
         document.getElementById('cursoId').value = cursoId;
         document.getElementById('cursoNome').value = curso.nome;
-        document.getElementById('cursoTurno').value = curso.turno;
         document.getElementById('cursoPeriodos').value = curso.total_periodos;
+
+        // Preencher checkboxes de turno (múltiplos)
+        const turnos = curso.turno ? curso.turno.split(',') : [];
+        const checkboxes = document.querySelectorAll('input[name="cursoTurno"]');
+
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = turnos.includes(checkbox.value);
+        });
 
         const isAtivo = curso.ativo === 1;
         document.getElementById('cursoAtivo').value = isAtivo ? 'true' : 'false';
@@ -174,6 +186,12 @@ class AdminCursos {
     limparFormulario() {
         document.getElementById('cursoForm').reset();
         document.getElementById('cursoId').value = '';
+
+        // Limpar checkboxes
+        const checkboxes = document.querySelectorAll('input[name="cursoTurno"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
     }
 
     async salvarCurso() {
@@ -187,8 +205,9 @@ class AdminCursos {
             return;
         }
 
-        if (!formData.turno) {
-            this.showNotification('Turno é obrigatório', 'error');
+        // Validação para turno (agora pode ser string vazia se nenhum selecionado)
+        if (!formData.turno || formData.turno.trim() === '') {
+            this.showNotification('Selecione pelo menos um turno', 'error');
             return;
         }
 
@@ -263,10 +282,14 @@ class AdminCursos {
 
     getFormData() {
         const id = document.getElementById('cursoId').value;
+        const turnoCheckboxes = document.querySelectorAll('input[name="cursoTurno"]:checked');
+        const turnos = Array.from(turnoCheckboxes).map(cb => cb.value);
+        const turnoString = turnos.length > 0 ? turnos.join(',') : '';
+
         return {
             id: id ? parseInt(id) : null,
             nome: document.getElementById('cursoNome').value.trim(),
-            turno: document.getElementById('cursoTurno').value,
+            turno: turnoString, // Agora é uma string com turnos separados por vírgula
             total_periodos: document.getElementById('cursoPeriodos').value ? parseInt(document.getElementById('cursoPeriodos').value) : 10,
             ativo: document.getElementById('cursoAtivo').value === 'true'
         };

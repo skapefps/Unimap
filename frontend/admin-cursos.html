@@ -27,7 +27,7 @@
             <a href="admin-professores.html"><i class="fas fa-chalkboard-teacher"></i> Professores</a>
             <a href="admin-usuarios.html"><i class="fas fa-users"></i> Usuários</a>
             <a href="admin-turmas.html"><i class="fas fa-users-class"></i> Turmas</a>
-            <a href="admin-turmas.html" ><i class="fa-solid fa-file-import"></i> CSV</a>
+            <a href="admin-turmas.html"><i class="fa-solid fa-file-import"></i> CSV</a>
             <a href="index.html" class="btn-voltar-app-mobile">
                 <i class="fas fa-arrow-left"></i> Voltar para o App
             </a>
@@ -161,13 +161,21 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Turno:</label>
-                            <select id="cursoTurno" required class="form-control">
-                                <option value="">Selecione o turno</option>
-                                <option value="Matutino">Matutino</option>
-                                <option value="Noturno">Noturno</option>
-                                <option value="Integral">Integral</option>
-                            </select>
+                            <label>Turno(s):</label>
+                            <div class="turnos-container">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="cursoTurno" value="Manhã"> Manhã
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="cursoTurno" value="Tarde"> Tarde
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="cursoTurno" value="Noite"> Noite
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="cursoTurno" value="Integral"> Integral
+                                </label>
+                            </div>
                         </div>
 
                         <div class="form-group">

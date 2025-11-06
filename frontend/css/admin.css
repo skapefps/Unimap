@@ -1272,6 +1272,7 @@ tbody td {
 
 .modal-content {
     background: #fff;
+    margin: 5% auto;
     border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     max-width: 600px;
@@ -3633,4 +3634,218 @@ tbody td {
     stroke-width: 2;
     stroke: #fff;
     fill: none;
+}
+
+/* ===== ESTILOS MELHORADOS PARA BADGES DE TURNO ===== */
+
+/* Container dos badges na tabela */
+.turnos-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    min-height: 32px;
+}
+
+/* Badge base com design moderno */
+.turno-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border: 1.5px solid transparent;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efeito hover sutil */
+.turno-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Cores específicas para cada turno */
+.turno-badge[data-turno="Manhã"] {
+    background: linear-gradient(135deg, #ffd166, #ffb347);
+    color: #7a4f01;
+    border-color: #ffb347;
+}
+
+.turno-badge[data-turno="Tarde"] {
+    background: linear-gradient(135deg, #6a89cc, #4a69bd);
+    color: #ffffff;
+    border-color: #4a69bd;
+}
+
+.turno-badge[data-turno="Noite"] {
+    background: linear-gradient(135deg, #8e44ad, #6c3483);
+    color: #ffffff;
+    border-color: #6c3483;
+}
+
+.turno-badge[data-turno="Integral"] {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    color: #ffffff;
+    border-color: #27ae60;
+}
+
+/* Ícone para cada turno (usando pseudo-elementos) */
+.turno-badge[data-turno="Manhã"]::before {
+    content: "☀️";
+    font-size: 10px;
+}
+
+.turno-badge[data-turno="Tarde"]::before {
+    content: "⛅";
+    font-size: 10px;
+}
+
+.turno-badge[data-turno="Noite"]::before {
+    content: "🌙";
+    font-size: 10px;
+}
+
+.turno-badge[data-turno="Integral"]::before {
+    content: "🕒";
+    font-size: 10px;
+}
+
+/* Badge quando há apenas um turno (mais destacado) */
+.turnos-display:has(.turno-badge:only-child) .turno-badge {
+    padding: 6px 14px;
+    font-size: 12px;
+    border-radius: 20px;
+}
+
+/* Estado quando o curso está inativo */
+tr:has(.status-inativo) .turno-badge {
+    opacity: 0.6;
+    filter: grayscale(0.3);
+}
+
+/* Container dos checkboxes no modal */
+.turnos-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+/* Checkboxes estilizados */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 12px 16px;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
+}
+
+.checkbox-label:hover {
+    border-color: #007bff;
+    background: #f8fbff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin: 0;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.checkbox-label input[type="checkbox"]:checked {
+    background-color: #007bff;
+}
+
+
+/* Indicador de seleção nos checkboxes */
+.checkbox-label input[type="checkbox"]:checked::after {
+    content: "✓";
+    position: absolute;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Badge compacto para quando há muitos turnos */
+.turno-badge.compact {
+    padding: 2px 8px;
+    font-size: 10px;
+    min-width: auto;
+}
+
+.turno-badge.compact::before {
+    font-size: 8px;
+}
+
+/* Tooltip para badges muito curtos */
+.turno-badge[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+}
+
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .turnos-container {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .checkbox-label {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+
+    .turno-badge {
+        padding: 3px 8px;
+        font-size: 10px;
+    }
+
+    .turnos-display:has(.turno-badge:only-child) .turno-badge {
+        padding: 4px 10px;
+        font-size: 11px;
+    }
+}
+
+.turno-badge:first-child {
+    animation: badgePulse 2s ease-in-out infinite;
 }
