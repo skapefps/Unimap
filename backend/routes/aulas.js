@@ -3,25 +3,6 @@ const db = require('../config/database');
 const { authenticateToken, requireAdmin, requireProfessor } = require('../middleware/auth');
 const router = express.Router();
 
-// 🔧 UTILITÁRIOS OTIMIZADOS
-const diasMap = {
-    'segunda': 1, 'terca': 2, 'quarta': 3, 'quinta': 4, 'sexta': 5
-};
-
-const parseDiasSemana = (diaSemana) => {
-    if (Array.isArray(diaSemana)) return diaSemana;
-    if (typeof diaSemana === 'string') return diaSemana.split(',').map(dia => dia.trim());
-    return [diaSemana];
-};
-
-const converterDiaParaNumero = (dia) => {
-    const diasMap = {
-        'segunda': 1, 'terca': 2, 'quarta': 3, 'quinta': 4, 'sexta': 5,
-        '1': 1, '2': 2, '3': 3, '4': 4, '5': 5
-    };
-    return diasMap[dia] || 1;
-};
-
 // 🔧 PROMISIFY DATABASE OPERATIONS
 const dbRun = (sql, params) => new Promise((resolve, reject) => {
     db.run(sql, params, function (err) {
@@ -44,236 +25,340 @@ const dbAll = (sql, params) => new Promise((resolve, reject) => {
     });
 });
 
-// 🔧 MIDDLEWARE DE VALIDAÇÃO
 const validateAulaData = (req, res, next) => {
-    const { disciplina, sala_id, curso, turma, horario_inicio, horario_fim, dia_semana } = req.body;
+    const { disciplina, sala_id, curso, turma, horario_inicio, horario_fim, data_aula, periodo } = req.body;
+
+    console.log('🔍 Validando dados da aula:', {
+        disciplina, sala_id, curso, turma, horario_inicio, horario_fim, data_aula, periodo
+    });
 
     const missingFields = [];
-    if (!disciplina) missingFields.push('disciplina');
+    if (!disciplina || disciplina.trim().length === 0) missingFields.push('disciplina');
     if (!sala_id) missingFields.push('sala_id');
-    if (!curso) missingFields.push('curso');
-    if (!turma) missingFields.push('turma');
+    if (!curso || curso.trim().length === 0) missingFields.push('curso');
+    if (!turma || turma.trim().length === 0) missingFields.push('turma');
     if (!horario_inicio) missingFields.push('horario_inicio');
     if (!horario_fim) missingFields.push('horario_fim');
-    if (!dia_semana) missingFields.push('dia_semana');
+    if (!data_aula) missingFields.push('data_aula');
 
     if (missingFields.length > 0) {
+        console.log('❌ Campos faltando:', missingFields);
         return res.status(400).json({
+            success: false,
             error: `Campos obrigatórios faltando: ${missingFields.join(', ')}`
         });
     }
 
+    // Validar formato da data
+    if (data_aula && !isValidDate(data_aula)) {
+        return res.status(400).json({
+            success: false,
+            error: 'Formato de data inválido. Use YYYY-MM-DD'
+        });
+    }
+
+    // 🔥 CORREÇÃO RADICAL: REMOVER TODA VALIDAÇÃO DE DATA
+    // Permitir qualquer data, incluindo hoje e datas passadas
+    console.log('📅 Data aceita sem validação:', data_aula);
+
     next();
 };
 
+const validateAulaDataEdicao = (req, res, next) => {
+    const { disciplina, sala_id, curso, turma, horario_inicio, horario_fim, data_aula, periodo } = req.body;
 
-// 🔧 VERIFICAÇÃO DE DUPLICAÇÃO OTIMIZADA
+    console.log('🔍 Validando dados da aula para EDIÇÃO:', {
+        disciplina, sala_id, curso, turma, horario_inicio, horario_fim, data_aula, periodo
+    });
 
-const verificarDuplicacaoAulaPorDia = async (professorId, aulaData, diaNumero) => {
+    const missingFields = [];
+    if (!disciplina || disciplina.trim().length === 0) missingFields.push('disciplina');
+    if (!sala_id) missingFields.push('sala_id');
+    if (!curso || curso.trim().length === 0) missingFields.push('curso');
+    if (!turma || turma.trim().length === 0) missingFields.push('turma');
+    if (!horario_inicio) missingFields.push('horario_inicio');
+    if (!horario_fim) missingFields.push('horario_fim');
+    if (!data_aula) missingFields.push('data_aula');
+
+    if (missingFields.length > 0) {
+        console.log('❌ Campos faltando:', missingFields);
+        return res.status(400).json({
+            success: false,
+            error: `Campos obrigatórios faltando: ${missingFields.join(', ')}`
+        });
+    }
+
+    if (data_aula && !isValidDate(data_aula)) {
+        return res.status(400).json({
+            success: false,
+            error: 'Formato de data inválido. Use YYYY-MM-DD'
+        });
+    }
+
+    console.log('📅 Data aceita para edição (sem restrições):', data_aula);
+
+    next();
+};
+
+// 🔧 CORRIGIR COLUNA DIA_SEMANA (remover NOT NULL constraint)
+function corrigirColunaDiaSemana() {
+    console.log('🔧 Verificando coluna dia_semana na tabela aulas...');
+
+    db.all(`PRAGMA table_info(aulas)`, (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao verificar estrutura da tabela aulas:', err);
+            return;
+        }
+
+        const colunaDiaSemana = rows.find(row => row.name === 'dia_semana');
+
+        if (colunaDiaSemana) {
+            console.log('📊 Coluna dia_semana encontrada:', colunaDiaSemana);
+
+            if (colunaDiaSemana.notnull === 1) {
+                console.log('🔄 Coluna dia_semana é NOT NULL, atualizando para permitir NULL...');
+
+                // SQLite não permite alterar diretamente a constraint, então precisamos:
+                // 1. Criar uma tabela temporária
+                // 2. Copiar os dados
+                // 3. Dropar a tabela original
+                // 4. Renomear a temporária
+
+                db.serialize(() => {
+                    // Criar tabela temporária sem a constraint NOT NULL
+                    db.run(`CREATE TABLE IF NOT EXISTS aulas_temp (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        disciplina TEXT NOT NULL,
+                        professor_id INTEGER NOT NULL,
+                        sala_id INTEGER,
+                        curso TEXT,
+                        turma TEXT,
+                        horario_inicio TIME NOT NULL,
+                        horario_fim TIME NOT NULL,
+                        data_aula DATE NOT NULL,
+                        periodo INTEGER,
+                        dia_semana INTEGER,
+                        data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        ativa BOOLEAN DEFAULT 1,
+                        FOREIGN KEY (professor_id) REFERENCES professores (id),
+                        FOREIGN KEY (sala_id) REFERENCES salas (id)
+                    )`);
+
+                    // Copiar dados
+                    db.run(`INSERT INTO aulas_temp 
+                           SELECT id, disciplina, professor_id, sala_id, curso, turma, 
+                                  horario_inicio, horario_fim, data_aula, periodo, 
+                                  dia_semana, data_criacao, ativa 
+                           FROM aulas`);
+
+                    // Dropar tabela original
+                    db.run(`DROP TABLE aulas`);
+
+                    // Renomear temporária
+                    db.run(`ALTER TABLE aulas_temp RENAME TO aulas`);
+
+                    console.log('✅ Coluna dia_semana atualizada para permitir NULL');
+                });
+            } else {
+                console.log('✅ Coluna dia_semana já permite NULL');
+            }
+        } else {
+            console.log('ℹ️ Coluna dia_semana não encontrada na tabela aulas');
+        }
+    });
+}
+
+// Chamar esta função no initializeDatabase
+setTimeout(() => {
+    corrigirColunaDiaSemana();
+}, 2000);
+
+const isValidDate = (dateString) => {
+    const regex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateString.match(regex)) return false;
+
+    const date = new Date(dateString);
+    const timestamp = date.getTime();
+    return !isNaN(timestamp);
+};
+
+const calcularDiaSemana = (dataString) => {
+    console.log('📅 Calculando dia da semana para:', dataString);
+
+    const [ano, mes, dia] = dataString.split('-').map(Number);
+    const data = new Date(Date.UTC(ano, mes - 1, dia));
+    const diaSemana = data.getUTCDay();
+    const resultado = diaSemana === 0 ? 7 : diaSemana;
+    console.log(`📅 Data: ${dataString} -> Dia da semana calculado: ${resultado} (${getNomeDiaSemana(resultado)})`);
+
+    return resultado;
+};
+
+const getNomeDiaSemana = (diaNumero) => {
+    const dias = {
+        1: 'Segunda-feira',
+        2: 'Terça-feira',
+        3: 'Quarta-feira',
+        4: 'Quinta-feira',
+        5: 'Sexta-feira',
+        6: 'Sábado',
+        7: 'Domingo'
+    };
+    return dias[diaNumero] || 'Desconhecido';
+};
+
+// 🔧 VERIFICAÇÃO DE DUPLICAÇÃO POR DATA
+const verificarDuplicacaoAulaPorData = async (professorId, aulaData) => {
     const query = `
         SELECT id FROM aulas 
         WHERE professor_id = ? 
-        AND disciplina = ? 
         AND sala_id = ? 
-        AND curso = ? 
-        AND turma = ? 
+        AND data_aula = ? 
         AND horario_inicio = ? 
-        AND horario_fim = ? 
-        AND dia_semana = ?
+        AND horario_fim = ?
         AND ativa = 1
     `;
 
     const existing = await dbGet(query, [
-        professorId, aulaData.disciplina, aulaData.sala_id, aulaData.curso,
-        aulaData.turma, aulaData.horario_inicio, aulaData.horario_fim, diaNumero
+        professorId, aulaData.sala_id, aulaData.data_aula,
+        aulaData.horario_inicio, aulaData.horario_fim
     ]);
 
     return !!existing;
 };
 
-const verificarDuplicacaoAula = async (professorId, aulaData, dia) => {
-    const diaSemanaNumero = converterDiaParaNumero(dia);
-
-    const query = `
-        SELECT id FROM aulas 
-        WHERE professor_id = ? 
-        AND disciplina = ? 
-        AND sala_id = ? 
-        AND curso = ? 
-        AND turma = ? 
-        AND horario_inicio = ? 
-        AND horario_fim = ? 
-        AND dia_semana = ?
-        AND ativa = 1
-    `;
-
-    const existing = await dbGet(query, [
-        professorId, aulaData.disciplina, aulaData.sala_id, aulaData.curso,
-        aulaData.turma, aulaData.horario_inicio, aulaData.horario_fim, diaSemanaNumero
-    ]);
-
-    return !!existing;
-};
-
-// 🔧 CRIAÇÃO DE AULA OTIMIZADA
-const criarAulaParaDia = async (professorId, aulaData, dia) => {
-    const diaSemanaNumero = converterDiaParaNumero(dia);
-
-    const result = await dbRun(
-        `INSERT INTO aulas (disciplina, professor_id, sala_id, curso, turma, horario_inicio, horario_fim, dia_semana) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [aulaData.disciplina, professorId, aulaData.sala_id, aulaData.curso,
-        aulaData.turma, aulaData.horario_inicio, aulaData.horario_fim, diaSemanaNumero]
-    );
-
-    return { dia, status: 'criada', id: result.lastID };
-};
-
-// 🚀 ROTAS OTIMIZADAS
-
+// 🔧 CRIAÇÃO DE AULA - VERSÃO SIMPLIFICADA
 router.post('/', authenticateToken, requireProfessor, validateAulaData, async (req, res) => {
     const aulaData = req.body;
-    console.log('📝 Criando aula com período:', aulaData.periodo, 'para professor:', req.user.email);
+    console.log('📝 Criando aula com data:', aulaData.data_aula, 'para professor:', req.user.email);
 
     try {
         // Buscar professor pelo email do usuário logado
         const professor = await dbGet('SELECT id, nome FROM professores WHERE email = ?', [req.user.email]);
         if (!professor) {
-            return res.status(404).json({ error: 'Professor não encontrado' });
-        }
-
-        const diasArray = Array.isArray(aulaData.dia_semana) ?
-            aulaData.dia_semana :
-            aulaData.dia_semana.split(',');
-
-        console.log('📅 Dias a processar:', diasArray, 'Professor ID:', professor.id);
-
-        const aulasCriadas = [];
-        const aulasDuplicadas = [];
-
-        // Mapeamento de dias para números
-        const diasParaNumeros = {
-            'segunda': 1, 'terca': 2, 'quarta': 3, 'quinta': 4, 'sexta': 5
-        };
-
-        for (const dia of diasArray) {
-            try {
-                // Converter dia para número
-                const diaNumero = diasParaNumeros[dia] || 1;
-
-                // Verificar duplicação
-                const duplicata = await dbGet(
-                    `SELECT id FROM aulas 
-                     WHERE professor_id = ? AND disciplina = ? AND sala_id = ? 
-                     AND curso = ? AND turma = ? AND horario_inicio = ? 
-                     AND horario_fim = ? AND dia_semana = ? AND ativa = 1`,
-                    [
-                        professor.id, aulaData.disciplina, aulaData.sala_id,
-                        aulaData.curso, aulaData.turma, aulaData.horario_inicio,
-                        aulaData.horario_fim, diaNumero
-                    ]
-                );
-
-                if (duplicata) {
-                    aulasDuplicadas.push({ dia });
-                    continue;
-                }
-
-                // 🔥 SALVAR COM PROFESSOR_ID
-                const result = await dbRun(
-                    `INSERT INTO aulas (disciplina, professor_id, sala_id, curso, turma, 
-                     horario_inicio, horario_fim, dia_semana, periodo, ativa) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
-                    [
-                        aulaData.disciplina, professor.id, aulaData.sala_id,
-                        aulaData.curso, aulaData.turma, aulaData.horario_inicio,
-                        aulaData.horario_fim, diaNumero, aulaData.periodo
-                    ]
-                );
-
-                // Buscar aula criada com informações do professor
-                const aulaCriada = await dbGet(`
-                    SELECT a.*, s.numero as sala_numero, s.bloco as sala_bloco,
-                           p.nome as professor_nome, p.email as professor_email
-                    FROM aulas a 
-                    LEFT JOIN salas s ON a.sala_id = s.id 
-                    LEFT JOIN professores p ON a.professor_id = p.id
-                    WHERE a.id = ?
-                `, [result.lastID]);
-
-                aulasCriadas.push(aulaCriada);
-                console.log(`✅ Aula criada para ${dia} pelo professor ${professor.nome}`);
-
-            } catch (error) {
-                console.error(`❌ Erro em ${dia}:`, error);
-            }
-        }
-
-        // Retornar resultado
-        if (aulasCriadas.length === 0) {
-            return res.status(400).json({
+            return res.status(404).json({
                 success: false,
-                error: aulasDuplicadas.length > 0 ?
-                    'Todas as aulas já existem' :
-                    'Erro ao criar aulas'
+                error: 'Professor não encontrado'
             });
         }
 
+        // VERIFICAR DUPLICAÇÃO por data e horário
+        const duplicata = await verificarDuplicacaoAulaPorData(professor.id, aulaData);
+
+        if (duplicata) {
+            return res.status(400).json({
+                success: false,
+                error: 'Já existe uma aula agendada para esta data e horário'
+            });
+        }
+
+        // 🔥 CORREÇÃO: Calcular dia da semana de forma simples
+        const dia_semana = calcularDiaSemana(aulaData.data_aula);
+
+        // 🔥 SALVAR COM OS DADOS RECEBIDOS (sem manipulação de timezone)
+        const result = await dbRun(
+            `INSERT INTO aulas (disciplina, professor_id, sala_id, curso, turma, 
+             horario_inicio, horario_fim, data_aula, periodo, dia_semana, ativa) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+            [
+                aulaData.disciplina,
+                professor.id,
+                aulaData.sala_id,
+                aulaData.curso,
+                aulaData.turma,
+                aulaData.horario_inicio,
+                aulaData.horario_fim,
+                aulaData.data_aula, // 🔥 Usar a data exatamente como veio
+                aulaData.periodo,
+                dia_semana
+            ]
+        );
+
+        // Buscar aula criada
+        const aulaCriada = await dbGet(`
+            SELECT 
+                a.id, a.disciplina, a.professor_id, a.sala_id, a.curso, a.turma,
+                a.horario_inicio, a.horario_fim, a.data_aula, a.periodo, 
+                a.dia_semana, a.ativa,
+                s.numero as sala_numero, s.bloco as sala_bloco,
+                p.nome as professor_nome, p.email as professor_email
+            FROM aulas a 
+            LEFT JOIN salas s ON a.sala_id = s.id 
+            LEFT JOIN professores p ON a.professor_id = p.id
+            WHERE a.id = ?
+        `, [result.lastID]);
+
+        console.log(`✅ Aula criada para ${aulaData.data_aula} (dia ${dia_semana}) pelo professor ${professor.nome}`);
+
         res.json({
             success: true,
-            message: `Criadas ${aulasCriadas.length} aula(s)`,
-            aulasCriadas,
-            aulasDuplicadas
+            message: `Aula criada com sucesso para ${formatarDataDisplay(aulaData.data_aula)}!`,
+            aula: aulaCriada
         });
 
     } catch (error) {
-        console.error('❌ Erro geral:', error);
+        console.error('❌ Erro ao criar aula:', error);
         res.status(500).json({
             success: false,
-            error: 'Erro interno do servidor'
+            error: 'Erro interno do servidor: ' + error.message
         });
     }
 });
 
-// Atualizar aula - GARANTIR QUE O PERÍODO SEJA SALVO
-router.put('/:id', authenticateToken, requireProfessor, validateAulaData, async (req, res) => {
+// Função para formatar data para exibição
+const formatarDataDisplay = (dataString) => {
+    const data = new Date(dataString);
+    return data.toLocaleDateString('pt-BR', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+};
+
+// 🔧 ATUALIZAÇÃO DE AULA COM CÁLCULO CORRETO
+router.put('/:id', authenticateToken, requireProfessor, validateAulaDataEdicao, async (req, res) => {
     const { id } = req.params;
     const aulaData = req.body;
 
     console.log('✏️ Atualizando aula:', id, aulaData);
 
     try {
-        // VERIFICAR SE O PERÍODO ESTÁ SENDO RECEBIDO
-        if (!aulaData.periodo) {
-            return res.status(400).json({
-                success: false,
-                error: 'Período é obrigatório'
-            });
-        }
+        // 🔥 CORREÇÃO: Usar a mesma função corrigida
+        const dia_semana = calcularDiaSemana(aulaData.data_aula);
 
         const result = await dbRun(
             `UPDATE aulas SET 
                 disciplina = ?, sala_id = ?, curso = ?, turma = ?, 
-                horario_inicio = ?, horario_fim = ?, dia_semana = ?, periodo = ?
+                horario_inicio = ?, horario_fim = ?, data_aula = ?, 
+                periodo = ?, dia_semana = ?
              WHERE id = ?`,
-            [aulaData.disciplina, aulaData.sala_id, aulaData.curso, aulaData.turma,
-            aulaData.horario_inicio, aulaData.horario_fim, aulaData.dia_semana,
-            aulaData.periodo, id] // 🔥 GARANTIR QUE PERÍODO SEJA SALVO
+            [
+                aulaData.disciplina, aulaData.sala_id, aulaData.curso, aulaData.turma,
+                aulaData.horario_inicio, aulaData.horario_fim, aulaData.data_aula,
+                aulaData.periodo, dia_semana, id
+            ]
         );
 
         if (result.changes === 0) {
-            return res.status(404).json({ error: 'Aula não encontrada' });
+            return res.status(404).json({
+                success: false,
+                error: 'Aula não encontrada'
+            });
         }
 
-        console.log('✅ Aula atualizada com período:', aulaData.periodo);
+        console.log('✅ Aula atualizada com data:', aulaData.data_aula, 'dia:', dia_semana);
         res.json({
             success: true,
-            message: 'Aula atualizada com sucesso!'
+            message: `Aula atualizada para ${formatarDataDisplay(aulaData.data_aula)}!`
         });
 
     } catch (error) {
         console.error('❌ Erro ao atualizar aula:', error);
-        res.status(400).json({ error: error.message });
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
     }
 });
 
@@ -329,9 +414,8 @@ const getAulasBaseQuery = (filtroProfessor = false) => `
     LEFT JOIN salas s ON a.sala_id = s.id
     LEFT JOIN professores p ON a.professor_id = p.id
     ${filtroProfessor ? 'WHERE p.email = ?' : ''}
-    ORDER BY a.ativa DESC, a.dia_semana, a.horario_inicio
+    ORDER BY a.ativa DESC, a.data_aula, a.horario_inicio
 `;
-
 
 // Obter aulas do usuário
 router.get('/usuario/:usuario_id', authenticateToken, async (req, res) => {
@@ -362,7 +446,7 @@ router.get('/usuario/:usuario_id', authenticateToken, async (req, res) => {
                 LEFT JOIN salas s ON a.sala_id = s.id
                 LEFT JOIN professores p ON a.professor_id = p.id
                 WHERE p.email = ? AND a.ativa = 1
-                ORDER BY a.dia_semana, a.horario_inicio
+                ORDER BY a.data_aula, a.horario_inicio
             `;
             params = [user.email];
         } else {
@@ -374,7 +458,7 @@ router.get('/usuario/:usuario_id', authenticateToken, async (req, res) => {
                 LEFT JOIN salas s ON a.sala_id = s.id
                 LEFT JOIN disciplinas d ON a.disciplina_id = d.id
                 WHERE a.ativa = 1
-                ORDER BY a.dia_semana, a.horario_inicio
+                ORDER BY a.data_aula, a.horario_inicio
             `;
             params = [];
         }
@@ -389,6 +473,7 @@ router.get('/usuario/:usuario_id', authenticateToken, async (req, res) => {
     }
 });
 
+// Aulas do professor
 router.get('/professor/minhas-aulas', authenticateToken, requireProfessor, async (req, res) => {
     console.log('📚 Buscando aulas do professor:', req.user.email);
 
@@ -409,42 +494,45 @@ router.get('/professor/minhas-aulas', authenticateToken, requireProfessor, async
     }
 });
 
-// 🔧 NOVA ROTA PARA OBTER DADOS DO PROFESSOR LOGADO
-router.get('/meu-perfil', authenticateToken, requireProfessor, async (req, res) => {
-    try {
-        const professor = await dbGet(
-            'SELECT id, nome, email, telefone, departamento FROM professores WHERE email = ?',
-            [req.user.email]
-        );
-
-        if (!professor) {
-            return res.status(404).json({ error: 'Professor não encontrado' });
-        }
-
-        res.json({
-            success: true,
-            data: professor
-        });
-
-    } catch (error) {
-        console.error('❌ Erro ao buscar dados do professor:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Aulas do aluno
+// 🔧 AULAS DO ALUNO - TODAS AS AULAS FUTURAS E RECENTES
 router.get('/aluno/:aluno_id', authenticateToken, async (req, res) => {
     const { aluno_id } = req.params;
-    console.log('🎓 Buscando aulas para aluno:', aluno_id);
+
+    console.log('🎓 Buscando TODAS as aulas para aluno:', aluno_id);
+
+    if (!aluno_id || aluno_id === 'undefined' || isNaN(parseInt(aluno_id))) {
+        return res.status(400).json({
+            success: false,
+            error: 'ID do aluno inválido'
+        });
+    }
 
     try {
-        const aluno = await dbGet('SELECT curso, periodo FROM usuarios WHERE id = ?', [aluno_id]);
+        // Buscar dados do aluno
+        const aluno = await dbGet(`
+            SELECT u.id, u.nome, u.curso, u.periodo, t.nome as turma_nome
+            FROM usuarios u
+            LEFT JOIN aluno_turmas at ON u.id = at.aluno_id AND at.status = 'cursando'
+            LEFT JOIN turmas t ON at.turma_id = t.id
+            WHERE u.id = ? AND u.tipo = 'aluno'
+        `, [aluno_id]);
+
         if (!aluno) {
-            return res.status(404).json({ error: 'Aluno não encontrada' });
+            console.log('❌ Aluno não encontrado ou não é do tipo aluno:', aluno_id);
+            return res.status(404).json({
+                success: false,
+                error: 'Aluno não encontrado'
+            });
         }
 
-        console.log('👤 Dados do aluno para filtro:', aluno);
+        console.log('👤 Dados do aluno encontrado:', aluno);
 
+        if (!aluno.curso) {
+            console.log('⚠️ Aluno não tem curso definido, retornando aulas vazias');
+            return res.json([]);
+        }
+
+        // 🔥 CORREÇÃO: Buscar TODAS as aulas do curso, ordenadas por data
         const query = `
             SELECT 
                 a.*, 
@@ -452,49 +540,32 @@ router.get('/aluno/:aluno_id', authenticateToken, async (req, res) => {
                 s.numero as sala_numero, 
                 s.bloco as sala_bloco,
                 s.andar as sala_andar,
-                d.nome as disciplina_nome
+                a.disciplina as disciplina_nome,
+                CASE 
+                    WHEN a.ativa = 0 THEN 'cancelada'
+                    ELSE 'ativa'
+                END as status_aula
             FROM aulas a
             LEFT JOIN professores p ON a.professor_id = p.id
             LEFT JOIN salas s ON a.sala_id = s.id
-            LEFT JOIN disciplinas d ON a.disciplina_id = d.id
-            WHERE a.ativa = 1 
-            AND (a.curso = ? OR a.curso IS NULL OR a.curso = '')
-            AND (a.turma LIKE '%' || ? || '%' OR a.turma IS NULL OR a.turma = '')
-            ORDER BY a.dia_semana, a.horario_inicio
+            WHERE a.curso = ?
+            ORDER BY a.data_aula ASC, a.horario_inicio ASC
         `;
 
-        const cursoFiltro = aluno.curso || '';
-        const turmaFiltro = aluno.periodo ? `T${aluno.periodo}` : '';
+        const params = [aluno.curso];
 
-        const rows = await dbAll(query, [cursoFiltro, turmaFiltro]);
-        console.log(`✅ ${rows.length} aulas encontradas após filtro`);
+        console.log('🔍 Executando query para aluno (TODAS as aulas):', aluno.nome);
+        const rows = await dbAll(query, params);
+        console.log(`✅ ${rows.length} aulas encontradas para o aluno ${aluno.nome} (todas as datas)`);
+
         res.json(rows);
 
     } catch (error) {
         console.error('❌ Erro ao buscar aulas do aluno:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Excluir aula
-router.delete('/:id', authenticateToken, requireProfessor, async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const result = await dbRun('DELETE FROM aulas WHERE id = ?', [id]);
-
-        if (result.changes === 0) {
-            return res.status(404).json({ error: 'Aula não encontrada' });
-        }
-
-        res.json({
-            success: true,
-            message: 'Aula excluída com sucesso!'
+        res.status(500).json({
+            success: false,
+            error: 'Erro interno do servidor: ' + error.message
         });
-
-    } catch (error) {
-        console.error('❌ Erro ao excluir aula:', error);
-        res.status(400).json({ error: error.message });
     }
 });
 
@@ -515,7 +586,7 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
             LEFT JOIN disciplinas d ON a.disciplina_id = d.id
             LEFT JOIN salas s ON a.sala_id = s.id
             WHERE a.ativa = 1
-            ORDER BY a.dia_semana, a.horario_inicio
+            ORDER BY a.data_aula, a.horario_inicio
         `;
 
         const rows = await dbAll(query, []);
@@ -528,7 +599,55 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
     }
 });
 
-// 🔧 ROTA DE HEALTH CHECK
+// 🔧 EXCLUIR AULA
+router.delete('/:id', authenticateToken, requireProfessor, async (req, res) => {
+    const { id } = req.params;
+
+    console.log('🗑️ Excluindo aula:', id, 'para professor:', req.user.email);
+
+    try {
+        // Verificar se a aula existe e pertence ao professor
+        const aula = await dbGet(
+            `SELECT a.*, p.email 
+             FROM aulas a 
+             LEFT JOIN professores p ON a.professor_id = p.id 
+             WHERE a.id = ? AND p.email = ?`,
+            [id, req.user.email]
+        );
+
+        if (!aula) {
+            return res.status(404).json({
+                success: false,
+                error: 'Aula não encontrada ou você não tem permissão para excluí-la'
+            });
+        }
+
+        // Excluir a aula
+        const result = await dbRun('DELETE FROM aulas WHERE id = ?', [id]);
+
+        if (result.changes === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Aula não encontrada'
+            });
+        }
+
+        console.log('✅ Aula excluída com sucesso');
+        res.json({
+            success: true,
+            message: 'Aula excluída com sucesso!'
+        });
+
+    } catch (error) {
+        console.error('❌ Erro ao excluir aula:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Erro interno do servidor: ' + error.message
+        });
+    }
+});
+
+// ROTA DE HEALTH CHECK
 router.get('/health', async (req, res) => {
     try {
         const aulaCount = await dbGet('SELECT COUNT(*) as count FROM aulas', []);

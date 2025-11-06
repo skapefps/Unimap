@@ -32,7 +32,7 @@ class ProfessorManager {
             this.carregarMinhasAulas(),
             this.carregarSalasDisponiveis(),
             this.carregarCursosDetalhados(),
-            this.carregarDadosProfessor() // NOVA FUNÇÃO
+            this.carregarDadosProfessor()
         ];
 
         for (const carregamento of carregamentos) {
@@ -71,6 +71,7 @@ class ProfessorManager {
         this.configurarEventosFormulario();
         this.desabilitarPeriodo();
         this.desabilitarTurma();
+        this.configurarDataMinima();
     }
 
     // ========== CARREGAMENTO DE DADOS ==========
@@ -79,7 +80,7 @@ class ProfessorManager {
             const result = await api.getMinhasAulasProfessor();
             if (result?.success) {
                 this.minhasAulas = this.processarDadosAulas(result.data);
-                this.atualizarContadorFiltros(this.minhasAulas.length); // Inicializar contador
+                this.atualizarContadorFiltros(this.minhasAulas.length);
                 this.filtrarAulas();
             } else {
                 throw new Error(result?.error || 'Erro ao carregar aulas');
@@ -432,7 +433,6 @@ class ProfessorManager {
         this.configurarFiltroSelect('filtroProfessor', 'professor');
         this.configurarFiltroTexto('filtroTurma', 'turma');
         this.configurarFiltroTexto('filtroSala', 'sala');
-        this.configurarFiltroSelect('filtroDia', 'dia_semana');
         this.configurarFiltroSelect('filtroStatus', 'status');
 
         // Carregar dados para os selects
@@ -475,7 +475,6 @@ class ProfessorManager {
             this.filtrarAulas();
         });
     }
-
 
     popularFiltroProfessores(professores) {
         const select = document.getElementById('filtroProfessor');
@@ -590,6 +589,7 @@ class ProfessorManager {
         this.atualizarContadorFiltros(aulasFiltradas.length);
     }
 
+    // 🔧 CORREÇÃO: Remover dia_semana dos filtros
     obterValoresFiltros() {
         return {
             disciplina: document.getElementById('filtroDisciplina')?.value.toLowerCase().trim() || '',
@@ -597,11 +597,9 @@ class ProfessorManager {
             professor: document.getElementById('filtroProfessor')?.value || '',
             turma: document.getElementById('filtroTurma')?.value.toLowerCase().trim() || '',
             sala: document.getElementById('filtroSala')?.value.toLowerCase().trim() || '',
-            dia_semana: document.getElementById('filtroDia')?.value || '',
             status: document.getElementById('filtroStatus')?.value || ''
         };
     }
-
 
     aplicarFiltros(aulas, filtros) {
         return aulas.filter(aula => {
@@ -611,13 +609,13 @@ class ProfessorManager {
                 if (!disciplina.includes(filtros.disciplina)) return false;
             }
 
-            // Filtro por curso (AGORA EXATO)
+            // Filtro por curso
             if (filtros.curso) {
                 const curso = (aula.curso || '');
                 if (curso !== filtros.curso) return false;
             }
 
-            // Filtro por professor (NOVO FILTRO)
+            // Filtro por professor
             if (filtros.professor) {
                 const professor = (aula.professor_nome || '');
                 if (professor !== filtros.professor) return false;
@@ -636,13 +634,6 @@ class ProfessorManager {
                 if (!salaNumero.includes(filtros.sala) && !salaBloco.includes(filtros.sala)) return false;
             }
 
-            // Filtro por dia da semana
-            if (filtros.dia_semana) {
-                const diaAula = aula.dia_semana.toString();
-                if (diaAula !== filtros.dia_semana) return false;
-            }
-
-            // Filtro por status
             if (filtros.status) {
                 const isCancelada = aula.ativa === 0 || aula.ativa === false || aula.status === 'cancelada';
 
@@ -653,7 +644,6 @@ class ProfessorManager {
             return true;
         });
     }
-
 
     renderizarAulasFiltradas(aulasFiltradas) {
         const container = document.getElementById('aulas-professor-grid');
@@ -671,24 +661,6 @@ class ProfessorManager {
         });
     }
 
-    atualizarContadorFiltros(totalFiltrado) {
-        const contador = document.getElementById('contadorAulas');
-        const totalOriginal = this.minhasAulas.length;
-        const filtrosContainer = document.querySelector('.filtros-container');
-
-        if (contador) {
-            if (totalFiltrado === totalOriginal) {
-                contador.textContent = `Total: ${totalOriginal} aulas`;
-                contador.classList.remove('filtro-ativo');
-                filtrosContainer?.classList.remove('filtros-ativos');
-            } else {
-                contador.textContent = `Mostrando ${totalFiltrado} de ${totalOriginal} aulas`;
-                contador.classList.add('filtro-ativo');
-                filtrosContainer?.classList.add('filtros-ativos');
-            }
-        }
-    }
-
     getHTMLNenhumaAulaEncontrada() {
         return `
         <div class="professor-empty-state">
@@ -701,6 +673,7 @@ class ProfessorManager {
         </div>`;
     }
 
+    // 🔧 CORREÇÃO: Remover filtroDia da limpeza
     limparFiltros() {
         // Limpar campos de texto
         const inputsTexto = ['filtroDisciplina', 'filtroTurma', 'filtroSala'];
@@ -710,7 +683,7 @@ class ProfessorManager {
         });
 
         // Limpar selects
-        const selects = ['filtroCurso', 'filtroProfessor', 'filtroDia', 'filtroStatus'];
+        const selects = ['filtroCurso', 'filtroProfessor', 'filtroStatus'];
         selects.forEach(id => {
             const select = document.getElementById(id);
             if (select) select.selectedIndex = 0;
@@ -720,16 +693,14 @@ class ProfessorManager {
         this.filtrarAulas();
     }
 
-
     // ========== GESTÃO DE AULAS ==========
     renderizarAulas() {
-        this.filtrarAulas(); // Agora usa o sistema de filtros
+        this.filtrarAulas();
     }
 
-    // 🔧 ATUALIZAR O CARD DA AULA PARA MOSTRAR O PROFESSOR
     criarCardAula(aula) {
         const status = this.getStatusAula(aula);
-        const dia = this.formatarDiasSemana(aula.dia_semana);
+        const dataFormatada = this.formatarDataDisplay(aula.data_aula);
         const isCancelada = aula.ativa === 0 || aula.ativa === false || aula.status === 'cancelada';
 
         return `
@@ -747,8 +718,12 @@ class ProfessorManager {
         </div>
         <div class="professor-aula-info">
             <div class="professor-info-item">
+                <span class="professor-icon"><i class="fas fa-calendar-day"></i></span>
+                <span>${dataFormatada}</span>
+            </div>
+            <div class="professor-info-item">
                 <span class="professor-icon"><i class="fas fa-clock"></i></span>
-                <span>${aula.horario_inicio} - ${aula.horario_fim} | ${dia}</span>
+                <span>${aula.horario_inicio} - ${aula.horario_fim}</span>
             </div>
             <div class="professor-info-item">
                 <span class="professor-icon"><i class="fas fa-door-open"></i></span>
@@ -758,12 +733,6 @@ class ProfessorManager {
                 <span class="professor-icon"><i class="fas fa-users"></i></span>
                 <span>Turma: ${aula.turma || 'N/A'} | Curso: ${aula.curso || 'N/A'}</span>
             </div>
-            ${aula.professor_nome ? `
-            <div class="professor-info-item">
-                <span class="professor-icon"><i class="fas fa-chalkboard-teacher"></i></span>
-                <span>Professor: ${aula.professor_nome}</span>
-            </div>
-            ` : ''}
         </div>
     </div>
     
@@ -773,10 +742,37 @@ class ProfessorManager {
 </div>`;
     }
 
-    // 🔧 ATUALIZAR O MODAL DE DETALHES PARA MOSTRAR O PROFESSOR
+    formatarDataDisplay(dataString) {
+        if (!dataString) return 'Data não definida';
+
+        // 🔥 CORREÇÃO SIMPLIFICADA: Usar data local simples
+        const [ano, mes, dia] = dataString.split('-').map(Number);
+        const data = new Date(ano, mes - 1, dia);
+
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
+        const amanha = new Date(hoje);
+        amanha.setDate(amanha.getDate() + 1);
+
+        // Verificar se é hoje, amanhã ou outra data
+        if (data.getTime() === hoje.getTime()) {
+            return 'Hoje';
+        } else if (data.getTime() === amanha.getTime()) {
+            return 'Amanhã';
+        } else {
+            return data.toLocaleDateString('pt-BR', {
+                weekday: 'short',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+    }
+
     mostrarModalDetalhesAula(aula) {
         const status = this.getStatusAula(aula);
-        const dia = this.formatarDiasSemana(aula.dia_semana);
+        const dataFormatada = this.formatarDataDisplay(aula.data_aula);
         const isCancelada = aula.ativa === 0 || aula.ativa === false || aula.status === 'cancelada';
 
         const modalHTML = `
@@ -800,12 +796,6 @@ class ProfessorManager {
                     <span>${this.escapeHtml(aula.professor_nome)}</span>
                 </div>
                 ` : ''}
-                ${aula.professor_email ? `
-                <div class="detalhe-item">
-                    <label><i class="fas fa-envelope"></i> Email do Professor:</label>
-                    <span>${this.escapeHtml(aula.professor_email)}</span>
-                </div>
-                ` : ''}
                 <div class="detalhe-item">
                     <label><i class="fas fa-graduation-cap"></i> Curso:</label>
                     <span>${this.escapeHtml(aula.curso || 'N/A')}</span>
@@ -823,8 +813,8 @@ class ProfessorManager {
                     <span>${aula.horario_inicio || 'N/A'} - ${aula.horario_fim || 'N/A'}</span>
                 </div>
                 <div class="detalhe-item">
-                    <label><i class="fas fa-calendar-day"></i> Dia:</label>
-                    <span>${this.escapeHtml(dia)}</span>
+                    <label><i class="fas fa-calendar-day"></i> Data:</label>
+                    <span>${dataFormatada}</span>
                 </div>
                 ${aula.periodo ? `
                 <div class="detalhe-item">
@@ -875,7 +865,6 @@ class ProfessorManager {
         }, 50);
     }
 
-    // 🔧 ADICIONAR ESTILOS CSS PARA O NOVO CAMPO DE PROFESSOR
     adicionarEstiloSalaSelecionada() {
         if (document.getElementById('professor-sala-styles')) return;
 
@@ -900,20 +889,7 @@ class ProfessorManager {
             cursor: pointer;
             background-color: white;
         }
-        /* Estilos para informações do professor */
-        .professor-info-item .fa-chalkboard-teacher {
-            color: #3498db;
-        }
-        .professor-info-item .fa-envelope {
-            color: #3498db;
-        }
-        .detalhe-item label .fa-chalkboard-teacher {
-            color: #3498db;
-        }
-        .detalhe-item label .fa-envelope {
-            color: #3498db;
-        }
-    `;
+        `;
         document.head.appendChild(style);
     }
 
@@ -943,57 +919,24 @@ class ProfessorManager {
             </button>`;
     }
 
-    // ========== OPERAÇÕES DE AULA ==========
-    async criarAula(dadosAula, diasSelecionados) {
-        const requestKey = `criar-aula-${JSON.stringify(dadosAula)}-${diasSelecionados.join(',')}`;
+    async criarAula(dadosAula) {
+        const requestKey = `criar-aula-${JSON.stringify(dadosAula)}`;
         if (this.pendingRequest === requestKey) return;
         this.pendingRequest = requestKey;
 
         try {
-            const erros = this.validarFormularioAula(dadosAula);
-            if (erros.length > 0) {
-                this.mostrarErro('Erros no formulário:\n' + erros.join('\n'));
-                this.pendingRequest = null;
-                return;
-            }
-
-            const periodo = document.getElementById('periodoSelect').value;
-            if (!periodo) {
-                this.mostrarErro('Selecione um período');
-                this.pendingRequest = null;
-                return;
-            }
-
+            // 🔥 CORREÇÃO RADICAL: SEM VALIDAÇÃO DE DATA
             const dadosFormatados = {
-                disciplina: dadosAula.disciplina,
-                sala_id: parseInt(dadosAula.sala_id),
-                curso: dadosAula.curso,
-                turma: dadosAula.turma,
-                horario_inicio: dadosAula.horario_inicio,
-                horario_fim: dadosAula.horario_fim,
-                dia_semana: diasSelecionados,
-                periodo: parseInt(periodo)
+                ...dadosAula,
+                periodo: parseInt(dadosAula.periodo) || 5
             };
+
+            console.log('📤 Enviando dados para API (sem validação de data):', dadosFormatados);
 
             const result = await api.criarAula(dadosFormatados);
 
             if (result?.success) {
-                let mensagemSucesso = '';
-                if (result.aulasCriadas && result.aulasCriadas.length > 0) {
-                    const diasCriados = result.aulasCriadas.map(aula =>
-                        this.formatarDiaSemana(aula.dia_semana)
-                    ).join(', ');
-
-                    mensagemSucesso = `${result.aulasCriadas.length} aula(s) criada(s) com sucesso para: ${diasCriados}`;
-
-                    if (result.aulasDuplicadas && result.aulasDuplicadas.length > 0) {
-                        mensagemSucesso += ` (${result.aulasDuplicadas.length} aula(s) já existiam)`;
-                    }
-                } else {
-                    mensagemSucesso = result.message || 'Aulas criadas com sucesso!';
-                }
-
-                this.mostrarSucesso(mensagemSucesso);
+                this.mostrarSucesso(result.message);
                 await this.carregarMinhasAulas();
                 this.limparFormulario();
                 this.cache.clear();
@@ -1002,43 +945,20 @@ class ProfessorManager {
                     showSection('minhas-aulas-professor');
                 }, 2000);
             } else {
-                throw new Error(result?.error || 'Erro desconhecido ao criar aulas');
+                throw new Error(result?.error || 'Erro desconhecido ao criar aula');
             }
         } catch (error) {
-            console.error('Erro ao criar aulas:', error);
+            console.error('Erro ao criar aula:', error);
             this.mostrarErro(this.tratarErroAula(error));
         } finally {
             this.pendingRequest = null;
         }
     }
 
-    formatarDiaSemana(diaNumero) {
-        const diasMap = {
-            1: 'Segunda', 2: 'Terça', 3: 'Quarta', 4: 'Quinta', 5: 'Sexta',
-            'segunda': 'Segunda', 'terca': 'Terça', 'quarta': 'Quarta',
-            'quinta': 'Quinta', 'sexta': 'Sexta'
-        };
-        return diasMap[diaNumero] || diaNumero;
-    }
-
-    diaParaNumero(dia) {
-        const diasMap = {
-            'segunda': 1,
-            'terca': 2,
-            'quarta': 3,
-            'quinta': 4,
-            'sexta': 5
-        };
-        return diasMap[dia] || 1;
-    }
-
     limparFormulario() {
         const form = document.getElementById('formCriarAula');
         if (form) {
             form.reset();
-            document.querySelectorAll('input[name="dias"]').forEach(checkbox => {
-                checkbox.checked = false;
-            });
             this.desabilitarPeriodo();
             this.desabilitarTurma();
         }
@@ -1133,7 +1053,6 @@ class ProfessorManager {
         }
     }
 
-
     fecharTodosModais() {
         const modais = document.querySelectorAll('.modal-overlay');
         modais.forEach(modal => modal.remove());
@@ -1159,15 +1078,11 @@ class ProfessorManager {
         }
 
         const agora = new Date();
-        const hoje = agora.getDay();
-        const horaAtual = agora.getHours() + agora.getMinutes() / 60;
+        const dataAula = new Date(aula.data_aula);
+        const hoje = new Date(agora.toDateString());
 
-        const diaAula = typeof aula.dia_semana === 'string' ?
-            parseInt(aula.dia_semana) : aula.dia_semana;
-
-        const aulaHoje = (hoje === diaAula);
-
-        if (aulaHoje) {
+        if (dataAula.toDateString() === hoje.toDateString()) {
+            const horaAtual = agora.getHours() + agora.getMinutes() / 60;
             const [horaInicio, minutoInicio] = aula.horario_inicio.split(':').map(Number);
             const [horaFim, minutoFim] = aula.horario_fim.split(':').map(Number);
             const horaInicioDecimal = horaInicio + minutoInicio / 60;
@@ -1177,21 +1092,7 @@ class ProfessorManager {
                 return { classe: 'em-andamento', texto: 'Em Andamento', icone: 'fa-play-circle' };
             }
         }
-
         return { classe: 'ativa', texto: 'Ativa', icone: 'fa-check-circle' };
-    }
-
-    formatarDiasSemana(diaSemana) {
-        return this.formatarDiaUnico(diaSemana);
-    }
-
-    formatarDiaUnico(dia) {
-        const diasMap = {
-            'segunda': 'Segunda', 'terca': 'Terça', 'quarta': 'Quarta',
-            'quinta': 'Quinta', 'sexta': 'Sexta',
-            1: 'Segunda', 2: 'Terça', 3: 'Quarta', 4: 'Quinta', 5: 'Sexta'
-        };
-        return diasMap[dia] || dia;
     }
 
     validarFormularioAula(dados) {
@@ -1204,9 +1105,7 @@ class ProfessorManager {
         if (!dados.curso) erros.push('Selecione um curso');
         if (!dados.turma) erros.push('Selecione uma turma');
         if (!dados.horario_inicio || !dados.horario_fim) erros.push('Selecione um horário');
-
-        const diasSelecionados = Array.from(document.querySelectorAll('input[name="dias"]:checked'));
-        if (diasSelecionados.length === 0) erros.push('Selecione pelo menos um dia da semana');
+        if (!dados.data_aula) erros.push('Selecione uma data para a aula');
 
         if (dados.horario_inicio && dados.horario_fim) {
             const inicio = new Date(`2000-01-01T${dados.horario_inicio}`);
@@ -1215,6 +1114,14 @@ class ProfessorManager {
         }
 
         return erros;
+    }
+
+    configurarDataMinima() {
+        const dataInput = document.getElementById('dataAula');
+        if (dataInput) {
+            const hoje = new Date().toISOString().split('T')[0];
+            dataInput.setAttribute('min', hoje);
+        }
     }
 
     tratarErroAula(error) {
@@ -1293,144 +1200,120 @@ class ProfessorManager {
 
     // ========== EDIÇÃO AVANÇADA ==========
     gerarHTMLModalEdicao(aula) {
-        const diasSemana = {
-            1: 'segunda', 2: 'terca', 3: 'quarta', 4: 'quinta', 5: 'sexta',
-            'segunda': 'segunda', 'terca': 'terca', 'quarta': 'quarta',
-            'quinta': 'quinta', 'sexta': 'sexta'
-        };
-
-        const diasSelecionados = Array.isArray(aula.dia_semana) ?
-            aula.dia_semana :
-            [aula.dia_semana].map(dia => diasSemana[dia]).filter(Boolean);
-
         return `
-        <div class="modal-overlay" id="modalEdicaoAula">
-            <div class="modal-content modal-extra-large" onclick="event.stopPropagation()">
-                <div class="modal-header">
-                    <h3><i class="fas fa-edit"></i> Editar Aula: ${aula.disciplina || aula.disciplina_nome || 'Disciplina'}</h3>
-                    <button class="modal-close" onclick="document.getElementById('modalEdicaoAula').remove()">
-                        <i class="fas fa-times"></i>
-                    </button>
+<div class="modal-overlay" id="modalEdicaoAula">
+    <div class="modal-content modal-extra-large" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3><i class="fas fa-edit"></i> Editar Aula: ${aula.disciplina || aula.disciplina_nome || 'Disciplina'}</h3>
+            <button class="modal-close" onclick="document.getElementById('modalEdicaoAula').remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="formEditarAula" class="professor-criar-aula-form">
+                <input type="hidden" id="editarAulaId" value="${aula.id}">
+                
+                <!-- Disciplina -->
+                <div class="professor-form-row">
+                    <div class="professor-form-group professor-form-group-full">
+                        <label for="editarDisciplinaInput" class="professor-form-label">
+                            <i class="fas fa-book"></i> Disciplina *
+                        </label>
+                        <input type="text" id="editarDisciplinaInput" class="professor-form-control" required
+                            value="${aula.disciplina || aula.disciplina_nome || ''}"
+                            placeholder="Nome da disciplina">
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <form id="formEditarAula" class="professor-criar-aula-form">
-                        <input type="hidden" id="editarAulaId" value="${aula.id}">
-                        
-                        <div class="professor-form-row">
-                            <div class="professor-form-group">
-                                <label for="editarCursoSelect" class="professor-form-label">
-                                    <i class="fas fa-graduation-cap"></i> Curso *
-                                </label>
-                                <select id="editarCursoSelect" class="professor-form-control select-habilitado" required>
-                                    <option value="">Selecione o curso</option>
-                                </select>
-                            </div>
-                            <div class="professor-form-group">
-                                <label for="editarPeriodoSelect" class="professor-form-label">
-                                    <i class="fas fa-calendar-alt"></i> Período *
-                                </label>
-                                <select id="editarPeriodoSelect" class="professor-form-control select-desabilitado" required disabled>
-                                    <option value="">Selecione o curso primeiro</option>
-                                </select>
-                            </div>
-                        </div>
 
-                        <div class="professor-form-row">
-                            <div class="professor-form-group">
-                                <label for="editarTurmaSelect" class="professor-form-label">
-                                    <i class="fas fa-users"></i> Turma *
-                                </label>
-                                <select id="editarTurmaSelect" class="professor-form-control select-desabilitado" required disabled>
-                                    <option value="">Selecione curso e período</option>
-                                </select>
-                            </div>
-                            <div class="professor-form-group">
-                                <label for="editarDisciplinaInput" class="professor-form-label">
-                                    <i class="fas fa-book"></i> Disciplina *
-                                </label>
-                                <input type="text" id="editarDisciplinaInput" class="professor-form-control" 
-                                       value="${aula.disciplina || aula.disciplina_nome || ''}" required
-                                       placeholder="Nome da disciplina">
-                            </div>
-                        </div>
-
-                        <div class="professor-form-row">
-                            <div class="professor-form-group professor-form-group-full">
-                                <label for="editarSearchSala" class="professor-form-label">
-                                    <i class="fas fa-door-open"></i> Buscar Sala *
-                                </label>
-                                <div class="professor-search-container">
-                                    <input type="text" id="editarSearchSala" class="professor-search-input"
-                                           placeholder="Digite para filtrar salas... (Ex: A101, Laboratório, Bloco B)">
-                                    <i class="fas fa-search professor-search-icon"></i>
-                                </div>
-
-                                <label for="editarSalaSelect" class="professor-form-label sala-select-label">
-                                    <i class="fas fa-list"></i> Selecione a Sala *
-                                </label>
-                                <select id="editarSalaSelect" class="professor-form-control professor-sala-select" required size="6">
-                                    <option value="">Carregando salas...</option>
-                                </select>
-                                <small class="professor-form-help">Use a busca acima para filtrar as salas</small>
-                            </div>
-                        </div>
-
-                        <div class="professor-form-row">
-                            <div class="professor-form-group">
-                                <label for="editarHorarioSelect" class="professor-form-label">
-                                    <i class="fas fa-clock"></i> Horário *
-                                </label>
-                                <select id="editarHorarioSelect" class="professor-form-control" required>
-                                    <option value="">Selecione o horário</option>
-                                    <option value="18:50-19:40">18:50 - 19:40</option>
-                                    <option value="19:40-20:30">19:40 - 20:30</option>
-                                    <option value="20:40-21:30">20:40 - 21:30</option>
-                                    <option value="21:30-22:20">21:30 - 22:20</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="professor-form-group professor-dias-container">
-                            <label class="professor-form-label">
-                                <i class="fas fa-calendar-day"></i> Dias da Semana *
-                            </label>
-                            <div class="professor-dias-checkbox">
-                                ${['segunda', 'terca', 'quarta', 'quinta', 'sexta'].map(dia => `
-                                    <label class="professor-checkbox-label">
-                                        <input type="checkbox" name="editarDias" value="${dia}" 
-                                            ${diasSelecionados.includes(dia) ? 'checked' : ''}>
-                                        <span class="professor-checkmark"></span>
-                                        <span class="professor-dia-text">${this.formatarDiasSemana(dia)}</span>
-                                    </label>
-                                `).join('')}
-                            </div>
-                            <small class="professor-form-help">Selecione os dias em que a aula ocorrerá</small>
-                        </div>
-
-                        <div class="professor-form-info">
-                            <p><i class="fas fa-info-circle"></i> Todos os campos marcados com * são obrigatórios</p>
-                        </div>
-                    </form>
+                <!-- Curso, Período e Turma -->
+                <div class="professor-form-row">
+                    <div class="professor-form-group">
+                        <label for="editarCursoSelect" class="professor-form-label">
+                            <i class="fas fa-graduation-cap"></i> Curso *
+                        </label>
+                        <select id="editarCursoSelect" class="professor-form-control" required>
+                            <option value="">Selecione o curso</option>
+                        </select>
+                    </div>
+                    <div class="professor-form-group">
+                        <label for="editarPeriodoSelect" class="professor-form-label">
+                            <i class="fas fa-calendar-alt"></i> Período *
+                        </label>
+                        <select id="editarPeriodoSelect" class="professor-form-control" required>
+                            <option value="">Selecione o período</option>
+                        </select>
+                    </div>
+                    <div class="professor-form-group">
+                        <label for="editarTurmaSelect" class="professor-form-label">
+                            <i class="fas fa-users"></i> Turma *
+                        </label>
+                        <select id="editarTurmaSelect" class="professor-form-control" required>
+                            <option value="">Selecione a turma</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-primary" onclick="professorManager.salvarEdicaoAula()">
-                        <i class="fas fa-save"></i> Salvar Alterações
-                    </button>
+
+                <!-- Data e Horário -->
+                <div class="professor-form-row">
+                    <div class="professor-form-group">
+                        <label for="editarDataAula" class="professor-form-label">
+                            <i class="fas fa-calendar-day"></i> Data da Aula *
+                        </label>
+                        <input type="date" id="editarDataAula" class="professor-form-control" 
+                            value="${aula.data_aula || ''}" required
+                            min="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="professor-form-group">
+                        <label for="editarHorarioSelect" class="professor-form-label">
+                            <i class="fas fa-clock"></i> Horário *
+                        </label>
+                        <select id="editarHorarioSelect" class="professor-form-control" required>
+                            <option value="">Selecione o horário</option>
+                            <option value="18:50-19:40">18:50 - 19:40</option>
+                            <option value="19:40-20:30">19:40 - 20:30</option>
+                            <option value="20:40-21:30">20:40 - 21:30</option>
+                            <option value="21:30-22:20">21:30 - 22:20</option>
+                        </select>
+                    </div>
                 </div>
-            </div>             
-        </div>`;
+
+                <!-- Sala -->
+                <div class="professor-form-row">
+                    <div class="professor-form-group professor-form-group-full">
+                        <label for="editarSearchSala" class="professor-form-label">
+                            <i class="fas fa-door-open"></i> Buscar Sala *
+                        </label>
+                        <div class="professor-search-container">
+                            <input type="text" id="editarSearchSala" class="professor-search-input"
+                                placeholder="Digite para filtrar salas...">
+                            <i class="fas fa-search professor-search-icon"></i>
+                        </div>
+                        <select id="editarSalaSelect" class="professor-form-control professor-sala-select" required size="6">
+                            <option value="">Selecione uma sala</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-primary" onclick="professorManager.salvarEdicaoAula()">
+                <i class="fas fa-save"></i> Salvar Alterações
+            </button>
+        </div>
+    </div>             
+</div>`;
     }
 
+    // 🔧 CORREÇÃO: Remover referência a dias da semana na inicialização do modal
     async inicializarModalEdicao(aula) {
         try {
             document.getElementById('editarAulaId').value = aula.id;
             document.getElementById('editarDisciplinaInput').value = aula.disciplina || aula.disciplina_nome || '';
             this.configurarHorarioEdicao(aula.horario_inicio, aula.horario_fim);
-            this.configurarDiasSemanaEdicao(aula.dia_semana);
 
             await this.configurarSalasEdicao(aula.sala_id);
 
-            // REMOVER OS SETTIMEOUT E CONFIGURAR DIRETAMENTE
+            // Configurar curso, período e turma
             await this.configurarCursoPeriodoTurmaEdicao(aula);
 
             // Configurar eventos APÓS os dados estarem preenchidos
@@ -1440,29 +1323,6 @@ class ProfessorManager {
             console.error('Erro ao inicializar modal de edição:', error);
             this.mostrarErro('Erro ao carregar dados para edição: ' + error.message);
         }
-    }
-
-    configurarDiasSemanaEdicao(diaSemana) {
-        let diasArray = [];
-        if (typeof diaSemana === 'string' && diaSemana.includes(',')) {
-            diasArray = diaSemana.split(',').map(dia => dia.trim());
-        } else {
-            diasArray = [diaSemana];
-        }
-
-        const numeroParaDia = {
-            1: 'segunda', 2: 'terca', 3: 'quarta', 4: 'quinta', 5: 'sexta',
-            '1': 'segunda', '2': 'terca', '3': 'quarta', '4': 'quinta', '5': 'sexta'
-        };
-
-        const diasNomes = diasArray.map(dia => numeroParaDia[dia] || dia);
-
-        diasNomes.forEach(dia => {
-            const checkbox = document.querySelector(`input[name="editarDias"][value="${dia}"]`);
-            if (checkbox) {
-                checkbox.checked = true;
-            }
-        });
     }
 
     extrairPeriodoDaTurma(turma) {
@@ -1496,7 +1356,6 @@ class ProfessorManager {
         await this.configurarCursoEdicao(aula.curso);
 
         if (aula.periodo) {
-            // CONFIGURAR PERÍODO DIRETAMENTE SEM TIMEOUT
             this.configurarPeriodoEdicaoDireto(aula.periodo, aula);
         } else {
             const periodoExtraido = this.extrairPeriodoDaTurma(aula.turma);
@@ -1520,7 +1379,6 @@ class ProfessorManager {
 
         this.popularSelectPeriodosEdicao(totalPeriodos);
 
-        // REMOVER O SETTIMEOUT - CONFIGURAR DIRETAMENTE
         periodoSelect.value = periodo;
         this.configurarTurmaEdicaoAposPeriodo(aula.curso, periodo, aula.turma);
     }
@@ -1626,7 +1484,6 @@ class ProfessorManager {
 
         if (!searchInput || !salaSelect) return;
 
-        // REMOVER A CLONAGEM - usar os elementos diretamente
         searchInput.addEventListener('input', () => {
             const searchTerm = searchInput.value.toLowerCase();
             const options = salaSelect.getElementsByTagName('option');
@@ -1650,21 +1507,14 @@ class ProfessorManager {
         const cursoSelect = document.getElementById('editarCursoSelect');
         const periodoSelect = document.getElementById('editarPeriodoSelect');
 
-        // REMOVER A CLONAGEM DE ELEMENTOS QUE RESETA OS VALORES
-        // Configurar eventos diretamente nos elementos existentes
-
         if (cursoSelect) {
-            // Remover event listener anterior se existir
             cursoSelect.removeEventListener('change', this.handleCursoChangeEdicaoBound);
-            // Criar bound function para poder remover depois
             this.handleCursoChangeEdicaoBound = (e) => this.handleCursoChangeEdicao(e.target.value);
             cursoSelect.addEventListener('change', this.handleCursoChangeEdicaoBound);
         }
 
         if (periodoSelect) {
-            // Remover event listener anterior se existir
             periodoSelect.removeEventListener('change', this.handlePeriodoChangeEdicaoBound);
-            // Criar bound function para poder remover depois
             this.handlePeriodoChangeEdicaoBound = (e) => this.handlePeriodoChangeEdicao(e.target.value);
             periodoSelect.addEventListener('change', this.handlePeriodoChangeEdicaoBound);
         }
@@ -1802,34 +1652,34 @@ class ProfessorManager {
                 sala_id: parseInt(document.getElementById('editarSalaSelect')?.value),
                 curso: document.getElementById('editarCursoSelect')?.value,
                 turma: document.getElementById('editarTurmaSelect')?.value,
-                horario: document.getElementById('editarHorarioSelect')?.value,
+                data_aula: document.getElementById('editarDataAula')?.value,
                 periodo: parseInt(document.getElementById('editarPeriodoSelect')?.value)
             };
 
-            const erros = [];
+            // 🔥 CORREÇÃO: REMOVER VALIDAÇÃO DE DATA PARA EDIÇÃO
+            // Permitir edição de qualquer data, incluindo passadas
+            console.log('📅 Editando aula (sem validação de data):', dadosAtualizados.data_aula);
 
+            // Processar horário
+            const horario = document.getElementById('editarHorarioSelect')?.value;
+            if (horario) {
+                const [horario_inicio, horario_fim] = horario.split('-');
+                dadosAtualizados.horario_inicio = horario_inicio.trim();
+                dadosAtualizados.horario_fim = horario_fim.trim();
+            }
+
+            // Validações (exceto data)
+            const erros = [];
             if (!dadosAtualizados.curso) erros.push('Selecione um curso');
             if (!dadosAtualizados.periodo || isNaN(dadosAtualizados.periodo)) erros.push('Selecione um período válido');
             if (!dadosAtualizados.turma) erros.push('Selecione uma turma');
             if (!dadosAtualizados.sala_id || isNaN(dadosAtualizados.sala_id)) erros.push('Selecione uma sala válida');
-            if (!dadosAtualizados.disciplina || dadosAtualizados.disciplina.trim().length < 2) erros.push('Digite um nome de disciplina válido (mínimo 2 caracteres)');
-            if (!dadosAtualizados.horario) erros.push('Selecione um horário');
-
-            const diasSelecionados = Array.from(document.querySelectorAll('input[name="editarDias"]:checked'))
-                .map(cb => cb.value);
-
-            if (diasSelecionados.length === 0) erros.push('Selecione pelo menos um dia da semana');
+            if (!dadosAtualizados.disciplina || dadosAtualizados.disciplina.trim().length < 2) erros.push('Digite um nome de disciplina válido');
+            if (!horario) erros.push('Selecione um horário');
 
             if (erros.length > 0) {
                 this.mostrarErro('Erros no formulário:\n• ' + erros.join('\n• '));
                 return;
-            }
-
-            if (dadosAtualizados.horario) {
-                const [horario_inicio, horario_fim] = dadosAtualizados.horario.split('-');
-                dadosAtualizados.horario_inicio = horario_inicio.trim();
-                dadosAtualizados.horario_fim = horario_fim.trim();
-                delete dadosAtualizados.horario;
             }
 
             const modal = document.getElementById('modalEdicaoAula');
@@ -1843,16 +1693,7 @@ class ProfessorManager {
             }
 
             try {
-                const diaParaNumero = {
-                    'segunda': 1, 'terca': 2, 'quarta': 3, 'quinta': 4, 'sexta': 5
-                };
-
-                const dadosCompletos = {
-                    ...dadosAtualizados,
-                    dia_semana: diaParaNumero[diasSelecionados[0]]
-                };
-
-                const result = await api.atualizarAula(aulaId, dadosCompletos);
+                const result = await api.atualizarAula(aulaId, dadosAtualizados);
 
                 if (result?.success) {
                     this.mostrarSucesso('Aula atualizada com sucesso!');
@@ -1876,14 +1717,6 @@ class ProfessorManager {
         } catch (error) {
             console.error('Erro ao salvar edição:', error);
             this.mostrarErro('Erro ao salvar alterações: ' + error.message);
-
-            if (error.message.includes('UNIQUE')) {
-                this.mostrarErro('Já existe uma aula com esses dados. Verifique se não está duplicando.');
-            } else if (error.message.includes('FOREIGN KEY')) {
-                this.mostrarErro('Erro de referência: Sala ou curso inválido.');
-            } else if (error.message.includes('NOT NULL')) {
-                this.mostrarErro('Preencha todos os campos obrigatórios.');
-            }
         }
     }
 

@@ -263,26 +263,44 @@ class SelecaoPeriodoManager {
             cursoSelect.innerHTML = '<option value="">Carregando cursos...</option>';
             cursoSelect.disabled = true;
 
-            const result = await api.getCursos();
+            // 🔥 CORREÇÃO: Usar a rota que retorna cursos COM total_periodos
+            const token = authManager ? authManager.getToken() : localStorage.getItem('authToken');
+            const response = await fetch('/api/cursos/com-periodos', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
 
-            if (result.success && result.data) {
-                this.cursos = result.data;
-                cursoSelect.innerHTML = '<option value="">Selecione seu curso</option>';
-
-                this.cursos.forEach(curso => {
-                    const option = document.createElement('option');
-                    option.value = curso.id;
-                    option.textContent = curso.nome;
-                    option.dataset.duracao = curso.duracao_periodos || curso.total_periodos || 8;
-                    cursoSelect.appendChild(option);
-                });
-
-                cursoSelect.disabled = false;
-                this.atualizarProgresso(1);
-                console.log(`✅ DEBUG: ${this.cursos.length} cursos carregados`);
-            } else {
-                throw new Error(result.error || 'Erro ao carregar cursos');
+            if (!response.ok) {
+                throw new Error(`Erro HTTP: ${response.status}`);
             }
+
+            const cursos = await response.json();
+
+            this.cursos = cursos;
+            cursoSelect.innerHTML = '<option value="">Selecione seu curso</option>';
+
+            this.cursos.forEach(curso => {
+                const option = document.createElement('option');
+                option.value = curso.id;
+                option.textContent = curso.nome;
+                // 🔥 CORREÇÃO: Armazenar total_periodos para uso posterior
+                option.dataset.totalPeriodos = curso.total_periodos;
+                cursoSelect.appendChild(option);
+
+                console.log('📚 Curso disponível:', {
+                    id: curso.id,
+                    nome: curso.nome,
+                    total_periodos: curso.total_periodos
+                });
+            });
+
+            cursoSelect.disabled = false;
+            this.atualizarProgresso(1);
+            console.log(`✅ DEBUG: ${this.cursos.length} cursos carregados COM períodos`);
+
         } catch (error) {
             console.error('❌ DEBUG: Erro ao carregar cursos:', error);
             this.mostrarMensagemStatus('Erro ao carregar cursos. Tente novamente.', 'error');
@@ -304,14 +322,28 @@ class SelecaoPeriodoManager {
             return;
         }
 
+        // 🔥 CORREÇÃO: Buscar o curso selecionado para obter o total_periodos REAL
         const cursoSelecionado = this.cursos.find(curso => curso.id == cursoId);
-        const duracaoPeriodos = cursoSelecionado ?
-            (cursoSelecionado.duracao_periodos || cursoSelecionado.total_periodos || 8) : 8;
+
+        if (!cursoSelecionado) {
+            console.error('❌ Curso selecionado não encontrado:', cursoId);
+            return;
+        }
+
+        // 🔥 CORREÇÃO: Usar total_periodos REAL do curso (não valor padrão)
+        const totalPeriodos = cursoSelecionado.total_periodos || 8;
+
+        console.log('📊 DEBUG: Curso selecionado:', {
+            nome: cursoSelecionado.nome,
+            total_periodos: totalPeriodos,
+            curso_id: cursoId
+        });
 
         periodoSelect.disabled = true;
         periodoSelect.innerHTML = '<option value="">Carregando períodos...</option>';
 
-        await this.carregarPeriodos(duracaoPeriodos);
+        // 🔥 CORREÇÃO: Passar o totalPeriodos REAL
+        await this.carregarPeriodos(totalPeriodos);
 
         periodoSelect.disabled = false;
         turmaSelect.disabled = true;
@@ -321,16 +353,18 @@ class SelecaoPeriodoManager {
         this.atualizarProgresso(2);
     }
 
-    async carregarPeriodos(duracaoPeriodos) {
+    async carregarPeriodos(totalPeriodos) {
         try {
             const periodoSelect = document.getElementById('periodoSelect');
             if (!periodoSelect) return;
+
+            console.log('🔄 DEBUG: Carregando períodos. Total:', totalPeriodos);
 
             periodoSelect.innerHTML = '<option value="">Carregando períodos...</option>';
             periodoSelect.disabled = true;
 
             const periodos = [];
-            for (let i = 1; i <= duracaoPeriodos; i++) {
+            for (let i = 1; i <= totalPeriodos; i++) {
                 periodos.push({
                     id: i,
                     numero: i,
@@ -350,6 +384,8 @@ class SelecaoPeriodoManager {
             });
 
             periodoSelect.disabled = false;
+
+            console.log(`✅ DEBUG: ${periodos.length} períodos carregados para o curso`);
 
         } catch (error) {
             console.error('❌ DEBUG: Erro ao carregar períodos:', error);

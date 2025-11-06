@@ -514,6 +514,7 @@ main {
 }
 
 .aula-card {
+    max-width: 90%;
     background: #fff;
     border: 1px solid #e9ecef;
     border-radius: 12px;
@@ -3866,16 +3867,407 @@ main {
     }
 }
 
-/* ==================== MODAL DETALHES AULA ALUNO - ESTILO PROFESSOR COM FUNDO ESCURO ==================== */
+/* ==================== VARIÁVEIS CSS ==================== */
+:root {
+    /* Cores Principais */
+    --primary-blue: #3498db;
+    --primary-blue-dark: #2980b9;
+    --primary-blue-darker: #21618c;
+    --primary-green: #27ae60;
+    --primary-green-dark: #219a52;
+    --primary-green-darker: #1e8449;
+    --primary-orange: #f39c12;
+    --primary-orange-dark: #e67e22;
+    --primary-orange-darker: #d35400;
+    --primary-red: #e74c3c;
+    --primary-red-dark: #c0392b;
+    --primary-red-darker: #a93226;
+    --primary-purple: #9b59b6;
+    --primary-purple-dark: #8e44ad;
+
+    /* Cores Neutras */
+    --dark-blue: #2c3e50;
+    --dark-blue-light: #34495e;
+    --gray-dark: #7f8c8d;
+    --gray-medium: #95a5a6;
+    --gray-light: #bdc3c7;
+    --gray-lighter: #ecf0f1;
+    --white: #ffffff;
+    --off-white: #f8f9fa;
+    --off-white-alt: #f8fafc;
+
+    /* Gradientes */
+    --gradient-primary: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+    --gradient-primary-dark: linear-gradient(135deg, var(--primary-blue-dark), var(--primary-blue-darker));
+    --gradient-green: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+    --gradient-green-dark: linear-gradient(135deg, var(--primary-green-dark), var(--primary-green-darker));
+    --gradient-orange: linear-gradient(135deg, var(--primary-orange), var(--primary-orange-dark));
+    --gradient-red: linear-gradient(135deg, var(--primary-red), var(--primary-red-dark));
+    --gradient-purple: linear-gradient(135deg, var(--primary-purple), var(--primary-purple-dark));
+    --gradient-gray: linear-gradient(135deg, var(--gray-medium), var(--gray-dark));
+    --gradient-dark: linear-gradient(135deg, var(--dark-blue), var(--dark-blue-light));
+    --gradient-light: linear-gradient(135deg, var(--white) 0%, var(--off-white-alt) 100%);
+
+    /* Sombras */
+    --shadow-light: 0 4px 15px rgba(0, 0, 0, 0.05);
+    --shadow-medium: 0 6px 20px rgba(0, 0, 0, 0.15);
+    --shadow-heavy: 0 10px 35px rgba(0, 0, 0, 0.15);
+    --shadow-blue: 0 6px 20px rgba(52, 152, 219, 0.4);
+    --shadow-green: 0 6px 20px rgba(39, 174, 96, 0.4);
+    --shadow-orange: 0 6px 20px rgba(243, 156, 18, 0.4);
+    --shadow-red: 0 6px 20px rgba(231, 76, 60, 0.4);
+
+    /* Bordas e Espaçamentos */
+    --border-radius-sm: 10px;
+    --border-radius-md: 12px;
+    --border-radius-lg: 14px;
+    --border-radius-xl: 16px;
+    --border-radius-xxl: 20px;
+    --border-radius-pill: 25px;
+
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 0.8rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.2rem;
+    --spacing-xl: 1.5rem;
+    --spacing-xxl: 2rem;
+    --spacing-xxxl: 2.5rem;
+
+    /* Transições */
+    --transition-fast: all 0.3s ease;
+    --transition-medium: all 0.4s ease;
+    --transition-slow: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    /* Z-index */
+    --z-index-low: 1;
+    --z-index-medium: 5;
+    --z-index-high: 10;
+}
+
+/* ==================== ANIMAÇÕES ==================== */
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-40px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes modalFadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@keyframes pulseVerde {
+    0% {
+        box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 4px 20px rgba(39, 174, 96, 0.7);
+    }
+
+    100% {
+        box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
+    }
+}
+
+@keyframes pulseVermelho {
+    0% {
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 4px 20px rgba(231, 76, 60, 0.7);
+    }
+
+    100% {
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+    }
+}
+
+@keyframes pulseLaranja {
+    0% {
+        box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 4px 20px rgba(243, 156, 18, 0.7);
+    }
+
+    100% {
+        box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4);
+    }
+}
+
+@keyframes pulseAzul {
+    0% {
+        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 4px 20px rgba(52, 152, 219, 0.7);
+    }
+
+    100% {
+        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+    }
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+@keyframes pulseGlow {
+    0% {
+        box-shadow: 0 8px 30px rgba(243, 156, 18, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 12px 40px rgba(243, 156, 18, 0.5);
+    }
+
+    100% {
+        box-shadow: 0 8px 30px rgba(243, 156, 18, 0.3);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes glowAndamento {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* ==================== COMPONENTES DE BOTÃO ==================== */
+.btn {
+    border: none;
+    padding: 14px 28px;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: var(--transition-slow);
+    font-size: 1rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+    justify-content: center;
+    text-decoration: none;
+    min-width: 150px;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn-primary {
+    background: var(--gradient-primary);
+    color: var(--white);
+    box-shadow: var(--shadow-blue);
+}
+
+.btn-primary:hover {
+    background: var(--gradient-primary-dark);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 30px rgba(52, 152, 219, 0.5);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: var(--white);
+    box-shadow: 0 6px 20px rgba(108, 117, 125, 0.3);
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #5a6268, #495057);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 30px rgba(108, 117, 125, 0.4);
+}
+
+.btn-localizar {
+    background: var(--gradient-green);
+    color: var(--white);
+    padding: 1rem 1.8rem;
+    border-radius: var(--border-radius-md);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition-slow);
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    box-shadow: var(--shadow-green);
+    flex: 1;
+    justify-content: center;
+    text-align: center;
+    min-width: 160px;
+    border: none;
+}
+
+.btn-localizar:hover {
+    background: var(--gradient-green-dark);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 30px rgba(39, 174, 96, 0.5);
+}
+
+/* ==================== COMPONENTES DE STATUS ==================== */
+.status-badge {
+    padding: 10px 18px;
+    border-radius: var(--border-radius-pill);
+    font-size: 0.85rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    transition: var(--transition-medium);
+    position: relative;
+    overflow: hidden;
+    border: 2px solid;
+}
+
+.status-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.6s ease;
+}
+
+.status-badge:hover::before {
+    left: 100%;
+}
+
+.status-badge:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+}
+
+.status-badge.ativa {
+    background: var(--gradient-green);
+    color: var(--white);
+    border-color: var(--primary-green-darker);
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
+}
+
+.status-badge.em-andamento {
+    background: var(--gradient-orange);
+    color: var(--white);
+    border-color: var(--primary-orange-darker);
+    box-shadow: 0 6px 20px rgba(243, 156, 18, 0.3);
+}
+
+.status-badge.cancelada {
+    background: var(--gradient-red);
+    color: var(--white);
+    border-color: var(--primary-red-darker);
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+}
+
+.status-badge.proxima {
+    background: var(--gradient-purple);
+    color: var(--white);
+    border-color: var(--primary-purple-dark);
+    box-shadow: 0 6px 20px rgba(155, 89, 182, 0.3);
+}
+
+/* ==================== MODAL DETALHES AULA ALUNO ==================== */
 #modalDetalhesAulaAluno.modal-overlay {
     background: rgba(44, 62, 80, 0.95);
-    /* Azul escuro igual ao professor */
     backdrop-filter: blur(8px);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+#modalDetalhesAulaAluno.modal-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(circle at 20% 80%, rgba(52, 152, 219, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(46, 204, 113, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(155, 89, 182, 0.05) 0%, transparent 50%);
+    pointer-events: none;
 }
 
 #modalDetalhesAulaAluno .modal-content {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border-radius: 20px;
+    background: var(--gradient-light);
+    border-radius: var(--border-radius-xxl);
     box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
     width: 90%;
     max-width: 750px;
@@ -3893,26 +4285,16 @@ main {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #3498db, #2ecc71, #3498db);
+    background: linear-gradient(90deg, var(--primary-blue), var(--primary-green), var(--primary-blue));
     background-size: 200% 100%;
     animation: shimmer 3s linear infinite;
 }
 
-@keyframes shimmer {
-    0% {
-        background-position: -200% 0;
-    }
-
-    100% {
-        background-position: 200% 0;
-    }
-}
-
 #modalDetalhesAulaAluno .modal-header {
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    color: #fff;
+    background: var(--gradient-dark);
+    color: var(--white);
     padding: 28px 30px 20px;
-    border-radius: 20px 20px 0 0;
+    border-radius: var(--border-radius-xxl) var(--border-radius-xxl) 0 0;
     position: relative;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
@@ -3929,7 +4311,7 @@ main {
 
 #modalDetalhesAulaAluno .modal-header h3 {
     margin: 0;
-    color: white;
+    color: var(--white);
     font-size: 1.6rem;
     font-weight: 700;
     display: flex;
@@ -3949,10 +4331,10 @@ main {
     border: 2px solid rgba(255, 255, 255, 0.25);
     font-size: 1.2rem;
     cursor: pointer;
-    color: white;
+    color: var(--white);
     padding: 8px;
     border-radius: 50%;
-    transition: all 0.3s ease;
+    transition: var(--transition-medium);
     width: 42px;
     height: 42px;
     display: flex;
@@ -3960,6 +4342,9 @@ main {
     justify-content: center;
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    position: absolute;
+    top: 20px;
+    right: 20px;
 }
 
 #modalDetalhesAulaAluno .modal-close:hover {
@@ -3973,11 +4358,10 @@ main {
     padding: 30px;
     max-height: 60vh;
     overflow-y: auto;
-    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+    background: var(--gradient-light);
     position: relative;
 }
 
-/* Efeito de brilho sutil no corpo */
 #modalDetalhesAulaAluno .modal-body::before {
     content: '';
     position: absolute;
@@ -3988,7 +4372,7 @@ main {
     background: linear-gradient(90deg, transparent, rgba(52, 152, 219, 0.3), transparent);
 }
 
-/* Grid de Detalhes - Estilo Premium */
+/* Grid de Detalhes */
 #modalDetalhesAulaAluno .aula-detalhes-grid {
     display: grid;
     gap: 18px;
@@ -4000,13 +4384,13 @@ main {
     justify-content: space-between;
     align-items: center;
     padding: 20px 24px;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 14px;
+    background: var(--gradient-light);
+    border-radius: var(--border-radius-lg);
     border: 1px solid #e1e8ed;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: var(--transition-slow);
     position: relative;
     overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-light);
 }
 
 #modalDetalhesAulaAluno .detalhe-item::before {
@@ -4016,25 +4400,25 @@ main {
     top: 0;
     bottom: 0;
     width: 5px;
-    background: linear-gradient(135deg, #3498db, #2980b9);
+    background: var(--gradient-primary);
     border-radius: 5px 0 0 5px;
-    transition: all 0.3s ease;
+    transition: var(--transition-medium);
 }
 
 #modalDetalhesAulaAluno .detalhe-item:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-    border-color: #3498db;
+    border-color: var(--primary-blue);
 }
 
 #modalDetalhesAulaAluno .detalhe-item:hover::before {
     width: 6px;
-    background: linear-gradient(135deg, #2980b9, #21618c);
+    background: var(--gradient-primary-dark);
 }
 
 #modalDetalhesAulaAluno .detalhe-item label {
     font-weight: 700;
-    color: #2c3e50;
+    color: var(--dark-blue);
     min-width: 150px;
     display: flex;
     align-items: center;
@@ -4046,79 +4430,21 @@ main {
 #modalDetalhesAulaAluno .detalhe-item label i {
     width: 22px;
     text-align: center;
-    color: #3498db;
+    color: var(--primary-blue);
     font-size: 1.2rem;
     text-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
 }
 
 #modalDetalhesAulaAluno .detalhe-item span {
     text-align: right;
-    color: #2c3e50;
+    color: var(--dark-blue);
     font-weight: 600;
     font-size: 1.05rem;
     flex: 1;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* Status Badges - Estilo Premium */
-#modalDetalhesAulaAluno .status-badge {
-    padding: 10px 18px;
-    border-radius: 25px;
-    font-size: 0.85rem;
-    font-weight: 800;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-    transition: all 0.4s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-#modalDetalhesAulaAluno .status-badge::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    transition: left 0.6s ease;
-}
-
-#modalDetalhesAulaAluno .status-badge:hover::before {
-    left: 100%;
-}
-
-#modalDetalhesAulaAluno .status-badge.ativa {
-    background: linear-gradient(135deg, #27ae60, #219a52);
-    color: white;
-    border: 2px solid #1e8449;
-    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
-}
-
-#modalDetalhesAulaAluno .status-badge.em-andamento {
-    background: linear-gradient(135deg, #f39c12, #e67e22);
-    color: white;
-    border: 2px solid #d35400;
-    box-shadow: 0 6px 20px rgba(243, 156, 18, 0.3);
-}
-
-#modalDetalhesAulaAluno .status-badge.cancelada {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-    color: white;
-    border: 2px solid #a93226;
-    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
-}
-
-#modalDetalhesAulaAluno .status-badge:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
-}
-
-/* Ações do Aluno - Estilo Premium */
+/* Ações do Aluno */
 #modalDetalhesAulaAluno .aula-actions-aluno {
     margin-top: 2.5rem;
     padding-top: 2rem;
@@ -4127,79 +4453,12 @@ main {
     gap: 1.2rem;
     justify-content: flex-end;
     flex-wrap: wrap;
-    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+    background: var(--gradient-light);
     padding: 2rem 0 0;
-    border-radius: 0 0 20px 20px;
+    border-radius: 0 0 var(--border-radius-xxl) var(--border-radius-xxl);
 }
 
-#modalDetalhesAulaAluno .btn-primary {
-    background: linear-gradient(135deg, #3498db, #2980b9);
-    color: white;
-    border: none;
-    padding: 14px 28px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    font-size: 1rem;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
-    position: relative;
-    overflow: hidden;
-    min-width: 180px;
-    justify-content: center;
-}
-
-#modalDetalhesAulaAluno .btn-primary::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: left 0.6s ease;
-}
-
-#modalDetalhesAulaAluno .btn-primary:hover::before {
-    left: 100%;
-}
-
-#modalDetalhesAulaAluno .btn-primary:hover {
-    background: linear-gradient(135deg, #2980b9, #21618c);
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 10px 30px rgba(52, 152, 219, 0.5);
-}
-
-#modalDetalhesAulaAluno .btn-secondary {
-    background: linear-gradient(135deg, #6c757d, #5a6268);
-    color: white;
-    border: none;
-    padding: 14px 28px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    font-size: 1rem;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    box-shadow: 0 6px 20px rgba(108, 117, 125, 0.3);
-    position: relative;
-    overflow: hidden;
-    min-width: 150px;
-    justify-content: center;
-}
-
-#modalDetalhesAulaAluno .btn-secondary:hover {
-    background: linear-gradient(135deg, #5a6268, #495057);
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 10px 30px rgba(108, 117, 125, 0.4);
-}
-
-/* Scrollbar Personalizada - Estilo Premium */
+/* Scrollbar Personalizada */
 #modalDetalhesAulaAluno .modal-body::-webkit-scrollbar {
     width: 10px;
 }
@@ -4211,19 +4470,494 @@ main {
 }
 
 #modalDetalhesAulaAluno .modal-body::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #3498db, #2980b9);
+    background: var(--gradient-primary);
     border-radius: 8px;
     border: 2px solid #f1f1f1;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 #modalDetalhesAulaAluno .modal-body::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #2980b9, #21618c);
+    background: var(--gradient-primary-dark);
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Responsividade */
+/* ==================== INDICADORES DE STATUS NOS CARDS DE AULA ==================== */
+.aula-status-indicator {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.2rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--border-radius-pill);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: var(--z-index-high);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    transition: var(--transition-medium);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.aula-card:hover .aula-status-indicator {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.aula-status-indicator::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.5s ease;
+}
+
+.aula-status-indicator:hover::before {
+    left: 100%;
+}
+
+.aula-status-indicator i {
+    font-size: 0.8rem;
+    animation: bounce 2s infinite;
+}
+
+/* Status Específicos */
+.aula-status-ativa {
+    background: var(--gradient-green);
+    color: var(--white);
+    animation: pulseVerde 2s infinite;
+}
+
+.aula-status-cancelada {
+    background: var(--gradient-red);
+    color: var(--white);
+    animation: pulseVermelho 2s infinite;
+}
+
+.aula-status-andamento {
+    background: var(--gradient-orange);
+    color: var(--white);
+    animation: pulseLaranja 2s infinite;
+}
+
+.aula-status-proxima {
+    background: var(--gradient-primary);
+    color: var(--white);
+    animation: pulseAzul 2s infinite;
+}
+
+/* Indicadores de borda e fundo baseados no status */
+.aula-card[data-status="ativa"] {
+    border-left: 6px solid var(--primary-green);
+}
+
+.aula-card[data-status="cancelada"] {
+    border-left: 6px solid var(--primary-red);
+}
+
+.aula-card[data-status="andamento"] {
+    border-left: 6px solid var(--primary-orange);
+}
+
+.aula-card[data-status="proxima"] {
+    border-left: 6px solid var(--primary-blue);
+}
+
+/* Efeitos de fundo baseados no status */
+.aula-card[data-status="ativa"]::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(39, 174, 96, 0.03), transparent);
+    pointer-events: none;
+    border-radius: var(--border-radius-xl);
+    z-index: var(--z-index-low);
+}
+
+.aula-card[data-status="cancelada"]::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(231, 76, 60, 0.03), transparent);
+    pointer-events: none;
+    border-radius: var(--border-radius-xl);
+    z-index: var(--z-index-low);
+}
+
+.aula-card[data-status="andamento"]::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(243, 156, 18, 0.03), transparent);
+    pointer-events: none;
+    border-radius: var(--border-radius-xl);
+    z-index: var(--z-index-low);
+}
+
+.aula-card[data-status="proxima"]::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.03), transparent);
+    pointer-events: none;
+    border-radius: var(--border-radius-xl);
+    z-index: var(--z-index-low);
+}
+
+/* Estados especiais baseados no status */
+.aula-card[data-status="cancelada"] {
+    opacity: 0.85;
+    filter: grayscale(0.3);
+}
+
+.aula-card[data-status="cancelada"] .aula-header h4 {
+    text-decoration: line-through;
+    color: var(--gray-dark);
+}
+
+.aula-card[data-status="cancelada"] .aula-horario {
+    background: var(--gradient-gray);
+    box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+}
+
+.aula-card[data-status="andamento"] {
+    animation: pulseCard 2s infinite;
+}
+
+@keyframes pulseCard {
+    0% {
+        box-shadow: 0 8px 30px rgba(243, 156, 18, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 12px 40px rgba(243, 156, 18, 0.5);
+    }
+
+    100% {
+        box-shadow: 0 8px 30px rgba(243, 156, 18, 0.3);
+    }
+}
+
+.aula-card[data-status="proxima"] {
+    border: 2px solid rgba(52, 152, 219, 0.3);
+}
+
+/* Efeito de destaque para aulas em andamento */
+.aula-card[data-status="andamento"]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: var(--border-radius-xl);
+    background: linear-gradient(135deg, rgba(243, 156, 18, 0.1), transparent);
+    pointer-events: none;
+    z-index: var(--z-index-low);
+    animation: glowAndamento 2s infinite;
+}
+
+/* ==================== CARDS DE AULA ALUNO ==================== */
+.dia-aulas {
+    margin-bottom: 3.5rem;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.dia-titulo {
+    color: var(--dark-blue);
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 2rem;
+    padding: 1.2rem 2rem;
+    background: var(--gradient-primary);
+    color: var(--white);
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-blue);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.dia-titulo::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-blue), var(--primary-green), var(--primary-blue));
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+}
+
+.dia-titulo i {
+    font-size: 1.3rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Container Principal */
+.aulas-dia-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 2.5rem;
+    padding: 1rem 0.5rem;
+    margin: 0 auto;
+    max-width: 1400px;
+}
+
+/* Card de Aula */
+.aula-card {
+    background: var(--gradient-light);
+    border-radius: var(--border-radius-xxl);
+    padding: 2.5rem 2rem 2rem;
+    box-shadow: var(--shadow-heavy);
+    border-left: 6px solid var(--primary-blue);
+    transition: var(--transition-slow);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(52, 152, 219, 0.15);
+    min-height: 240px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.aula-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(52, 152, 219, 0.03), transparent);
+    transition: left 0.7s ease;
+}
+
+/* Header do Card */
+.aula-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: var(--z-index-high);
+}
+
+.aula-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    width: 100%;
+}
+
+.aula-header h4 {
+    color: var(--dark-blue);
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.3;
+    flex: 1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 70%;
+}
+
+.aula-header-bottom {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+.aula-horario {
+    background: var(--gradient-primary);
+    color: var(--white);
+    padding: 0.7rem 1.2rem;
+    border-radius: var(--border-radius-xxl);
+    font-size: 0.85rem;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: var(--shadow-blue);
+    transition: var(--transition-medium);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: var(--z-index-medium);
+}
+
+.aula-card:hover .aula-horario {
+    transform: scale(1.01);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.5);
+}
+
+/* Badge de Status */
+.aula-status-badge {
+    padding: 0.6rem 1rem;
+    border-radius: var(--border-radius-xxl);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: var(--z-index-medium);
+    text-align: center;
+    line-height: 1.2;
+    white-space: nowrap;
+    flex-shrink: 0;
+    max-width: 120px;
+    min-width: 80px;
+}
+
+/* Informações da Aula */
+.aula-info {
+    margin-bottom: 1.5rem;
+    flex: 1;
+}
+
+.aula-info p {
+    margin: 0.8rem 0;
+    color: #555;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    line-height: 1.4;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: var(--transition-medium);
+}
+
+.aula-info p:last-child {
+    border-bottom: none;
+}
+
+.aula-info p:hover {
+    color: var(--dark-blue);
+    transform: translateX(3px);
+}
+
+.aula-info strong {
+    color: var(--dark-blue);
+    font-weight: 700;
+    min-width: 90px;
+    display: inline-block;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+/* Ações do Card */
+.aula-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: auto;
+    padding-top: 1rem;
+}
+
+/* Estados Especiais */
+.aula-card.aula-cancelada {
+    border-left-color: var(--gray-medium);
+    background: linear-gradient(135deg, var(--off-white) 0%, #e9ecef 100%);
+    opacity: 0.8;
+    filter: grayscale(0.3);
+}
+
+.aula-card.aula-cancelada .aula-header h4 {
+    text-decoration: line-through;
+    color: var(--gray-dark);
+}
+
+.aula-card.aula-cancelada .aula-horario {
+    background: var(--gradient-gray);
+    box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+}
+
+.aula-card.aula-em-andamento {
+    border-left-color: var(--primary-orange);
+    animation: pulseGlow 2s infinite;
+    background: linear-gradient(135deg, var(--white) 0%, #fffbf0 100%);
+}
+
+.aula-card::after {
+    position: absolute;
+    bottom: 1.5rem;
+    right: 2rem;
+    font-size: 0.75rem;
+    color: var(--primary-blue);
+    background: rgba(52, 152, 219, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius-md);
+    opacity: 0;
+    transition: var(--transition-medium);
+    font-weight: 600;
+    z-index: var(--z-index-medium);
+}
+
+.aula-card:hover::after {
+    opacity: 1;
+    transform: translateY(-5px);
+}
+
+/* Efeito de destaque gradativo */
+.aulas-dia-container:has(.aula-card:hover) .aula-card:not(:hover) {
+    opacity: 0.6;
+    transform: scale(0.98);
+    transition: var(--transition-medium);
+}
+
+/* ==================== RESPONSIVIDADE ==================== */
+@media (max-width: 1400px) {
+    .aulas-dia-container {
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 2.2rem;
+    }
+}
+
+@media (max-width: 1200px) {
+    .aulas-dia-container {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 2rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .aulas-dia-container {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.8rem;
+        padding: 0.8rem;
+    }
+
+    .aula-card {
+        padding: 2.2rem 1.8rem 1.8rem;
+    }
+}
+
 @media (max-width: 768px) {
+
+    /* Modal */
     #modalDetalhesAulaAluno.modal-overlay {
         padding: 15px;
         backdrop-filter: blur(5px);
@@ -4277,9 +5011,92 @@ main {
         justify-content: center;
         min-width: auto;
     }
+
+    /* Cards */
+    .aulas-dia-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: 0.5rem;
+    }
+
+    .aula-card {
+        padding: 2rem 1.5rem 1.5rem;
+        min-height: auto;
+        margin-bottom: 0;
+    }
+
+    .dia-titulo {
+        font-size: 1.3rem;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .aula-header-top {
+        flex-direction: column;
+        gap: 0.8rem;
+        align-items: flex-start;
+    }
+
+    .aula-header h4 {
+        max-width: 100%;
+        font-size: 1.2rem;
+    }
+
+    .aula-status-badge {
+        align-self: flex-start;
+        max-width: 100px;
+    }
+
+    .aula-header-bottom {
+        justify-content: flex-start;
+    }
+
+    .aula-horario {
+        padding: 0.6rem 1rem;
+        font-size: 0.8rem;
+    }
+
+    .aula-info p {
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .aula-info strong {
+        min-width: auto;
+    }
+
+    .aula-actions {
+        flex-direction: column;
+    }
+
+    .btn-localizar {
+        flex: none;
+        min-width: auto;
+    }
+
+    .aula-card::after {
+        content: '👆 Detalhes';
+        font-size: 0.7rem;
+        bottom: 1rem;
+        right: 1rem;
+    }
+
+    /* Status Indicators */
+    .aula-status-indicator {
+        top: 1rem;
+        right: 1rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.7rem;
+    }
+
+    .aula-status-indicator i {
+        font-size: 0.7rem;
+    }
 }
 
 @media (max-width: 480px) {
+
+    /* Modal */
     #modalDetalhesAulaAluno.modal-overlay {
         padding: 10px;
     }
@@ -4287,7 +5104,7 @@ main {
     #modalDetalhesAulaAluno .modal-content {
         width: 100%;
         margin: 5px;
-        border-radius: 16px;
+        border-radius: var(--border-radius-xl);
     }
 
     #modalDetalhesAulaAluno .modal-header {
@@ -4323,563 +5140,101 @@ main {
         padding: 12px 24px;
         font-size: 0.95rem;
     }
-}
 
-/* Animações Premium */
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-40px) scale(0.95);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-@keyframes modalFadeOut {
-    from {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-
-    to {
-        opacity: 0;
-        transform: translateY(-30px) scale(0.95);
-    }
-}
-
-#modalDetalhesAulaAluno.modal-overlay.closing {
-    animation: modalFadeOut 0.3s ease forwards;
-}
-
-/* Efeito de brilho no overlay */
-#modalDetalhesAulaAluno.modal-overlay {
-    background: rgba(44, 62, 80, 0.92);
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
-}
-
-/* Adicionando uma textura sutil no overlay */
-#modalDetalhesAulaAluno.modal-overlay::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background:
-        radial-gradient(circle at 20% 80%, rgba(52, 152, 219, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(46, 204, 113, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(155, 89, 182, 0.05) 0%, transparent 50%);
-    pointer-events: none;
-}
-
-/* ==================== CARDS DE AULA ALUNO - ESTILO PREMIUM ==================== */
-
-.dia-aulas {
-    margin-bottom: 3rem;
-    animation: fadeInUp 0.6s ease-out;
-}
-
-.dia-titulo {
-    color: #2c3e50;
-    font-size: 1.5rem;
-    font-weight: 800;
-    margin-bottom: 1.5rem;
-    padding: 1rem 1.5rem;
-    background: linear-gradient(135deg, #3498db, #2980b9);
-    color: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: relative;
-    overflow: hidden;
-}
-
-.dia-titulo::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #3498db, #2ecc71, #3498db);
-    background-size: 200% 100%;
-    animation: shimmer 3s linear infinite;
-}
-
-.dia-titulo i {
-    font-size: 1.3rem;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.aulas-dia-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-    gap: 1.8rem;
-    padding: 0.5rem;
-}
-
-/* Card de Aula Premium */
-.aula-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 18px;
-    padding: 2rem;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    border-left: 6px solid #3498db;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid rgba(52, 152, 219, 0.1);
-    min-height: 220px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.aula-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(52, 152, 219, 0.03), transparent);
-    transition: left 0.7s ease;
-}
-
-.aula-card:hover::before {
-    left: 100%;
-}
-
-.aula-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
-    border-left-color: #2980b9;
-    border-color: rgba(52, 152, 219, 0.3);
-}
-
-.aula-card:active {
-    transform: translateY(-2px) scale(1.01);
-}
-
-/* Header do Card */
-.aula-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-    gap: 1rem;
-    position: relative;
-}
-
-.aula-header h4 {
-    color: #2c3e50;
-    font-size: 1.3rem;
-    font-weight: 800;
-    margin: 0;
-    line-height: 1.3;
-    flex: 1;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.aula-horario {
-    background: linear-gradient(135deg, #3498db, #2980b9);
-    color: white;
-    padding: 0.7rem 1.2rem;
-    border-radius: 25px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    white-space: nowrap;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-}
-
-.aula-card:hover .aula-horario {
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.5);
-}
-
-/* Informações da Aula */
-.aula-info {
-    margin-bottom: 1.8rem;
-    flex: 1;
-}
-
-.aula-info p {
-    margin: 0.8rem 0;
-    color: #555;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: flex-start;
-    gap: 0.8rem;
-    line-height: 1.5;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
-}
-
-.aula-info p:last-child {
-    border-bottom: none;
-}
-
-.aula-info p:hover {
-    color: #2c3e50;
-    transform: translateX(5px);
-}
-
-.aula-info strong {
-    color: #2c3e50;
-    font-weight: 700;
-    min-width: 90px;
-    display: inline-block;
-    font-size: 0.9rem;
-}
-
-/* Ações do Card */
-.aula-actions {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-top: auto;
-}
-
-.btn-localizar {
-    background: linear-gradient(135deg, #27ae60, #219a52);
-    color: white;
-    border: none;
-    padding: 0.9rem 1.5rem;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    display: flex;
-    align-items: center;
-    gap: 0.7rem;
-    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
-    flex: 1;
-    justify-content: center;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    min-width: 140px;
-}
-
-.btn-localizar::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.6s ease;
-}
-
-.btn-localizar:hover::before {
-    left: 100%;
-}
-
-.btn-localizar:hover {
-    background: linear-gradient(135deg, #219a52, #1e8449);
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 10px 30px rgba(39, 174, 96, 0.5);
-}
-
-.btn-localizar:active {
-    transform: translateY(-1px) scale(1.02);
-}
-
-.btn-localizar i {
-    font-size: 1rem;
-}
-
-/* Estados Especiais da Aula */
-.aula-card.aula-cancelada {
-    border-left-color: #95a5a6;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    opacity: 0.8;
-    filter: grayscale(0.3);
-}
-
-.aula-card.aula-cancelada .aula-header h4 {
-    text-decoration: line-through;
-    color: #7f8c8d;
-}
-
-.aula-card.aula-cancelada .aula-horario {
-    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
-    box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
-}
-
-.aula-card.aula-em-andamento {
-    border-left-color: #f39c12;
-    animation: pulseGlow 2s infinite;
-    background: linear-gradient(135deg, #ffffff 0%, #fffbf0 100%);
-}
-
-@keyframes pulseGlow {
-    0% {
-        box-shadow: 0 8px 30px rgba(243, 156, 18, 0.3);
-    }
-
-    50% {
-        box-shadow: 0 12px 40px rgba(243, 156, 18, 0.5);
-    }
-
-    100% {
-        box-shadow: 0 8px 30px rgba(243, 156, 18, 0.3);
-    }
-}
-
-.aula-card.aula-em-andamento .aula-horario {
-    background: linear-gradient(135deg, #f39c12, #e67e22);
-    box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4);
-}
-
-.aula-card.aula-proxima {
-    border-left-color: #9b59b6;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f5fc 100%);
-}
-
-.aula-card.aula-proxima .aula-horario {
-    background: linear-gradient(135deg, #9b59b6, #8e44ad);
-    box-shadow: 0 4px 15px rgba(155, 89, 182, 0.4);
-}
-
-/* Badge de Status */
-.aula-status-badge {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    z-index: 2;
-}
-
-.aula-status-badge.em-andamento {
-    background: linear-gradient(135deg, #f39c12, #e67e22);
-    color: white;
-}
-
-.aula-status-badge.proxima {
-    background: linear-gradient(135deg, #9b59b6, #8e44ad);
-    color: white;
-}
-
-.aula-status-badge.cancelada {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-    color: white;
-}
-
-/* Efeito de Destaque ao Passar o Mouse */
-.aulas-dia-container:has(.aula-card:hover) .aula-card:not(:hover) {
-    opacity: 0.7;
-    transform: scale(0.98);
-}
-
-/* Indicador de Clique */
-.aula-card::after {
-    content: '👆 Clique para detalhes';
-    position: absolute;
-    bottom: 1rem;
-    right: 1rem;
-    font-size: 0.7rem;
-    color: #3498db;
-    background: rgba(52, 152, 219, 0.1);
-    padding: 0.4rem 0.8rem;
-    border-radius: 12px;
-    opacity: 0;
-    transition: all 0.3s ease;
-    font-weight: 600;
-}
-
-.aula-card:hover::after {
-    opacity: 1;
-    transform: translateY(-5px);
-}
-
-/* Responsividade */
-@media (max-width: 1200px) {
+    /* Cards */
     .aulas-dia-container {
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    }
-}
-
-@media (max-width: 768px) {
-    .aulas-dia-container {
-        grid-template-columns: 1fr;
         gap: 1.5rem;
-        padding: 0.2rem;
+        padding: 0.3rem;
     }
 
     .aula-card {
-        padding: 1.5rem;
-        min-height: auto;
-    }
-
-    .aula-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-
-    .aula-horario {
-        align-self: flex-start;
-    }
-
-    .aula-info p {
-        flex-direction: column;
-        gap: 0.3rem;
-        padding: 0.7rem 0;
-    }
-
-    .aula-info strong {
-        min-width: auto;
-        font-size: 0.95rem;
-    }
-
-    .aula-actions {
-        flex-direction: column;
-    }
-
-    .btn-localizar {
-        flex: none;
-        min-width: auto;
-    }
-
-    .dia-titulo {
-        font-size: 1.3rem;
-        padding: 0.8rem 1.2rem;
-        margin-bottom: 1.2rem;
-    }
-
-    .aula-card::after {
-        content: '👆 Detalhes';
-        font-size: 0.65rem;
-        bottom: 0.8rem;
-        right: 0.8rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .aula-card {
-        padding: 1.2rem;
-        border-radius: 14px;
+        padding: 1.8rem 1.2rem 1.2rem;
+        border-radius: var(--border-radius-xl);
     }
 
     .aula-header h4 {
-        font-size: 1.15rem;
+        font-size: 1.2rem;
     }
 
     .aula-horario {
-        padding: 0.6rem 1rem;
-        font-size: 0.8rem;
+        padding: 0.7rem 1.2rem;
+        font-size: 0.85rem;
     }
 
     .aula-info p {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
     }
 
     .btn-localizar {
-        padding: 0.8rem 1.2rem;
-        font-size: 0.85rem;
+        padding: 0.9rem 1.5rem;
+        font-size: 0.9rem;
     }
 
     .dia-titulo {
         font-size: 1.2rem;
-        padding: 0.7rem 1rem;
+        padding: 0.8rem 1.2rem;
+        margin-bottom: 1.2rem;
     }
 
-    .aulas-dia-container {
-        gap: 1.2rem;
-    }
-}
-
-/* Animações */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
+    .aula-status-badge {
+        padding: 0.5rem 1rem;
+        font-size: 0.7rem;
     }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes shimmer {
-    0% {
-        background-position: -200% 0;
+    /* Status Indicators */
+    .aula-status-indicator {
+        top: 0.8rem;
+        right: 0.8rem;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.65rem;
     }
 
-    100% {
-        background-position: 200% 0;
+    .aula-status-indicator span {
+        display: none;
+    }
+
+    .aula-status-indicator i {
+        font-size: 0.8rem;
+        margin-right: 0;
     }
 }
 
-/* Efeito de foco para acessibilidade */
-.aula-card:focus {
-    outline: 3px solid #3498db;
-    outline-offset: 2px;
-    transform: translateY(-5px);
+/* Estados de fechamento do modal */
+#modalDetalhesAulaAluno.modal-overlay.closing {
+    animation: modalFadeOut 0.3s ease forwards;
 }
 
-/* Loading State */
-.aula-card.loading {
-    position: relative;
-    overflow: hidden;
+.aula-status-badge.ativa {
+    background: var(--gradient-green);
+    color: var(--white);
 }
 
-.aula-card.loading::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
-    animation: loadingShimmer 1.5s infinite;
+.aula-status-badge.cancelada {
+    background: var(--gradient-red);
+    color: var(--white);
 }
 
-@keyframes loadingShimmer {
-    0% {
-        left: -100%;
-    }
-
-    100% {
-        left: 100%;
-    }
+.aula-status-badge.hoje {
+    background: var(--gradient-purple);
+    color: var(--white);
 }
 
-/* Destaque para aulas de hoje */
-.aula-card.aula-hoje {
-    border-left-color: #e74c3c;
-    background: linear-gradient(135deg, #ffffff 0%, #ffeaa7 100%);
-    box-shadow: 0 8px 30px rgba(231, 76, 60, 0.2);
+/* Se precisar adicionar também para os indicadores de status globais: */
+.aula-status-ativa {
+    background: var(--gradient-green);
+    color: var(--white);
+    animation: pulseVerde 2s infinite;
 }
 
-.aula-card.aula-hoje .aula-horario {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+.aula-status-cancelada {
+    background: var(--gradient-red);
+    color: var(--white);
+    animation: pulseVermelho 2s infinite;
 }
 
-.aula-card.aula-hoje::before {
-    background: linear-gradient(90deg, transparent, rgba(231, 76, 60, 0.05), transparent);
+.aula-status-hoje {
+    background: var(--gradient-purple);
+    color: var(--white);
+    animation: pulseAzul 2s infinite;
+    /* Ou criar uma animação específica para roxo */
 }

@@ -3,139 +3,183 @@ class AulasManager {
         this.aulas = [];
         this.tipoUsuario = null;
         this.usuarioId = null;
+        this.currentUser = null;
+        this.containerDesktop = null;
+        this.containerMobile = null;
         this.init();
     }
 
     async init() {
-        console.log('📚 Inicializando AulasManager...');
+        console.log('🎯 Inicializando AulasManager...');
 
-        const userData = JSON.parse(localStorage.getItem('userData'));
-        if (userData) {
-            this.tipoUsuario = userData.tipo;
-            this.usuarioId = userData.id;
-            console.log(`👤 AulasManager configurado para: ${this.tipoUsuario} (ID: ${this.usuarioId})`);
-        }
-    }
+        // Inicializar containers
+        this.containerDesktop = document.getElementById('aulas-list-desktop');
+        this.containerMobile = document.getElementById('aulas-list-mobile');
 
-    // ✅ CARREGAR AULAS DO ALUNO
-    async carregarAulasAluno() {
-        try {
-            if (!this.usuarioId) {
-                throw new Error('ID do aluno não encontrado');
-            }
-
-            console.log('🎓 Carregando aulas para aluno:', this.usuarioId);
-
-            const response = await fetch(`/api/aluno/${this.usuarioId}/aulas`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`Erro HTTP: ${response.status}`);
-            }
-
-            this.aulas = await response.json();
-            console.log(`✅ ${this.aulas.length} aulas carregadas para o aluno`);
-            return this.aulas;
-
-        } catch (error) {
-            console.error('❌ Erro ao carregar aulas do aluno:', error);
-            this.aulas = [];
-            throw error;
-        }
-    }
-
-    // ✅ CARREGAR AULAS DO PROFESSOR
-    async carregarAulasProfessor() {
-        try {
-            const result = await api.getMinhasAulasProfessor();
-            if (result && result.success) {
-                this.aulas = result.data;
-                console.log(`✅ ${this.aulas.length} aulas carregadas para o professor`);
-                return this.aulas;
-            } else {
-                throw new Error(result?.error || 'Erro ao carregar aulas do professor');
-            }
-        } catch (error) {
-            console.error('❌ Erro ao carregar aulas do professor:', error);
-            this.aulas = [];
-            throw error;
-        }
-    }
-
-    // ✅ CARREGAR AULAS DO ALUNO
-    async carregarAulasAluno() {
-        try {
-            if (!this.usuarioId) {
-                throw new Error('ID do aluno não encontrado');
-            }
-
-            const response = await fetch(`/api/aluno/${this.usuarioId}/aulas`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`Erro HTTP: ${response.status}`);
-            }
-
-            this.aulas = await response.json();
-            console.log(`✅ ${this.aulas.length} aulas carregadas para o aluno`);
-            return this.aulas;
-
-        } catch (error) {
-            console.error('❌ Erro ao carregar aulas do aluno:', error);
-            this.aulas = [];
-            throw error;
-        }
-    }
-
-    // ✅ CARREGAR TODAS AS AULAS (ADMIN)
-    async carregarTodasAulas() {
-        try {
-            const result = await api.getAulas();
-            if (result && Array.isArray(result)) {
-                this.aulas = result;
-            } else if (result && result.success) {
-                this.aulas = result.data;
-            }
-            console.log(`✅ ${this.aulas.length} aulas carregadas`);
-            return this.aulas;
-        } catch (error) {
-            console.error('❌ Erro ao carregar todas as aulas:', error);
-            this.aulas = [];
-            throw error;
-        }
-    }
-
-    renderizarAulas() {
-        console.log('🎨 Renderizando aulas...');
-
-        // Encontrar containers pelas classes (seu HTML atual)
-        const containerMobile = document.querySelector('#aulas-mobile .aulas-list');
-        const containerDesktop = document.querySelector('#aulas-desktop .aulas-grid');
-
-        console.log('📱 Containers encontrados:', {
-            mobile: containerMobile ? '✅' : '❌',
-            desktop: containerDesktop ? '✅' : '❌'
+        console.log('📱 Containers:', {
+            desktop: this.containerDesktop,
+            mobile: this.containerMobile
         });
 
-        if (!containerMobile && !containerDesktop) {
-            console.error('❌ Nenhum container de aulas encontrado');
+        // Verificar se o usuário está logado
+        const userData = localStorage.getItem('userData');
+        if (!userData) {
+            console.error('❌ Usuário não está logado');
+            this.mostrarErro('Você precisa fazer login para acessar as aulas');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 3000);
             return;
         }
 
-        const html = this.gerarHTMLAulasAluno();
+        try {
+            const user = JSON.parse(userData);
+            this.currentUser = user;
+            this.tipoUsuario = user.tipo;
+            this.usuarioId = user.id;
 
-        if (containerMobile) containerMobile.innerHTML = html;
-        if (containerDesktop) containerDesktop.innerHTML = html;
+            console.log('👤 Usuário carregado:', user);
 
-        console.log('✅ Aulas renderizadas com sucesso');
+            if (!user.id) {
+                throw new Error('ID do usuário não encontrado');
+            }
+
+            // Carregar aulas baseado no tipo de usuário
+            await this.carregarERenderizarAulas();
+
+        } catch (error) {
+            console.error('❌ Erro na inicialização:', error);
+            this.mostrarErro('Erro ao carregar dados: ' + error.message);
+        }
+    }
+
+    // 🔥 CORREÇÃO: Método gerarHTMLAulas que estava faltando
+    gerarHTMLAulas(aulas) {
+        console.log('🎨 Gerando HTML para', aulas.length, 'aulas');
+
+        // Salvar as aulas na instância
+        this.aulas = aulas;
+
+        if (!aulas || aulas.length === 0) {
+            return this.getHTMLNenhumaAula();
+        }
+
+        // Baseado no tipo de usuário, usar o método apropriado
+        if (this.tipoUsuario === 'aluno') {
+            return this.gerarHTMLAulasAluno();
+        } else if (this.tipoUsuario === 'professor') {
+            return this.gerarHTMLAulasProfessor();
+        } else {
+            // Fallback para outros tipos de usuário
+            return this.gerarHTMLAulasGenerico(aulas);
+        }
+    }
+
+    // 🔥 CORREÇÃO: Método genérico para fallback
+    gerarHTMLAulasGenerico(aulas) {
+        return `
+            <div class="aulas-grid">
+                ${aulas.map(aula => `
+                    <div class="aula-card">
+                        <div class="aula-header">
+                            <h4>${aula.disciplina || 'Disciplina'}</h4>
+                            <span class="status ${aula.ativa ? 'ativa' : 'cancelada'}">
+                                ${aula.ativa ? '🟢 Ativa' : '🔴 Cancelada'}
+                            </span>
+                        </div>
+                        <div class="aula-info">
+                            <p><strong>Horário:</strong> ${aula.horario_inicio} - ${aula.horario_fim}</p>
+                            <p><strong>Sala:</strong> ${aula.sala_numero} - Bloco ${aula.sala_bloco}</p>
+                            <p><strong>Turma:</strong> ${aula.turma}</p>
+                            <p><strong>Curso:</strong> ${aula.curso}</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    async carregarAulasAluno(alunoId) {
+        try {
+            console.log('📚 Carregando aulas para aluno:', alunoId);
+
+            const response = await api.request(`/aulas/aluno/${alunoId}`, {
+                method: 'GET'
+            });
+
+            if (response.success) {
+                console.log(`✅ ${response.data.length} aulas carregadas para o aluno`);
+                return response.data;
+            } else {
+                throw new Error(response.error || 'Erro ao carregar aulas');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar aulas do aluno:', error);
+            throw error;
+        }
+    }
+
+    async carregarAulasProfessor() {
+        try {
+            console.log('👨‍🏫 Carregando aulas do professor');
+
+            const response = await api.request('/aulas/professor/minhas-aulas', {
+                method: 'GET'
+            });
+
+            if (response.success) {
+                console.log(`✅ ${response.data.length} aulas carregadas para o professor`);
+                return response.data;
+            } else {
+                throw new Error(response.error || 'Erro ao carregar aulas do professor');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar aulas do professor:', error);
+            throw error;
+        }
+    }
+
+    async carregarTodasAulas() {
+        try {
+            console.log('👑 Carregando todas as aulas (admin)');
+
+            const response = await api.request('/aulas', {
+                method: 'GET'
+            });
+
+            if (response.success) {
+                console.log(`✅ ${response.data.length} aulas carregadas (admin)`);
+                return response.data;
+            } else {
+                throw new Error(response.error || 'Erro ao carregar todas as aulas');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar todas as aulas:', error);
+            throw error;
+        }
+    }
+
+    renderizarAulas(aulas) {
+        console.log('🎨 Renderizando aulas:', aulas.length);
+
+        try {
+            const aulasHTML = this.gerarHTMLAulas(aulas);
+
+            // Atualizar desktop
+            if (this.containerDesktop) {
+                this.containerDesktop.innerHTML = aulasHTML;
+            }
+
+            // Atualizar mobile
+            if (this.containerMobile) {
+                this.containerMobile.innerHTML = aulasHTML;
+            }
+
+            console.log('✅ Aulas renderizadas com sucesso');
+        } catch (error) {
+            console.error('❌ Erro ao renderizar aulas:', error);
+            this.mostrarErro('Erro ao exibir aulas: ' + error.message);
+        }
     }
 
     escapeHtml(text) {
@@ -145,6 +189,45 @@ class AulasManager {
         return div.innerHTML;
     }
 
+    agruparAulasPorData(aulas) {
+        console.log('📅 Agrupando TODAS as aulas por data');
+
+        const grupos = {};
+
+        aulas.forEach(aula => {
+            if (!aula.data_aula) {
+                console.log('⚠️ Aula sem data, pulando:', aula.id);
+                return;
+            }
+
+            // Usar a data completa como chave (YYYY-MM-DD)
+            const dataKey = aula.data_aula;
+
+            if (!grupos[dataKey]) {
+                // Criar novo grupo para esta data
+                grupos[dataKey] = {
+                    nome: this.formatarDataDisplay(aula.data_aula),
+                    data: new Date(aula.data_aula),
+                    aulas: []
+                };
+            }
+
+            grupos[dataKey].aulas.push(aula);
+        });
+
+        // Ordenar os grupos por data (mais antiga primeiro)
+        const gruposOrdenados = Object.values(grupos).sort((a, b) => a.data - b.data);
+
+        // Ordenar aulas dentro de cada grupo por horário
+        gruposOrdenados.forEach(grupo => {
+            grupo.aulas.sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
+        });
+
+        console.log(`📊 ${gruposOrdenados.length} grupos de data criados`);
+        return gruposOrdenados;
+    }
+
+    // 🔧 CORREÇÃO: MÉTODO agruparAulasPorDia CORRIGIDO
     agruparAulasPorDia(aulas) {
         const dias = {
             1: { nome: 'Segunda-feira', aulas: [] },
@@ -155,9 +238,38 @@ class AulasManager {
         };
 
         aulas.forEach(aula => {
-            const diaNumero = parseInt(aula.dia_semana);
+            // Usar data_aula para determinar o dia da semana
+            let diaNumero;
+            if (aula.data_aula) {
+                // 🔥 CORREÇÃO: Usar UTC para cálculo consistente
+                const [ano, mes, dia] = aula.data_aula.split('-').map(Number);
+                const data = new Date(Date.UTC(ano, mes - 1, dia));
+                const diaSemanaUTC = data.getUTCDay(); // 0=Domingo, 1=Segunda, etc.
+
+                // 🔥 CORREÇÃO: Converter corretamente para 1-5 (Segunda a Sexta)
+                diaNumero = diaSemanaUTC === 0 ? 7 : diaSemanaUTC; // 1=Segunda, 7=Domingo
+
+                console.log(`📅 Frontend - Data: ${aula.data_aula}, UTC Day: ${diaSemanaUTC}, Dia Calculado: ${diaNumero}`);
+
+                // Se for sábado (6) ou domingo (7), pular
+                if (diaNumero === 6 || diaNumero === 7) {
+                    console.log(`⏭️ Pulando aula de ${aula.data_aula} - Fim de semana (dia ${diaNumero})`);
+                    return;
+                }
+            } else if (aula.dia_semana) {
+                // Fallback para dia_semana do banco (já deve estar correto)
+                diaNumero = parseInt(aula.dia_semana);
+                console.log(`📅 Usando dia_semana do banco: ${diaNumero} para aula ${aula.id}`);
+            } else {
+                console.log('⚠️ Aula sem data_aula e dia_semana, pulando:', aula.id);
+                return; // Pular aula sem dia definido
+            }
+
             if (dias[diaNumero]) {
                 dias[diaNumero].aulas.push(aula);
+                console.log(`✅ Aula ${aula.id} (${aula.data_aula}) adicionada à ${dias[diaNumero].nome}`);
+            } else {
+                console.log(`❌ Dia número ${diaNumero} não encontrado para aula ${aula.id}`);
             }
         });
 
@@ -166,10 +278,14 @@ class AulasManager {
             dia.aulas.sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
         });
 
+        // Debug: mostrar quantas aulas em cada dia
+        Object.entries(dias).forEach(([diaNum, diaInfo]) => {
+            console.log(`📊 ${diaInfo.nome}: ${diaInfo.aulas.length} aulas`);
+        });
+
         return dias;
     }
 
-    // ✅ VER DETALHES DA AULA (PARA ALUNO)
     verDetalhesAula(aulaId) {
         const aula = this.aulas.find(a => a.id === aulaId);
         if (aula) {
@@ -179,9 +295,8 @@ class AulasManager {
         }
     }
 
-    // ✅ MODAL DE DETALHES DA AULA PARA ALUNO
     mostrarModalDetalhesAulaAluno(aula) {
-        const dia = this.formatarDiaSemana(aula.dia_semana);
+        const dataFormatada = this.formatarDataDisplay(aula.data_aula);
 
         const modalHTML = `
 <div class="modal-overlay" id="modalDetalhesAulaAluno">
@@ -227,8 +342,8 @@ class AulasManager {
                     <span>${aula.horario_inicio || 'N/A'} - ${aula.horario_fim || 'N/A'}</span>
                 </div>
                 <div class="detalhe-item">
-                    <label><i class="fas fa-calendar-day"></i> Dia:</label>
-                    <span>${this.escapeHtml(dia)}</span>
+                    <label><i class="fas fa-calendar-day"></i> Data:</label>
+                    <span>${dataFormatada}</span>
                 </div>
                 ${aula.periodo ? `
                 <div class="detalhe-item">
@@ -244,7 +359,6 @@ class AulasManager {
                 </div>
             </div>
             
-            <!-- Ações específicas para aluno -->
             <div class="aula-actions-aluno" style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee;">
                 <button class="btn-primary" onclick="abrirMapaSala('${aula.sala_bloco}', ${aula.sala_andar || 1}, '${aula.sala_numero}'); fecharModalDetalhesAluno();">
                     <i class="fas fa-map-marker-alt"></i> Localizar no Mapa
@@ -264,7 +378,6 @@ class AulasManager {
             this.fecharTodosModaisAluno();
         };
 
-        // Configurar fechamento ao clicar fora
         setTimeout(() => {
             const overlay = document.getElementById('modalDetalhesAulaAluno');
             if (overlay) {
@@ -277,40 +390,127 @@ class AulasManager {
         }, 50);
     }
 
-    // ✅ ATUALIZAR GERAR HTML DAS AULAS DO ALUNO (COM CLIQUE)
-    gerarHTMLAulasAluno() {
-        if (!this.aulas || this.aulas.length === 0) {
-            return `
-            <div class="empty-state">
-                <i class="fas fa-calendar-times fa-3x"></i>
-                <h3>Nenhuma aula encontrada</h3>
-                <p>Você não tem aulas agendadas para sua turma no momento.</p>
-            </div>
-        `;
-        }
+    formatarDataDisplay(dataString) {
+        if (!dataString) return 'Data não definida';
 
-        // Agrupar aulas por dia da semana
-        const aulasPorDia = this.agruparAulasPorDia(this.aulas);
-        return this.gerarHTMLAulasPorDia(aulasPorDia);
+        try {
+            const [ano, mes, dia] = dataString.split('-').map(Number);
+            const data = new Date(ano, mes - 1, dia);
+
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+
+            const amanha = new Date(hoje);
+            amanha.setDate(amanha.getDate() + 1);
+
+            const semanaQueVem = new Date(hoje);
+            semanaQueVem.setDate(semanaQueVem.getDate() + 7);
+
+            // Verificar se é hoje, amanhã ou outra data
+            if (data.getTime() === hoje.getTime()) {
+                return 'Hoje';
+            } else if (data.getTime() === amanha.getTime()) {
+                return 'Amanhã';
+            } else if (data > hoje && data <= semanaQueVem) {
+                // Próximos 7 dias - mostrar dia da semana
+                return data.toLocaleDateString('pt-BR', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long'
+                });
+            } else {
+                // Datas futuras - mostrar data completa
+                return data.toLocaleDateString('pt-BR', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+            }
+        } catch (error) {
+            console.error('❌ Erro ao formatar data:', error);
+            return dataString;
+        }
     }
 
-    // No método gerarHTMLAulasPorDia, atualize a geração dos cards:
-gerarHTMLAulasPorDia(aulasPorDia) {
-    let html = '';
+    gerarHTMLAulasAluno() {
+        if (!this.aulas || this.aulas.length === 0) {
+            return this.getHTMLNenhumaAula();
+        }
 
-    for (const [diaNumero, diaInfo] of Object.entries(aulasPorDia)) {
-        if (diaInfo.aulas.length > 0) {
-            html += `
+        // 🔥 CORREÇÃO: Usar agrupamento por data em vez de por dia da semana
+        const gruposData = this.agruparAulasPorData(this.aulas);
+        return this.gerarHTMLAulasPorData(gruposData);
+    }
+
+    gerarHTMLAulasPorData(gruposData) {
+        let html = '';
+
+        gruposData.forEach(grupo => {
+            if (grupo.aulas.length > 0) {
+                html += `
+            <div class="dia-aulas">
+                <h3 class="dia-titulo">
+                    <i class="fas fa-calendar-day"></i> ${grupo.nome}
+                </h3>
+                <div class="aulas-dia-container">
+                    ${grupo.aulas.map(aula => {
+                    const statusClass = this.getAulaStatusClass(aula);
+                    const statusBadge = this.getStatusBadge(aula);
+                    return `
+                            <div class="aula-card ${statusClass}" onclick="aulasManager.verDetalhesAula(${aula.id})">
+                                <div class="aula-header">
+                                    <div class="aula-header-top">
+                                        <h4>${aula.disciplina || aula.disciplina_nome || 'Disciplina'}</h4>
+                                        ${statusBadge}
+                                    </div>
+                                    <div class="aula-header-bottom">
+                                        <span class="aula-horario">
+                                            <i class="fas fa-clock"></i>${aula.horario_inicio} - ${aula.horario_fim}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="aula-info">
+                                    <p><strong>Professor:</strong> ${aula.professor_nome || 'N/A'}</p>
+                                    <p><strong>Sala:</strong> ${aula.sala_numero} - Bloco ${aula.sala_bloco}</p>
+                                    <p><strong>Turma:</strong> ${aula.turma || 'N/A'}</p>
+                                    ${aula.periodo ? `<p><strong>Período:</strong> ${aula.periodo}º</p>` : ''}
+                                </div>
+                                <div class="aula-actions">
+                                    <button class="btn-localizar" 
+                                            onclick="event.stopPropagation(); abrirMapaSala('${aula.sala_bloco}', ${aula.sala_andar || 1}, '${aula.sala_numero}')">
+                                        <i class="fas fa-map-marker-alt"></i> Localizar Sala
+                                    </button>
+                                </div>
+                            </div>
+                            `;
+                }).join('')}
+                </div>
+            </div>
+            `;
+            }
+        });
+
+        return html || this.getHTMLNenhumaAula();
+    }
+
+    gerarHTMLAulasPorDia(aulasPorDia) {
+        let html = '';
+
+        for (const [diaNumero, diaInfo] of Object.entries(aulasPorDia)) {
+            if (diaInfo.aulas.length > 0) {
+                html += `
             <div class="dia-aulas">
                 <h3 class="dia-titulo">
                     <i class="fas fa-calendar-day"></i>${diaInfo.nome}
                 </h3>
                 <div class="aulas-dia-container">
                     ${diaInfo.aulas.map(aula => {
-                        const statusClass = this.getAulaStatusClass(aula);
-                        return `
+                    const statusClass = this.getAulaStatusClass(aula);
+                    const statusBadge = this.getStatusBadge(aula);
+                    return `
                         <div class="aula-card ${statusClass}" onclick="aulasManager.verDetalhesAula(${aula.id})">
-                            ${this.getStatusBadge(aula)}
+                            ${statusBadge}
                             <div class="aula-header">
                                 <h4>${aula.disciplina || aula.disciplina_nome || 'Disciplina'}</h4>
                                 <span class="aula-horario">
@@ -334,36 +534,121 @@ gerarHTMLAulasPorDia(aulasPorDia) {
                 </div>
             </div>
             `;
+            }
         }
+
+        return html || this.getHTMLNenhumaAulaEstaSemana();
     }
 
-    return html || this.getHTMLNenhumaAulaEstaSemana();
-}
+    getAulaStatusClass(aula) {
+        // 🔥 CORREÇÃO: Verificar múltiplas formas de identificar aula cancelada
+        const isCancelada = aula.ativa === 0 ||
+            aula.ativa === false ||
+            aula.status === 'cancelada' ||
+            aula.status_aula === 'cancelada';
 
-// Método auxiliar para determinar a classe de status
-getAulaStatusClass(aula) {
-    if (aula.ativa === 0 || aula.ativa === false || aula.status === 'cancelada') {
-        return 'aula-cancelada';
-    }
-    
-    // Aqui você pode adicionar lógica para determinar se está em andamento, próxima, etc.
-    // Baseado no horário atual e data
-    return '';
-}
+        if (isCancelada) {
+            return 'aula-cancelada';
+        }
 
-// Método para gerar badge de status
-getStatusBadge(aula) {
-    if (aula.ativa === 0 || aula.ativa === false || aula.status === 'cancelada') {
-        return '<span class="aula-status-badge cancelada">Cancelada</span>';
+        // 🔥 CORREÇÃO: Comparação de datas mais robusta
+        const agora = new Date();
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
+        let dataAula;
+        try {
+            if (aula.data_aula) {
+                const [ano, mes, dia] = aula.data_aula.split('-').map(Number);
+                dataAula = new Date(ano, mes - 1, dia);
+            } else {
+                return '';
+            }
+        } catch (error) {
+            console.error('❌ Erro ao processar data da aula:', aula.data_aula, error);
+            return '';
+        }
+
+        const isHoje = dataAula.getDate() === hoje.getDate() &&
+            dataAula.getMonth() === hoje.getMonth() &&
+            dataAula.getFullYear() === hoje.getFullYear();
+
+        if (isHoje) {
+            const horaAtual = agora.getHours() + (agora.getMinutes() / 60);
+            const [horaInicio, minutoInicio] = aula.horario_inicio.split(':').map(Number);
+            const [horaFim, minutoFim] = aula.horario_fim.split(':').map(Number);
+            const horaInicioDecimal = horaInicio + (minutoInicio / 60);
+            const horaFimDecimal = horaFim + (minutoFim / 60);
+
+            if (horaAtual >= horaInicioDecimal && horaAtual <= horaFimDecimal) {
+                return 'aula-em-andamento';
+            }
+        }
+
+        return '';
     }
-    
-    // Lógica para outros status
-    return '';
-}
+
+    getStatusBadge(aula) {
+        // 🔥 CORREÇÃO: Verificar múltiplas formas de identificar aula cancelada
+        const isCancelada = aula.ativa === 0 ||
+            aula.ativa === false ||
+            aula.status === 'cancelada' ||
+            aula.status_aula === 'cancelada';
+
+        if (isCancelada) {
+            return '<span class="aula-status-badge cancelada compact">Cancelada</span>';
+        }
+
+        // 🔥 CORREÇÃO: Comparação de datas mais robusta
+        const agora = new Date();
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0); // Zerar horas para comparar apenas a data
+
+        let dataAula;
+        try {
+            // Converter a data da aula para objeto Date
+            if (aula.data_aula) {
+                const [ano, mes, dia] = aula.data_aula.split('-').map(Number);
+                dataAula = new Date(ano, mes - 1, dia);
+            } else {
+                // Se não tem data_aula, não podemos determinar se é hoje
+                return '<span class="aula-status-badge ativa compact">Ativa</span>';
+            }
+        } catch (error) {
+            console.error('❌ Erro ao processar data da aula:', aula.data_aula, error);
+            return '<span class="aula-status-badge ativa compact">Ativa</span>';
+        }
+
+        // 🔥 CORREÇÃO: Comparar apenas ano, mês e dia
+        const isHoje = dataAula.getDate() === hoje.getDate() &&
+            dataAula.getMonth() === hoje.getMonth() &&
+            dataAula.getFullYear() === hoje.getFullYear();
+
+        console.log(`📅 Verificando status - Data aula: ${aula.data_aula}, Hoje: ${hoje.toISOString().split('T')[0]}, É hoje: ${isHoje}`);
+
+        if (isHoje) {
+            // Verificar se está em andamento
+            const horaAtual = agora.getHours() + (agora.getMinutes() / 60);
+            const [horaInicio, minutoInicio] = aula.horario_inicio.split(':').map(Number);
+            const [horaFim, minutoFim] = aula.horario_fim.split(':').map(Number);
+            const horaInicioDecimal = horaInicio + (minutoInicio / 60);
+            const horaFimDecimal = horaFim + (minutoFim / 60);
+
+            console.log(`⏰ Horário - Atual: ${horaAtual.toFixed(2)}, Aula: ${horaInicioDecimal}-${horaFimDecimal}`);
+
+            if (horaAtual >= horaInicioDecimal && horaAtual <= horaFimDecimal) {
+                return '<span class="aula-status-badge em-andamento pulse compact">Em Andamento</span>';
+            } else {
+                return '<span class="aula-status-badge hoje compact">Hoje</span>';
+            }
+        }
+
+        // Se não é hoje e não está cancelada, é "Ativa"
+        return '<span class="aula-status-badge ativa compact">Ativa</span>';
+    }
 
     gerarHTMLAulasProfessor() {
         if (typeof professorManager !== 'undefined') {
-            // Se professorManager existe, deixe ele lidar com a renderização
             console.log('📊 ProfessorManager encontrado, delegando renderização...');
             return '';
         }
@@ -383,7 +668,7 @@ getStatusBadge(aula) {
                             <p><strong>Horário:</strong> ${aula.horario_inicio} - ${aula.horario_fim}</p>
                             <p><strong>Sala:</strong> ${aula.sala_numero} - Bloco ${aula.sala_bloco}</p>
                             <p><strong>Turma:</strong> ${aula.turma}</p>
-                            <p><strong>Dia:</strong> ${this.formatarDiaSemana(aula.dia_semana)}</p>
+                            <p><strong>Data:</strong> ${this.formatarDataDisplay(aula.data_aula)}</p>
                         </div>
                     </div>
                 `).join('')}
@@ -391,37 +676,11 @@ getStatusBadge(aula) {
         `;
     }
 
-    gruparAulasPorDia(aulas) {
-        const dias = {
-            1: { nome: 'Segunda-feira', aulas: [] },
-            2: { nome: 'Terça-feira', aulas: [] },
-            3: { nome: 'Quarta-feira', aulas: [] },
-            4: { nome: 'Quinta-feira', aulas: [] },
-            5: { nome: 'Sexta-feira', aulas: [] }
-        };
-
-        aulas.forEach(aula => {
-            const diaNumero = parseInt(aula.dia_semana);
-            if (dias[diaNumero]) {
-                dias[diaNumero].aulas.push(aula);
-            }
-        });
-
-        // Ordenar aulas por horário em cada dia
-        Object.values(dias).forEach(dia => {
-            dia.aulas.sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
-        });
-
-        return dias;
-    }
-
-    // ✅ FECHAR TODOS OS MODAIS (ALUNO)
     fecharTodosModaisAluno() {
         const modais = document.querySelectorAll('.modal-overlay');
         modais.forEach(modal => modal.remove());
     }
 
-    // ✅ FORMATAR DIA DA SEMANA
     formatarDiaSemana(dia) {
         const diasMap = {
             1: 'Segunda-feira',
@@ -438,7 +697,6 @@ getStatusBadge(aula) {
         return diasMap[dia] || dia;
     }
 
-    // ✅ HTML QUANDO NÃO HÁ AULAS
     getHTMLNenhumaAula() {
         if (this.tipoUsuario === 'aluno') {
             return `
@@ -460,103 +718,98 @@ getStatusBadge(aula) {
         }
     }
 
-    // ✅ HTML QUANDO NÃO HÁ AULAS ESTA SEMANA
     getHTMLNenhumaAulaEstaSemana() {
         return `
-            <div class="empty-state">
-                <i class="fas fa-calendar-check fa-3x"></i>
-                <h3>Nenhuma aula esta semana</h3>
-                <p>Não há aulas agendadas para os dias atuais.</p>
-                <p class="empty-subtitle">As aulas aparecerão aqui quando forem agendadas para sua turma.</p>
+    <div class="empty-state">
+        <i class="fas fa-calendar-check fa-3x"></i>
+        <h3>Nenhuma aula esta semana</h3>
+        <p>Não há aulas agendadas para os dias atuais.</p>
+        <div class="status-legend" style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <div class="legend-item" style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: #27ae60;"></div>
+                <span style="font-size: 0.9rem; color: #666;">Aulas Ativas</span>
             </div>
-        `;
+            <div class="legend-item" style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: #e74c3c;"></div>
+                <span style="font-size: 0.9rem; color: #666;">Aulas Canceladas</span>
+            </div>
+            <div class="legend-item" style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: #f39c12;"></div>
+                <span style="font-size: 0.9rem; color: #666;">Em Andamento</span>
+            </div>
+        </div>
+    </div>
+    `;
     }
 
-    // ✅ VERIFICAR SE ALUNO TEM CADASTRO COMPLETO
-    async verificarCadastroCompletoAluno() {
-        try {
-            if (this.tipoUsuario !== 'aluno') return true;
+    mostrarLoading() {
+        console.log('⏳ Mostrando loading...');
 
-            const response = await fetch(`/api/aluno/dados-completos/${this.usuarioId}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                return data.cadastro_completo;
-            }
-            return false;
-        } catch (error) {
-            console.error('❌ Erro ao verificar cadastro:', error);
-            return false;
+        if (this.containerDesktop) {
+            this.containerDesktop.innerHTML = `
+                <div class="loading-aulas">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Carregando aulas...</p>
+                </div>
+            `;
         }
+
+        if (this.containerMobile) {
+            this.containerMobile.innerHTML = `
+                <div class="loading-aulas">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Carregando aulas...</p>
+                </div>
+            `;
+        }
+    }
+
+    esconderLoading() {
+        console.log('✅ Escondendo loading...');
     }
 
     async carregarERenderizarAulas() {
         try {
-            console.log('🚀 Iniciando carregamento de aulas...');
+            console.log('🔄 Carregando aulas...');
+            this.mostrarLoading();
 
-            // Verificar se é aluno
-            if (this.tipoUsuario !== 'aluno') {
-                console.log('⚠️ Não é aluno, ignorando carregamento');
-                return;
+            const userData = localStorage.getItem('userData');
+            if (!userData) {
+                throw new Error('Usuário não logado');
             }
 
-            // Carregar aulas
-            await this.carregarAulasAluno();
+            const user = JSON.parse(userData);
+            this.currentUser = user;
+            this.tipoUsuario = user.tipo;
 
-            // Renderizar
-            this.renderizarAulas();
+            console.log('👤 Tipo de usuário:', user.tipo);
+            console.log('👤 ID do usuário:', user.id);
 
-            console.log('✅ Aulas carregadas e renderizadas com sucesso');
+            let aulas = [];
+
+            if (user.tipo === 'aluno') {
+                aulas = await this.carregarAulasAluno(user.id);
+            } else if (user.tipo === 'professor') {
+                aulas = await this.carregarAulasProfessor();
+            } else if (user.tipo === 'admin') {
+                aulas = await this.carregarTodasAulas();
+            } else {
+                throw new Error('Tipo de usuário não suportado: ' + user.tipo);
+            }
+
+            console.log(`✅ ${aulas.length} aulas carregadas`);
+            this.renderizarAulas(aulas);
 
         } catch (error) {
             console.error('❌ Erro ao carregar e renderizar aulas:', error);
             this.mostrarErro('Erro ao carregar aulas: ' + error.message);
+        } finally {
+            this.esconderLoading();
         }
-    }
-
-    // ✅ MOSTRAR MODAL DE CADASTRO INCOMPLETO
-    mostrarModalCadastroIncompleto() {
-        const modalHTML = `
-            <div class="modal-overlay" id="modalCadastroIncompleto">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3><i class="fas fa-user-plus"></i> Complete seu Cadastro</h3>
-                    </div>
-                    <div class="modal-body">
-                        <p>Para visualizar suas aulas, é necessário completar seu cadastro com:</p>
-                        <ul>
-                            <li>✅ Curso</li>
-                            <li>✅ Período</li>  
-                            <li>✅ Turma</li>
-                        </ul>
-                        <p>Clique no botão abaixo para completar seu cadastro.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn-primary" onclick="window.location.href='perfil.html'">
-                            <i class="fas fa-user-edit"></i> Completar Cadastro
-                        </button>
-                        <button class="btn-secondary" onclick="document.getElementById('modalCadastroIncompleto').remove()">
-                            <i class="fas fa-times"></i> Mais Tarde
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
 
     mostrarErro(mensagem) {
         console.error('❌ Erro:', mensagem);
-
-        // Encontrar containers e mostrar erro
-        const containerMobile = document.querySelector('#aulas-mobile .aulas-list');
-        const containerDesktop = document.querySelector('#aulas-desktop .aulas-grid');
 
         const errorHTML = `
             <div class="error-state">
@@ -569,14 +822,15 @@ getStatusBadge(aula) {
             </div>
         `;
 
-        if (containerMobile) containerMobile.innerHTML = errorHTML;
-        if (containerDesktop) containerDesktop.innerHTML = errorHTML;
+        if (this.containerDesktop) {
+            this.containerDesktop.innerHTML = errorHTML;
+        }
+        if (this.containerMobile) {
+            this.containerMobile.innerHTML = errorHTML;
+        }
     }
 
-    // ========== MÉTODOS EXISTENTES (COMPATIBILIDADE) ==========
-
-
-
+    // Outros métodos mantidos para compatibilidade
     async criarAula(dadosAula) {
         try {
             const result = await api.criarAula(dadosAula);
@@ -633,135 +887,23 @@ const aulasManager = new AulasManager();
 window.fecharModalDetalhesAluno = function () {
     const modal = document.getElementById('modalDetalhesAulaAluno');
     if (modal) {
-        modal.classList.add('closing');
-        setTimeout(() => {
-            modal.remove();
-        }, 300);
+        modal.remove();
     }
 };
 
-// ✅ FUNÇÃO GLOBAL PARA CARREGAR AULAS
 window.carregarAulas = function (containerId = null) {
-    if (!containerId) {
-        // Determinar container automaticamente baseado na tela
-        const isMobile = window.innerWidth < 768;
-        containerId = isMobile ? 'aulas-list-mobile' : 'aulas-list-desktop';
-    }
-
-    aulasManager.carregarERenderizarAulas(containerId);
+    aulasManager.carregarERenderizarAulas();
 };
 
-// ✅ CORRIGIR A INICIALIZAÇÃO NO aulas.js
+// ✅ CORRIGIR A INICIALIZAÇÃO
 document.addEventListener('DOMContentLoaded', function () {
     console.log('📚 AulasManager carregado e pronto');
 
-    // ✅ CORREÇÃO: Carregar aulas automaticamente para ALUNOS
     setTimeout(() => {
         const userData = JSON.parse(localStorage.getItem('userData'));
         if (userData && userData.tipo === 'aluno') {
             console.log('🎓 Inicializando carregamento automático de aulas para aluno...');
-
-            // Determinar container baseado no tamanho da tela
-            const isMobile = window.innerWidth < 768;
-            const containerId = isMobile ? 'aulas-list-mobile' : 'aulas-list-desktop';
-
-            // Carregar aulas
-            carregarAulas(containerId);
+            aulasManager.carregarERenderizarAulas();
         }
     }, 1000);
 });
-
-// ✅ FUNÇÃO DE DEBUG - TESTAR VÍNCULO
-async function debugVinculoAluno() {
-    try {
-        const userData = JSON.parse(localStorage.getItem('userData'));
-        if (!userData || userData.tipo !== 'aluno') {
-            alert('Esta função é apenas para alunos');
-            return;
-        }
-
-        console.log('🐛 Iniciando debug de vínculo...');
-
-        const response = await fetch(`/api/aluno/${userData.id}/debug-vinculo`, {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status}`);
-        }
-
-        const debugData = await response.json();
-        console.log('🔍 [DEBUG] Resultado completo:', debugData);
-
-        // Mostrar resultado em um alerta formatado
-        const mensagem = `
-🎯 RESULTADO DO DEBUG:
-
-👤 ALUNO:
-• Nome: ${debugData.aluno?.aluno_nome || 'N/A'}
-• Curso: ${debugData.aluno?.aluno_curso || 'NÃO DEFINIDO'}
-• Turma: ${debugData.aluno?.turma_nome || 'NÃO VINCULADO'}
-• Status: ${debugData.aluno?.status_vinculo || 'N/A'}
-
-📚 AULAS ENCONTRADAS: ${debugData.aulas?.length || 0}
-
-${debugData.aulas?.map(aula => `
-➤ Aula: ${aula.disciplina}
-  Curso: ${aula.aula_curso} | Turma: ${aula.aula_turma}
-  Professor: ${aula.professor_nome} | Ativa: ${aula.ativa ? '✅' : '❌'}
-`).join('')}
-
-🔍 RESUMO:
-• Aluno tem curso: ${debugData.resumo?.aluno_tem_curso ? '✅' : '❌'}
-• Aluno tem turma: ${debugData.resumo?.aluno_tem_turma ? '✅' : '❌'}
-• Correspondência de curso: ${debugData.resumo?.correspondencia_curso ? '✅' : '❌'}
-• Correspondência de turma: ${debugData.resumo?.correspondencia_turma ? '✅' : '❌'}
-        `.trim();
-
-        alert(mensagem);
-
-    } catch (error) {
-        console.error('❌ Erro no debug:', error);
-        alert('Erro no debug: ' + error.message);
-    }
-}
-
-// ✅ ADICIONAR AO GLOBAL PARA TESTAR NO CONSOLE
-window.debugVinculoAluno = debugVinculoAluno;
-
-// ✅ FUNÇÃO DE DEBUG PARA VERIFICAR RENDERIZAÇÃO
-window.debugRenderizacaoAulas = function () {
-    console.log('🔍 [DEBUG RENDER] Verificando renderização...');
-
-    const userData = JSON.parse(localStorage.getItem('userData'));
-    console.log('👤 Usuário:', userData);
-
-    console.log('📚 AulasManager:', {
-        tipoUsuario: aulasManager.tipoUsuario,
-        usuarioId: aulasManager.usuarioId,
-        aulas: aulasManager.aulas,
-        quantidade: aulasManager.aulas.length
-    });
-
-    // Verificar containers
-    const containerMobile = document.getElementById('aulas-list-mobile');
-    const containerDesktop = document.getElementById('aulas-list-desktop');
-
-    console.log('📱 Containers:', {
-        mobile: containerMobile ? '✅ Encontrado' : '❌ Não encontrado',
-        desktop: containerDesktop ? '✅ Encontrado' : '❌ Não encontrado',
-        mobileHTML: containerMobile ? containerMobile.innerHTML : 'N/A',
-        desktopHTML: containerDesktop ? containerDesktop.innerHTML : 'N/A'
-    });
-
-    // Forçar recarregamento
-    if (userData && userData.tipo === 'aluno') {
-        const isMobile = window.innerWidth < 768;
-        const containerId = isMobile ? 'aulas-list-mobile' : 'aulas-list-desktop';
-        console.log('🔄 Forçando recarregamento no container:', containerId);
-        carregarAulas(containerId);
-    }
-};

@@ -263,40 +263,14 @@
                                 <option value="21:30-22:20">21:30 - 22:20</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div class="professor-form-group professor-dias-container">
-                        <label class="professor-form-label">
-                            <i class="fas fa-calendar-day"></i> Dias da Semana *
-                        </label>
-                        <div class="professor-dias-checkbox">
-                            <label class="professor-checkbox-label">
-                                <input type="checkbox" name="dias" value="segunda">
-                                <span class="professor-checkmark"></span>
-                                <span class="professor-dia-text">Segunda</span>
+                        <div class="professor-form-group">
+                            <label for="dataAula" class="professor-form-label">
+                                <i class="fas fa-calendar-day"></i> Data da Aula *
                             </label>
-                            <label class="professor-checkbox-label">
-                                <input type="checkbox" name="dias" value="terca">
-                                <span class="professor-checkmark"></span>
-                                <span class="professor-dia-text">Terça</span>
-                            </label>
-                            <label class="professor-checkbox-label">
-                                <input type="checkbox" name="dias" value="quarta">
-                                <span class="professor-checkmark"></span>
-                                <span class="professor-dia-text">Quarta</span>
-                            </label>
-                            <label class="professor-checkbox-label">
-                                <input type="checkbox" name="dias" value="quinta">
-                                <span class="professor-checkmark"></span>
-                                <span class="professor-dia-text">Quinta</span>
-                            </label>
-                            <label class="professor-checkbox-label">
-                                <input type="checkbox" name="dias" value="sexta">
-                                <span class="professor-checkmark"></span>
-                                <span class="professor-dia-text">Sexta</span>
-                            </label>
+                            <input type="date" id="dataAula" class="professor-form-control" required
+                                min="{{ dataMinima }}">
+                            <small class="professor-form-help">Selecione a data específica da aula</small>
                         </div>
-                        <small class="professor-form-help">Selecione os dias em que a aula ocorrerá</small>
                     </div>
 
                     <div class="professor-form-actions">
@@ -313,39 +287,6 @@
                         <p><i class="fas fa-info-circle"></i> Todos os campos marcados com * são obrigatórios</p>
                     </div>
                 </form>
-            </div>
-
-            <!-- ==================== PAINEL DE DEBUG ==================== -->
-            <div class="debug-panel"
-                style="margin-top: 30px; padding: 20px; background: #fff3cd; border: 2px dashed #ffc107; border-radius: 8px;">
-                <h4 style="margin: 0 0 15px 0; color: #856404;">
-                    <i class="fas fa-bug"></i> Painel de Debug (Remover em Produção)
-                </h4>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button type="button" onclick="debugForm()" class="btn" style="background: #17a2b8; color: white;">
-                        <i class="fas fa-info-circle"></i> Verificar Estado
-                    </button>
-                    <button type="button" onclick="debugSections()" class="btn"
-                        style="background: #6c757d; color: white;">
-                        <i class="fas fa-layer-group"></i> Ver Sections
-                    </button>
-                    <button type="button" onclick="debugCursoPeriodo()" class="btn"
-                        style="background: #28a745; color: white;">
-                        <i class="fas fa-play"></i> Testar Curso/Período
-                    </button>
-                    <button type="button" onclick="testarHabilitarPeriodo()" class="btn"
-                        style="background: #e83e8c; color: white;">
-                        <i class="fas fa-magic"></i> Testar Período
-                    </button>
-                    <button type="button" onclick="professorManager.debugCriarAula()" class="btn"
-                        style="background: #dc3545; color: white;">
-                        <i class="fas fa-bolt"></i> Teste Manual API
-                    </button>
-                </div>
-                <div id="debug-output"
-                    style="margin-top: 15px; padding: 10px; background: white; border-radius: 4px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
-                    <!-- Output do debug aparecerá aqui -->
-                </div>
             </div>
         </section>
 
@@ -429,6 +370,21 @@
         function closeMenu() {
             const nav = document.getElementById('mobileNav');
             nav.classList.remove('active');
+        }
+
+        function configurarDataMinima() {
+            const dataInputs = document.querySelectorAll('input[type="date"]');
+            const dataPadrao = new Date().toISOString().split('T')[0];
+            dataInputs.forEach(input => {
+
+                input.setAttribute('min', '2000-01-01');
+
+                if (!input.value) {
+                    input.value = dataPadrao;
+                }
+            });
+
+            console.log('📅 Data configurada (sem restrições)');
         }
 
         function showSection(sectionId) {
@@ -588,7 +544,7 @@
 
             if (formCriarAula) {
                 console.log('✅ Formulário encontrado, configurando evento submit...');
-
+                configurarDataMinima();
                 // 🔥 CORREÇÃO: Remover event listener anterior se existir
                 if (formSubmitHandler) {
                     formCriarAula.removeEventListener('submit', formSubmitHandler);
@@ -645,7 +601,67 @@
             }
         }
 
-        // 🔥 CORREÇÃO: Função separada para lidar com o submit do formulário
+        // 🔥 CORREÇÃO SIMPLIFICADA: Função para formatar data
+        function formatarDataParaEnvio(dataString) {
+            // Simplesmente retorna a string da data, pois o input já está em YYYY-MM-DD
+            return dataString;
+        }
+
+        // 🔥 CORREÇÃO: Configurar data mínima para hoje
+        function configurarDataMinima() {
+            const dataInputs = document.querySelectorAll('input[type="date"]');
+
+            // Usar data atual do sistema (local)
+            const hoje = new Date();
+            const ano = hoje.getFullYear();
+            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+            const dia = String(hoje.getDate()).padStart(2, '0');
+            const hojeFormatada = `${ano}-${mes}-${dia}`;
+
+            dataInputs.forEach(input => {
+                input.setAttribute('min', hojeFormatada);
+                // Se não tiver valor, definir como hoje
+                if (!input.value) {
+                    input.value = hojeFormatada;
+                }
+            });
+
+            console.log('📅 Data mínima configurada:', hojeFormatada);
+        }
+
+        // 🔥 CORREÇÃO: Validação de data no frontend - Permitir hoje
+        function validarDataAula(dataAula, horarioFim) {
+            if (!dataAula) return { valido: false, erro: 'Selecione uma data' };
+
+            const dataSelecionada = new Date(dataAula);
+            const hoje = new Date();
+
+            // Resetar horas para comparar apenas as datas
+            dataSelecionada.setHours(0, 0, 0, 0);
+            hoje.setHours(0, 0, 0, 0);
+
+            // Permitir hoje e datas futuras
+            if (dataSelecionada < hoje) {
+                return { valido: false, erro: 'Não é possível agendar aulas para datas passadas' };
+            }
+
+            // Se for hoje, verificar se o horário já passou
+            if (dataSelecionada.getTime() === hoje.getTime() && horarioFim) {
+                const agora = new Date();
+                const [horaAtual, minutoAtual] = [agora.getHours(), agora.getMinutes()];
+                const [horaFim, minutoFim] = horarioFim.split(':').map(Number);
+
+                if (horaAtual > horaFim || (horaAtual === horaFim && minutoAtual > minutoFim)) {
+                    return {
+                        valido: false,
+                        erro: 'Não é possível agendar aulas para horários que já passaram hoje'
+                    };
+                }
+            }
+
+            return { valido: true };
+        }
+
         async function handleFormSubmit(e) {
             const form = e.target;
             const submitBtn = form.querySelector('button[type="submit"]');
@@ -656,12 +672,13 @@
                 sala_id: document.getElementById('salaSelect').value,
                 curso: document.getElementById('cursoSelect').value,
                 turma: document.getElementById('turmaSelect').value,
-                horario: document.getElementById('horarioSelect').value
+                horario: document.getElementById('horarioSelect').value,
+                data_aula: document.getElementById('dataAula').value
             };
 
             console.log('📋 Dados coletados do formulário:', dadosAula);
 
-            // Validação básica
+            // Validação básica apenas dos campos obrigatórios
             if (!dadosAula.curso) {
                 showNotification('❌ Selecione um curso', 'error');
                 return;
@@ -682,14 +699,8 @@
                 showNotification('❌ Selecione um horário', 'error');
                 return;
             }
-
-            // Validar dias da semana
-            const diasSelecionados = Array.from(document.querySelectorAll('input[name="dias"]:checked'))
-                .map(cb => cb.value);
-
-            console.log('📅 Dias selecionados:', diasSelecionados);
-            if (diasSelecionados.length === 0) {
-                showNotification('❌ Selecione pelo menos um dia da semana', 'error');
+            if (!dadosAula.data_aula) {
+                showNotification('❌ Selecione uma data para a aula', 'error');
                 return;
             }
 
@@ -701,6 +712,19 @@
                 delete dadosAula.horario;
             }
 
+            // 🔥 CORREÇÃO RADICAL: SEM VALIDAÇÃO DE DATA
+            console.log('📅 Data selecionada (sem validação):', dadosAula.data_aula);
+
+            // Adicionar período
+            const periodoSelect = document.getElementById('periodoSelect');
+            if (periodoSelect && periodoSelect.value) {
+                dadosAula.periodo = parseInt(periodoSelect.value);
+            } else {
+                showNotification('❌ Selecione um período', 'error');
+                return;
+            }
+
+            console.log('🚀 Dados completos para criação:', dadosAula);
             console.log('🚀 Chamando professorManager.criarAula...');
 
             // Mostrar loading
@@ -709,8 +733,10 @@
             submitBtn.disabled = true;
 
             try {
-                // 🔥 CORREÇÃO: Passar os dias selecionados para o método criarAula
-                await professorManager.criarAula(dadosAula, diasSelecionados);
+                await professorManager.criarAula(dadosAula);
+            } catch (error) {
+                console.error('❌ Erro no handleFormSubmit:', error);
+                showNotification('Erro ao criar aula: ' + error.message, 'error');
             } finally {
                 // Restaurar botão
                 submitBtn.innerHTML = originalText;

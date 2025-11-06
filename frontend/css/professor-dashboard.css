@@ -489,7 +489,6 @@ select.select-desabilitado {
 }
 
 .professor-aula-card::after {
-    content: 'Clique para ver detalhes';
     position: absolute;
     top: 10px;
     right: 10px;
@@ -1881,4 +1880,18 @@ select.select-desabilitado {
 
 .btn-limpar-filtros-empty.loading i {
     animation: spin 1s linear infinite;
+}
+
+.professor-form-control[type="date"] {
+    padding: 12px 15px;
+    border: 2px solid #e8e8e8;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.professor-form-control[type="date"]:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }

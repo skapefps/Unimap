@@ -9,22 +9,31 @@ function initializeDatabase() {
         // ==================== TABELAS PRINCIPAIS ====================
 
         // 1. Usuários
-        db.run(`CREATE TABLE IF NOT EXISTS usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            matricula TEXT UNIQUE,
-            tipo TEXT DEFAULT 'aluno',
-            curso TEXT,
-            periodo INTEGER,
-            senha_hash TEXT NOT NULL,
-            ativo BOOLEAN DEFAULT 1,
-            data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`, (err) => {
+        db.run(`CREATE TABLE IF NOT EXISTS aulas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    disciplina TEXT NOT NULL,
+    professor_id INTEGER NOT NULL,
+    sala_id INTEGER,
+    curso TEXT,
+    turma TEXT,
+    horario_inicio TIME NOT NULL,
+    horario_fim TIME NOT NULL,
+    data_aula DATE,
+    periodo INTEGER,
+    dia_semana INTEGER,
+    data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ativa BOOLEAN DEFAULT 1,
+    FOREIGN KEY (professor_id) REFERENCES professores (id),
+    FOREIGN KEY (sala_id) REFERENCES salas (id)
+)`, (err) => {
             if (err) {
-                console.error('❌ Erro ao criar tabela usuarios:', err);
+                console.error('❌ Erro ao criar tabela aulas:', err);
             } else {
-                console.log('✅ Tabela usuarios verificada/criada');
+                console.log('✅ Tabela aulas verificada/criada');
+                // 🔥 CORREÇÃO: Chamar a nova função de verificação completa
+                setTimeout(() => {
+                    verificarEstruturaCompletaAulas();
+                }, 500);
             }
         });
 
@@ -137,31 +146,152 @@ function initializeDatabase() {
         });
 
         db.run(`CREATE TABLE IF NOT EXISTS aulas (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    disciplina TEXT NOT NULL,
-    professor_id INTEGER NOT NULL,
-    sala_id INTEGER,
-    curso TEXT,
-    turma TEXT,
-    horario_inicio TIME NOT NULL,
-    horario_fim TIME NOT NULL,
-    dia_semana INTEGER NOT NULL,
-    data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
-    ativa BOOLEAN DEFAULT 1,
-    FOREIGN KEY (professor_id) REFERENCES professores (id),
-    FOREIGN KEY (sala_id) REFERENCES salas (id)
-)`, (err) => {
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            disciplina TEXT NOT NULL,
+            professor_id INTEGER NOT NULL,
+            sala_id INTEGER,
+            curso TEXT,
+            turma TEXT,
+            horario_inicio TIME NOT NULL,
+            horario_fim TIME NOT NULL,
+            data_aula DATE NOT NULL, -- NOVO: Data específica da aula
+            periodo INTEGER,
+            data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+            ativa BOOLEAN DEFAULT 1,
+            FOREIGN KEY (professor_id) REFERENCES professores (id),
+            FOREIGN KEY (sala_id) REFERENCES salas (id)
+        )`, (err) => {
             if (err) {
                 console.error('❌ Erro ao criar tabela aulas:', err);
             } else {
-                console.log('✅ Tabela aulas verificada/criada');
-
-                verificarEAdicionarColunaDisciplina();
+                console.log('✅ Tabela aulas verificada/criada com data específica');
+                verificarEAdicionarColunasAulas();
             }
         });
 
-        function verificarEAdicionarColunaDisciplina() {
-            console.log('🔍 Verificando se a coluna disciplina existe...');
+        // 🔧 VERIFICAR E CORRIGIR TODAS AS COLUNAS DA TABELA AULAS
+        function verificarEstruturaCompletaAulas() {
+            console.log('🔍 Verificando estrutura completa da tabela aulas...');
+
+            db.all(`PRAGMA table_info(aulas)`, (err, rows) => {
+                if (err) {
+                    console.error('❌ Erro ao verificar estrutura da tabela aulas:', err);
+                    return;
+                }
+
+                const colunas = rows.map(row => row.name);
+                console.log('📊 Colunas atuais da tabela aulas:', colunas);
+
+                // Lista de colunas necessárias
+                const colunasNecessarias = [
+                    { nome: 'disciplina', tipo: 'TEXT NOT NULL' },
+                    { nome: 'data_aula', tipo: 'DATE NOT NULL' },
+                    { nome: 'periodo', tipo: 'INTEGER' },
+                    { nome: 'dia_semana', tipo: 'INTEGER' },
+                    { nome: 'data_criacao', tipo: 'DATETIME DEFAULT CURRENT_TIMESTAMP' }
+                ];
+
+                colunasNecessarias.forEach(coluna => {
+                    if (!colunas.includes(coluna.nome)) {
+                        console.log(`🔄 Adicionando coluna ${coluna.nome} na tabela aulas...`);
+                        db.run(`ALTER TABLE aulas ADD COLUMN ${coluna.nome} ${coluna.tipo}`, (alterErr) => {
+                            if (alterErr) {
+                                console.error(`❌ Erro ao adicionar coluna ${coluna.nome}:`, alterErr);
+                            } else {
+                                console.log(`✅ Coluna ${coluna.nome} adicionada com sucesso!`);
+
+                                // Para data_criacao, preencher com valor padrão se for adicionada
+                                if (coluna.nome === 'data_criacao') {
+                                    db.run(`UPDATE aulas SET data_criacao = datetime('now') WHERE data_criacao IS NULL`, (updateErr) => {
+                                        if (updateErr) {
+                                            console.error('❌ Erro ao preencher data_criacao:', updateErr);
+                                        } else {
+                                            console.log('✅ Dados de data_criacao preenchidos!');
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                    }
+                });
+
+                // Verificar se todas as colunas necessárias existem agora
+                setTimeout(() => {
+                    db.all(`PRAGMA table_info(aulas)`, (err, rows) => {
+                        if (err) return;
+                        const colunasFinais = rows.map(row => row.name);
+                        console.log('✅ Estrutura final da tabela aulas:', colunasFinais);
+                    });
+                }, 1000);
+            });
+        }
+
+        // 🔧 VERIFICAR E CORRIGIR ESTRUTURA DA TABELA AULAS
+        function verificarEstruturaAulas() {
+            console.log('🔍 Verificando estrutura da tabela aulas...');
+
+            db.all(`PRAGMA table_info(aulas)`, (err, rows) => {
+                if (err) {
+                    console.error('❌ Erro ao verificar estrutura da tabela aulas:', err);
+                    return;
+                }
+
+                const colunas = rows.map(row => row.name);
+                console.log('📊 Colunas da tabela aulas:', colunas);
+
+                // Verificar e adicionar coluna disciplina se não existir
+                if (!colunas.includes('disciplina')) {
+                    console.log('🔄 Adicionando coluna disciplina na tabela aulas...');
+                    db.run(`ALTER TABLE aulas ADD COLUMN disciplina TEXT`, (alterErr) => {
+                        if (alterErr) {
+                            console.error('❌ Erro ao adicionar coluna disciplina:', alterErr);
+                        } else {
+                            console.log('✅ Coluna disciplina adicionada com sucesso!');
+                        }
+                    });
+                }
+
+                // Verificar e adicionar coluna data_aula se não existir
+                if (!colunas.includes('data_aula')) {
+                    console.log('🔄 Adicionando coluna data_aula na tabela aulas...');
+                    db.run(`ALTER TABLE aulas ADD COLUMN data_aula DATE`, (alterErr) => {
+                        if (alterErr) {
+                            console.error('❌ Erro ao adicionar coluna data_aula:', alterErr);
+                        } else {
+                            console.log('✅ Coluna data_aula adicionada com sucesso!');
+
+                            // Migrar dados existentes se houver
+                            db.run(`UPDATE aulas SET data_aula = date('now') WHERE data_aula IS NULL`, (updateErr) => {
+                                if (updateErr) {
+                                    console.error('❌ Erro ao migrar dados de data_aula:', updateErr);
+                                } else {
+                                    console.log('✅ Dados de data_aula migrados com sucesso!');
+                                }
+                            });
+                        }
+                    });
+                }
+
+                // Verificar e adicionar coluna periodo se não existir
+                if (!colunas.includes('periodo')) {
+                    console.log('🔄 Adicionando coluna periodo na tabela aulas...');
+                    db.run(`ALTER TABLE aulas ADD COLUMN periodo INTEGER`, (alterErr) => {
+                        if (alterErr) {
+                            console.error('❌ Erro ao adicionar coluna periodo:', alterErr);
+                        } else {
+                            console.log('✅ Coluna periodo adicionada com sucesso!');
+                        }
+                    });
+                }
+            });
+        }
+
+        setTimeout(() => {
+            verificarEstruturaAulas();
+        }, 1000);
+
+        function verificarEAdicionarColunasAulas() {
+            console.log('🔍 Verificando colunas da tabela aulas...');
 
             db.all(`PRAGMA table_info(aulas)`, (err, rows) => {
                 if (err) {
@@ -174,23 +304,39 @@ function initializeDatabase() {
                     return;
                 }
 
-                const hasDisciplina = rows.some(row => row.name === 'disciplina');
+                const colunas = rows.map(row => row.name);
 
-                if (!hasDisciplina) {
-                    console.log('🔄 Adicionando coluna disciplina na tabela aulas...');
-                    db.run(`ALTER TABLE aulas ADD COLUMN disciplina TEXT`, (alterErr) => {
+                // Verificar e adicionar coluna data_aula se não existir
+                if (!colunas.includes('data_aula')) {
+                    console.log('🔄 Adicionando coluna data_aula na tabela aulas...');
+                    db.run(`ALTER TABLE aulas ADD COLUMN data_aula DATE`, (alterErr) => {
                         if (alterErr) {
-                            if (alterErr.message.includes('duplicate column name')) {
-                                console.log('✅ Coluna disciplina já existe');
-                            } else {
-                                console.error('❌ Erro ao adicionar coluna disciplina:', alterErr);
-                            }
+                            console.error('❌ Erro ao adicionar coluna data_aula:', alterErr);
                         } else {
-                            console.log('✅ Coluna disciplina adicionada com sucesso!');
+                            console.log('✅ Coluna data_aula adicionada com sucesso!');
                         }
                     });
                 } else {
-                    console.log('✅ Coluna disciplina já existe na tabela aulas');
+                    console.log('✅ Coluna data_aula já existe na tabela aulas');
+                }
+
+                // Verificar e adicionar coluna periodo se não existir
+                if (!colunas.includes('periodo')) {
+                    console.log('🔄 Adicionando coluna periodo na tabela aulas...');
+                    db.run(`ALTER TABLE aulas ADD COLUMN periodo INTEGER`, (alterErr) => {
+                        if (alterErr) {
+                            console.error('❌ Erro ao adicionar coluna periodo:', alterErr);
+                        } else {
+                            console.log('✅ Coluna periodo adicionada com sucesso!');
+                        }
+                    });
+                } else {
+                    console.log('✅ Coluna periodo já existe na tabela aulas');
+                }
+
+                // Remover coluna dia_semana se existir (para migração)
+                if (colunas.includes('dia_semana')) {
+                    console.log('🔄 Aviso: Coluna dia_semana ainda existe. Mantendo para compatibilidade.');
                 }
             });
         }

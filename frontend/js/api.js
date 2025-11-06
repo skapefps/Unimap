@@ -74,7 +74,7 @@ class ApiService {
             const result = await response.json();
             return {
                 success: true,
-                data: result 
+                data: result
             };
 
         } catch (error) {
@@ -165,6 +165,7 @@ class ApiService {
         }
     }
 
+    // No api.js, na função handleResponse, você pode adicionar:
     async handleResponse(response, endpoint) {
         console.log(`📥 Resposta de ${endpoint}:`, response.status);
 
@@ -175,6 +176,16 @@ class ApiService {
                 return { success: true, data };
             } else {
                 const errorMessage = this.extractErrorMessage(data, response);
+
+                // 🔥 CORREÇÃO: Tratamento específico para 403
+                if (response.status === 403) {
+                    console.error(`🚫 Acesso negado em ${endpoint}`);
+                    return {
+                        success: false,
+                        error: 'Acesso negado. Você não tem permissão para acessar este recurso.'
+                    };
+                }
+
                 console.error(`❌ Erro ${response.status} em ${endpoint}:`, errorMessage);
                 return { success: false, error: errorMessage };
             }
@@ -287,9 +298,23 @@ class ApiService {
         console.log('📝 Criando aula:', dadosAula);
         this.clearCacheByPattern('/aulas');
 
+        // 🔧 CORREÇÃO: Garantir que todos os campos obrigatórios estão presentes
+        const dadosCompletos = {
+            disciplina: dadosAula.disciplina,
+            sala_id: dadosAula.sala_id,
+            curso: dadosAula.curso,
+            turma: dadosAula.turma,
+            horario_inicio: dadosAula.horario_inicio,
+            horario_fim: dadosAula.horario_fim,
+            data_aula: dadosAula.data_aula,
+            periodo: dadosAula.periodo || 5
+        };
+
+        console.log('📤 Dados completos para API:', dadosCompletos);
+
         return this.request('/aulas', {
             method: 'POST',
-            body: JSON.stringify(dadosAula)
+            body: JSON.stringify(dadosCompletos)
         });
     }
 
