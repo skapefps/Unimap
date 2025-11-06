@@ -118,6 +118,15 @@ class AdminAPI {
     async getProfessoresStats() {
         return this.get('/api/professores/stats');
     }
+
+    async importarCSV(csvData) {
+        return this.post('/api/aulas/importar-csv', { csvData });
+    }
+
+    // 🔧 CRIAR AULAS EM LOTE
+    async criarAulasLote(aulas) {
+        return this.post('/api/aulas/criar-lote', { aulas });
+    }
 }
 
 const adminAPI = new AdminAPI();

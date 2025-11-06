@@ -305,6 +305,290 @@ router.post('/', authenticateToken, requireProfessor, validateAulaData, async (r
     }
 });
 
+// 🔧 IMPORTAR CSV - PROCESSAR E VALIDAR
+router.post('/importar-csv', authenticateToken, requireAdmin, async (req, res) => {
+    const { csvData } = req.body;
+
+    console.log('📤 Processando importação de CSV:', csvData.length, 'linhas');
+
+    try {
+        if (!csvData || !Array.isArray(csvData) || csvData.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Dados CSV inválidos ou vazios'
+            });
+        }
+
+        const resultados = {
+            aulasValidas: [],
+            erros: [],
+            totais: {
+                linhasProcessadas: csvData.length,
+                aulasValidas: 0,
+                erros: 0
+            }
+        };
+
+        // Processar cada linha do CSV
+        for (let i = 0; i < csvData.length; i++) {
+            const linha = csvData[i];
+            try {
+                console.log(`🔍 Processando linha ${i + 1}:`, linha);
+
+                // Validar estrutura mínima
+                if (!linha.Professor || !linha.Disciplina || !linha.Sala || !linha.Horário || !linha['Data da Aula']) {
+                    resultados.erros.push({
+                        linha: i + 1,
+                        dados: linha,
+                        erro: 'Campos obrigatórios faltando (Professor, Disciplina, Sala, Horário, Data da Aula)'
+                    });
+                    continue;
+                }
+
+                // Parse do horário (formato: "18:50-19:40")
+                const horarioParts = linha.Horário.split('-');
+                if (horarioParts.length !== 2) {
+                    resultados.erros.push({
+                        linha: i + 1,
+                        dados: linha,
+                        erro: 'Formato de horário inválido. Use: HH:MM-HH:MM'
+                    });
+                    continue;
+                }
+
+                const [horario_inicio, horario_fim] = horarioParts;
+
+                // Validar formato de hora
+                const horaRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+                if (!horaRegex.test(horario_inicio.trim()) || !horaRegex.test(horario_fim.trim())) {
+                    resultados.erros.push({
+                        linha: i + 1,
+                        dados: linha,
+                        erro: 'Formato de hora inválido. Use: HH:MM (24h)'
+                    });
+                    continue;
+                }
+
+                // Validar data
+                if (!isValidDate(linha['Data da Aula'])) {
+                    resultados.erros.push({
+                        linha: i + 1,
+                        dados: linha,
+                        erro: 'Formato de data inválido. Use: YYYY-MM-DD'
+                    });
+                    continue;
+                }
+
+                // Buscar professor pelo nome
+                const professor = await dbGet('SELECT id, nome FROM professores WHERE nome = ?', [linha.Professor]);
+                if (!professor) {
+                    resultados.erros.push({
+                        linha: i + 1,
+                        dados: linha,
+                        erro: `Professor não encontrado: ${linha.Professor}`
+                    });
+                    continue;
+                }
+
+                // Buscar sala pelo número
+                const sala = await dbGet('SELECT id, numero, bloco FROM salas WHERE numero = ?', [linha.Sala]);
+                if (!sala) {
+                    resultados.erros.push({
+                        linha: i + 1,
+                        dados: linha,
+                        erro: `Sala não encontrada: ${linha.Sala}`
+                    });
+                    continue;
+                }
+
+                // Extrair número do período (ex: "5º Período" -> 5)
+                let periodo = null;
+                if (linha.Período) {
+                    const periodoMatch = linha.Período.match(/(\d+)/);
+                    periodo = periodoMatch ? parseInt(periodoMatch[1]) : null;
+                }
+
+                // Calcular dia da semana
+                const dia_semana = calcularDiaSemana(linha['Data da Aula']);
+
+                // Verificar duplicação
+                const duplicata = await verificarDuplicacaoAulaPorData(professor.id, {
+                    sala_id: sala.id,
+                    data_aula: linha['Data da Aula'],
+                    horario_inicio: horario_inicio.trim(),
+                    horario_fim: horario_fim.trim()
+                });
+
+                if (duplicata) {
+                    resultados.erros.push({
+                        linha: i + 1,
+                        dados: linha,
+                        erro: 'Já existe uma aula agendada para esta data e horário'
+                    });
+                    continue;
+                }
+
+                // Aula válida - adicionar aos resultados
+                const aulaProcessada = {
+                    linha: i + 1,
+                    dados: {
+                        professor_nome: linha.Professor,
+                        professor_id: professor.id,
+                        disciplina: linha.Disciplina,
+                        sala_numero: linha.Sala,
+                        sala_id: sala.id,
+                        sala_bloco: sala.bloco,
+                        curso: linha.Curso || '',
+                        turma: linha.Turma || '',
+                        periodo: periodo,
+                        periodo_original: linha.Período || '',
+                        horario_inicio: horario_inicio.trim(),
+                        horario_fim: horario_fim.trim(),
+                        horario_original: linha.Horário,
+                        data_aula: linha['Data da Aula'],
+                        dia_semana: dia_semana,
+                        dia_semana_nome: getNomeDiaSemana(dia_semana)
+                    },
+                    status: 'valida'
+                };
+
+                resultados.aulasValidas.push(aulaProcessada);
+                resultados.totais.aulasValidas++;
+
+                console.log(`✅ Linha ${i + 1} processada com sucesso`);
+
+            } catch (error) {
+                console.error(`❌ Erro ao processar linha ${i + 1}:`, error);
+                resultados.erros.push({
+                    linha: i + 1,
+                    dados: linha,
+                    erro: `Erro interno: ${error.message}`
+                });
+            }
+        }
+
+        resultados.totais.erros = resultados.erros.length;
+
+        console.log(`📊 Resultado do processamento: ${resultados.totais.aulasValidas} válidas, ${resultados.totais.erros} erros`);
+
+        res.json({
+            success: true,
+            message: `CSV processado: ${resultados.totais.aulasValidas} aulas válidas, ${resultados.totais.erros} erros`,
+            data: resultados
+        });
+
+    } catch (error) {
+        console.error('❌ Erro ao processar CSV:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Erro interno ao processar CSV: ' + error.message
+        });
+    }
+});
+
+// 🔧 CRIAR AULAS EM LOTE
+router.post('/criar-lote', authenticateToken, requireAdmin, async (req, res) => {
+    const { aulas } = req.body;
+
+    console.log('📦 Criando lote de aulas:', aulas.length);
+
+    try {
+        if (!aulas || !Array.isArray(aulas) || aulas.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Nenhuma aula fornecida para criação'
+            });
+        }
+
+        const resultados = {
+            sucessos: [],
+            erros: []
+        };
+
+        for (const aulaData of aulas) {
+            try {
+                console.log('🔍 Criando aula:', aulaData);
+
+                // Verificar se ainda não existe duplicata
+                const duplicata = await verificarDuplicacaoAulaPorData(aulaData.professor_id, {
+                    sala_id: aulaData.sala_id,
+                    data_aula: aulaData.data_aula,
+                    horario_inicio: aulaData.horario_inicio,
+                    horario_fim: aulaData.horario_fim
+                });
+
+                if (duplicata) {
+                    resultados.erros.push({
+                        aula: aulaData,
+                        erro: 'Já existe uma aula agendada para esta data e horário'
+                    });
+                    continue;
+                }
+
+                // Inserir aula
+                const result = await dbRun(
+                    `INSERT INTO aulas (disciplina, professor_id, sala_id, curso, turma, 
+                     horario_inicio, horario_fim, data_aula, periodo, dia_semana, ativa) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+                    [
+                        aulaData.disciplina,
+                        aulaData.professor_id,
+                        aulaData.sala_id,
+                        aulaData.curso,
+                        aulaData.turma,
+                        aulaData.horario_inicio,
+                        aulaData.horario_fim,
+                        aulaData.data_aula,
+                        aulaData.periodo,
+                        aulaData.dia_semana
+                    ]
+                );
+
+                // Buscar aula criada
+                const aulaCriada = await dbGet(`
+                    SELECT 
+                        a.id, a.disciplina, a.professor_id, a.sala_id, a.curso, a.turma,
+                        a.horario_inicio, a.horario_fim, a.data_aula, a.periodo, 
+                        a.dia_semana, a.ativa,
+                        s.numero as sala_numero, s.bloco as sala_bloco,
+                        p.nome as professor_nome, p.email as professor_email
+                    FROM aulas a 
+                    LEFT JOIN salas s ON a.sala_id = s.id 
+                    LEFT JOIN professores p ON a.professor_id = p.id
+                    WHERE a.id = ?
+                `, [result.lastID]);
+
+                resultados.sucessos.push({
+                    aula: aulaCriada,
+                    mensagem: 'Aula criada com sucesso'
+                });
+
+                console.log(`✅ Aula criada: ${aulaData.disciplina} - ${aulaData.data_aula}`);
+
+            } catch (error) {
+                console.error('❌ Erro ao criar aula:', error);
+                resultados.erros.push({
+                    aula: aulaData,
+                    erro: error.message
+                });
+            }
+        }
+
+        res.json({
+            success: true,
+            message: `Lote processado: ${resultados.sucessos.length} sucessos, ${resultados.erros.length} erros`,
+            data: resultados
+        });
+
+    } catch (error) {
+        console.error('❌ Erro ao criar lote de aulas:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Erro interno ao criar aulas: ' + error.message
+        });
+    }
+});
+
 // Função para formatar data para exibição
 const formatarDataDisplay = (dataString) => {
     const data = new Date(dataString);

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UNIMAP - Admin</title>
+    <title>UNIMAP - Importar CSV</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin.css">
     <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
@@ -12,6 +12,13 @@
 </head>
 
 <body>
+
+    <script src="js/notifications.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin-api.js"></script>
+    <script src="js/admin-csv.js"></script>
+
     <header class="mobile-header">
         <div class="header-top">
             <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
@@ -31,9 +38,7 @@
             <a href="index.html" class="btn-voltar-app-mobile">
                 <i class="fas fa-arrow-left"></i> Voltar para o App
             </a>
-            <a href="#" onclick="authManager.logout()">
-                <i class="fas fa-sign-out-alt"></i> Sair
-            </a>
+            <a href="#" onclick="authManager.logout()"><i class="fas fa-sign-out-alt"></i> Sair</a>
         </nav>
     </header>
 
@@ -46,7 +51,8 @@
             <nav class="desktop-nav">
                 <a href="index.html" class="btn-flutuante-voltar" title="Voltar para o App">
                     <i class="fas fa-arrow-left"></i>
-                    <span>Voltar para o App</span></a>
+                    <span>Voltar para o App</span>
+                </a>
                 <a href="admin.html" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 <a href="admin-cursos.html" class="nav-link"><i class="fas fa-graduation-cap"></i> Cursos</a>
                 <a href="admin-salas.html" class="nav-link"><i class="fas fa-door-open"></i> Salas</a>
@@ -64,11 +70,129 @@
     </header>
 
     <main>
-        <div class="importbutton">
-            <label for="csvFile" class="btn-import">Importar CSV</label>
-            <input type="file" id="csvFile" accept=".csv" hidden>
+        <div class="csv-import-container">
+            <h2><i class="fas fa-file-import"></i> Importação de Aulas via CSV</h2>
+
+            <div class="drop-zone" id="dropZone">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h4>Arraste e solte seu arquivo CSV aqui</h4>
+                <p>ou clique no botão abaixo para selecionar</p>
+                <button type="button" class="btn-import" id="btnImport">
+                    <i class="fas fa-file-csv"></i> Selecionar Arquivo CSV
+                </button>
+                <input type="file" id="csvFile" accept=".csv" hidden>
+            </div>
+
+            <div id="fileInfo" class="file-info" style="display: none;">
+                <i class="fas fa-file-csv"></i>
+                <div class="file-details">
+                    <div class="file-name" id="fileName">arquivo.csv</div>
+                    <div class="file-size" id="fileSize">0 KB</div>
+                </div>
+                <button class="btn-secondary" id="btnRemover">
+                    <i class="fas fa-times"></i> Remover
+                </button>
+            </div>
+
+            <div id="loadingState" class="loading-state" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Processando arquivo...</p>
+            </div>
         </div>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Verificar autenticação igual na página de usuários
+            const user = authManager.getCurrentUser();
+
+            if (!user || user.tipo !== 'admin') {
+                alert('Acesso restrito a administradores!');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Atualizar informações do usuário no header
+            document.getElementById('desktopUserName').innerHTML =
+                `${user.nome} <span class="user-type-badge admin">ADMIN</span>`;
+            document.getElementById('mobileUserName').textContent = user.nome;
+            document.getElementById('mobileNavUser').textContent = user.nome;
+
+            // Inicializar a funcionalidade de CSV
+            adminCSV.init();
+
+            // Configurar event listeners para os botões de logout como fallback
+            setupLogoutButtons();
+        });
+
+        // Configurar botões de logout como fallback
+        function setupLogoutButtons() {
+            // Botão de sair do desktop
+            const btnSairDesktop = document.querySelector('.btn-sair-desktop-texto');
+            if (btnSairDesktop) {
+                btnSairDesktop.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    performLogout();
+                });
+            }
+
+            // Botão de sair do mobile
+            const btnSairMobile = document.querySelector('.mobile-nav a[onclick*="logout"]');
+            if (btnSairMobile) {
+                btnSairMobile.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    performLogout();
+                });
+            }
+        }
+
+        // Função de logout unificada
+        function performLogout() {
+            console.log('🚪 Executando logout...');
+
+            // Limpar dados de autenticação
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('userType');
+
+            // Redirecionar para login
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 500);
+        }
+
+        // Funções do menu mobile
+        function toggleMenu() {
+            const nav = document.getElementById('mobileNav');
+            if (nav) {
+                nav.classList.toggle('active');
+            }
+        }
+
+        function closeMenu() {
+            const nav = document.getElementById('mobileNav');
+            if (nav) {
+                nav.classList.remove('active');
+            }
+        }
+
+        // Fechar menu ao clicar fora
+        document.addEventListener('click', function (event) {
+            const nav = document.getElementById('mobileNav');
+            const hamburger = document.querySelector('.menu-hamburger');
+
+            if (nav && nav.classList.contains('active') &&
+                !nav.contains(event.target) &&
+                hamburger && !hamburger.contains(event.target)) {
+                nav.classList.remove('active');
+            }
+        });
+
+        // Fechar menu ao clicar em um link
+        document.querySelectorAll('.mobile-nav a').forEach(link => {
+            link.addEventListener('click', closeMenu);
+        });
+    </script>
 </body>
 
 </html>
