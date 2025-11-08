@@ -56,10 +56,12 @@ class AdminCursos {
 
             this.renderizarCursos();
             this.atualizarEstatisticas();
+            return true;
 
         } catch (error) {
             console.error('❌ Erro ao carregar cursos:', error);
-            this.showNotification('Erro ao carregar cursos: ' + error.message, 'error');
+            this.showNotification('Erro ao recarregar lista de cursos: ' + error.message, 'error');
+            return false;
         } finally {
             this.showLoading(false);
         }
@@ -104,7 +106,6 @@ class AdminCursos {
                 </span>
             </td>
             <td class="actions-cell">
-                <!-- Botões permanecem iguais -->
                 <button class="btn-action btn-edit" onclick="adminCursos.editarCurso(${curso.id})" title="Editar Curso">
                     <i class="fas fa-edit"></i>
                 </button>
@@ -194,18 +195,18 @@ class AdminCursos {
         });
     }
 
+    // ⭐⭐ MÉTODO SALVAR CURSO - CORRIGIDO E SIMPLIFICADO ⭐⭐
     async salvarCurso() {
         if (!this.verificarAutenticacao()) return;
 
         const formData = this.getFormData();
 
-        // Apenas validação básica
+        // Validação básica
         if (!formData.nome || formData.nome.trim() === '') {
             this.showNotification('Nome do curso é obrigatório', 'error');
             return;
         }
 
-        // Validação para turno (agora pode ser string vazia se nenhum selecionado)
         if (!formData.turno || formData.turno.trim() === '') {
             this.showNotification('Selecione pelo menos um turno', 'error');
             return;
@@ -214,33 +215,37 @@ class AdminCursos {
         try {
             this.showLoading(true);
             const submitBtn = document.querySelector('#cursoForm button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
 
             console.log('💾 Enviando dados do curso:', formData);
 
-            let response;
-            let url = `${this.API_BASE}/cursos`;
-            let method = 'POST';
-            let requestBody = {
-                nome: formData.nome,
-                duracao: formData.total_periodos,
-                turno: formData.turno,
-                total_periodos: formData.total_periodos,
-                ativo: true
-            };
+            // Configurar requisição
+            const url = formData.id 
+                ? `${this.API_BASE}/cursos/${formData.id}`
+                : `${this.API_BASE}/cursos`;
+            
+            const method = formData.id ? 'PUT' : 'POST';
+            
+            const requestBody = formData.id 
+                ? {
+                    nome: formData.nome,
+                    duracao: formData.total_periodos,
+                    turno: formData.turno,
+                    total_periodos: formData.total_periodos,
+                    ativo: formData.ativo
+                }
+                : {
+                    nome: formData.nome,
+                    duracao: formData.total_periodos,
+                    turno: formData.turno,
+                    total_periodos: formData.total_periodos
+                };
 
-            if (formData.id) {
-                url = `${this.API_BASE}/cursos/${formData.id}`;
-                method = 'PUT';
-                requestBody.ativo = formData.ativo;
-                console.log(`✏️ Editando curso ID: ${formData.id}`);
-            } else {
-                console.log('🆕 Criando novo curso');
-            }
+            console.log(formData.id ? `✏️ Editando curso ID: ${formData.id}` : '🆕 Criando novo curso');
 
-            response = await fetch(url, {
+            // Fazer requisição
+            const response = await fetch(url, {
                 method: method,
                 headers: {
                     'Content-Type': 'application/json',
@@ -250,21 +255,21 @@ class AdminCursos {
             });
 
             console.log('📨 Status da resposta:', response.status);
+            
+            // Processar resposta
+            const responseData = await response.json();
+            console.log('📨 Resposta completa:', responseData);
 
-            // Primeiro verificar se a resposta é bem-sucedida
-            if (response.ok) {
-                const responseData = await response.json();
-                console.log('📨 Resposta de sucesso:', responseData);
-
+            // ⭐⭐ VERIFICAÇÃO SIMPLES E DIRETA ⭐⭐
+            if (response.ok && responseData.success === true) {
+                // ✅ SUCESSO
+                console.log('✅ Curso salvo com sucesso');
                 this.fecharModalCurso();
                 await this.carregarTodosCursos();
-                this.showNotification(responseData.message || 'Curso salvo com sucesso!', 'success');
+                this.showNotification(responseData.message, 'success');
             } else {
-                // Só mostrar erro se realmente houver erro
-                const responseData = await response.json();
-                console.log('📨 Resposta de erro:', responseData);
-
-                throw new Error(responseData.error || `Erro ${response.status}`);
+                // ❌ ERRO
+                throw new Error(responseData.error || responseData.message || `Erro ${response.status}`);
             }
 
         } catch (error) {
@@ -289,7 +294,7 @@ class AdminCursos {
         return {
             id: id ? parseInt(id) : null,
             nome: document.getElementById('cursoNome').value.trim(),
-            turno: turnoString, // Agora é uma string com turnos separados por vírgula
+            turno: turnoString,
             total_periodos: document.getElementById('cursoPeriodos').value ? parseInt(document.getElementById('cursoPeriodos').value) : 10,
             ativo: document.getElementById('cursoAtivo').value === 'true'
         };
@@ -313,7 +318,6 @@ class AdminCursos {
 
             console.log(`⏸️ Desativando curso ID: ${cursoId}`);
 
-            // Usar a rota DELETE existente (soft delete)
             const response = await fetch(`${this.API_BASE}/cursos/${cursoId}`, {
                 method: 'DELETE',
                 headers: {
@@ -325,12 +329,12 @@ class AdminCursos {
             const responseData = await response.json();
             console.log('📨 Resposta da desativação:', responseData);
 
-            if (!response.ok) {
+            if (!response.ok || !responseData.success) {
                 throw new Error(responseData.error || `Erro ${response.status}`);
             }
 
             await this.carregarTodosCursos();
-            this.showNotification(responseData.message || 'Curso desativado com sucesso!', 'success');
+            this.showNotification(responseData.message, 'success');
 
         } catch (error) {
             console.error('❌ Erro ao desativar curso:', error);
@@ -377,12 +381,12 @@ class AdminCursos {
             const responseData = await response.json();
             console.log('📨 Resposta da ativação:', responseData);
 
-            if (!response.ok) {
+            if (!response.ok || !responseData.success) {
                 throw new Error(responseData.error || `Erro ${response.status}`);
             }
 
             await this.carregarTodosCursos();
-            this.showNotification(responseData.message || 'Curso ativado com sucesso!', 'success');
+            this.showNotification(responseData.message, 'success');
 
         } catch (error) {
             console.error('❌ Erro ao ativar curso:', error);
@@ -401,7 +405,6 @@ class AdminCursos {
             return;
         }
 
-        // Verificar se o curso está ativo
         if (curso.ativo === 1) {
             this.showNotification('Não é possível excluir permanentemente um curso ativo. Desative o curso primeiro.', 'error');
             return;
@@ -416,7 +419,6 @@ class AdminCursos {
 
             console.log(`🗑️ Excluindo permanentemente curso ID: ${cursoId}`);
 
-            // Usar a rota correta do routes
             const response = await fetch(`${this.API_BASE}/cursos/admin/excluir-permanentemente/${cursoId}`, {
                 method: 'DELETE',
                 headers: {
@@ -428,12 +430,12 @@ class AdminCursos {
             const responseData = await response.json();
             console.log('📨 Resposta da exclusão:', responseData);
 
-            if (!response.ok) {
+            if (!response.ok || !responseData.success) {
                 throw new Error(responseData.error || `Erro ${response.status}`);
             }
 
             await this.carregarTodosCursos();
-            this.showNotification(responseData.message || 'Curso excluído permanentemente com sucesso!', 'success');
+            this.showNotification(responseData.message, 'success');
 
         } catch (error) {
             console.error('❌ Erro ao excluir curso:', error);
@@ -465,32 +467,41 @@ class AdminCursos {
     }
 
     showNotification(message, type = 'info') {
-        // Criar notificação simples sem alert()
+        // Remover notificações existentes
+        const existingNotifications = document.querySelectorAll('.notification');
+        existingNotifications.forEach(notification => {
+            notification.remove();
+        });
+
+        // Criar nova notificação
         const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: ${type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1'};
-            color: ${type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460'};
-            padding: 12px 20px;
-            border-radius: 4px;
-            border: 1px solid ${type === 'success' ? '#c3e6cb' : type === 'error' ? '#f5c6cb' : '#bee5eb'};
-            z-index: 10000;
-            font-size: 14px;
-            max-width: 400px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        notification.className = `notification ${type}`;
+
+        const icons = {
+            success: '✅',
+            error: '❌',
+            info: 'ℹ️',
+            warning: '⚠️'
+        };
+
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-icon">${icons[type] || icons.info}</span>
+                <span class="notification-message">${message}</span>
+                <button class="notification-close" onclick="this.closest('.notification').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
         `;
-        notification.textContent = message;
 
         document.body.appendChild(notification);
 
-        // Remover após 4 segundos
+        // Auto-remover após 5 segundos
         setTimeout(() => {
             if (notification.parentElement) {
                 notification.remove();
             }
-        }, 4000);
+        }, 5000);
     }
 
     // Métodos auxiliares para debug
