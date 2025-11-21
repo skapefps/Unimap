@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIMAP - Gerenciar Salas</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <header class="mobile-header">
+        <div class="header-top">
+            <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
+            <h1>UNIMAP - Salas</h1>
+            <span class="user-name" id="mobileUserName">Admin</span>
+        </div>
+
+        <nav class="mobile-nav" id="mobileNav">
+            <div class="nav-user" id="mobileNavUser">Administrador</div>
+            <a href="admin.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="admin-cursos.html"><i class="fas fa-graduation-cap"></i> Cursos</a>
+            <a href="admin-salas.html" class="active"><i class="fas fa-door-open"></i> Salas</a>
+            <a href="admin-professores.html"><i class="fas fa-chalkboard-teacher"></i> Professores</a>
+            <a href="admin-usuarios.html"><i class="fas fa-users"></i> Usuários</a>
+            <a href="admin-turmas.html"><i class="fas fa-users-class"></i> Turmas</a>
+            <a href="admin-csv.html"><i class="fa-solid fa-file-import"></i> CSV</a>
+            <a href="index.html" class="btn-voltar-app-mobile">
+                <i class="fas fa-arrow-left"></i> Voltar para o App
+            </a>
+            <a href="#" onclick="authManager.logout()">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </a>
+        </nav>
+    </header>
+
+    <header class="desktop-header">
+        <div class="header-content">
+            <a href="admin.html" class="logo-link">
+                <img src="images/unipam png.png" alt="UNIPAM" class="navbar-logo">
+                <h1>UNIMAP - Salas</h1>
+            </a>
+            <nav class="desktop-nav">
+                <a href="index.html" class="btn-flutuante-voltar" title="Voltar para o App">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Voltar para o App</span>
+                </a>
+                <a href="admin.html" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="admin-cursos.html" class="nav-link"><i class="fas fa-graduation-cap"></i> Cursos</a>
+                <a href="admin-salas.html" class="nav-link active"><i class="fas fa-door-open"></i> Salas</a>
+                <a href="admin-professores.html" class="nav-link"><i class="fas fa-chalkboard-teacher"></i> Professores</a>
+                <a href="admin-usuarios.html" class="nav-link"><i class="fas fa-users"></i> Usuários</a>
+                <a href="admin-turmas.html" class="nav-link"><i class="fas fa-users-class"></i> Turmas</a>
+                <a href="admin-csv.html" class="nav-link"><i class="fa-solid fa-file-import"></i> CSV</a>
+                <span class="user-info" id="desktopUserName">Administrador</span>
+                <button class="btn-sair-desktop-texto" onclick="authManager.logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="admin-dashboard">
+        <div class="container">
+            <div class="page-header">
+                <h2>Gerenciar Salas</h2>
+                <button class="btn-primary" onclick="adminSalas.abrirModalCriarSala()">
+                    <i class="fas fa-plus"></i> Nova Sala
+                </button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-door-open"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total de Salas</h3>
+                        <div class="stat-number" id="total-salas">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Salas Ativas</h3>
+                        <div class="stat-number" id="salas-ativas">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Salas Inativas</h3>
+                        <div class="stat-number" id="salas-inativas">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ⭐⭐ ATUALIZADO: Painel de Filtros e Busca -->
+            <div class="filters-panel" style="margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+                <h4 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-filter"></i> Filtros e Busca
+                </h4>
+                
+                <!-- 🔍 NOVA LINHA: Campo de Busca -->
+                <div class="search-row" style="margin-bottom: 20px;">
+                    <div class="form-group" style="max-width: 400px;">
+                        <label style="font-weight: 600; margin-bottom: 8px; display: block;">
+                            <i class="fas fa-search"></i> Buscar Sala:
+                        </label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="filter-busca" class="form-control" 
+                                   placeholder="Digite número, nome ou parte do nome da sala..."
+                                   style="flex: 1;">
+                            <button class="btn-secondary" onclick="adminSalas.aplicarBusca()" 
+                                    style="white-space: nowrap;">
+                                <i class="fas fa-search"></i> Buscar
+                            </button>
+                            <button class="btn-secondary" onclick="adminSalas.limparBusca()" 
+                                    style="white-space: nowrap;">
+                                <i class="fas fa-times"></i> Limpar
+                            </button>
+                        </div>
+                        <small class="form-text" style="margin-top: 5px;">
+                            Busque por número (101), nome (Sala 101) ou parte do nome (Lab)
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="filters-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>Bloco:</label>
+                        <select id="filter-bloco" class="form-control" onchange="adminSalas.aplicarFiltros()">
+                            <option value="todos">Todos os Blocos</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Andar:</label>
+                        <select id="filter-andar" class="form-control" onchange="adminSalas.aplicarFiltros()">
+                            <option value="todos">Todos os Andares</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tipo:</label>
+                        <select id="filter-tipo" class="form-control" onchange="adminSalas.aplicarFiltros()">
+                            <option value="todos">Todos os Tipos</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Campus:</label>
+                        <select id="filter-campus" class="form-control" onchange="adminSalas.aplicarFiltros()">
+                            <option value="todos">Todos os Campus</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status:</label>
+                        <select id="filter-ativo" class="form-control" onchange="adminSalas.aplicarFiltros()">
+                            <option value="todos">Todos os Status</option>
+                            <option value="true">Ativas</option>
+                            <option value="false">Inativas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn-secondary" onclick="adminSalas.limparFiltros()">
+                        <i class="fas fa-eraser"></i> Limpar Todos os Filtros
+                    </button>
+                    <button class="btn-secondary" onclick="adminSalas.recarregarDados()">
+                        <i class="fas fa-sync"></i> Atualizar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Controles de Paginação Superior -->
+            <div class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0; padding: 10px; background: white; border-radius: 6px; border: 1px solid #dee2e6;">
+                <div class="pagination-info">
+                    <span id="pagination-info">Carregando...</span>
+                </div>
+                
+                <div class="pagination-size" style="display: flex; align-items: center; gap: 10px;">
+                    <label for="page-size">Itens por página:</label>
+                    <select id="page-size" class="form-control" style="width: auto;" onchange="adminSalas.alterarTamanhoPagina(this.value)">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                        <option value="30">30</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Tabela de Salas -->
+            <div class="table-container">
+                <table id="salas-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Sala</th>
+                            <th>Localização</th>
+                            <th>Tipo</th>
+                            <th>Capacidade</th>
+                            <th>Recursos</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="salas-body">
+                        <tr>
+                            <td colspan="8" class="text-center">Carregando salas...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Controles de Paginação Inferior -->
+            <div class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0; padding: 15px; background: white; border-radius: 6px; border: 1px solid #dee2e6;">
+                <button class="btn-secondary" id="prev-page" onclick="adminSalas.paginaAnterior()" disabled>
+                    <i class="fas fa-chevron-left"></i> Anterior
+                </button>
+                
+                <div class="pagination-numbers" id="pagination-numbers" style="display: flex; gap: 5px;">
+                    <!-- Números das páginas serão gerados aqui -->
+                </div>
+                
+                <button class="btn-secondary" id="next-page" onclick="adminSalas.proximaPagina()" disabled>
+                    Próxima <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- Ferramentas de Gestão -->
+            <div class="debug-actions" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #3498db;">
+                <h4><i class="fas fa-tools"></i> Ferramentas de Gestão</h4>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                    <button class="btn-secondary" onclick="adminSalas.recarregarDados()">
+                        <i class="fas fa-sync"></i> Recarregar Tudo
+                    </button>
+                    <button class="btn-secondary" onclick="adminSalas.exportarSalas()">
+                        <i class="fas fa-download"></i> Exportar Lista
+                    </button>
+                    <button class="btn-secondary" onclick="adminSalas.testarConexao()">
+                        <i class="fas fa-wifi"></i> Testar Conexão
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para Criar/Editar Sala -->
+    <div class="modal-overlay" id="salaModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-door-open"></i> <span id="salaModalTitle">Nova Sala</span></h3>
+                <button class="modal-close" onclick="adminSalas.fecharModalSala()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="salaForm">
+                    <input type="hidden" id="salaId">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Número da Sala:*</label>
+                            <input type="text" id="salaNumero" required class="form-control" 
+                                   placeholder="Ex: 101, A201, LAB1">
+                            <small class="form-text">Identificador único da sala</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Bloco:*</label>
+                            <input type="text" id="salaBloco" required class="form-control" 
+                                   placeholder="Ex: A, B, Central">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Andar:</label>
+                            <input type="text" id="salaAndar" class="form-control" 
+                                   placeholder="Ex: Térreo, 1º, 2º">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Capacidade:*</label>
+                            <input type="number" id="salaCapacidade" required class="form-control" 
+                                   min="1" value="30">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tipo:</label>
+                            <select id="salaTipo" class="form-control">
+                                <option value="Sala de Aula">Sala de Aula</option>
+                                <option value="Laboratório">Laboratório</option>
+                                <option value="Auditório">Auditório</option>
+                                <option value="Sala de Reunião">Sala de Reunião</option>
+                                <option value="Laboratório de Informática">Laboratório de Informática</option>
+                                <option value="Laboratório de Química">Laboratório de Química</option>
+                                <option value="Laboratório de Física">Laboratório de Física</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Campus:</label>
+                            <input type="text" id="salaCampus" class="form-control" 
+                                   placeholder="Ex: Campus I, Unidade Centro">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Recursos Disponíveis:</label>
+                        <textarea id="salaRecursos" class="form-control" rows="3" 
+                                  placeholder="Ex: Projetor, Ar-condicionado, Quadro branco, Computadores..."></textarea>
+                        <small class="form-text">Liste os recursos separados por vírgula</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status:</label>
+                        <select id="salaAtiva" class="form-control">
+                            <option value="true">Ativa</option>
+                            <option value="false">Inativa</option>
+                        </select>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i> Salvar Sala
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="adminSalas.fecharModalSala()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin-salas.js"></script>
+
+    <script>
+        function toggleMenu() {
+            const nav = document.getElementById('mobileNav');
+            nav.classList.toggle('active');
+        }
+
+        function closeMenu() {
+            const nav = document.getElementById('mobileNav');
+            nav.classList.remove('active');
+        }
+
+        document.addEventListener('click', function (event) {
+            const nav = document.getElementById('mobileNav');
+            const hamburger = document.querySelector('.menu-hamburger');
+
+            if (nav.classList.contains('active') &&
+                !nav.contains(event.target) &&
+                !hamburger.contains(event.target)) {
+                nav.classList.remove('active');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const userData = localStorage.getItem('userData');
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    const desktopUser = document.getElementById('desktopUserName');
+                    if (desktopUser) {
+                        desktopUser.innerHTML = `${user.nome} <span class="user-type-badge admin">ADMIN</span>`;
+                    }
+                    const mobileUser = document.getElementById('mobileUserName');
+                    const navUser = document.getElementById('mobileNavUser');
+                    if (mobileUser) mobileUser.textContent = user.nome;
+                    if (navUser) navUser.textContent = user.nome;
+                } catch (error) {
+                    console.error('Erro ao carregar usuário:', error);
+                }
+            }
+
+            // Inicializar gerenciador de salas
+            if (window.adminSalas) {
+                adminSalas.init();
+            }
+        });
+    </script>
+</body>
+</html>

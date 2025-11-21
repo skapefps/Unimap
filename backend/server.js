@@ -18,6 +18,7 @@ const turmaRoutes = require('./routes/turmas');
 const alunoRoutes = require('./routes/aluno');
 const dashboardRoutes = require('./routes/dashboard');
 const debugRoutes = require('./routes/debug');
+const adminSalasRoutes = require('./routes/admin-salas');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,6 +42,7 @@ app.use('/api/turmas', turmaRoutes);
 app.use('/api/aluno', alunoRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/debug', debugRoutes);
+app.use('/api/admin/salas', adminSalasRoutes);
 
 // Servir arquivos estáticos
 app.use(express.static(path.join(__dirname, '../frontend')));
