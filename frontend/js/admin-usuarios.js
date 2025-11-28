@@ -12,32 +12,70 @@ class AdminUsuarios {
         this.cursosDisponiveis = [];
     }
 async carregarCursosDoBanco() {
-        try {
-            console.log('📚 Carregando cursos do banco...');
+    try {
+        console.log('📚 Carregando cursos do banco...');
+        
+        // 🔍 PRIMEIRO TESTAR QUAL ROTA ESTÁ DISPONÍVEL
+        const rotaCorreta = await this.testarRotas();
+        
+        if (!rotaCorreta) {
+            throw new Error('Nenhuma rota de cursos disponível');
+        }
+
+        console.log(`🔄 Usando rota: ${rotaCorreta}`);
+        const response = await this.makeRequest(rotaCorreta);
+        
+        if (response.success) {
+            this.cursosComPeriodos = {};
+            this.cursosDisponiveis = [];
             
-            const response = await this.makeRequest('/cursos-com-periodos');
+            // 🔥 ESTRUTURA ESPERADA DO BACKEND (cursos.js):
+            // A rota /cursos/com-periodos retorna um array de objetos:
+            // [{ id: 1, nome: "Sistemas de Informação", total_periodos: 8 }, ...]
             
-            if (response.success) {
-                this.cursosComPeriodos = {};
-                this.cursosDisponiveis = [];
-                
-                response.data.forEach(curso => {
-                    this.cursosComPeriodos[curso.nome] = curso.total_periodos || 8;
-                    this.cursosDisponiveis.push(curso.nome);
+            let cursosData = response.data;
+            
+            console.log('📊 Estrutura dos dados recebidos:', cursosData);
+            
+            if (Array.isArray(cursosData) && cursosData.length > 0) {
+                cursosData.forEach(curso => {
+                    console.log('📝 Processando curso:', curso);
+                    
+                    // 🔥 ESTRUTURA DO SEU BACKEND (cursos.js)
+                    const nomeCurso = curso.nome;
+                    const totalPeriodos = curso.total_periodos || 8; // Fallback para 8 se não tiver
+                    
+                    if (nomeCurso) {
+                        this.cursosComPeriodos[nomeCurso] = totalPeriodos;
+                        this.cursosDisponiveis.push(nomeCurso);
+                        console.log(`✅ Curso adicionado: ${nomeCurso} (${totalPeriodos} períodos)`);
+                    } else {
+                        console.warn('⚠️ Curso sem nome válido:', curso);
+                    }
                 });
                 
-                console.log(`✅ ${this.cursosDisponiveis.length} cursos carregados do banco`);
+                console.log(`✅ ${this.cursosDisponiveis.length} cursos carregados do banco:`, this.cursosDisponiveis);
                 this.popularCursosNoModal();
+                
+                this.showNotification(
+                    `${this.cursosDisponiveis.length} cursos carregados do banco`, 
+                    'success',
+                    3000
+                );
             } else {
-                throw new Error(response.error || 'Erro ao carregar cursos');
+                console.error('❌ Estrutura de dados inválida para cursos:', cursosData);
+                throw new Error('Nenhum curso encontrado no banco de dados');
             }
-        } catch (error) {
-            console.error('❌ Erro ao carregar cursos:', error);
-            // Fallback para cursos padrão se der erro
-            this.usarCursosFallback();
+        } else {
+            throw new Error(response.error || 'Erro ao carregar cursos');
         }
+    } catch (error) {
+        console.error('❌ Erro ao carregar cursos do banco:', error);
+        console.log('🔄 Usando cursos fallback...');
+        // Fallback para cursos padrão se der erro
+        this.usarCursosFallback();
     }
-
+}
     // Fallback caso a API falhe
     usarCursosFallback() {
         console.log('🔄 Usando cursos fallback...');

@@ -779,74 +779,79 @@ router.get('/professor/minhas-aulas', authenticateToken, requireProfessor, async
 });
 
 // 🔧 AULAS DO ALUNO - TODAS AS AULAS FUTURAS E RECENTES
-router.get('/aluno/:id', async (req, res) => {
-    try {
-        const alunoId = req.params.id;
+router.get('/aluno/:aluno_id', authenticateToken, async (req, res) => {
+    const { aluno_id } = req.params;
 
-        // 1. Buscar curso e período do aluno
-        const [alunoRows] = await db.execute(`
-            SELECT curso, periodo
-            FROM usuarios
-            WHERE id = ?
-        `, [alunoId]);
+    console.log('🎓 Buscando TODAS as aulas para aluno:', aluno_id);
 
-        if (alunoRows.length === 0) {
-            return res.status(404).json({ error: 'Aluno não encontrado' });
-        }
-
-        const curso = alunoRows[0].curso.trim();
-        const periodoAluno = Number(alunoRows[0].periodo); // 🔥 garante número
-
-        // 2. Buscar a turma REAL do aluno
-        const [turmaRows] = await db.execute(`
-            SELECT t.nome AS turma_nome
-            FROM aluno_turmas at
-            INNER JOIN turmas t ON t.id = at.turma_id
-            WHERE at.aluno_id = ?
-            AND at.status = 'cursando'
-        `, [alunoId]);
-
-        if (turmaRows.length === 0) {
-            return res.json({ aulas: [], futuras: [] });
-        }
-
-        const turmaNome = turmaRows[0].turma_nome.trim();
-
-        // 3. Buscar aulas do mesmo curso E mesmo período
-        const [aulasRows] = await db.execute(`
-            SELECT *
-            FROM aulas
-            WHERE curso = ?
-            AND CAST(periodo AS INTEGER) = ?
-        `, [curso, periodoAluno]);
-
-        // 4. Filtrar aulas da mesma TURMA (com normalização)
-        const normalizar = (str) =>
-            String(str).toLowerCase()
-                .replace("turma", "")
-                .replace(":", "")
-                .replace("-", "")
-                .replace(" ", "")
-                .trim();
-
-        const turmaNormal = normalizar(turmaNome);
-
-        const aulas = aulasRows.filter(a => {
-            return normalizar(a.turma) === turmaNormal;
+    if (!aluno_id || aluno_id === 'undefined' || isNaN(parseInt(aluno_id))) {
+        return res.status(400).json({
+            success: false,
+            error: 'ID do aluno inválido'
         });
+    }
 
-        // 5. Filtrar aulas futuras
-        const agora = new Date();
-        const futuras = aulas.filter(a => new Date(a.data) >= agora);
+    try {
+        // Buscar dados do aluno
+        const aluno = await dbGet(`
+            SELECT u.id, u.nome, u.curso, u.periodo, t.nome as turma_nome
+            FROM usuarios u
+            LEFT JOIN aluno_turmas at ON u.id = at.aluno_id AND at.status = 'cursando'
+            LEFT JOIN turmas t ON at.turma_id = t.id
+            WHERE u.id = ? AND u.tipo = 'aluno'
+        `, [aluno_id]);
 
-        res.json({ aulas, futuras });
+        if (!aluno) {
+            console.log('❌ Aluno não encontrado ou não é do tipo aluno:', aluno_id);
+            return res.status(404).json({
+                success: false,
+                error: 'Aluno não encontrado'
+            });
+        }
 
-    } catch (err) {
-        console.error("Erro ao buscar aulas:", err);
-        res.status(500).json({ error: 'Erro interno' });
+        console.log('👤 Dados do aluno encontrado:', aluno);
+
+        if (!aluno.curso) {
+            console.log('⚠️ Aluno não tem curso definido, retornando aulas vazias');
+            return res.json([]);
+        }
+
+        // 🔥 CORREÇÃO: Buscar TODAS as aulas do curso, ordenadas por data
+        const query = `
+            SELECT 
+                a.*, 
+                p.nome as professor_nome, 
+                s.numero as sala_numero, 
+                s.bloco as sala_bloco,
+                s.andar as sala_andar,
+                a.disciplina as disciplina_nome,
+                CASE 
+                    WHEN a.ativa = 0 THEN 'cancelada'
+                    ELSE 'ativa'
+                END as status_aula
+            FROM aulas a
+            LEFT JOIN professores p ON a.professor_id = p.id
+            LEFT JOIN salas s ON a.sala_id = s.id
+            WHERE a.curso = ?
+            ORDER BY a.data_aula ASC, a.horario_inicio ASC
+        `;
+
+        const params = [aluno.curso];
+
+        console.log('🔍 Executando query para aluno (TODAS as aulas):', aluno.nome);
+        const rows = await dbAll(query, params);
+        console.log(`✅ ${rows.length} aulas encontradas para o aluno ${aluno.nome} (todas as datas)`);
+
+        res.json(rows);
+
+    } catch (error) {
+        console.error('❌ Erro ao buscar aulas do aluno:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Erro interno do servidor: ' + error.message
+        });
     }
 });
-
 
 // Todas as aulas (apenas admin)
 router.get('/', authenticateToken, requireAdmin, async (req, res) => {
