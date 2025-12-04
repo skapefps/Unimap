@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Professor</title>
+</head>
+<body>
+    <h1>Testando acesso como professor</h1>
+    <button onclick="verificarUsuario()">Verificar Meu Usuário</button>
+    <div id="resultado"></div>
+
+    <script>
+        function verificarUsuario() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const token = localStorage.getItem('token');
+            
+            document.getElementById('resultado').innerHTML = `
+                <h3>Dados do usuário:</h3>
+                <pre>${JSON.stringify(user, null, 2)}</pre>
+                <p>Token: ${token}</p>
+                <p>Tipo: <strong>${user.tipo}</strong></p>
+                <p>Deve redirecionar para: <strong>${user.tipo === 'professor' ? 'professor-dashboard.html' : 'index.html'}</strong></p>
+                <button onclick="irParaProfessor()">Ir para Professor Dashboard</button>
+            `;
+        }
+
+        function irParaProfessor() {
+            window.location.href = 'professor-dashboard.html';
+        }
+
+        verificarUsuario();
+    </script>
+</body>
+</html>

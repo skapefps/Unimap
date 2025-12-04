@@ -1,0 +1,1897 @@
+/* ===== ESTILOS OTIMIZADOS DO PROFESSOR DASHBOARD ===== */
+/* Prefixo: professor- | Versão: 4.0 | Status: Otimizado e Consolidado */
+
+:root {
+    --professor-primary: #3498db;
+    --professor-secondary: #2c3e50;
+    --professor-success: #27ae60;
+    --professor-danger: #e74c3c;
+    --professor-warning: #f39c12;
+    --professor-info: #17a2b8;
+    --professor-light: #ecf0f1;
+    --professor-dark: #34495e;
+    --professor-gray: #95a5a6;
+    --professor-border: #e9ecef;
+    --professor-shadow: rgba(0, 0, 0, 0.08);
+    --professor-shadow-hover: rgba(0, 0, 0, 0.12);
+    --professor-radius: 12px;
+    --professor-transition: all 0.3s ease;
+}
+
+/* ===== RESET E BASE ===== */
+.professor-page-header,
+.professor-filters-container,
+.professor-salas-filters,
+.professor-filter-group,
+.professor-aulas-grid,
+.professor-blocos-grid,
+.professor-andares-grid,
+.professor-salas-grid,
+.professor-aula-card,
+.professor-bloco-card,
+.professor-andar-card,
+.professor-sala-card,
+.professor-aula-header,
+.professor-sala-header,
+.professor-form-container,
+.professor-criar-aula-form,
+.professor-form-row,
+.professor-form-group,
+.professor-dias-checkbox,
+.professor-checkbox-label,
+.professor-form-actions,
+.professor-search-container,
+.professor-bloco-stats,
+.professor-andar-stats,
+.professor-andares-header,
+.professor-salas-header,
+.professor-empty-state,
+.professor-aula-info,
+.professor-sala-info,
+.professor-info-item {
+    box-sizing: border-box;
+}
+
+/* ===== COMPONENTES PRINCIPAIS ===== */
+.professor-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--professor-light);
+}
+
+.professor-page-header h2 {
+    color: var(--professor-secondary);
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Containers de Filtros */
+.professor-filters-container,
+.professor-salas-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: var(--professor-radius);
+    box-shadow: 0 2px 10px var(--professor-shadow);
+}
+
+.professor-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.professor-filter-group label {
+    font-weight: 600;
+    color: var(--professor-secondary);
+    font-size: 0.9rem;
+}
+
+/* Inputs e Seletores */
+.professor-filter-select,
+.professor-filter-input,
+.professor-form-control,
+.professor-search-input {
+    padding: 0.75rem;
+    border: 2px solid var(--professor-border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: var(--professor-transition);
+    width: 100%;
+}
+
+.professor-filter-select:focus,
+.professor-filter-input:focus,
+.professor-form-control:focus,
+.professor-search-input:focus {
+    outline: none;
+    border-color: var(--professor-primary);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* ESTILOS CORRIGIDOS PARA SELECTS */
+select.professor-form-control {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: white url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23333' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") no-repeat right 12px center/16px !important;
+    padding-right: 40px !important;
+}
+
+.select-habilitado {
+    opacity: 1 !important;
+    cursor: pointer !important;
+    background-color: white !important;
+}
+
+.select-desabilitado {
+    background: #f9f9f9 !important;
+    background-image: none !important;
+    padding-right: 12px !important;
+    opacity: 0.7 !important;
+    cursor: not-allowed !important;
+    color: #888 !important;
+    border-color: #e0e0e0 !important;
+}
+
+/* Remover seta padrão em todos os selects desabilitados */
+select.professor-form-control:disabled,
+select.select-desabilitado {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-image: none !important;
+}
+
+/* Firefox específico */
+@-moz-document url-prefix() {
+
+    select.professor-form-control:disabled,
+    select.select-desabilitado {
+        background-image: none !important;
+        text-indent: 0.01px;
+        text-overflow: '';
+        padding-right: 12px !important;
+    }
+}
+
+/* IE/Edge específico */
+@media all and (-ms-high-contrast: none),
+(-ms-high-contrast: active) {
+
+    select.professor-form-control:disabled,
+    select.select-desabilitado {
+        &::-ms-expand {
+            display: none !important;
+        }
+
+        padding-right: 12px !important;
+    }
+}
+
+/* ===== SISTEMA DE GRIDS ===== */
+.professor-aulas-grid,
+.professor-blocos-grid,
+.professor-andares-grid,
+.professor-salas-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.professor-aulas-grid {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+}
+
+.professor-blocos-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.professor-andares-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.professor-salas-grid {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+}
+
+/* Cards Base */
+.professor-aula-card,
+.professor-bloco-card,
+.professor-andar-card,
+.professor-sala-card {
+    background: white;
+    border-radius: var(--professor-radius);
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px var(--professor-shadow);
+    transition: var(--professor-transition);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.professor-aula-card {
+    border-left: 6px solid var(--professor-primary);
+    cursor: pointer;
+}
+
+.professor-bloco-card {
+    border-left: 6px solid var(--professor-primary);
+    cursor: pointer;
+}
+
+.professor-andar-card {
+    border-left: 4px solid var(--professor-success);
+    cursor: pointer;
+}
+
+.professor-sala-card {
+    border-left: 4px solid var(--professor-primary);
+}
+
+.professor-aula-card:hover,
+.professor-bloco-card:hover,
+.professor-andar-card:hover,
+.professor-sala-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 25px var(--professor-shadow-hover);
+}
+
+/* ===== COMPONENTES DE CARDS ===== */
+.professor-aula-header,
+.professor-sala-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.professor-aula-header h3,
+.professor-sala-header h4 {
+    color: var(--professor-secondary);
+    margin: 0;
+    font-weight: 700;
+    flex: 1;
+}
+
+.professor-aula-header h3 {
+    font-size: 1.2rem;
+}
+
+.professor-sala-header h4 {
+    font-size: 1.3rem;
+}
+
+/* Badges e Status */
+.professor-status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.professor-status-badge.ativa,
+.professor-sala-status.professor-disponivel {
+    background: #d4edda;
+    color: #155724;
+}
+
+.professor-status-badge.inativa,
+.professor-sala-status.professor-ocupada,
+.professor-status-badge.status-cancelada {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.professor-status-badge.em-andamento {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.professor-status-badge.agendada {
+    background: #cce7ff;
+    color: #004085;
+}
+
+/* Informações de Cards */
+.professor-aula-info,
+.professor-sala-info {
+    margin-bottom: 1rem;
+}
+
+.professor-aula-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.professor-sala-info {
+    flex: 1;
+}
+
+.professor-info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.professor-info-item i {
+    width: 16px;
+    color: var(--professor-primary);
+}
+
+.professor-sala-info p {
+    margin: 0.5rem 0;
+    color: #555;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.professor-sala-info strong {
+    color: var(--professor-secondary);
+    font-weight: 600;
+    display: inline-block;
+    min-width: 80px;
+}
+
+/* ===== BOTÕES EM 2 FILEIRAS OTIMIZADOS ===== */
+.professor-aula-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    align-items: stretch;
+}
+
+.professor-btn-action {
+    padding: 10px 8px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 38px;
+    min-width: 0;
+    flex-direction: column;
+    text-align: center;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
+}
+
+.professor-btn-action i {
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+}
+
+.professor-btn-action span {
+    font-size: 0.75rem;
+    line-height: 1.2;
+    display: block;
+}
+
+/* Cores dos botões otimizadas */
+.professor-btn-action.secundario {
+    background: linear-gradient(135deg, #27ae60, #219a52);
+    box-shadow: 0 2px 4px rgba(39, 174, 96, 0.3);
+}
+
+.professor-btn-action.editar {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    box-shadow: 0 2px 4px rgba(243, 156, 18, 0.3);
+}
+
+.professor-btn-action.cancelar {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+    color: #212529;
+}
+
+.professor-btn-action.reativar {
+    background: linear-gradient(135deg, #20c997, #1ba87e);
+    box-shadow: 0 2px 4px rgba(32, 201, 151, 0.3);
+    color: white;
+}
+
+.professor-btn-action.perigo {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+}
+
+.professor-btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.professor-btn-action.secundario:hover {
+    background: linear-gradient(135deg, #219a52, #1e8449);
+}
+
+.professor-btn-action.editar:hover {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+}
+
+.professor-btn-action.cancelar:hover {
+    background: linear-gradient(135deg, #e0a800, #d39e00);
+}
+
+.professor-btn-action.reativar:hover {
+    background: linear-gradient(135deg, #1ba87e, #189770);
+}
+
+.professor-btn-action.perigo:hover {
+    background: linear-gradient(135deg, #c0392b, #a93226);
+}
+
+/* Estados desabilitados */
+.professor-btn-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* ===== CARD DE AULA CLICÁVEL ===== */
+.professor-aula-card {
+    padding: 20px;
+    margin-bottom: 16px;
+    border-radius: 10px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    border: 2px solid transparent;
+}
+
+.professor-aula-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    border-color: #3498db;
+}
+
+.professor-aula-card:active {
+    transform: translateY(0);
+}
+
+.professor-aula-card-content {
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+.professor-aula-card::after {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.7rem;
+    color: #3498db;
+    background: rgba(52, 152, 219, 0.1);
+    padding: 2px 6px;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.professor-aula-card:hover::after {
+    opacity: 1;
+}
+
+/* Aula cancelada */
+.professor-aula-card.aula-cancelada {
+    opacity: 0.7;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-left: 4px solid #6c757d;
+}
+
+.professor-aula-card.aula-cancelada:hover {
+    border-color: #6c757d;
+}
+
+.professor-aula-card.aula-cancelada .professor-aula-header h3 {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+.professor-aula-card.aula-cancelada::after {
+    content: 'Clique para ver detalhes';
+    color: #6c757d;
+    background: rgba(108, 117, 125, 0.1);
+}
+
+.professor-aula-card.aula-cancelada .professor-aula-actions {
+    grid-template-columns: 1fr 1fr;
+}
+
+/* ===== FORMULÁRIOS ===== */
+.professor-form-container {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px var(--professor-shadow);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.professor-criar-aula-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.professor-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.professor-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.professor-form-group label {
+    font-weight: 600;
+    color: var(--professor-secondary);
+    font-size: 0.9rem;
+}
+
+.professor-form-group-full {
+    grid-column: 1 / -1;
+}
+
+/* Sistema de Checkbox */
+.professor-dias-checkbox {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.professor-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.75rem;
+    border: 2px solid var(--professor-border);
+    border-radius: 8px;
+    transition: var(--professor-transition);
+}
+
+.professor-checkbox-label:hover {
+    border-color: var(--professor-primary);
+}
+
+.professor-checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
+.professor-checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--professor-border);
+    border-radius: 4px;
+    position: relative;
+    transition: var(--professor-transition);
+}
+
+.professor-checkbox-label input[type="checkbox"]:checked+.professor-checkmark {
+    background: var(--professor-primary);
+    border-color: var(--professor-primary);
+}
+
+.professor-checkbox-label input[type="checkbox"]:checked+.professor-checkmark::after {
+    content: '✓';
+    position: absolute;
+    color: white;
+    font-size: 14px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* ===== BOTÕES E AÇÕES ===== */
+.professor-form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--professor-light);
+}
+
+.professor-btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+}
+
+.professor-btn-secondary,
+.professor-btn-voltar-andar,
+.professor-btn-voltar-sala {
+    background: var(--professor-gray);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.professor-btn-secondary:hover,
+.professor-btn-voltar-andar:hover,
+.professor-btn-voltar-sala:hover {
+    background: #7f8c8d;
+}
+
+.professor-btn-voltar-andar,
+.professor-btn-voltar-sala {
+    background: var(--professor-primary);
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+}
+
+.professor-btn-voltar-andar:hover,
+.professor-btn-voltar-sala:hover {
+    background: #2980b9;
+}
+
+/* ===== COMPONENTES ESPECÍFICOS ===== */
+.professor-search-container {
+    position: relative;
+    margin-bottom: 0.5rem;
+}
+
+.professor-search-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+/* Blocos e Andares */
+.professor-bloco-icon,
+.professor-andar-icon {
+    transition: transform 0.3s ease;
+    margin-bottom: 1rem;
+}
+
+.professor-bloco-icon {
+    font-size: 3rem;
+    color: var(--professor-primary);
+}
+
+.professor-andar-icon {
+    font-size: 2.5rem;
+    color: var(--professor-success);
+}
+
+.professor-bloco-card:hover .professor-bloco-icon,
+.professor-andar-card:hover .professor-andar-icon {
+    transform: scale(1.1);
+}
+
+.professor-bloco-card h3,
+.professor-andar-card h4 {
+    color: var(--professor-secondary);
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.professor-bloco-card h3 {
+    font-size: 1.5rem;
+}
+
+.professor-andar-card h4 {
+    font-size: 1.2rem;
+}
+
+.professor-bloco-card p,
+.professor-andar-card p {
+    color: var(--professor-gray);
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Stats e Status */
+.professor-bloco-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+    gap: 0.5rem;
+}
+
+.professor-andar-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.professor-stat {
+    background: #f8f9fa;
+    padding: 0.5rem 1rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    color: #495057;
+    font-weight: 600;
+    text-align: center;
+}
+
+.professor-andar-stats .professor-stat {
+    padding: 0.4rem 0.8rem;
+    border-radius: 12px;
+}
+
+/* Cabeçalhos de Seção */
+.professor-andares-header,
+.professor-salas-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--professor-light);
+    flex-wrap: wrap;
+}
+
+.professor-andares-header h3,
+.professor-salas-header h3 {
+    color: var(--professor-secondary);
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    flex: 1;
+}
+
+/* Empty State */
+.professor-empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6c757d;
+    grid-column: 1 / -1;
+    background: white;
+    border-radius: var(--professor-radius);
+    box-shadow: 0 2px 10px var(--professor-shadow);
+}
+
+.professor-empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #bdc3c7;
+}
+
+.professor-empty-state p {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+
+/* ===== DETALHES DA AULA ===== */
+.professor-detalhes-aula {
+    padding: 0;
+}
+
+.professor-detalhes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.professor-detalhes-header h4 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.professor-detalhes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.professor-detalhes-coluna {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.professor-detalhes-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #4CAF50;
+    transition: all 0.3s ease;
+}
+
+.professor-detalhes-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.professor-detalhes-icon {
+    width: 45px;
+    height: 45px;
+    background: #4CAF50;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+    font-size: 1.1rem;
+}
+
+.professor-detalhes-content label {
+    display: block;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.professor-detalhes-content p {
+    margin: 0;
+    color: #2c3e50;
+    font-weight: 500;
+    font-size: 1.1rem;
+}
+
+.professor-detalhes-content small {
+    color: #6c757d;
+    font-size: 0.85rem;
+    display: block;
+    margin-top: 0.25rem;
+}
+
+.professor-detalhes-alerta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 10px;
+    color: #856404;
+    margin-top: 1.5rem;
+    font-weight: 500;
+}
+
+.professor-detalhes-alerta i {
+    color: #f39c12;
+    font-size: 1.2rem;
+}
+
+/* ===== ANIMAÇÕES ===== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes modalEnter {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ===== RESPONSIVIDADE OTIMIZADA ===== */
+
+/* Desktop Grande (1201px+) */
+@media (min-width: 1201px) {
+    .professor-salas-grid {
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    }
+
+    .professor-blocos-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .professor-andares-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Desktop Médio (992px - 1200px) */
+@media (min-width: 992px) and (max-width: 1200px) {
+    .professor-salas-grid {
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    }
+
+    .professor-blocos-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .professor-andares-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Tablet (769px - 991px) */
+@media (min-width: 769px) and (max-width: 991px) {
+    .professor-salas-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+
+    .professor-blocos-grid,
+    .professor-andares-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .professor-form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Mobile (até 768px) */
+@media (max-width: 768px) {
+    .professor-page-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .professor-form-row,
+    .professor-filters-container,
+    .professor-aulas-grid,
+    .professor-salas-grid,
+    .professor-blocos-grid,
+    .professor-andares-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .professor-form-actions,
+    .professor-salas-filters {
+        flex-direction: column;
+    }
+
+    .professor-andares-header,
+    .professor-salas-header,
+    .professor-sala-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .professor-sala-status {
+        align-self: flex-start;
+    }
+
+    .professor-bloco-card,
+    .professor-andar-card,
+    .professor-sala-card {
+        padding: 1.25rem;
+    }
+
+    .professor-form-container {
+        padding: 1.5rem;
+        margin: 0 1rem;
+    }
+
+    .professor-aula-actions {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    .professor-btn-action {
+        height: 36px;
+        padding: 8px 6px;
+        font-size: 0.75rem;
+    }
+
+    .professor-btn-action i {
+        font-size: 0.8rem;
+        margin-bottom: 1px;
+    }
+
+    .professor-btn-action span {
+        font-size: 0.7rem;
+    }
+
+    .professor-aula-card::after {
+        content: '👆 Detalhes';
+        font-size: 0.65rem;
+    }
+
+    .modal-large {
+        width: 95%;
+        margin: 1rem;
+    }
+
+    .professor-detalhes-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .professor-detalhes-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .professor-detalhes-item {
+        padding: 1rem;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+    }
+
+    .modal-footer button {
+        width: 100%;
+    }
+}
+
+/* Mobile Pequeno (até 480px) */
+@media (max-width: 480px) {
+
+    .professor-blocos-grid,
+    .professor-andares-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .professor-bloco-card,
+    .professor-andar-card,
+    .professor-sala-card {
+        padding: 1rem;
+    }
+
+    .professor-bloco-icon {
+        font-size: 2rem;
+    }
+
+    .professor-andar-icon {
+        font-size: 1.75rem;
+    }
+
+    .professor-page-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .professor-andares-header h3,
+    .professor-salas-header h3 {
+        font-size: 1.3rem;
+    }
+
+    .professor-sala-header h4 {
+        font-size: 1.1rem;
+    }
+
+    .professor-empty-state {
+        padding: 2rem 1rem;
+    }
+
+    .professor-empty-state i {
+        font-size: 2.5rem;
+    }
+
+    .professor-form-container {
+        padding: 1rem;
+        margin: 0 0.5rem;
+    }
+
+    .professor-aula-actions {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+
+    .professor-btn-action {
+        height: 34px;
+        padding: 6px 4px;
+        flex-direction: row;
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    .professor-btn-action i {
+        margin-bottom: 0;
+        margin-right: 6px;
+        min-width: 16px;
+    }
+
+    .professor-btn-action span {
+        font-size: 0.7rem;
+    }
+}
+
+/* Impressão */
+@media print {
+
+    .professor-page-header,
+    .professor-filters-container,
+    .professor-form-actions {
+        display: none;
+    }
+
+    .professor-aula-card,
+    .professor-bloco-card,
+    .professor-andar-card,
+    .professor-sala-card {
+        box-shadow: none;
+        border: 1px solid #000;
+        break-inside: avoid;
+    }
+}
+
+/* ==================== MODAL STYLES - SISTEMA UNIMAP ==================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(44, 62, 80, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    visibility: visible;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+    padding: 20px;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow: hidden;
+    transform: scale(1);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 10000;
+    border: 1px solid #e9ecef;
+    animation: modalSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-large {
+    max-width: 700px;
+}
+
+.modal-extra-large {
+    max-width: 800px;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Header do Modal */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 24px 16px;
+    background: linear-gradient(135deg, var(--professor-primary) 0%, #2980b9 100%);
+    border-radius: 16px 16px 0 0;
+    position: relative;
+}
+
+.modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 24px;
+    right: 24px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header h3 i {
+    font-size: 1.3rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.modal-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    font-size: 1.3rem;
+    cursor: pointer;
+    color: white;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: rotate(90deg) scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Corpo do Modal */
+.modal-body {
+    padding: 28px;
+    max-height: 60vh;
+    overflow-y: auto;
+    background: white;
+}
+
+.modal-body label {
+    color: white !important;
+}
+
+/* Grid de Detalhes - Estilo Modernizado */
+.aula-detalhes-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.detalhe-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.detalhe-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--professor-primary);
+    border-radius: 4px 0 0 4px;
+}
+
+.detalhe-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--professor-shadow);
+    border-color: var(--professor-primary);
+}
+
+.detalhe-item label {
+    font-weight: 600;
+    color: var(--professor-secondary);
+    min-width: 140px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.95rem;
+}
+
+.detalhe-item label i {
+    width: 20px;
+    text-align: center;
+    color: var(--professor-primary);
+    font-size: 1.1rem;
+}
+
+.detalhe-item span {
+    text-align: right;
+    color: var(--professor-dark);
+    font-weight: 500;
+    font-size: 1rem;
+    flex: 1;
+}
+
+/* Status Badges - Estilo Melhorado */
+.status-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.status-badge.ativa {
+    background: linear-gradient(135deg, #27ae60, #219a52);
+    color: white;
+    border: 1px solid #1e8449;
+}
+
+.status-badge.em-andamento {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+    border: 1px solid #d35400;
+}
+
+.status-badge.cancelada {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    border: 1px solid #a93226;
+}
+
+.status-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Footer do Modal */
+.modal-footer {
+    padding: 20px 24px 24px;
+    text-align: right;
+    border-top: 2px solid var(--professor-light);
+    background: #f8f9fa;
+    border-radius: 0 0 16px 16px;
+}
+
+.btn-fechar {
+    background: linear-gradient(135deg, var(--professor-primary), #2980b9);
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.btn-fechar:hover {
+    background: linear-gradient(135deg, #2980b9, #21618c);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
+}
+
+.btn-fechar:active {
+    transform: translateY(0);
+}
+
+/* Scrollbar Personalizada */
+.modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--professor-primary), #2980b9);
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #2980b9, #21618c);
+}
+
+/* Efeitos de Foco e Acessibilidade */
+.modal-content:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .modal-overlay {
+        padding: 15px;
+    }
+
+    .modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+
+    .modal-large,
+    .modal-extra-large {
+        max-width: 95%;
+    }
+
+    .modal-header {
+        padding: 20px 20px 12px;
+    }
+
+    .modal-header h3 {
+        font-size: 1.3rem;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .detalhe-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .detalhe-item::before {
+        width: 100%;
+        height: 3px;
+        border-radius: 4px 4px 0 0;
+    }
+
+    .detalhe-item span {
+        text-align: left;
+        width: 100%;
+    }
+
+    .modal-footer {
+        padding: 16px 20px 20px;
+        text-align: center;
+    }
+
+    .btn-fechar {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-overlay {
+        padding: 10px;
+    }
+
+    .modal-content {
+        width: 100%;
+        margin: 5px;
+    }
+
+    .modal-header {
+        padding: 16px 16px 10px;
+    }
+
+    .modal-header h3 {
+        font-size: 1.2rem;
+        gap: 8px;
+    }
+
+    .modal-body {
+        padding: 16px;
+    }
+
+    .detalhe-item {
+        padding: 14px;
+    }
+
+    .detalhe-item label {
+        min-width: auto;
+        font-size: 0.9rem;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Animações de Entrada e Saída */
+@keyframes modalFadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+}
+
+.modal-overlay.closing {
+    animation: modalFadeOut 0.3s ease forwards;
+}
+
+/* Melhorias de Acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+
+    .modal-content,
+    .detalhe-item,
+    .modal-close,
+    .btn-fechar,
+    .status-badge {
+        animation: none;
+        transition: none;
+    }
+}
+
+/* Suporte para Modo Escuro */
+@media (prefers-color-scheme: dark) {
+    .modal-content {
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        border-color: #4a5f7a;
+    }
+
+    .modal-body {
+        background: #2c3e50;
+        color: #ecf0f1;
+    }
+
+    .detalhe-item {
+        background: linear-gradient(135deg, #34495e, #2c3e50);
+        border-color: #4a5f7a;
+        color: #ecf0f1;
+    }
+
+    .detalhe-item span {
+        color: #ecf0f1;
+    }
+
+    .modal-footer {
+        background: #34495e;
+        border-top-color: #4a5f7a;
+    }
+
+    .modal-body::-webkit-scrollbar-track {
+        background: #34495e;
+    }
+}
+
+/* ========== ESTILOS DOS FILTROS ========== */
+.filtros-container {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #e9ecef;
+}
+
+.filtros-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.filtros-title {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.contador-aulas {
+    font-size: 0.9em;
+    color: #6c757d;
+    background: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    border: 1px solid #dee2e6;
+}
+
+.contador-aulas.filtro-ativo {
+    background: #fff3cd;
+    color: #856404;
+    border-color: #ffeaa7;
+    font-weight: 600;
+}
+
+.filtros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.filtro-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filtro-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+.filtro-input,
+.filtro-select {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.filtro-input:focus,
+.filtro-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.filtro-input:not(:placeholder-shown) {
+    background-color: #f8fff8;
+    border-color: #4CAF50;
+}
+
+.filtros-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.btn-filtro {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.btn-limpar {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-limpar:hover {
+    background: #5a6268;
+}
+
+.btn-aplicar {
+    background: #667eea;
+    color: white;
+}
+
+.btn-aplicar:hover {
+    background: #5a6fd8;
+}
+
+/* ========== ESTADO VAZIO MELHORADO ========== */
+.professor-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 40px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 20px;
+    border: 2px dashed #dee2e6;
+    margin: 30px 0;
+    min-height: 400px;
+    transition: all 0.3s ease;
+}
+
+.professor-empty-state i {
+    font-size: 4em;
+    color: #6c757d;
+    margin-bottom: 25px;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+}
+
+.professor-empty-state p {
+    font-size: 1.4em;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.professor-empty-state .empty-subtitle {
+    font-size: 1em;
+    font-weight: 400;
+    color: #6c757d;
+    margin-bottom: 35px;
+    max-width: 400px;
+    line-height: 1.5;
+}
+
+/* ========== BOTÃO LIMPAR FILTROS MELHORADO ========== */
+.btn-limpar-filtros-empty {
+    background: red;
+    color: white;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-top: 20px;
+    transition: all 0.4s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 200px;
+    justify-content: center;
+}
+
+.btn-limpar-filtros-empty::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: red;
+    transition: left 0.5s ease;
+}
+
+.btn-limpar-filtros-empty:hover::before {
+    left: 100%;
+}
+
+.btn-limpar-filtros-empty:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    background: white;
+    color: red;
+}
+
+.btn-limpar-filtros-empty:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-limpar-filtros-empty i {
+    font-size: 1.2em;
+    transition: transform 0.3s ease;
+}
+
+.btn-limpar-filtros-empty:hover i {
+    transform: rotate(90deg);
+}
+
+.professor-empty-state {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* ========== RESPONSIVIDADE ========== */
+@media (max-width: 768px) {
+    .professor-empty-state {
+        padding: 40px 20px;
+        min-height: 300px;
+        margin: 20px 0;
+    }
+
+    .professor-empty-state i {
+        font-size: 3em;
+    }
+
+    .professor-empty-state p {
+        font-size: 1.2em;
+    }
+
+    .professor-empty-state .empty-subtitle {
+        font-size: 0.9em;
+        margin-bottom: 25px;
+    }
+
+    .btn-limpar-filtros-empty {
+        padding: 14px 28px;
+        font-size: 1em;
+        min-width: 180px;
+    }
+}
+
+/* ========== EFEITO DE FOCO ========== */
+.btn-limpar-filtros-empty:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
+/* ========== ESTADO DE CARREGAMENTO PARA O BOTÃO ========== */
+.btn-limpar-filtros-empty.loading {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.btn-limpar-filtros-empty.loading i {
+    animation: spin 1s linear infinite;
+}
+
+.professor-form-control[type="date"] {
+    padding: 12px 15px;
+    border: 2px solid #e8e8e8;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.professor-form-control[type="date"]:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
