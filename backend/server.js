@@ -116,9 +116,14 @@ app.use('*', (req, res) => {
     res.status(404).json({ error: 'Rota não encontrada' });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`🚀 UNIMAP rodando na porta ${PORT}`);
-    console.log(`🌎 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`📈 Health: ${process.env.APP_URL || `http://localhost:${PORT}`}/api/health`);
-});
+// Iniciar servidor apenas quando executado diretamente.
+// Quando importado (pelos testes), apenas exporta o app.
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`🚀 UNIMAP rodando na porta ${PORT}`);
+        console.log(`🌎 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`📈 Health: ${process.env.APP_URL || `http://localhost:${PORT}`}/api/health`);
+    });
+}
+
+module.exports = app;

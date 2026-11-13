@@ -39,6 +39,8 @@
 15. `PRAGMA table_info(aulas)` usado em runtime (5x) para adicionar colunas via `ALTER TABLE` — substitui migrations.
 16. `server-simple.js` aceita qualquer senha; `teste-professor.html` é página de teste. Ambos no deploy.
 17. Tabela `salas_backup_cleanup` (422 linhas) é lixo de desenvolvimento.
+18. **`initializeDatabase()` nunca cria a tabela `usuarios`.** Cria 12 tabelas; `usuarios` — a tabela central, de que dependem login, cadastro e todo o `middleware/auth.js` — não está entre elas. O sistema só funciona porque o `unimap.db` versionado já continha a tabela, criada à mão fora do código. Verificado em banco novo: `POST /api/auth/login` → 500, log `SQLITE_ERROR: no such table: usuarios`. Consequência direta: um deploy limpo não sobe. As migrations da Task 4 passam a ser a única fonte do schema e resolvem isso.
+19. As rotas são inconsistentes no formato de resposta de criação: `cursos` devolve `{ data: { id } }`, `disciplinas` e `salas` devolvem `{ id }`. Não quebra o frontend atual, mas os testes precisam tolerar as variantes.
 
 ## Requisitos
 
