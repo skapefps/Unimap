@@ -1,0 +1,46 @@
+# Dependências
+node_modules/
+jspm_packages/
+
+# Segredos e ambiente
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Banco de dados local
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.sqbpro
+
+# Binários e instaladores
+*.msi
+*.exe
+*.dmg
+*.tar.gz
+
+# Build e cobertura
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*~

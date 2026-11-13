@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -116,11 +118,7 @@ app.use('*', (req, res) => {
 
 // Iniciar servidor
 app.listen(PORT, () => {
-    console.log(`🚀 UNIMAP COMPLETO rodando: http://localhost:${PORT}`);
-    console.log(`📊 Banco: SQLite (unimap.db)`);
-    console.log(`🔐 Google OAuth: Configurado`);
-    console.log(`📧 Email: Configurado`);
-    console.log(`👤 Admin: admin@unipam.edu.br / admin123`);
-    console.log(`👨‍🏫 Professor: professor@unipam.edu.br / prof123`);
-    console.log(`📈 Status: http://localhost:${PORT}/api/status`);
+    console.log(`🚀 UNIMAP rodando na porta ${PORT}`);
+    console.log(`🌎 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📈 Health: ${process.env.APP_URL || `http://localhost:${PORT}`}/api/health`);
 });
