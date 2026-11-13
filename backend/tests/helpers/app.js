@@ -77,6 +77,12 @@ async function aguardarSchema(timeoutMs = 20000) {
 
     await run(SCHEMA_USUARIOS);
 
+    // `professores` não tem senha_hash no schema atual — a coluna chega
+    // com a Task 4 (migrations). Até lá, adiciona aqui para os testes.
+    await run('ALTER TABLE professores ADD COLUMN senha_hash TEXT').catch(() => {
+        // Coluna já existe: ALTER TABLE ADD COLUMN não é idempotente no SQLite.
+    });
+
     while (Date.now() < limite) {
         try {
             const presentes = await all(

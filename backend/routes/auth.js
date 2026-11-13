@@ -5,6 +5,7 @@ const db = require('../config/database');
 const transporter = require('../config/email');
 const { client } = require('../config/auth');
 const { authenticateToken } = require('../middleware/auth');
+const { sign } = require('../config/jwt');
 const router = express.Router();
 
 // Rota de login
@@ -89,14 +90,14 @@ router.post('/login', (req, res) => {
                     curso: user.curso,
                     periodo: user.periodo
                 },
-                token: user.id.toString()
+                token: sign(user)
             });
-            
+
         } catch (error) {
             console.error('❌ Erro ao verificar senha:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 success: false,
-                error: 'Erro interno do servidor' 
+                error: 'Erro interno do servidor'
             });
         }
     });
@@ -256,7 +257,7 @@ router.post('/google', async (req, res) => {
                         curso: user.curso,
                         periodo: user.periodo
                     },
-                    token: user.id.toString()
+                    token: sign(user)
                 });
                 
             } else {
@@ -296,7 +297,7 @@ router.post('/google', async (req, res) => {
                                 curso: null,
                                 periodo: null
                             },
-                            token: this.lastID.toString()
+                            token: sign({ id: this.lastID, tipo: 'aluno' })
                         });
                     }
                 );
@@ -564,37 +565,50 @@ router.post('/login-professor', (req, res) => {
             console.error('❌ Erro no banco:', err);
             return res.status(500).json({ error: 'Erro interno do servidor' });
         }
-        
+
+        // Mensagem idêntica para email inexistente e senha errada: não
+        // informa a terceiros quais emails estão cadastrados.
+        const credenciaisInvalidas = () =>
+            res.status(401).json({ error: 'Email ou senha incorretos' });
+
         if (!professor) {
-            console.log('❌ Professor não encontrado:', email);
-            return res.status(401).json({ error: 'Email não encontrado' });
+            console.log('❌ Login professor falhou (email não encontrado)');
+            return credenciaisInvalidas();
         }
-        
+
+        // Professor cadastrado pelo admin ainda não definiu senha. O
+        // caminho de primeiro acesso é a recuperação de senha.
+        if (!professor.senha_hash) {
+            console.log('❌ Login professor falhou (senha não definida)');
+            return res.status(403).json({
+                error: 'Primeiro acesso: defina sua senha pela opção "Esqueci a senha".'
+            });
+        }
+
         try {
-            // Para professores, vamos usar uma senha simples por enquanto
-            // Você pode implementar bcrypt depois se quiser
-            if (senha !== 'prof123') { // Senha padrão para professores
-                console.log('❌ Senha incorreta para professor:', email);
-                return res.status(401).json({ error: 'Senha incorreta' });
+            const senhaValida = await bcrypt.compare(senha, professor.senha_hash);
+
+            if (!senhaValida) {
+                console.log('❌ Login professor falhou (senha incorreta)');
+                return credenciaisInvalidas();
             }
-            
+
             console.log('✅ Login professor bem-sucedido:', professor.nome);
-            
-            // Criar um usuário temporário para o professor no sistema
+
             const professorUser = {
-                id: `prof_${professor.id}`,
+                id: professor.id,
                 nome: professor.nome,
                 email: professor.email,
                 tipo: 'professor',
                 professor_id: professor.id
             };
-            
+
             res.json({
                 success: true,
                 user: professorUser,
-                token: professorUser.id
+                token: sign({ id: professor.id, tipo: 'professor' })
             });
-            
+
         } catch (error) {
             console.error('❌ Erro ao verificar senha:', error);
             res.status(500).json({ error: 'Erro interno do servidor' });
