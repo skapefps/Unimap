@@ -1,0 +1,30 @@
+# O projeto foi desenvolvido no Windows e roda em Linux (Render), então o
+# repositório tinha CRLF e LF misturados — às vezes no mesmo diretório.
+# Isso faz uma edição de uma linha aparecer como arquivo inteiro
+# reescrito no diff, e é a diferença entre um code review possível e um
+# impossível.
+#
+# Daqui em diante: LF no repositório, qualquer que seja o sistema de
+# quem edita. O Git converte na hora do checkout para quem usa Windows.
+
+* text=auto eol=lf
+
+# Binários: nunca converter
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.svg  text
+*.pdf  binary
+*.zip  binary
+*.db   binary
+*.sqlite binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary
+
+# Scripts de shell precisam de LF para executar
+*.sh text eol=lf
