@@ -3,6 +3,13 @@ const h = require('./helpers/app');
 
 const { app, SENHA_PADRAO } = h;
 
+// Com `trust proxy` ligado, o rate limit conta por X-Forwarded-For.
+// Um IP por requisição mantém os testes independentes: sem isso, as
+// chamadas de recuperação de senha estouram o limite de 3/hora e os
+// testes seguintes recebem 429 em vez do status que verificam.
+let contadorIp = 0;
+const ipUnico = () => `198.51.100.${(contadorIp++ % 250) + 1}`;
+
 beforeAll(async () => {
     await h.aguardarSchema();
     // Estado limpo: sem isso os testes acumulam dados entre execucoes
@@ -17,6 +24,7 @@ describe('POST /api/auth/login', () => {
     test('com senha correta devolve token e usuário', async () => {
         const res = await request(app)
             .post('/api/auth/login')
+            .set('X-Forwarded-For', ipUnico())
             .send({ email: 'aluno@teste.unimap', senha: SENHA_PADRAO });
 
         expect(res.status).toBe(200);
@@ -32,6 +40,7 @@ describe('POST /api/auth/login', () => {
     test('aceita login por matrícula', async () => {
         const res = await request(app)
             .post('/api/auth/login')
+            .set('X-Forwarded-For', ipUnico())
             .send({ matricula: 'T000001', senha: SENHA_PADRAO });
 
         expect(res.status).toBe(200);
@@ -41,6 +50,7 @@ describe('POST /api/auth/login', () => {
     test('com senha errada devolve 401', async () => {
         const res = await request(app)
             .post('/api/auth/login')
+            .set('X-Forwarded-For', ipUnico())
             .send({ email: 'aluno@teste.unimap', senha: 'senhaErrada' });
 
         expect(res.status).toBe(401);
@@ -50,6 +60,7 @@ describe('POST /api/auth/login', () => {
     test('sem senha devolve 400', async () => {
         const res = await request(app)
             .post('/api/auth/login')
+            .set('X-Forwarded-For', ipUnico())
             .send({ email: 'aluno@teste.unimap' });
 
         expect(res.status).toBe(400);
@@ -58,6 +69,7 @@ describe('POST /api/auth/login', () => {
     test('sem email nem matrícula devolve 400', async () => {
         const res = await request(app)
             .post('/api/auth/login')
+            .set('X-Forwarded-For', ipUnico())
             .send({ senha: SENHA_PADRAO });
 
         expect(res.status).toBe(400);
@@ -66,6 +78,7 @@ describe('POST /api/auth/login', () => {
     test('com email inexistente devolve 401', async () => {
         const res = await request(app)
             .post('/api/auth/login')
+            .set('X-Forwarded-For', ipUnico())
             .send({ email: 'naoexiste@teste.unimap', senha: SENHA_PADRAO });
 
         expect(res.status).toBe(401);
@@ -77,6 +90,7 @@ describe('POST /api/auth/register', () => {
         const email = `novo-${Date.now()}@teste.unimap`;
         const res = await request(app)
             .post('/api/auth/register')
+            .set('X-Forwarded-For', ipUnico())
             .send({ nome: 'Novo Aluno', email, senha: 'outraSenha123', matricula: `M${Date.now()}` });
 
         expect(res.status).toBe(200);
@@ -85,6 +99,7 @@ describe('POST /api/auth/register', () => {
         // E consegue logar em seguida.
         const login = await request(app)
             .post('/api/auth/login')
+            .set('X-Forwarded-For', ipUnico())
             .send({ email, senha: 'outraSenha123' });
         expect(login.status).toBe(200);
     });
@@ -92,6 +107,7 @@ describe('POST /api/auth/register', () => {
     test('com email duplicado devolve 400', async () => {
         const res = await request(app)
             .post('/api/auth/register')
+            .set('X-Forwarded-For', ipUnico())
             .send({ nome: 'Duplicado', email: 'aluno@teste.unimap', senha: 'qualquerSenha123' });
 
         expect(res.status).toBe(400);
@@ -100,6 +116,7 @@ describe('POST /api/auth/register', () => {
     test('sem nome devolve 400', async () => {
         const res = await request(app)
             .post('/api/auth/register')
+            .set('X-Forwarded-For', ipUnico())
             .send({ email: `sem-nome-${Date.now()}@teste.unimap`, senha: 'qualquerSenha123' });
 
         expect(res.status).toBe(400);
@@ -115,6 +132,7 @@ describe('Proteção de rotas', () => {
     test('rota protegida com token lixo devolve 401 ou 403', async () => {
         const res = await request(app)
             .get('/api/usuarios')
+            .set('X-Forwarded-For', ipUnico())
             .set('Authorization', 'Bearer isso-nao-e-um-token');
         expect([401, 403]).toContain(res.status);
     });
@@ -123,6 +141,7 @@ describe('Proteção de rotas', () => {
         const token = await h.loginAs('aluno');
         const res = await request(app)
             .get('/api/usuarios')
+            .set('X-Forwarded-For', ipUnico())
             .set('Authorization', `Bearer ${token}`);
         expect(res.status).toBe(403);
     });
@@ -131,6 +150,7 @@ describe('Proteção de rotas', () => {
         const token = await h.loginAs('admin');
         const res = await request(app)
             .get('/api/usuarios')
+            .set('X-Forwarded-For', ipUnico())
             .set('Authorization', `Bearer ${token}`);
         expect(res.status).toBe(200);
     });
@@ -139,6 +159,7 @@ describe('Proteção de rotas', () => {
         const token = await h.loginAs('aluno');
         const res = await request(app)
             .get('/api/usuarios/perfil')
+            .set('X-Forwarded-For', ipUnico())
             .set('Authorization', `Bearer ${token}`);
 
         expect(res.status).toBe(200);
@@ -150,6 +171,7 @@ describe('POST /api/auth/forgot-password', () => {
     test('com email inexistente devolve 200 sem revelar que não existe', async () => {
         const res = await request(app)
             .post('/api/auth/forgot-password')
+            .set('X-Forwarded-For', ipUnico())
             .send({ email: 'ninguem@teste.unimap' });
 
         expect(res.status).toBe(200);
@@ -159,7 +181,7 @@ describe('POST /api/auth/forgot-password', () => {
     });
 
     test('sem email devolve 400', async () => {
-        const res = await request(app).post('/api/auth/forgot-password').send({});
+        const res = await request(app).post('/api/auth/forgot-password').set('X-Forwarded-For', ipUnico()).send({});
         expect(res.status).toBe(400);
     });
 });
@@ -175,6 +197,7 @@ describe('POST /api/auth/reset-password', () => {
     test('token inválido devolve 400', async () => {
         const res = await request(app)
             .post('/api/auth/reset-password')
+            .set('X-Forwarded-For', ipUnico())
             .send({ token: 'invalido', novaSenha: 'novaSenha123' });
         expect(res.status).toBe(400);
     });
@@ -182,6 +205,7 @@ describe('POST /api/auth/reset-password', () => {
     test('sem novaSenha devolve 400', async () => {
         const res = await request(app)
             .post('/api/auth/reset-password')
+            .set('X-Forwarded-For', ipUnico())
             .send({ token: 'qualquer' });
         expect(res.status).toBe(400);
     });

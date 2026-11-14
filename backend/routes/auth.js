@@ -6,10 +6,12 @@ const transporter = require('../config/email');
 const { client } = require('../config/auth');
 const { authenticateToken } = require('../middleware/auth');
 const { sign } = require('../config/jwt');
+const { loginLimiter, registroLimiter, senhaLimiter } = require('../middleware/limiters');
+const { validate, schemas } = require('../middleware/validate');
 const router = express.Router();
 
 // Rota de login
-router.post('/login', (req, res) => {
+router.post('/login', loginLimiter, validate(schemas.login), (req, res) => {
     const { email, matricula, senha } = req.body;
     
     console.log('🔐 Tentativa de login:', { email, matricula, hasPassword: !!senha });
@@ -65,15 +67,27 @@ router.post('/login', (req, res) => {
             });
         }
         
+        // Conta criada pelo Google: o cadastro grava a string literal
+        // "google_oauth" em senha_hash, não um hash. Sem este ramo o
+        // usuário recebia "Senha incorreta" sem nenhuma pista de que a
+        // conta não tem senha própria.
+        if (user.senha_hash === 'google_oauth') {
+            console.log('ℹ️ Tentativa de login por senha em conta do Google');
+            return res.status(401).json({
+                success: false,
+                error: 'Esta conta foi criada com o Google. Use o botão "Entrar com Google".'
+            });
+        }
+
         try {
             // Verificar senha
             const senhaValida = await bcrypt.compare(senha, user.senha_hash);
-            
+
             if (!senhaValida) {
                 console.log('❌ Senha incorreta para:', params[0]);
-                return res.status(401).json({ 
+                return res.status(401).json({
                     success: false,
-                    error: 'Senha incorreta' 
+                    error: 'Senha incorreta'
                 });
             }
             
@@ -104,7 +118,7 @@ router.post('/login', (req, res) => {
 });
 
 // Rota de registro
-router.post('/register', async (req, res) => {
+router.post('/register', registroLimiter, validate(schemas.registro), async (req, res) => {
     const { nome, email, matricula, curso, periodo, senha } = req.body;
     
     console.log('👤 Tentativa de cadastro:', { email, nome });
@@ -207,7 +221,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Rota de login com Google
-router.post('/google', async (req, res) => {
+router.post('/google', loginLimiter, async (req, res) => {
     const { token } = req.body;
 
     console.log('🔐 Processando login Google...');
@@ -314,7 +328,7 @@ router.post('/google', async (req, res) => {
 });
 
 // Rota de esqueci a senha
-router.post('/forgot-password', (req, res) => {
+router.post('/forgot-password', senhaLimiter, validate(schemas.esqueciSenha), (req, res) => {
     const { email } = req.body;
     
     console.log('🔐 Solicitação de redefinição de senha para:', email);
@@ -365,7 +379,11 @@ router.post('/forgot-password', (req, res) => {
                 console.log('✅ Token gerado para:', user.email);
                 
                 // Enviar email
-                const resetLink = `http://localhost:3000/reset-password.html?token=${token}`;
+                // Vem do ambiente: fixo em localhost, o email de produção
+                // levava a um link quebrado.
+                const baseUrl = (process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`)
+                    .replace(/\/+$/, '');
+                const resetLink = `${baseUrl}/reset-password.html?token=${token}`;
                 
                 const mailOptions = {
                     from: 'UNIMAP <noreply@unimap.edu.br>',
@@ -459,7 +477,7 @@ router.get('/verify-reset-token/:token', (req, res) => {
 });
 
 // Redefinir senha
-router.post('/reset-password', (req, res) => {
+router.post('/reset-password', senhaLimiter, validate(schemas.resetSenha), (req, res) => {
     const { token, novaSenha } = req.body;
     
     console.log('🔄 Redefinindo senha para token:', token);
@@ -550,7 +568,7 @@ router.post('/reset-password', (req, res) => {
 });
 
 // Rota de login para professores
-router.post('/login-professor', (req, res) => {
+router.post('/login-professor', loginLimiter, validate(schemas.loginProfessor), (req, res) => {
     const { email, senha } = req.body;
     
     console.log('🔐 Tentativa de login professor:', email);

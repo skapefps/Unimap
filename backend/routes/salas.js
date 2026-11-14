@@ -5,6 +5,7 @@ const router = express.Router();
 
 
 const { validarId } = require('../middleware/validarId');
+const { validate, schemas } = require('../middleware/validate');
 
 // Qualquer rota com :id recebe 400 para id nao numerico, em vez de
 // 500 por erro de tipo do Postgres.
@@ -24,7 +25,7 @@ router.get('/', authenticateToken, (req, res) => {
 });
 
 // Criar nova sala (apenas admin)
-router.post('/', authenticateToken, requireAdmin, (req, res) => {
+router.post('/', authenticateToken, requireAdmin, validate(schemas.sala), (req, res) => {
     const { numero, bloco, andar, tipo, capacidade, recursos, telefone, email, campus } = req.body;
     
     console.log('🏫 Criando nova sala:', { numero, bloco, andar });
@@ -154,7 +155,7 @@ router.get('/bloco/:bloco', authenticateToken, (req, res) => {
 });
 
 // Atualizar sala (apenas admin)
-router.put('/:id', authenticateToken, requireAdmin, (req, res) => {
+router.put('/:id', authenticateToken, requireAdmin, validate(schemas.sala), (req, res) => {
     const { id } = req.params;
     const { numero, bloco, andar, tipo, capacidade, recursos, telefone, email, campus } = req.body;
     

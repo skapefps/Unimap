@@ -6,6 +6,7 @@ const router = express.Router();
 
 
 const { validarId } = require('../middleware/validarId');
+const { validate, schemas } = require('../middleware/validate');
 
 // Qualquer rota com :id recebe 400 para id nao numerico, em vez de
 // 500 por erro de tipo do Postgres.
@@ -266,7 +267,7 @@ router.delete('/favoritos/:aluno_id/:professor_id', authenticateToken, async (re
 });
 
 // Criar professor (apenas admin)
-router.post('/', authenticateToken, requireAdmin, validateProfessorData, async (req, res) => {
+router.post('/', authenticateToken, requireAdmin, validate(schemas.professor), validateProfessorData, async (req, res) => {
     const { nome, email } = req.body;
 
     try {
@@ -322,7 +323,7 @@ router.post('/', authenticateToken, requireAdmin, validateProfessorData, async (
 });
 
 // Atualizar professor (apenas admin)
-router.put('/:id', authenticateToken, requireAdmin, validateProfessorData, async (req, res) => {
+router.put('/:id', authenticateToken, requireAdmin, validate(schemas.professor), validateProfessorData, async (req, res) => {
     const { id } = req.params;
     const { nome, email } = req.body;
 

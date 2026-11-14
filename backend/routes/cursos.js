@@ -5,6 +5,7 @@ const router = express.Router();
 
 
 const { validarId } = require('../middleware/validarId');
+const { validate, schemas } = require('../middleware/validate');
 
 // Qualquer rota com :id recebe 400 para id nao numerico, em vez de
 // 500 por erro de tipo do Postgres.
@@ -114,7 +115,7 @@ router.get('/:id', authenticateToken, (req, res) => {
 });
 
 // ⭐⭐ CRIAR NOVO CURSO - CORRIGIDO ⭐⭐
-router.post('/', authenticateToken, requireAdmin, (req, res) => {
+router.post('/', authenticateToken, requireAdmin, validate(schemas.curso), (req, res) => {
     const { nome, duracao, turno, total_periodos } = req.body;
 
     console.log('🆕 Criando novo curso:', { nome, duracao, turno });
@@ -182,7 +183,7 @@ router.post('/', authenticateToken, requireAdmin, (req, res) => {
 });
 
 // ⭐⭐ ATUALIZAR CURSO - CORRIGIDO (AGORA COM success: true) ⭐⭐
-router.put('/:id', authenticateToken, requireAdmin, (req, res) => {
+router.put('/:id', authenticateToken, requireAdmin, validate(schemas.curso), (req, res) => {
     const { id } = req.params;
     const { nome, duracao, turno, total_periodos, ativo } = req.body;
 
