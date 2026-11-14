@@ -8,6 +8,9 @@ let alunoToken;
 
 beforeAll(async () => {
     await h.aguardarSchema();
+    // Estado limpo: sem isso os testes acumulam dados entre execucoes
+    // e passam a depender de ordem.
+    await h.resetDb();
     await h.seed();
     adminToken = await h.loginAs('admin');
     alunoToken = await h.loginAs('aluno');
@@ -179,6 +182,12 @@ describe('Disciplinas', () => {
         const res = await comoAdmin(request(app).post('/api/cursos'))
             .send({ nome: `Curso p/ Disciplina ${uniq()}`, duracao: 8, turno: 'Noturno' });
         cursoId = extrairId(res.body, 'curso');
+
+        if (!cursoId) {
+            throw new Error(
+                `Não foi possível criar o curso base: ${res.status} ${JSON.stringify(res.body)}`
+            );
+        }
     });
 
     test('admin cria disciplina', async () => {

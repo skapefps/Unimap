@@ -3,6 +3,13 @@ const db = require('../config/database');
 const { authenticateToken, requireAluno } = require('../middleware/auth');
 const router = express.Router();
 
+
+const { validarId } = require('../middleware/validarId');
+
+// Qualquer rota com :id recebe 400 para id nao numerico, em vez de
+// 500 por erro de tipo do Postgres.
+router.param('id', validarId);
+
 // Atualizar dados do aluno (curso, período)
 router.put('/atualizar-dados', authenticateToken, requireAluno, (req, res) => {
     const { curso, periodo } = req.body;

@@ -4,6 +4,13 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
 
+
+const { validarId } = require('../middleware/validarId');
+
+// Qualquer rota com :id recebe 400 para id nao numerico, em vez de
+// 500 por erro de tipo do Postgres.
+router.param('id', validarId);
+
 // 🔧 UTILITÁRIOS OTIMIZADOS
 const promisifyDb = {
     run: (sql, params) => new Promise((resolve, reject) => {

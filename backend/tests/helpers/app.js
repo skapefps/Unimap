@@ -1,30 +1,26 @@
 /**
  * Helper compartilhado pelos testes.
  *
- * Isola o banco (SQLITE_PATH aponta para arquivo temporário), espera o
- * initializeDatabase() terminar — ele é fire-and-forget com callbacks
- * encadeados e não expõe conclusão — e semeia usuários com senhas conhecidas.
+ * Roda contra um Postgres real — não um mock e não SQLite. A migração de
+ * banco só está provada se este mesmo conjunto de testes, que passava em
+ * SQLite, continuar passando aqui.
+ *
+ * Espera um Postgres acessível em DATABASE_URL (padrão: instância local
+ * na porta 5433) com as migrations já aplicadas.
  */
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
 const bcrypt = require('bcryptjs');
 
-const SENHA_PADRAO = 'senhaTeste123';
-
-// Precisa ser definido antes de require('../../server'), que carrega o banco.
-const dbFile = path.join(
-    fs.mkdtempSync(path.join(os.tmpdir(), 'unimap-test-')),
-    'test.db'
-);
-process.env.SQLITE_PATH = dbFile;
 process.env.NODE_ENV = 'test';
+process.env.DATABASE_URL = process.env.DATABASE_URL
+    || 'postgresql://postgres@localhost:5433/unimap_test';
 process.env.JWT_SECRET = process.env.JWT_SECRET
     || 'segredo-de-teste-com-mais-de-32-caracteres-para-passar-na-validacao';
-process.env.APP_URL = 'http://localhost:3000';
+process.env.APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
 const app = require('../../server');
 const db = require('../../config/database');
+
+const SENHA_PADRAO = 'senhaTeste123';
 
 const run = (sql, params = []) =>
     new Promise((resolve, reject) => {
@@ -44,62 +40,46 @@ const all = (sql, params = []) =>
         db.all(sql, params, (err, rows) => (err ? reject(err) : resolve(rows || [])));
     });
 
-const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
-
 /**
- * initializeDatabase() cria 12 tabelas mas NÃO cria `usuarios` — bug
- * pré-existente que deixa o sistema inoperante em banco novo. O schema
- * abaixo é o de database/script.sql, que é o que roda em produção hoje.
- * A correção definitiva são as migrations SQL (Task 4); aqui só
- * destravamos os testes contra SQLite.
+ * Confere que as migrations rodaram. Falha com mensagem útil em vez de
+ * deixar cada teste quebrar com "relation does not exist".
  */
-const SCHEMA_USUARIOS = `
-    CREATE TABLE IF NOT EXISTS usuarios (
-        id            INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome          TEXT NOT NULL,
-        email         TEXT NOT NULL UNIQUE,
-        matricula     TEXT UNIQUE,
-        tipo          TEXT DEFAULT 'aluno',
-        curso         TEXT,
-        periodo       INTEGER,
-        senha_hash    TEXT NOT NULL,
-        ativo         BOOLEAN DEFAULT 1,
-        data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`;
+async function aguardarSchema() {
+    const { TABELAS_ESPERADAS, verificarSchema } = require('../../utils/databaseInit');
+    const { ok, faltando } = await verificarSchema();
 
-/**
- * O schema é criado de forma assíncrona na importação do server.
- * Espera até que as tabelas que os testes usam existam.
- */
-async function aguardarSchema(timeoutMs = 20000) {
-    const tabelas = ['usuarios', 'cursos', 'salas', 'turmas', 'disciplinas', 'professores', 'aulas'];
-    const limite = Date.now() + timeoutMs;
-
-    await run(SCHEMA_USUARIOS);
-
-    // `professores` não tem senha_hash no schema atual — a coluna chega
-    // com a Task 4 (migrations). Até lá, adiciona aqui para os testes.
-    await run('ALTER TABLE professores ADD COLUMN senha_hash TEXT').catch(() => {
-        // Coluna já existe: ALTER TABLE ADD COLUMN não é idempotente no SQLite.
-    });
-
-    while (Date.now() < limite) {
-        try {
-            const presentes = await all(
-                `SELECT name FROM sqlite_master WHERE type = 'table' AND name IN (${tabelas.map(() => '?').join(',')})`,
-                tabelas
-            );
-            if (presentes.length === tabelas.length) {
-                // O seed do initializeDatabase ainda pode estar em voo; dá uma folga.
-                await esperar(500);
-                return;
-            }
-        } catch {
-            // Banco ainda inicializando.
-        }
-        await esperar(200);
+    if (!ok) {
+        throw new Error(
+            `Schema de teste incompleto. Faltam: ${faltando.join(', ')}.\n` +
+            `Rode: DATABASE_URL="${process.env.DATABASE_URL}" npm run migrate`
+        );
     }
-    throw new Error('Timeout esperando o schema do banco de testes');
+    return TABELAS_ESPERADAS;
+}
+
+/**
+ * Esvazia as tabelas de dados, reiniciando as sequences.
+ *
+ * CASCADE é necessário por causa das FKs; RESTART IDENTITY devolve os
+ * ids ao início para os testes poderem prever valores.
+ */
+async function resetDb() {
+    await db.pool.query(`
+        TRUNCATE
+            professores_favoritos,
+            aluno_turmas,
+            password_reset_tokens,
+            aulas,
+            turmas,
+            disciplinas,
+            salas,
+            professores,
+            cursos,
+            blocos,
+            horarios,
+            usuarios
+        RESTART IDENTITY CASCADE
+    `);
 }
 
 /** IDs dos usuários semeados, preenchidos por seed(). */
@@ -108,7 +88,6 @@ const usuarios = { admin: null, professor: null, aluno: null };
 async function seed() {
     const hash = await bcrypt.hash(SENHA_PADRAO, 10);
 
-    // Remove usuários de teste anteriores sem tocar nos seeds do initializeDatabase.
     await run(`DELETE FROM usuarios WHERE email LIKE '%@teste.unimap'`);
 
     const criar = async (nome, email, tipo, extras = {}) => {
@@ -132,7 +111,7 @@ async function seed() {
 
 /**
  * Faz login de verdade pela API e devolve o token.
- * Deliberadamente não gera o token localmente: queremos exercitar o fluxo real.
+ * Não gera o token localmente de propósito: o fluxo real é o que importa.
  */
 async function loginAs(tipo) {
     const request = require('supertest');
@@ -146,16 +125,17 @@ async function loginAs(tipo) {
     return res.body.token;
 }
 
-function limpar() {
+/** Fecha o pool para o Jest não ficar com handle aberto. */
+async function limpar() {
     try {
-        fs.rmSync(path.dirname(dbFile), { recursive: true, force: true });
+        await db.pool.end();
     } catch {
-        // Diretório temporário; falha na limpeza não importa.
+        // Pool já encerrado por outro arquivo de teste.
     }
 }
 
 module.exports = {
     app, db, run, get, all,
-    aguardarSchema, seed, loginAs, limpar,
-    usuarios, SENHA_PADRAO, dbFile
+    aguardarSchema, resetDb, seed, loginAs, limpar,
+    usuarios, SENHA_PADRAO
 };

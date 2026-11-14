@@ -15,6 +15,9 @@ const { app, SENHA_PADRAO } = h;
 
 beforeAll(async () => {
     await h.aguardarSchema();
+    // Estado limpo: sem isso os testes acumulam dados entre execucoes
+    // e passam a depender de ordem.
+    await h.resetDb();
     await h.seed();
 }, 40000);
 

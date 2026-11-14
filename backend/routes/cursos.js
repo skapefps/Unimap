@@ -3,6 +3,13 @@ const db = require('../config/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const router = express.Router();
 
+
+const { validarId } = require('../middleware/validarId');
+
+// Qualquer rota com :id recebe 400 para id nao numerico, em vez de
+// 500 por erro de tipo do Postgres.
+router.param('id', validarId);
+
 // Listar todos os cursos (ativos)
 router.get('/', authenticateToken, (req, res) => {
     const query = `SELECT id, nome FROM cursos WHERE ativo = 1 ORDER BY nome`;
@@ -126,28 +133,26 @@ router.post('/', authenticateToken, requireAdmin, (req, res) => {
         });
     }
 
-    // Calcular o próximo ID manualmente
-    db.get('SELECT MAX(id) as maxId FROM cursos', (err, row) => {
-        if (err) {
-            console.error('❌ Erro ao obter máximo ID:', err);
-            return res.status(500).json({ 
-                success: false,
-                error: 'Erro interno do servidor' 
-            });
-        }
-
-        const nextId = (row.maxId || 0) + 1;
-        console.log('🔢 Próximo ID calculado:', nextId);
-
-        // Inserir com ID específico
+    // O id é atribuído pelo banco.
+    //
+    // Aqui havia um `SELECT MAX(id) + 1` seguido de insert com o id
+    // explícito. Dois problemas: dois pedidos simultâneos calculam o
+    // mesmo id e um deles falha; e inserir id explícito não avança a
+    // sequence do Postgres, então o próximo insert automático colide com
+    // uma linha existente.
+    {
         db.run(
-            'INSERT INTO cursos (id, nome, duracao, turno, total_periodos, ativo) VALUES (?, ?, ?, ?, ?, ?)',
-            [nextId, nome.trim(), duracao, turno, total_periodos || 10, 1],
+            'INSERT INTO cursos (nome, duracao, turno, total_periodos, ativo) VALUES (?, ?, ?, ?, ?)',
+            [nome.trim(), duracao, turno, total_periodos || 10, 1],
             function (err) {
+                const nextId = this && this.lastID;
+
                 if (err) {
                     console.error('❌ Erro ao criar curso:', err);
-                    if (err.message.includes('UNIQUE')) {
-                        return res.status(400).json({ 
+                    // Postgres: 23505 = unique_violation. A mensagem do
+                    // sqlite3 trazia "UNIQUE"; a do pg, não.
+                    if (err.code === '23505' || (err.message || '').includes('UNIQUE')) {
+                        return res.status(400).json({
                             success: false,
                             error: 'Já existe um curso com este nome' 
                         });
@@ -173,7 +178,7 @@ router.post('/', authenticateToken, requireAdmin, (req, res) => {
                 });
             }
         );
-    });
+    }
 });
 
 // ⭐⭐ ATUALIZAR CURSO - CORRIGIDO (AGORA COM success: true) ⭐⭐

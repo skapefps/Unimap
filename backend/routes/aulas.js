@@ -3,6 +3,13 @@ const db = require('../config/database');
 const { authenticateToken, requireAdmin, requireProfessor } = require('../middleware/auth');
 const router = express.Router();
 
+
+const { validarId } = require('../middleware/validarId');
+
+// Qualquer rota com :id recebe 400 para id nao numerico, em vez de
+// 500 por erro de tipo do Postgres.
+router.param('id', validarId);
+
 // 🔧 PROMISIFY DATABASE OPERATIONS
 const dbRun = (sql, params) => new Promise((resolve, reject) => {
     db.run(sql, params, function (err) {
@@ -100,78 +107,12 @@ const validateAulaDataEdicao = (req, res, next) => {
     next();
 };
 
-// 🔧 CORRIGIR COLUNA DIA_SEMANA (remover NOT NULL constraint)
-function corrigirColunaDiaSemana() {
-    console.log('🔧 Verificando coluna dia_semana na tabela aulas...');
-
-    db.all(`PRAGMA table_info(aulas)`, (err, rows) => {
-        if (err) {
-            console.error('❌ Erro ao verificar estrutura da tabela aulas:', err);
-            return;
-        }
-
-        const colunaDiaSemana = rows.find(row => row.name === 'dia_semana');
-
-        if (colunaDiaSemana) {
-            console.log('📊 Coluna dia_semana encontrada:', colunaDiaSemana);
-
-            if (colunaDiaSemana.notnull === 1) {
-                console.log('🔄 Coluna dia_semana é NOT NULL, atualizando para permitir NULL...');
-
-                // SQLite não permite alterar diretamente a constraint, então precisamos:
-                // 1. Criar uma tabela temporária
-                // 2. Copiar os dados
-                // 3. Dropar a tabela original
-                // 4. Renomear a temporária
-
-                db.serialize(() => {
-                    // Criar tabela temporária sem a constraint NOT NULL
-                    db.run(`CREATE TABLE IF NOT EXISTS aulas_temp (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        disciplina TEXT NOT NULL,
-                        professor_id INTEGER NOT NULL,
-                        sala_id INTEGER,
-                        curso TEXT,
-                        turma TEXT,
-                        horario_inicio TIME NOT NULL,
-                        horario_fim TIME NOT NULL,
-                        data_aula DATE NOT NULL,
-                        periodo INTEGER,
-                        dia_semana INTEGER,
-                        data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
-                        ativa BOOLEAN DEFAULT 1,
-                        FOREIGN KEY (professor_id) REFERENCES professores (id),
-                        FOREIGN KEY (sala_id) REFERENCES salas (id)
-                    )`);
-
-                    // Copiar dados
-                    db.run(`INSERT INTO aulas_temp 
-                           SELECT id, disciplina, professor_id, sala_id, curso, turma, 
-                                  horario_inicio, horario_fim, data_aula, periodo, 
-                                  dia_semana, data_criacao, ativa 
-                           FROM aulas`);
-
-                    // Dropar tabela original
-                    db.run(`DROP TABLE aulas`);
-
-                    // Renomear temporária
-                    db.run(`ALTER TABLE aulas_temp RENAME TO aulas`);
-
-                    console.log('✅ Coluna dia_semana atualizada para permitir NULL');
-                });
-            } else {
-                console.log('✅ Coluna dia_semana já permite NULL');
-            }
-        } else {
-            console.log('ℹ️ Coluna dia_semana não encontrada na tabela aulas');
-        }
-    });
-}
-
-// Chamar esta função no initializeDatabase
-setTimeout(() => {
-    corrigirColunaDiaSemana();
-}, 2000);
+// A correção da coluna dia_semana vivia aqui: uma função que rodava 2
+// segundos após o boot, inspecionava a tabela com PRAGMA table_info e,
+// se achasse a coluna NOT NULL, recriava `aulas` via tabela temporária
+// com DROP TABLE no meio — a cada inicialização do servidor, dentro de
+// um arquivo de rota. O schema agora é das migrations, onde dia_semana
+// já aceita NULL, e nada disso é necessário.
 
 const isValidDate = (dateString) => {
     const regex = /^\d{4}-\d{2}-\d{2}$/;

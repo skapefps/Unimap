@@ -3,6 +3,13 @@ const db = require('../config/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const router = express.Router();
 
+
+const { validarId } = require('../middleware/validarId');
+
+// Qualquer rota com :id recebe 400 para id nao numerico, em vez de
+// 500 por erro de tipo do Postgres.
+router.param('id', validarId);
+
 // Debug de usuários
 router.get('/usuarios', authenticateToken, requireAdmin, (req, res) => {
     db.all('SELECT id, nome, email, matricula, tipo, curso, periodo, data_cadastro FROM usuarios WHERE ativo = 1', [], (err, rows) => {
