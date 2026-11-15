@@ -20,6 +20,12 @@ services:
     # `npm ci` respeita o package-lock; `npm install` poderia subir
     # versão de dependência entre deploys sem ninguém pedir.
     buildCommand: npm ci --omit=dev && npm run migrate
+
+    # A versão do Node vem de backend/.node-version e de engines.node
+    # (22.x). A faixa era ">=22", e o Render instalou o Node 26 — uma
+    # versão em que nada foi testado, e cujo npm rejeitou o próprio
+    # comando de build. Faixa aberta significa runtime de produção
+    # mudando sozinho.
     startCommand: npm start
 
     # Consulta o banco, diferente de /api/status. Instância que perde o
