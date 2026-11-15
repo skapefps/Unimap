@@ -1,0 +1,54 @@
+# Infraestrutura do UNIMAP no Render.
+#
+# Um único Web Service serve a API e os arquivos estáticos do frontend,
+# como já acontecia localmente. O banco é Postgres no Neon, fora do
+# Render, então não há recurso de banco declarado aqui.
+#
+# As migrations rodam no build, antes de a nova versão receber tráfego:
+# se o schema falhar, o deploy falha e a versão anterior continua no ar.
+
+services:
+  - type: web
+    name: unimap
+    runtime: node
+    plan: starter
+    region: virginia          # mesma região do Neon (us-east-1)
+    rootDir: backend
+    branch: main
+    autoDeploy: true
+
+    # `npm ci` respeita o package-lock; `npm install` poderia subir
+    # versão de dependência entre deploys sem ninguém pedir.
+    buildCommand: npm ci --omit=dev && npm run migrate
+    startCommand: npm start
+
+    # Consulta o banco, diferente de /api/status. Instância que perde o
+    # banco é retirada do balanceador.
+    healthCheckPath: /api/health
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # O Render injeta a porta; o server.js já lê process.env.PORT.
+      - key: PORT
+        value: 10000
+
+      # Preenchidos no painel (sync: false mantém fora do repositório).
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+
+      - key: LOG_LEVEL
+        value: info
