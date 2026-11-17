@@ -5,7 +5,7 @@ const db = require('../config/database');
 const transporter = require('../config/email');
 const { client } = require('../config/auth');
 const { authenticateToken } = require('../middleware/auth');
-const { sign } = require('../config/jwt');
+const { sign, ORIGEM } = require('../config/jwt');
 const { loginLimiter, registroLimiter, senhaLimiter } = require('../middleware/limiters');
 const { validate, schemas } = require('../middleware/validate');
 const router = express.Router();
@@ -624,7 +624,7 @@ router.post('/login-professor', loginLimiter, validate(schemas.loginProfessor), 
             res.json({
                 success: true,
                 user: professorUser,
-                token: sign({ id: professor.id, tipo: 'professor' })
+                token: sign({ id: professor.id, tipo: 'professor' }, ORIGEM.PROFESSORES)
             });
 
         } catch (error) {

@@ -1,5 +1,5 @@
 const db = require('../config/database');
-const { verify } = require('../config/jwt');
+const { verify, ORIGEM } = require('../config/jwt');
 
 /**
  * Autentica a requisição por JWT.
@@ -33,6 +33,20 @@ function authenticateToken(req, res, next) {
         return res.status(401).json({
             error: expirado ? 'Sessão expirada. Faça login novamente.' : 'Token inválido',
             expired: expirado
+        });
+    }
+
+    // Token emitido contra a tabela `professores` não resolve aqui.
+    //
+    // As duas tabelas de identidade têm sequences independentes, então
+    // o professor de id 1 e o usuário de id 1 são pessoas diferentes.
+    // Sem esta checagem, o token do professor 1 era resolvido contra
+    // `usuarios WHERE id = 1` — que no banco atual é o administrador,
+    // dando acesso total de admin. Reproduzido em teste antes da
+    // correção.
+    if (payload.src === ORIGEM.PROFESSORES) {
+        return res.status(403).json({
+            error: 'Este token é de professor e não dá acesso a esta área'
         });
     }
 
@@ -81,7 +95,10 @@ function authenticateProfessor(req, res, next) {
         });
     }
 
-    if (payload.tipo !== 'professor') {
+    // Exige que o token tenha sido emitido contra a tabela `professores`.
+    // `tipo` sozinho não basta: há usuários em `usuarios` com
+    // tipo='professor', cujos ids pertencem a outra sequence.
+    if (payload.src !== ORIGEM.PROFESSORES) {
         return res.status(403).json({ error: 'Acesso restrito a professores' });
     }
 
