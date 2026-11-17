@@ -177,6 +177,42 @@ describe('Interface sem emoji', () => {
     });
 });
 
+describe('Responsividade', () => {
+    const paginas = fs.readdirSync(FRONTEND).filter((f) => f.endsWith('.html'));
+
+    test.each(paginas)('%s declara a viewport', (pagina) => {
+        expect(ler(pagina)).toMatch(/name=["']viewport["']/);
+    });
+
+    test.each(paginas)('%s carrega a base responsiva', (pagina) => {
+        expect(ler(pagina)).toContain('css/responsivo.css');
+    });
+
+    test('nenhum container de formulário tem largura fixa', () => {
+        // `width: 400px` no cartão de login e de cadastro estourava a
+        // tela em celular de 360px.
+        for (const arquivo of ['css/login.css', 'css/cadastro.css']) {
+            const css = ler(arquivo);
+            const container = css.match(/\.(login|register)-container \{[^}]*\}/);
+            expect(container).not.toBeNull();
+            expect(container[0]).not.toMatch(/\n\s*width:\s*\d+px/);
+        }
+    });
+
+    test('toda altura 100vh tem a versão dvh ao lado', () => {
+        // No celular, 100vh conta a altura com a barra do navegador
+        // recolhida, e o conteúdo fica cortado.
+        for (const arquivo of fs.readdirSync(path.join(FRONTEND, 'css')).filter((f) => f.endsWith('.css'))) {
+            const linhas = ler(`css/${arquivo}`).split('\n');
+            linhas.forEach((linha, i) => {
+                if (!/(?:min-|max-)?height\s*:\s*100vh/.test(linha)) return;
+                const seguinte = linhas[i + 1] || '';
+                expect(seguinte).toMatch(/100dvh/);
+            });
+        }
+    });
+});
+
 describe('Erros do servidor chegam ao usuário', () => {
     // O catch do cadastro só reconhecia três mensagens específicas e
     // trocava todo o resto por "Erro ao fazer cadastro. Tente

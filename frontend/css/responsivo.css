@@ -1,0 +1,132 @@
+/*
+ * responsivo.css — base responsiva e escala de breakpoints.
+ *
+ * Carregado DEPOIS do CSS da página, para que estas regras valham como
+ * rede de segurança sem reescrever o layout existente.
+ *
+ * Problema que motivou o arquivo: o projeto usa 14 valores de
+ * breakpoint diferentes (768, 769, 800, 801, 850, 981, 991, 992, 1200,
+ * 1201, 1400, 480, 600, 700). Alguns são pares corretos de
+ * `max-width` com `min-width`, mas os avulsos fazem cada tela quebrar
+ * num ponto diferente.
+ *
+ * ESCALA ADOTADA — use só estes valores em CSS novo:
+ *
+ *   até 480px    celular pequeno
+ *   até 768px    celular e tablet em pé
+ *   até 1024px   tablet deitado
+ *   acima        desktop
+ *
+ * Em `min-width`, use o valor seguinte: 481, 769, 1025.
+ */
+
+/* ------------------------------------------------------------------
+   Rede de segurança contra estouro horizontal
+   ------------------------------------------------------------------ */
+
+html,
+body {
+    /* Qualquer elemento que passe da largura da tela cria rolagem
+       lateral na página inteira — o sintoma mais comum de layout
+       quebrado em celular. */
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+img,
+svg,
+video,
+canvas {
+    /* Não havia regra global: uma imagem maior que a tela empurrava o
+       layout inteiro. */
+    max-width: 100%;
+    height: auto;
+}
+
+/* Palavras muito longas (URLs, emails) quebram em vez de alargar o
+   container. */
+p,
+h1, h2, h3, h4, h5, h6,
+td, th,
+label,
+.card,
+.message,
+.error-message {
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* ------------------------------------------------------------------
+   Tabelas
+   ------------------------------------------------------------------ */
+
+.table-container,
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ------------------------------------------------------------------
+   Alvos de toque
+   ------------------------------------------------------------------ */
+
+@media (max-width: 768px) {
+    button,
+    .btn,
+    .btn-primary,
+    .mobile-btn-primary,
+    a.button,
+    input[type="submit"],
+    input[type="button"] {
+        /* 44px é o mínimo confortável para o dedo; abaixo disso o
+           usuário erra o alvo. */
+        min-height: 44px;
+    }
+
+    input,
+    select,
+    textarea {
+        /* Abaixo de 16px o Safari do iPhone dá zoom automático ao focar
+           o campo, e a tela fica desalinhada. */
+        font-size: 16px;
+        min-height: 44px;
+    }
+}
+
+/* ------------------------------------------------------------------
+   Formulários em tela estreita
+   ------------------------------------------------------------------ */
+
+@media (max-width: 480px) {
+    .login-container,
+    .register-container {
+        /* Sem borda arredondada e sem sombra quando ocupa a tela toda:
+           a moldura só faz sentido quando há fundo em volta. */
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    body {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+}
+
+/* ------------------------------------------------------------------
+   Impressão
+   ------------------------------------------------------------------ */
+
+@media print {
+    .navbar,
+    .menu-hamburger,
+    .logout-btn,
+    .action-buttons,
+    button {
+        display: none !important;
+    }
+
+    body {
+        background: #fff;
+        color: #000;
+    }
+}

@@ -10,6 +10,7 @@ body {
     font-family: 'Inter', Arial, sans-serif;
     background: url('../images/background.webp') center/cover no-repeat fixed;
     height: 100vh;
+    height: 100dvh;
     display: flex;
     justify-content: flex-end;
     align-items: center;
@@ -17,8 +18,11 @@ body {
 }
 
 .login-container {
-    width: 400px;
+    /* width fixo estourava a tela em celular estreito. */
+    width: 100%;
+    max-width: 400px;
     height: 100vh;
+    height: 100dvh;
     background: #FFF;
     display: flex;
     flex-direction: column;
@@ -277,6 +281,7 @@ body {
     .login-container {
         width: 100%;
         height: 100vh;
+        height: 100dvh;
         max-width: 100%;
         border-radius: 0;
         box-shadow: none;
@@ -291,6 +296,7 @@ body {
         display: flex;
         flex-direction: column;
         height: 100vh;
+        height: 100dvh;
         background: #FFF
     }
 
@@ -500,12 +506,14 @@ body {
 body {
     background: url('../images/background.webp') center/cover no-repeat fixed !important;
     min-height: 100vh !important;
+    min-height: 100dvh !important;
     height: 100% !important
 }
 
 .login-container,
 .register-container {
     min-height: 100vh !important;
+    min-height: 100dvh !important;
     height: auto !important
 }
 

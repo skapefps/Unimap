@@ -10,6 +10,7 @@ body {
     font-family: 'Inter', Arial, sans-serif;
     background: url('../images/background.webp') center/cover no-repeat;
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -17,7 +18,10 @@ body {
 }
 
 .register-container {
-    width: 400px;
+    /* width fixo estourava a tela em celular estreito (360px de
+       largura, mais 20px de padding de cada lado do body). */
+    width: 100%;
+    max-width: 400px;
     background: #FFF;
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
