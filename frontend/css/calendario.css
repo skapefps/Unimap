@@ -1,0 +1,316 @@
+/*
+ * calendario.css — calendário acadêmico.
+ *
+ * Cada tipo de evento tem sua cor, e a mesma cor se repete no filtro, na
+ * borda do item e no destaque. É o que permite varrer o ano e achar os
+ * feriados sem ler texto.
+ */
+
+:root {
+    --cal-feriado: #d9534f;
+    --cal-sabado: #e8a33d;
+    --cal-prazo: #4a90d9;
+    --cal-marco: #44a06b;
+    --cal-reuniao: #8e6fc4;
+    --cal-texto: #243746;
+    --cal-fraco: #6b7a89;
+    --cal-borda: #e3eaf0;
+}
+
+.cal-pagina {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 16px 48px;
+}
+
+/* --- topo --- */
+
+.cal-topo {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.cal-topo h2 {
+    margin: 0 0 4px;
+    font-size: 1.5rem;
+    color: var(--cal-texto);
+}
+
+.cal-topo p {
+    margin: 0;
+    color: var(--cal-fraco);
+    font-size: 0.9rem;
+    max-width: 60ch;
+}
+
+.cal-pdf {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: #d9534f;
+    color: #fff;
+    text-decoration: none;
+    padding: 11px 18px;
+    border-radius: 9px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    white-space: nowrap;
+}
+
+.cal-pdf:hover { background: #c33c38; }
+
+/* --- números do ano --- */
+
+.cal-resumo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 26px;
+}
+
+.cal-resumo div {
+    background: #fff;
+    border: 1px solid var(--cal-borda);
+    border-radius: 11px;
+    padding: 14px 16px;
+}
+
+.cal-resumo strong {
+    display: block;
+    font-size: 1.6rem;
+    color: var(--cal-texto);
+    line-height: 1.1;
+}
+
+.cal-resumo span {
+    font-size: 0.82rem;
+    color: var(--cal-fraco);
+}
+
+/* --- seções --- */
+
+.cal-secao { margin-bottom: 30px; }
+
+.cal-secao h3 {
+    margin: 0 0 12px;
+    font-size: 1.1rem;
+    color: var(--cal-texto);
+}
+
+.cal-secao-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.cal-secao-topo h3 { margin: 0; }
+
+.cal-filtros {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+
+.cal-filtro {
+    background: #f1f5f8;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 0.84rem;
+    cursor: pointer;
+    color: var(--cal-texto);
+}
+
+.cal-filtro:hover { background: #e4edf4; }
+
+.cal-filtro.ativo {
+    background: var(--cal-texto);
+    color: #fff;
+}
+
+/* --- próximos eventos --- */
+
+.cal-destaques {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+}
+
+.cal-destaque {
+    display: flex;
+    gap: 13px;
+    background: #fff;
+    border: 1px solid var(--cal-borda);
+    border-left-width: 4px;
+    border-radius: 11px;
+    padding: 15px 17px;
+}
+
+.cal-destaque > i {
+    font-size: 1.15rem;
+    margin-top: 2px;
+}
+
+.cal-destaque-data {
+    display: block;
+    font-weight: 700;
+    color: var(--cal-texto);
+    margin-bottom: 3px;
+    font-size: 0.95rem;
+}
+
+.cal-destaque p {
+    margin: 0;
+    font-size: 0.86rem;
+    color: var(--cal-fraco);
+    line-height: 1.45;
+}
+
+/* --- meses --- */
+
+.cal-meses {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 14px;
+    align-items: start;
+}
+
+.cal-mes {
+    background: #fff;
+    border: 1px solid var(--cal-borda);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.cal-mes header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 13px 16px;
+    background: #f7fafc;
+    border-bottom: 1px solid var(--cal-borda);
+}
+
+.cal-mes h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--cal-texto);
+}
+
+.cal-letivos {
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--cal-fraco);
+    background: #fff;
+    border: 1px solid var(--cal-borda);
+    border-radius: 999px;
+    padding: 2px 9px;
+    white-space: nowrap;
+}
+
+.cal-mes ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.cal-mes li {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f2f6f9;
+    border-left: 3px solid transparent;
+}
+
+.cal-mes li:last-child { border-bottom: none; }
+
+.cal-dia {
+    flex: 0 0 auto;
+    min-width: 54px;
+    font-weight: 700;
+    font-size: 0.86rem;
+    color: var(--cal-texto);
+}
+
+.cal-rotulo {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    margin-bottom: 3px;
+}
+
+.cal-rotulo i { margin-right: 4px; }
+
+.cal-mes li p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--cal-fraco);
+    line-height: 1.45;
+}
+
+/* --- cores por tipo --- */
+
+.cal-feriado { border-left-color: var(--cal-feriado); }
+.cal-feriado .cal-rotulo, .cal-destaque.cal-feriado > i { color: var(--cal-feriado); }
+
+.cal-sabado { border-left-color: var(--cal-sabado); }
+.cal-sabado .cal-rotulo, .cal-destaque.cal-sabado > i { color: var(--cal-sabado); }
+
+.cal-prazo { border-left-color: var(--cal-prazo); }
+.cal-prazo .cal-rotulo, .cal-destaque.cal-prazo > i { color: var(--cal-prazo); }
+
+.cal-marco { border-left-color: var(--cal-marco); }
+.cal-marco .cal-rotulo, .cal-destaque.cal-marco > i { color: var(--cal-marco); }
+
+.cal-reuniao { border-left-color: var(--cal-reuniao); }
+.cal-reuniao .cal-rotulo, .cal-destaque.cal-reuniao > i { color: var(--cal-reuniao); }
+
+/* --- rodapé --- */
+
+.cal-nota {
+    margin-top: 26px;
+    padding: 14px 16px;
+    background: #f7fafc;
+    border: 1px solid var(--cal-borda);
+    border-radius: 10px;
+    font-size: 0.83rem;
+    color: var(--cal-fraco);
+    line-height: 1.5;
+}
+
+.cal-nota i { margin-right: 6px; }
+.cal-nota a { color: var(--cal-prazo); }
+
+.cal-vazio {
+    color: var(--cal-fraco);
+    font-size: 0.9rem;
+}
+
+/* --- nota da planta, usada no mapa --- */
+
+.mapa-nota {
+    margin: 0;
+    padding: 12px 20px 16px;
+    background: #fff;
+    font-size: 0.82rem;
+    color: #6b7a89;
+    line-height: 1.5;
+}
+
+.mapa-nota i { margin-right: 6px; }
+
+@media (max-width: 768px) {
+    .cal-pdf { width: 100%; justify-content: center; }
+    .cal-meses { grid-template-columns: 1fr; }
+    .cal-dia { min-width: 46px; }
+}

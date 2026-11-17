@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIMAP - Calendário Acadêmico 2026</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/calendario.css">
+    <link rel="stylesheet" href="css/responsivo.css">
+    <link rel="shortcut icon" type="image/png" href="images/logo-unipam 2.png">
+</head>
+<body>
+    <header class="desktop-header">
+        <div class="header-content">
+            <h1>UNIMAP</h1>
+            <nav class="desktop-nav">
+                <a href="index.html">Minhas Aulas</a>
+                <a href="mapa.html">Mapa Salas</a>
+                <a href="professores.html">Professores</a>
+                <a href="calendario.html" class="nav-link active">Calendário</a>
+                <span class="user-info" id="userName"></span>
+                <button onclick="logout()" class="btn-sair">Sair</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="cal-pagina">
+        <section class="cal-topo">
+            <div>
+                <h2>Calendário Acadêmico 2026</h2>
+                <p>Centro Universitário de Patos de Minas &middot; aprovado pela Reitoria,
+                   conforme Portaria UNIPAM nº 3.463/2025.</p>
+            </div>
+            <a class="cal-pdf" data-pdf href="#" target="_blank" rel="noopener">
+                <i class="fas fa-file-pdf" aria-hidden="true"></i>
+                Abrir o PDF oficial
+            </a>
+        </section>
+
+        <section class="cal-resumo">
+            <div><strong>101</strong><span>dias letivos no 1º semestre</span></div>
+            <div><strong>100</strong><span>dias letivos no 2º semestre</span></div>
+            <div><strong>02/02</strong><span>início do 1º semestre</span></div>
+            <div><strong>03/08</strong><span>início do 2º semestre</span></div>
+        </section>
+
+        <section class="cal-secao">
+            <h3>Próximos eventos</h3>
+            <div id="calDestaques" class="cal-destaques"></div>
+        </section>
+
+        <section class="cal-secao">
+            <div class="cal-secao-topo">
+                <h3>O ano inteiro</h3>
+                <div id="calFiltros" class="cal-filtros" role="group" aria-label="Filtrar por tipo">
+                    <button type="button" class="cal-filtro ativo" data-tipo="todos" aria-pressed="true">Tudo</button>
+                    <button type="button" class="cal-filtro" data-tipo="feriado" aria-pressed="false">Feriados</button>
+                    <button type="button" class="cal-filtro" data-tipo="sabado" aria-pressed="false">Sábados letivos</button>
+                    <button type="button" class="cal-filtro" data-tipo="prazo" aria-pressed="false">Prazos</button>
+                    <button type="button" class="cal-filtro" data-tipo="marco" aria-pressed="false">Semestre</button>
+                </div>
+            </div>
+            <div id="calMeses" class="cal-meses"></div>
+        </section>
+
+        <p class="cal-nota">
+            <i class="fas fa-circle-info" aria-hidden="true"></i>
+            Sábados letivos são destinados a atividades discentes supervisionadas,
+            nos termos da Resolução CNE/CES 03/07. Em caso de divergência,
+            vale o <a data-pdf href="#" target="_blank" rel="noopener">PDF oficial</a>.
+        </p>
+    </main>
+
+    <script src="js/session.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/icones.js"></script>
+    <script src="js/calendario.js"></script>
+    <script>
+        (function () {
+            try {
+                const u = JSON.parse(localStorage.getItem('userData') || '{}');
+                const alvo = document.getElementById('userName');
+                if (alvo && u.nome) alvo.textContent = u.nome;
+            } catch (e) { /* localStorage indisponível */ }
+        })();
+
+        function logout() {
+            if (window.unimapSession) return window.unimapSession.encerrar();
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

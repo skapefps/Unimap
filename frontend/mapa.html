@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIMAP - Mapa do Campus</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/mapa-campus.css">
+    <link rel="stylesheet" href="css/responsivo.css">
+    <link rel="shortcut icon" type="image/png" href="images/logo-unipam 2.png">
+</head>
+<body>
+    <header class="desktop-header">
+        <div class="header-content">
+            <h1>UNIMAP</h1>
+            <nav class="desktop-nav">
+                <a href="index.html">Minhas Aulas</a>
+                <a href="mapa.html" class="nav-link active">Mapa Salas</a>
+                <a href="professores.html">Professores</a>
+                <a href="calendario.html">Calendário</a>
+                <span class="user-info" id="userName"></span>
+                <button onclick="logout()" class="btn-sair">Sair</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="mapa-pagina">
+        <section class="mapa-quadro">
+            <div class="mapa-cabecalho">
+                <div>
+                    <h2>Mapa do campus</h2>
+                    <p>Clique em um bloco para ver os pisos e os locais.</p>
+                </div>
+                <span id="mapaResumo"></span>
+            </div>
+
+            <svg id="mapaSvg" viewBox="0 0 1000 720" role="img"
+                 aria-label="Planta esquemática do campus, com os blocos clicáveis">
+            </svg>
+
+            <p class="mapa-nota">
+                <i class="fas fa-circle-info" aria-hidden="true"></i>
+                Planta esquemática, baseada na placa de orientação do campus.
+                As posições são aproximadas e servem para localizar o bloco,
+                não para medir distância.
+            </p>
+        </section>
+
+        <aside class="mapa-painel" id="mapaPainel" aria-live="polite">
+            <div class="mapa-painel-topo">
+                <div>
+                    <h3>Selecione um bloco</h3>
+                    <p class="mapa-painel-sub">No mapa ao lado ou na lista abaixo.</p>
+                </div>
+            </div>
+            <p class="mapa-vazio">
+                <i class="fas fa-hand-pointer" aria-hidden="true"></i><br>
+                Os pisos e os locais aparecem aqui.
+            </p>
+        </aside>
+
+        <section class="mapa-blocos-lista" style="grid-column: 1 / -1;">
+            <h3>Todos os blocos</h3>
+            <p>Se preferir, escolha pela lista em vez do mapa.</p>
+            <div id="mapaListaBlocos"></div>
+        </section>
+    </main>
+
+    <script src="js/session.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/icones.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/mapa-campus.js"></script>
+    <script>
+        // Nome de quem está logado no cabeçalho.
+        (function () {
+            try {
+                const u = JSON.parse(localStorage.getItem('userData') || '{}');
+                const alvo = document.getElementById('userName');
+                if (alvo && u.nome) alvo.textContent = u.nome;
+            } catch (e) { /* localStorage indisponível */ }
+        })();
+
+        function logout() {
+            if (window.unimapSession) return window.unimapSession.encerrar();
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

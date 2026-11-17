@@ -11,6 +11,59 @@ const { validate, schemas } = require('../middleware/validate');
 // 500 por erro de tipo do Postgres.
 router.param('id', validarId);
 
+/**
+ * Dados do mapa do campus: um registro por bloco, com contagem por andar.
+ *
+ * Alimenta a planta esquemática. Conta números de sala distintos, não
+ * linhas: a tabela tem 2.912 linhas para 703 números, porque o mesmo
+ * número aparece até 5 vezes com tipo e capacidade diferentes — resíduo
+ * de dados de teste. Contar linhas mostraria um campus 4 vezes maior do
+ * que ele é.
+ */
+router.get('/mapa', authenticateToken, (req, res) => {
+    db.all(
+        `SELECT s.bloco,
+                b.nome AS nome_bloco,
+                s.andar,
+                COUNT(DISTINCT s.numero) AS salas
+           FROM salas s
+           LEFT JOIN blocos b ON b.letra = s.bloco
+          WHERE s.ativa = 1
+          GROUP BY s.bloco, b.nome, s.andar
+          ORDER BY s.bloco, s.andar`,
+        [],
+        (err, linhas) => {
+            if (err) {
+                console.error('❌ Erro ao montar o mapa:', err.message);
+                return res.status(500).json({ error: 'Erro interno do servidor' });
+            }
+
+            // Agrupa por bloco, com os andares dentro.
+            const porBloco = new Map();
+
+            for (const l of linhas || []) {
+                if (!porBloco.has(l.bloco)) {
+                    porBloco.set(l.bloco, {
+                        letra: l.bloco,
+                        nome: l.nome_bloco || `Bloco ${l.bloco}`,
+                        andares: [],
+                        total_salas: 0
+                    });
+                }
+                const bloco = porBloco.get(l.bloco);
+                bloco.andares.push({ andar: l.andar, salas: l.salas });
+                bloco.total_salas += l.salas;
+            }
+
+            res.json({
+                blocos: [...porBloco.values()],
+                total_blocos: porBloco.size,
+                total_salas: [...porBloco.values()].reduce((s, b) => s + b.total_salas, 0)
+            });
+        }
+    );
+});
+
 // Listar todas as salas
 router.get('/', authenticateToken, (req, res) => {
     console.log('🏫 Buscando salas...');
@@ -119,15 +172,19 @@ router.get('/bloco/:bloco/andar/:andar', authenticateToken, (req, res) => {
         default: andarNumero = parseInt(andar);
     }
     
+    // DISTINCT ON por número: a tabela tem o mesmo número repetido até
+    // 5 vezes, cada cópia com tipo e capacidade diferentes. Sem isto a
+    // tela lista "A001" quatro vezes dizendo coisas contraditórias.
+    // Fica com a linha de menor id, que é a mais antiga.
     const query = `
-        SELECT 
+        SELECT DISTINCT ON (numero)
             id, numero, bloco, andar, tipo, capacidade, recursos,
             telefone, email, campus, ativa
-        FROM salas 
+        FROM salas
         WHERE bloco = ? AND andar = ? AND ativa = 1
-        ORDER BY numero
+        ORDER BY numero, id
     `;
-    
+
     db.all(query, [bloco, andarNumero], (err, rows) => {
         if (err) {
             console.error('❌ Erro ao carregar salas:', err);
