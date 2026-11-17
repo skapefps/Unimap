@@ -1,6 +1,6 @@
 const express = require('express');
 const db = require('../config/database');
-const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { authenticateToken, requireAdmin, authenticateProfessor } = require('../middleware/auth');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
 
@@ -201,6 +201,48 @@ router.get('/ativos', authenticateToken, async (req, res) => {
         console.error('❌ Erro ao buscar professores ativos:', error);
         res.status(500).json({ error: error.message });
     }
+});
+
+/**
+ * Perfil do professor que está logado.
+ *
+ * O frontend (`js/professor.js`) já chamava esta rota, que não existia —
+ * respondia 404 e o painel do professor não carregava. Devolve o
+ * registro de `professores` ligado à conta, mais os dados da conta.
+ */
+router.get('/meu-perfil', authenticateProfessor, (req, res) => {
+    const { id, nome, email, ativo } = req.professor;
+
+    res.json({
+        id,
+        nome,
+        email,
+        ativo,
+        usuario_id: req.user.id,
+        tipo: 'professor'
+    });
+});
+
+/**
+ * Aulas do professor logado, sem precisar que o frontend saiba o id do
+ * vínculo acadêmico.
+ */
+router.get('/minhas-aulas', authenticateProfessor, (req, res) => {
+    db.all(
+        `SELECT a.*, s.numero AS sala_numero, s.bloco AS sala_bloco
+           FROM aulas a
+           LEFT JOIN salas s ON a.sala_id = s.id
+          WHERE a.professor_id = ? AND a.ativa = 1
+          ORDER BY a.data_aula DESC, a.horario_inicio`,
+        [req.professor.id],
+        (err, rows) => {
+            if (err) {
+                console.error('❌ Erro ao buscar aulas do professor:', err.message);
+                return res.status(500).json({ error: 'Erro interno do servidor' });
+            }
+            res.json(rows || []);
+        }
+    );
 });
 
 // Adicionar professor aos favoritos

@@ -175,15 +175,26 @@ describe('Usuário desativado depois da emissão do token', () => {
 });
 
 describe('Login de professor', () => {
+    // A conta do professor vive em `usuarios`, como a de todo mundo.
+    // `professores` guarda só o vínculo acadêmico, ligado por
+    // usuario_id. Antes era uma segunda tabela de identidade, com senha
+    // e sequence próprias.
     const emailProf = `prof-login-${Date.now()}@teste.unimap`;
     const senhaProf = 'senhaDoProfessor123';
+    let professorId;
 
     beforeAll(async () => {
         const hash = await bcrypt.hash(senhaProf, 10);
-        await h.run(
-            `INSERT INTO professores (nome, email, senha_hash, ativo) VALUES (?, ?, ?, 1)`,
+        const u = await h.run(
+            `INSERT INTO usuarios (nome, email, senha_hash, tipo, ativo)
+             VALUES (?, ?, ?, 'professor', 1)`,
             ['Professor Com Senha', emailProf, hash]
         );
+        const p = await h.run(
+            'INSERT INTO professores (nome, email, usuario_id, ativo) VALUES (?, ?, ?, 1)',
+            ['Professor Com Senha', emailProf, u.lastID]
+        );
+        professorId = p.lastID;
     });
 
     test('professor loga com a própria senha', async () => {
@@ -206,9 +217,14 @@ describe('Login de professor', () => {
 
     test('professor sem senha definida não loga com senha vazia', async () => {
         const emailSemSenha = `prof-sem-senha-${Date.now()}@teste.unimap`;
-        await h.run(
-            `INSERT INTO professores (nome, email, ativo) VALUES (?, ?, 1)`,
+        const u = await h.run(
+            `INSERT INTO usuarios (nome, email, senha_hash, tipo, ativo)
+             VALUES (?, ?, '', 'professor', 1)`,
             ['Professor Sem Senha', emailSemSenha]
+        );
+        await h.run(
+            'INSERT INTO professores (nome, email, usuario_id, ativo) VALUES (?, ?, ?, 1)',
+            ['Professor Sem Senha', emailSemSenha, u.lastID]
         );
 
         const res = await request(app)
@@ -218,12 +234,30 @@ describe('Login de professor', () => {
         expect(res.status).toBe(400);
     });
 
-    test('id do professor no token é numérico, não "prof_N"', async () => {
+    test('a resposta traz o professor_id do vínculo acadêmico', async () => {
         const res = await request(app)
             .post('/api/auth/login-professor')
             .send({ email: emailProf, senha: senhaProf });
 
+        // `aulas` aponta para professores.id, que não é o id do usuário.
+        expect(res.body.user.professor_id).toBe(professorId);
         expect(typeof res.body.user.id).toBe('number');
+    });
+
+    test('conta sem vínculo acadêmico recebe 403', async () => {
+        const email = `sem-vinculo-${Date.now()}@teste.unimap`;
+        const hash = await bcrypt.hash(senhaProf, 10);
+        await h.run(
+            `INSERT INTO usuarios (nome, email, senha_hash, tipo, ativo)
+             VALUES (?, ?, ?, 'professor', 1)`,
+            ['Sem Vinculo', email, hash]
+        );
+
+        const res = await request(app)
+            .post('/api/auth/login-professor')
+            .send({ email, senha: senhaProf });
+
+        expect(res.status).toBe(403);
     });
 });
 

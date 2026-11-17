@@ -6,6 +6,18 @@ const transporter = require('../config/email');
 const { client } = require('../config/auth');
 const { authenticateToken } = require('../middleware/auth');
 const { sign, ORIGEM } = require('../config/jwt');
+
+/**
+ * Resposta única de /forgot-password.
+ *
+ * Email inexistente, email enviado e falha no envio respondem a mesma
+ * coisa. Qualquer diferença entre esses casos diz a quem perguntar
+ * quais emails estão cadastrados.
+ */
+const RESPOSTA_RECUPERACAO = Object.freeze({
+    success: true,
+    message: 'Se o email existir em nosso sistema, enviaremos instruções de redefinição.'
+});
 const { loginLimiter, registroLimiter, senhaLimiter } = require('../middleware/limiters');
 const { validate, schemas } = require('../middleware/validate');
 const router = express.Router();
@@ -93,7 +105,7 @@ router.post('/login', loginLimiter, validate(schemas.login), (req, res) => {
             
             console.log('✅ Login bem-sucedido:', user.nome, '- Tipo:', user.tipo);
             
-            res.json({
+            const resposta = {
                 success: true,
                 user: {
                     id: user.id,
@@ -105,7 +117,29 @@ router.post('/login', loginLimiter, validate(schemas.login), (req, res) => {
                     periodo: user.periodo
                 },
                 token: sign(user)
-            });
+            };
+
+            // Professor recebe também o id do vínculo acadêmico.
+            //
+            // `aulas` e `professores_favoritos` apontam para
+            // `professores.id`, que não é o id do usuário — o frontend
+            // precisa dele para buscar as aulas de quem acabou de entrar.
+            if (user.tipo === 'professor') {
+                return db.get(
+                    'SELECT id FROM professores WHERE usuario_id = ? AND ativo = 1',
+                    [user.id],
+                    (errProf, professor) => {
+                        if (errProf) {
+                            console.error('❌ Erro ao buscar vínculo de professor:', errProf.message);
+                        } else if (professor) {
+                            resposta.user.professor_id = professor.id;
+                        }
+                        res.json(resposta);
+                    }
+                );
+            }
+
+            res.json(resposta);
 
         } catch (error) {
             console.error('❌ Erro ao verificar senha:', error);
@@ -353,10 +387,7 @@ router.post('/forgot-password', senhaLimiter, validate(schemas.esqueciSenha), (r
         if (!user) {
             console.log('❌ Email não encontrado:', email);
             // Por segurança, não revelamos se o email existe ou não
-            return res.json({ 
-                success: true, 
-                message: 'Se o email existir em nosso sistema, enviaremos instruções de redefinição.' 
-            });
+            return res.json(RESPOSTA_RECUPERACAO);
         }
         
         // Gerar token único
@@ -415,23 +446,25 @@ router.post('/forgot-password', senhaLimiter, validate(schemas.esqueciSenha), (r
                 
                 console.log('📤 Tentando enviar email para:', user.email);
                 
+                // Resposta idêntica aconteça o que acontecer.
+                //
+                // Antes havia duas diferenças que permitiam descobrir
+                // quais emails estão cadastrados: a mensagem de sucesso
+                // ("Enviamos um email...") não era a de email
+                // inexistente ("Se o email existir..."), e uma falha de
+                // envio devolvia 500 — que só ocorre quando o email
+                // existe, porque só então há o que enviar.
+                //
+                // A falha de envio fica no log do servidor, onde é
+                // acionável, e não na resposta, onde é um oráculo.
                 transporter.sendMail(mailOptions, (error, info) => {
                     if (error) {
-                        console.error('❌ Erro ao enviar email:', error);
-                        return res.status(500).json({ 
-                            success: false, 
-                            error: 'Erro ao enviar email de redefinição. Tente novamente em alguns minutos.' 
-                        });
+                        console.error('❌ Falha ao enviar email de redefinição:', error.message);
+                    } else {
+                        console.log('✅ Email de redefinição enviado:', info && info.messageId);
                     }
-                    
-                    console.log('✅ Email de redefinição enviado com sucesso!');
-                    console.log('📧 Message ID:', info.messageId);
-                    console.log('🔗 Preview URL:', nodemailer.getTestMessageUrl(info));
-                    
-                    res.json({ 
-                        success: true, 
-                        message: 'Enviamos um email com instruções para redefinir sua senha.' 
-                    });
+
+                    res.json(RESPOSTA_RECUPERACAO);
                 });
             }
         );
@@ -568,70 +601,90 @@ router.post('/reset-password', senhaLimiter, validate(schemas.resetSenha), (req,
 });
 
 // Rota de login para professores
+/**
+ * Login de professor.
+ *
+ * Mantida por compatibilidade: a tela do professor ainda aponta para
+ * cá. A autenticação agora é exatamente a mesma de /login — a conta do
+ * professor vive em `usuarios` como a de todo mundo — e esta rota só
+ * confirma que existe um vínculo acadêmico ativo antes de devolver o
+ * token.
+ *
+ * Antes, `professores` tinha senha própria: nenhum professor tinha uma,
+ * a recuperação de senha não os alcançava, e o id colidia com o de
+ * `usuarios`, abrindo caminho para admin.
+ */
 router.post('/login-professor', loginLimiter, validate(schemas.loginProfessor), (req, res) => {
     const { email, senha } = req.body;
-    
-    console.log('🔐 Tentativa de login professor:', email);
-    
-    if (!email || !senha) {
-        return res.status(400).json({ error: 'Email e senha são obrigatórios' });
-    }
-    
-    // Buscar professor por email
-    db.get('SELECT * FROM professores WHERE email = ? AND ativo = 1', [email], async (err, professor) => {
-        if (err) {
-            console.error('❌ Erro no banco:', err);
-            return res.status(500).json({ error: 'Erro interno do servidor' });
-        }
 
-        // Mensagem idêntica para email inexistente e senha errada: não
-        // informa a terceiros quais emails estão cadastrados.
-        const credenciaisInvalidas = () =>
-            res.status(401).json({ error: 'Email ou senha incorretos' });
+    const credenciaisInvalidas = () =>
+        res.status(401).json({ error: 'Email ou senha incorretos' });
 
-        if (!professor) {
-            console.log('❌ Login professor falhou (email não encontrado)');
-            return credenciaisInvalidas();
-        }
-
-        // Professor cadastrado pelo admin ainda não definiu senha. O
-        // caminho de primeiro acesso é a recuperação de senha.
-        if (!professor.senha_hash) {
-            console.log('❌ Login professor falhou (senha não definida)');
-            return res.status(403).json({
-                error: 'Primeiro acesso: defina sua senha pela opção "Esqueci a senha".'
-            });
-        }
-
-        try {
-            const senhaValida = await bcrypt.compare(senha, professor.senha_hash);
-
-            if (!senhaValida) {
-                console.log('❌ Login professor falhou (senha incorreta)');
-                return credenciaisInvalidas();
+    db.get(
+        'SELECT * FROM usuarios WHERE email = ? AND ativo = 1',
+        [email],
+        async (err, user) => {
+            if (err) {
+                console.error('❌ Erro no banco:', err);
+                return res.status(500).json({ error: 'Erro interno do servidor' });
             }
 
-            console.log('✅ Login professor bem-sucedido:', professor.nome);
+            if (!user) return credenciaisInvalidas();
 
-            const professorUser = {
-                id: professor.id,
-                nome: professor.nome,
-                email: professor.email,
-                tipo: 'professor',
-                professor_id: professor.id
-            };
+            if (user.senha_hash === 'google_oauth') {
+                return res.status(401).json({
+                    error: 'Esta conta foi criada com o Google. Use o botão "Entrar com Google".'
+                });
+            }
 
-            res.json({
-                success: true,
-                user: professorUser,
-                token: sign({ id: professor.id, tipo: 'professor' }, ORIGEM.PROFESSORES)
-            });
+            // Conta criada pela unificação ainda sem senha definida.
+            if (!user.senha_hash) {
+                return res.status(403).json({
+                    error: 'Primeiro acesso: defina sua senha pela opção "Esqueci a senha".'
+                });
+            }
 
-        } catch (error) {
-            console.error('❌ Erro ao verificar senha:', error);
-            res.status(500).json({ error: 'Erro interno do servidor' });
+            try {
+                if (!(await bcrypt.compare(senha, user.senha_hash))) {
+                    return credenciaisInvalidas();
+                }
+            } catch (erro) {
+                console.error('❌ Erro ao verificar senha:', erro);
+                return res.status(500).json({ error: 'Erro interno do servidor' });
+            }
+
+            db.get(
+                'SELECT * FROM professores WHERE usuario_id = ? AND ativo = 1',
+                [user.id],
+                (errProf, professor) => {
+                    if (errProf) {
+                        console.error('❌ Erro ao buscar vínculo:', errProf.message);
+                        return res.status(500).json({ error: 'Erro interno do servidor' });
+                    }
+
+                    if (!professor) {
+                        return res.status(403).json({
+                            error: 'Esta conta não está vinculada a um registro de professor'
+                        });
+                    }
+
+                    console.log('✅ Login professor bem-sucedido:', user.nome);
+
+                    res.json({
+                        success: true,
+                        user: {
+                            id: user.id,
+                            nome: user.nome,
+                            email: user.email,
+                            tipo: 'professor',
+                            professor_id: professor.id
+                        },
+                        token: sign(user)
+                    });
+                }
+            );
         }
-    });
+    );
 });
 
 // Verificar se email existe

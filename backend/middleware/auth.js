@@ -71,54 +71,46 @@ function authenticateToken(req, res, next) {
 }
 
 /**
- * Autentica o professor por JWT contra a tabela `professores`.
+ * Autentica um professor.
  *
- * Existe porque professores vivem em tabela própria: o token emitido por
- * /api/auth/login-professor tem `tipo: 'professor'` e `sub` apontando
- * para `professores.id`, não para `usuarios.id`.
+ * A conta vive em `usuarios`, como a de qualquer pessoa — então
+ * autentica por lá e, em seguida, busca o vínculo acadêmico em
+ * `professores`. É esse vínculo que `aulas` e `professores_favoritos`
+ * referenciam, e seu id é diferente do id do usuário.
+ *
+ * Antes, `professores` era uma segunda tabela de identidade com senha e
+ * sequence próprias: ninguém conseguia senha, a recuperação não os
+ * alcançava, e o id colidente abria caminho para admin.
  */
 function authenticateProfessor(req, res, next) {
-    const header = req.headers['authorization'];
-
-    if (!header || !header.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Token de acesso requerido' });
-    }
-
-    let payload;
-    try {
-        payload = verify(header.slice('Bearer '.length).trim());
-    } catch (err) {
-        return res.status(401).json({
-            error: err.name === 'TokenExpiredError'
-                ? 'Sessão expirada. Faça login novamente.'
-                : 'Token inválido'
-        });
-    }
-
-    // Exige que o token tenha sido emitido contra a tabela `professores`.
-    // `tipo` sozinho não basta: há usuários em `usuarios` com
-    // tipo='professor', cujos ids pertencem a outra sequence.
-    if (payload.src !== ORIGEM.PROFESSORES) {
-        return res.status(403).json({ error: 'Acesso restrito a professores' });
-    }
-
-    db.get(
-        'SELECT * FROM professores WHERE id = ? AND ativo = 1',
-        [payload.sub],
-        (err, professor) => {
-            if (err) {
-                console.error('❌ Erro ao carregar professor do token:', err.message);
-                return res.status(500).json({ error: 'Erro interno do servidor' });
-            }
-            if (!professor) {
-                return res.status(401).json({ error: 'Token inválido' });
-            }
-
-            req.professor = professor;
-            req.user = { ...professor, tipo: 'professor', professor_id: professor.id };
-            next();
+    authenticateToken(req, res, () => {
+        if (req.user.tipo !== 'professor' && req.user.tipo !== 'admin') {
+            return res.status(403).json({ error: 'Acesso restrito a professores' });
         }
-    );
+
+        db.get(
+            'SELECT * FROM professores WHERE usuario_id = ? AND ativo = 1',
+            [req.user.id],
+            (err, professor) => {
+                if (err) {
+                    console.error('❌ Erro ao carregar vínculo de professor:', err.message);
+                    return res.status(500).json({ error: 'Erro interno do servidor' });
+                }
+
+                // Conta marcada como professor sem registro acadêmico
+                // ligado: falha limpa, não 500 em cada consulta adiante.
+                if (!professor) {
+                    return res.status(403).json({
+                        error: 'Esta conta não está vinculada a um registro de professor'
+                    });
+                }
+
+                req.professor = professor;
+                req.user.professor_id = professor.id;
+                next();
+            }
+        );
+    });
 }
 
 function requireAdmin(req, res, next) {
