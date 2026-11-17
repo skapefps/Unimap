@@ -743,10 +743,10 @@ class RegisterManager {
         }
 
         // Validar senha
-        if (inputs.password.value.length < 6) {
+        if (inputs.password.value.length < 8) {
             return {
                 isValid: false,
-                message: 'A senha deve ter pelo menos 6 caracteres'
+                message: 'A senha deve ter pelo menos 8 caracteres'
             };
         }
 

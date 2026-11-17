@@ -9,6 +9,7 @@
     <link rel="shortcut icon" type="imagex/png" href="../frontend/images/logo-unipam 2.png">
     <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
     <script src="js/session.js"></script>
+    <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script></script>
 </head>
@@ -276,18 +277,27 @@
             }
             
         } catch (error) {
-            console.error('❌ Erro no cadastro:', error);
-            let errorMessage = 'Erro ao fazer cadastro. Tente novamente.';
-            
-            if (error.message.includes('Este email já está cadastrado no sistema. Use outro email ou faça login.')) {
-                errorMessage = 'Este email já está cadastrado no sistema. Use outro email ou faça login.';
-            } else if (error.message.includes('matrícula')) {
-                errorMessage = 'Esse Login já está em uso.';
-            } else if (error.message.includes('NetworkError')) {
-                errorMessage = 'Erro de conexão. Verifique o servidor.';
+            console.error('Erro no cadastro:', error);
+
+            // A mensagem do servidor é o padrão.
+            //
+            // Antes, o padrão era o texto genérico abaixo e só três
+            // mensagens conhecidas o substituíam — então qualquer erro de
+            // validação ("a senha precisa de ao menos 8 caracteres", por
+            // exemplo) chegava ao usuário como "Erro ao fazer cadastro.
+            // Tente novamente.", sem dizer o que corrigir.
+            let errorMessage = error.message || 'Erro ao fazer cadastro. Tente novamente.';
+
+            // Reescritas apenas onde dá para ser mais claro que o servidor.
+            if (error.message && error.message.includes('email já está cadastrado')) {
+                errorMessage = 'Este email já está cadastrado. Use outro email ou faça login.';
+            } else if (error.message && error.message.includes('matrícula')) {
+                errorMessage = 'Essa matrícula já está em uso.';
+            } else if (error.message && /NetworkError|Failed to fetch|network/i.test(error.message)) {
+                errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
             }
-            
-            showMessage('❌ ' + errorMessage, 'error', 5000);
+
+            showMessage(errorMessage, 'error', 6000);
         } finally {
             isProcessing = false;
             if (registerBtn) {
@@ -333,10 +343,10 @@
             };
         }
 
-        if (inputs.password.value.length < 6) {
+        if (inputs.password.value.length < 8) {
             return { 
                 isValid: false, 
-                message: 'A senha deve ter pelo menos 6 caracteres' 
+                message: 'A senha deve ter pelo menos 8 caracteres' 
             };
         }
 
@@ -446,7 +456,7 @@
 
             console.log('✅ Token Google obtido, enviando para API...');
             
-            const response = await fetch("http://localhost:3000/api/auth/google", {
+            const response = await fetch(`${Config.getBaseURL()}/auth/google`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ token }),

@@ -2,7 +2,9 @@
 class AdminCursos {
     constructor() {
         this.cursos = [];
-        this.API_BASE = 'http://localhost:3000/api';
+        // Resolve pela origem atual. Estava fixo em localhost, o que
+        // deixava esta tela inteira sem backend em producao.
+        this.API_BASE = Config.getBaseURL() + '';
     }
 
     init() {
