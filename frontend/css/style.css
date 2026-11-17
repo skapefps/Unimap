@@ -3285,7 +3285,9 @@ main {
 }
 
 .fa-users-class:before {
-    content: "👥";
+    content: '\f0c0';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
     font-style: normal
 }
 
@@ -5075,7 +5077,9 @@ main {
     }
 
     .aula-card::after {
-        content: '👆 Detalhes';
+        content: '\f0a6  Detalhes';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
         font-size: 0.7rem;
         bottom: 1rem;
         right: 1rem;

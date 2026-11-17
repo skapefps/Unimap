@@ -7,7 +7,7 @@
     <link rel="shortcut icon" type="imagex/png" href="../frontend/images/logo-unipam 2.png">
     <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
     <style>
-        * {
+ * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -117,16 +117,17 @@
         }
         
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="dashboard-container">
         <div class="header">
-            <h1>🏫 UNIMAP - Dashboard</h1>
-            <button class="logout-btn" onclick="authManager.logout()">🚪 Sair</button>
+            <h1><i class="fas fa-school" aria-hidden="true"></i> UNIMAP - Dashboard</h1>
+            <button class="logout-btn" onclick="authManager.logout()"><i class="fas fa-right-from-bracket" aria-hidden="true"></i> Sair</button>
         </div>
         
         <div class="user-info">
-            <h3>👤 Informações do Usuário</h3>
+            <h3><i class="fas fa-user" aria-hidden="true"></i> Informações do Usuário</h3>
             <div id="userData">Carregando...</div>
         </div>
         
@@ -151,19 +152,19 @@
         
         <div class="menu-grid">
             <div class="menu-item" onclick="alert('Horários em desenvolvimento')">
-                <h3>📅 Horários</h3>
+                <h3><i class="fas fa-calendar-days" aria-hidden="true"></i> Horários</h3>
                 <p>Ver grade horária</p>
             </div>
             <div class="menu-item" onclick="alert('Salas em desenvolvimento')">
-                <h3>🏢 Salas</h3>
+                <h3><i class="fas fa-building" aria-hidden="true"></i> Salas</h3>
                 <p>Localizar salas</p>
             </div>
             <div class="menu-item" onclick="alert('Professores em desenvolvimento')">
-                <h3>👨‍🏫 Professores</h3>
+                <h3><i class="fas fa-chalkboard-user" aria-hidden="true"></i> Professores</h3>
                 <p>Lista de professores</p>
             </div>
             <div class="menu-item" onclick="alert('Mapa em desenvolvimento')">
-                <h3>🗺️ Mapa</h3>
+                <h3><i class="fas fa-map-location-dot" aria-hidden="true"></i> Mapa</h3>
                 <p>Mapa do campus</p>
             </div>
         </div>
@@ -171,6 +172,7 @@
 
     <script src="js/session.js"></script>
     <script src="js/config.js"></script>
+    <script src="js/icones.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script>

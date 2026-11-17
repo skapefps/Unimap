@@ -13,23 +13,23 @@ class AdminUsuarios {
     }
 async carregarCursosDoBanco() {
     try {
-        console.log('📚 Carregando cursos do banco...');
+        console.log(' Carregando cursos do banco...');
         
-        // 🔥 USE A ROTA CORRETA QUE JÁ EXISTE
+ // USE A ROTA CORRETA QUE JÁ EXISTE
         const response = await this.makeRequest('/cursos/com-periodos');
         
         if (response.success) {
             this.cursosComPeriodos = {};
             this.cursosDisponiveis = [];
             
-            // 🔥 A ROTA /cursos/com-periodos RETORNA UM ARRAY DIRETO
+ // A ROTA /cursos/com-periodos RETORNA UM ARRAY DIRETO
             let cursosData = response.data;
             
-            console.log('📊 Cursos recebidos do banco:', cursosData);
+            console.log(' Cursos recebidos do banco:', cursosData);
             
             if (Array.isArray(cursosData)) {
                 cursosData.forEach(curso => {
-                    // 🔥 ESTRUTURA: { id: 1, nome: "Curso", total_periodos: 8 }
+ // ESTRUTURA: { id: 1, nome: "Curso", total_periodos: 8 }
                     const nomeCurso = curso.nome;
                     const totalPeriodos = curso.total_periodos || 8;
                     
@@ -39,7 +39,7 @@ async carregarCursosDoBanco() {
                     }
                 });
                 
-                console.log(`✅ ${this.cursosDisponiveis.length} cursos carregados do banco`);
+                console.log(` ${this.cursosDisponiveis.length} cursos carregados do banco`);
                 this.popularCursosNoModal();
             } else {
                 throw new Error('Estrutura de dados inválida para cursos');
@@ -48,14 +48,14 @@ async carregarCursosDoBanco() {
             throw new Error(response.error || 'Erro ao carregar cursos');
         }
     } catch (error) {
-        console.error('❌ Erro ao carregar cursos:', error);
-        // Fallback para cursos padrão se der erro
+        console.error(' Erro ao carregar cursos:', error);
+ // Fallback para cursos padrão se der erro
         this.usarCursosFallback();
     }
 }
-    // Fallback caso a API falhe
+ // Fallback caso a API falhe
     usarCursosFallback() {
-        console.log('🔄 Usando cursos fallback...');
+        console.log(' Usando cursos fallback...');
         const cursosFallback = {
             'Sistemas de Informação': 8,
             'Administração': 8,
@@ -68,25 +68,25 @@ async carregarCursosDoBanco() {
     }
 
 
-    // Inicializar
+ // Inicializar
     async init() {
         if (this.inicializado) {
-            console.log('✅ AdminUsuarios já foi inicializado');
+            console.log(' AdminUsuarios já foi inicializado');
             return;
         }
 
         try {
-            console.log('🚀 Inicializando AdminUsuarios...');
+            console.log(' Inicializando AdminUsuarios...');
             
-            // 🔥 CARREGAR CURSOS PRIMEIRO
+ // CARREGAR CURSOS PRIMEIRO
             await this.carregarCursosDoBanco();
             await this.carregarUsuarios();
             this.setupEventListeners();
             this.inicializado = true;
-            console.log('✅ AdminUsuarios inicializado com sucesso');
+            console.log(' AdminUsuarios inicializado com sucesso');
             
         } catch (error) {
-            console.error('❌ Erro na inicialização do AdminUsuarios:', error);
+            console.error(' Erro na inicialização do AdminUsuarios:', error);
             this.showNotification('Erro ao carregar dados do sistema', 'error');
         }
     }
@@ -106,12 +106,12 @@ async carregarCursosDoBanco() {
                 selectPeriodo.appendChild(option);
             }
             
-            console.log(`✅ Gerados ${totalPeriodos} períodos para ${cursoSelecionado}`);
+            console.log(` Gerados ${totalPeriodos} períodos para ${cursoSelecionado}`);
         }
     }
     
 
-    // Fazer requisições autenticadas
+ // Fazer requisições autenticadas
     async makeRequest(endpoint, options = {}) {
         const token = localStorage.getItem('authToken');
         
@@ -147,7 +147,7 @@ async carregarCursosDoBanco() {
                 data = await response.text();
             }
             
-            console.log(`📡 API Response [${endpoint}]:`, data);
+            console.log(` API Response [${endpoint}]:`, data);
 
             if (!response.ok) {
                 throw new Error(typeof data === 'object' ? (data.error || `Erro ${response.status}`) : `Erro ${response.status}`);
@@ -159,7 +159,7 @@ async carregarCursosDoBanco() {
                 message: typeof data === 'object' ? data.message : 'Sucesso'
             };
         } catch (error) {
-            console.error(`❌ Erro na requisição ${endpoint}:`, error);
+            console.error(` Erro na requisição ${endpoint}:`, error);
             return {
                 success: false,
                 error: error.message
@@ -167,14 +167,14 @@ async carregarCursosDoBanco() {
         }
     }
 
-    // Carregar todos os usuários
+ // Carregar todos os usuários
     async carregarUsuarios() {
         if (this.carregando) return;
 
         this.carregando = true;
 
         try {
-            console.log('📥 Carregando usuários...');
+            console.log(' Carregando usuários...');
             
             const response = await this.makeRequest('/usuarios');
             
@@ -188,11 +188,11 @@ async carregarCursosDoBanco() {
                 } else if (response.data && Array.isArray(response.data.data)) {
                     usuariosArray = response.data.data;
                 } else {
-                    console.warn('⚠️ Estrutura inesperada da resposta:', response);
+                    console.warn(' Estrutura inesperada da resposta:', response);
                     usuariosArray = [];
                 }
                 
-                console.log('👥 Usuários carregados:', usuariosArray.length);
+                console.log(' Usuários carregados:', usuariosArray.length);
                 
                 this.usuarios = Array.isArray(usuariosArray) ? usuariosArray : [];
                 this.usuariosFiltrados = [...this.usuarios];
@@ -204,7 +204,7 @@ async carregarCursosDoBanco() {
                 throw new Error(response.error || 'Erro ao carregar usuários');
             }
         } catch (error) {
-            console.error('❌ Erro ao carregar usuários:', error);
+            console.error(' Erro ao carregar usuários:', error);
             this.showNotification('Erro ao carregar usuários: ' + error.message, 'error');
             this.usuarios = [];
             this.usuariosFiltrados = [];
@@ -214,7 +214,7 @@ async carregarCursosDoBanco() {
         }
     }
 
-    // MÉTODOS PARA USUÁRIOS
+ // MÉTODOS PARA USUÁRIOS
     atualizarEstatisticas() {
         try {
             if (!Array.isArray(this.usuarios)) {
@@ -237,14 +237,14 @@ async carregarCursosDoBanco() {
             if (totalAdminsEl) totalAdminsEl.textContent = totalAdmins;
 
         } catch (error) {
-            console.error('❌ Erro ao atualizar estatísticas:', error);
+            console.error(' Erro ao atualizar estatísticas:', error);
         }
     }
 
     exibirUsuarios() {
         const tbody = document.getElementById('usuarios-body');
         if (!tbody) {
-            console.error('❌ Elemento usuarios-body não encontrado');
+            console.error(' Elemento usuarios-body não encontrado');
             return;
         }
 
@@ -303,7 +303,7 @@ async carregarCursosDoBanco() {
 
             this.atualizarPaginacao();
         } catch (error) {
-            console.error('❌ Erro ao exibir usuários:', error);
+            console.error(' Erro ao exibir usuários:', error);
             tbody.innerHTML = `
                 <tr>
                     <td colspan="7" class="empty-state">
@@ -319,7 +319,7 @@ async carregarCursosDoBanco() {
     }
 
     async recarregarUsuarios() {
-        console.log('🔄 Recarregando usuários manualmente...');
+        console.log(' Recarregando usuários manualmente...');
         await this.carregarUsuarios();
     }
 
@@ -342,7 +342,7 @@ async carregarCursosDoBanco() {
             this.paginaAtual = 1;
             this.exibirUsuarios();
         } catch (error) {
-            console.error('❌ Erro ao filtrar usuários:', error);
+            console.error(' Erro ao filtrar usuários:', error);
         }
     }
 
@@ -359,7 +359,7 @@ async carregarCursosDoBanco() {
             this.paginaAtual = 1;
             this.exibirUsuarios();
         } catch (error) {
-            console.error('❌ Erro ao filtrar por tipo:', error);
+            console.error(' Erro ao filtrar por tipo:', error);
         }
     }
 
@@ -380,7 +380,7 @@ async carregarCursosDoBanco() {
                 nextButton.onclick = () => this.mudarPagina(this.paginaAtual + 1);
             }
         } catch (error) {
-            console.error('❌ Erro ao atualizar paginação:', error);
+            console.error(' Erro ao atualizar paginação:', error);
         }
     }
 
@@ -389,7 +389,7 @@ async carregarCursosDoBanco() {
         this.exibirUsuarios();
     }
 
-    // admin-usuarios.js - ATUALIZAR O MÉTODO editarUsuario
+ // admin-usuarios.js - ATUALIZAR O MÉTODO editarUsuario
 async editarUsuario(usuarioId) {
     try {
         const usuario = this.usuarios.find(u => u.id === usuarioId);
@@ -399,7 +399,7 @@ async editarUsuario(usuarioId) {
 
         this.usuarioEditando = usuario;
 
-        // ✅ VERIFICAR SE OS ELEMENTOS DO MODAL EXISTEM
+ // VERIFICAR SE OS ELEMENTOS DO MODAL EXISTEM
         const editUserId = document.getElementById('editUserId');
         const editUserModal = document.getElementById('editUserModal');
         
@@ -412,7 +412,7 @@ async editarUsuario(usuarioId) {
             return;
         }
 
-        // Só preencher os campos se o modal existir
+ // Só preencher os campos se o modal existir
         editUserId.value = usuario.id;
         
         const editUserName = document.getElementById('editUserName');
@@ -427,15 +427,15 @@ async editarUsuario(usuarioId) {
         if (editUserMatricula) editUserMatricula.value = usuario.matricula || '';
         if (editUserType) editUserType.value = usuario.tipo || 'aluno';
         
-        // 🔥 PREENCHER CURSO E PERÍODO DINAMICAMENTE
+ // PREENCHER CURSO E PERÍODO DINAMICAMENTE
         if (editUserCurso && usuario.curso) {
             editUserCurso.value = usuario.curso;
-            // Atualizar os períodos baseado no curso
+ // Atualizar os períodos baseado no curso
             this.atualizarPeriodos(usuario.curso);
             
-            // Agora preencher o período
+ // Agora preencher o período
             if (editUserPeriodo && usuario.periodo) {
-                // Aguardar um pouco para garantir que os períodos foram carregados
+ // Aguardar um pouco para garantir que os períodos foram carregados
                 setTimeout(() => {
                     if (editUserPeriodo) {
                         editUserPeriodo.value = usuario.periodo;
@@ -446,18 +446,18 @@ async editarUsuario(usuarioId) {
 
         editUserModal.style.display = 'flex';
     } catch (error) {
-        console.error('❌ Erro ao abrir edição:', error);
+        console.error(' Erro ao abrir edição:', error);
         this.showNotification('Erro ao carregar dados do usuário', 'error');
     }
 }
     popularCursosNoModal() {
     const selectCurso = document.getElementById('editUserCurso');
     if (!selectCurso) {
-        console.log('❌ Elemento editUserCurso não encontrado');
+        console.log(' Elemento editUserCurso não encontrado');
         return;
     }
     
-    console.log('📝 Populando cursos no modal...');
+    console.log(' Populando cursos no modal...');
     selectCurso.innerHTML = '<option value="">Selecione um curso</option>';
     
     this.cursosDisponiveis.forEach(curso => {
@@ -467,7 +467,7 @@ async editarUsuario(usuarioId) {
         selectCurso.appendChild(option);
     });
     
-    console.log(`✅ ${this.cursosDisponiveis.length} cursos adicionados ao modal`);
+    console.log(` ${this.cursosDisponiveis.length} cursos adicionados ao modal`);
 }
 
     fecharModal() {
@@ -501,7 +501,7 @@ async editarUsuario(usuarioId) {
                 throw new Error(response.error);
             }
         } catch (error) {
-            console.error('❌ Erro ao salvar edição:', error);
+            console.error(' Erro ao salvar edição:', error);
             this.showNotification('Erro ao atualizar usuário: ' + error.message, 'error');
         }
     }
@@ -543,7 +543,7 @@ async editarUsuario(usuarioId) {
                 throw new Error(response.error || 'Erro ao alterar tipo');
             }
         } catch (error) {
-            console.error('❌ Erro ao alterar tipo:', error);
+            console.error(' Erro ao alterar tipo:', error);
             
             if (error.message.includes('404') || error.message.includes('Cannot PUT')) {
                 this.showNotification('Função de edição não disponível. Atualizando localmente...', 'warning');
@@ -568,21 +568,21 @@ async editarUsuario(usuarioId) {
     }
 }
 
-    // MÉTODO EXCLUIR USUÁRIO - VERSÃO CORRIGIDA
+ // MÉTODO EXCLUIR USUÁRIO - VERSÃO CORRIGIDA
 // MÉTODO EXCLUIR USUÁRIO - VERSÃO ATUALIZADA
 async excluirUsuario(usuarioId) {
-    // Verificar se o usuário existe na lista local
+ // Verificar se o usuário existe na lista local
     const usuario = this.usuarios.find(u => u && u.id === usuarioId);
     if (!usuario) {
         this.showNotification('Usuário não encontrado', 'error');
         return;
     }
 
-    // 🔥 MENSAGEM DE CONFIRMAÇÃO ESPECÍFICA PARA PROFESSORES
+ // MENSAGEM DE CONFIRMAÇÃO ESPECÍFICA PARA PROFESSORES
     let confirmMessage = `Tem certeza que deseja excluir o usuário "${usuario.nome}"? Esta ação não pode ser desfeita.`;
     
     if (usuario.tipo === 'professor') {
-        confirmMessage = `🚨 ATENÇÃO: EXCLUSÃO DE PROFESSOR\n\n` +
+        confirmMessage = `ATENÇÃO: EXCLUSÃO DE PROFESSOR\n\n`+
                         `Você está prestes a excluir o professor "${usuario.nome}".\n\n` +
                         `Esta ação irá:\n` +
                         `• Desativar o usuário\n` +
@@ -598,7 +598,7 @@ async excluirUsuario(usuarioId) {
     }
 
     try {
-        console.log(`🗑️ Tentando excluir usuário ID: ${usuarioId}`);
+        console.log(` Tentando excluir usuário ID: ${usuarioId}`);
         
         const response = await this.makeRequest(`/usuarios/${usuarioId}`, {
             method: 'DELETE'
@@ -607,7 +607,7 @@ async excluirUsuario(usuarioId) {
         if (response.success) {
             let mensagemSucesso = 'Usuário excluído com sucesso!';
             
-            // 🔥 MENSAGEM ESPECÍFICA PARA PROFESSORES
+ // MENSAGEM ESPECÍFICA PARA PROFESSORES
             if (usuario.tipo === 'professor' && response.professor_excluido) {
                 mensagemSucesso = `Professor "${usuario.nome}" excluído permanentemente do sistema!`;
                 
@@ -624,17 +624,17 @@ async excluirUsuario(usuarioId) {
             
             this.showNotification(mensagemSucesso, 'success');
             
-            // Remover da lista local
+ // Remover da lista local
             this.usuarios = this.usuarios.filter(u => u.id !== usuarioId);
             this.usuariosFiltrados = this.usuariosFiltrados.filter(u => u.id !== usuarioId);
             
             this.atualizarEstatisticas();
             this.exibirUsuarios();
 
-            // 🔥 ATUALIZAR A LISTA DE PROFESSORES SE ESTIVER ABERTA
+ // ATUALIZAR A LISTA DE PROFESSORES SE ESTIVER ABERTA
             setTimeout(() => {
                 if (typeof professoresAdmin !== 'undefined' && typeof professoresAdmin.loadProfessores === 'function') {
-                    console.log('🔄 Atualizando lista de professores...');
+                    console.log(' Atualizando lista de professores...');
                     professoresAdmin.loadProfessores();
                 }
             }, 500);
@@ -643,7 +643,7 @@ async excluirUsuario(usuarioId) {
             throw new Error(response.error || 'Erro ao excluir usuário');
         }
     } catch (error) {
-        console.error('❌ Erro ao excluir usuário:', error);
+        console.error(' Erro ao excluir usuário:', error);
         
         if (error.message.includes('404') || error.message.includes('Cannot DELETE')) {
             this.showNotification('Função de exclusão não disponível no momento. Contate o administrador do sistema.', 'warning');
@@ -724,7 +724,7 @@ async excluirUsuario(usuarioId) {
     }
 
     setupEventListeners() {
-        console.log('✅ Event listeners configurados para usuários');
+        console.log(' Event listeners configurados para usuários');
         
         const searchInput = document.getElementById('searchUsers');
         if (searchInput) {
@@ -755,14 +755,14 @@ const adminUsuarios = new AdminUsuarios();
 
 // INICIALIZAÇÃO AUTOMÁTICA quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 DOM Carregado - Inicializando AdminUsuarios...');
+    console.log(' DOM Carregado - Inicializando AdminUsuarios...');
     
     setTimeout(async () => {
         try {
             await adminUsuarios.init();
-            console.log('✅ AdminUsuarios inicializado com sucesso');
+            console.log(' AdminUsuarios inicializado com sucesso');
         } catch (error) {
-            console.error('❌ Erro na inicialização do AdminUsuarios:', error);
+            console.error(' Erro na inicialização do AdminUsuarios:', error);
         }
     }, 100);
 });

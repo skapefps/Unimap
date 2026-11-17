@@ -1,7 +1,7 @@
 // AuthManager - Gerenciador de Autenticação
 class AuthManager {
     constructor() {
-        console.log('🔧 CONSTRUCTOR: AuthManager sendo construído...');
+        console.log(' CONSTRUCTOR: AuthManager sendo construído...');
         this.isInitialized = false;
         this.isAuthenticated = false;
         this.currentUser = null;
@@ -11,22 +11,22 @@ class AuthManager {
     }
 
     redirectByUserType(user) {
-        console.log('🔀 Redirecionando usuário tipo:', user.tipo);
-        console.log('👤 Dados do usuário:', user);
+        console.log(' Redirecionando usuário tipo:', user.tipo);
+        console.log(' Dados do usuário:', user);
 
-        // ✅ REDIRECIONAMENTO IMEDIATO - BLOQUEIA CARREGAMENTO DA PÁGINA ERRADA
+ // REDIRECIONAMENTO IMEDIATO - BLOQUEIA CARREGAMENTO DA PÁGINA ERRADA
         switch (user.tipo) {
             case 'admin':
-                console.log('➡️ Redirecionando IMEDIATAMENTE para admin.html');
+                console.log(' Redirecionando IMEDIATAMENTE para admin.html');
                 window.location.replace('admin.html');
                 break;
             case 'professor':
-                console.log('➡️ Redirecionando IMEDIATAMENTE para professor-dashboard.html');
+                console.log(' Redirecionando IMEDIATAMENTE para professor-dashboard.html');
                 window.location.replace('professor-dashboard.html');
                 break;
             case 'aluno':
             default:
-                console.log('➡️ Redirecionando IMEDIATAMENTE para index.html');
+                console.log(' Redirecionando IMEDIATAMENTE para index.html');
                 window.location.replace('index.html');
                 break;
         }
@@ -48,27 +48,27 @@ class AuthManager {
         this.logout = this.logout.bind(this);
         this.redirectByUserType = this.redirectByUserType.bind(this);
         this.validarEmail = this.validarEmail.bind(this);
-        this.shouldRedirectToLogin = this.shouldRedirectToLogin.bind(this); // 🔥 ADICIONADO
-        this.verifyPageAccess = this.verifyPageAccess.bind(this); // 🔥 ADICIONADO
-        this.clearAuth = this.clearAuth.bind(this); // 🔥 ADICIONADO
+        this.shouldRedirectToLogin = this.shouldRedirectToLogin.bind(this); //  ADICIONADO
+        this.verifyPageAccess = this.verifyPageAccess.bind(this); //  ADICIONADO
+        this.clearAuth = this.clearAuth.bind(this); //  ADICIONADO
     }
 
     init() {
         if (this.isInitialized) return;
 
-        console.log('🎯 INIT: Inicializando AuthManager...');
+        console.log(' INIT: Inicializando AuthManager...');
         this.checkExistingAuth();
         this.setupLoginForm();
         this.isInitialized = true;
 
-        // 🔥 NOVO: Verificar se precisa redirecionar após inicialização
+ // NOVO: Verificar se precisa redirecionar após inicialização
         setTimeout(() => {
             if (this.shouldRedirectToLogin()) {
                 return; // Já redirecionou, parar execução
             }
         }, 200);
 
-        console.log('✅ INIT: AuthManager inicializado com sucesso');
+        console.log(' INIT: AuthManager inicializado com sucesso');
     }
 
     shouldRedirectToLogin() {
@@ -78,7 +78,7 @@ class AuthManager {
         const isResetPasswordPage = currentPage.includes('reset-password.html');
         const isRegisterPage = currentPage.includes('cadastro.html');
 
-        // Se não está autenticado e está em uma página que requer auth, redirecionar para login
+ // Se não está autenticado e está em uma página que requer auth, redirecionar para login
         if (!this.isAuthenticated &&
             !isLoginPage &&
             !isForgotPasswordPage &&
@@ -86,7 +86,7 @@ class AuthManager {
             !isRegisterPage &&
             currentPage !== '/' &&
             !currentPage.includes('index.html')) {
-            console.log('🔄 Não autenticado - Redirecionando para login');
+            console.log(' Não autenticado - Redirecionando para login');
             window.location.href = 'login.html';
             return true;
         }
@@ -94,7 +94,7 @@ class AuthManager {
         return false;
     }
 
-    // MODIFIQUE o método checkExistingAuth():
+ // MODIFIQUE o método checkExistingAuth():
     checkExistingAuth() {
         const token = localStorage.getItem('authToken');
         const userData = localStorage.getItem('userData');
@@ -104,40 +104,40 @@ class AuthManager {
                 this.token = token;
                 this.currentUser = JSON.parse(userData);
                 this.isAuthenticated = true;
-                console.log('🔐 Usuário já autenticado:', this.currentUser.nome, '- Tipo:', this.currentUser.tipo);
+                console.log(' Usuário já autenticado:', this.currentUser.nome, '- Tipo:', this.currentUser.tipo);
 
-                // ✅ CORREÇÃO: Verificar se está na página correta
+ // CORREÇÃO: Verificar se está na página correta
                 setTimeout(() => {
                     this.verifyPageAccess();
                 }, 100);
 
             } catch (error) {
-                console.error('❌ Erro ao verificar autenticação:', error);
+                console.error(' Erro ao verificar autenticação:', error);
                 this.clearAuth();
-                this.shouldRedirectToLogin(); // 🔥 NOVO
+                this.shouldRedirectToLogin(); //  NOVO
             }
         } else {
-            console.log('🔐 Nenhum usuário autenticado encontrado');
-            this.shouldRedirectToLogin(); // 🔥 NOVO
+            console.log(' Nenhum usuário autenticado encontrado');
+            this.shouldRedirectToLogin(); //  NOVO
         }
     }
 
-    // 🔥 NOVO MÉTODO: Validar se é email
+ // NOVO MÉTODO: Validar se é email
     validarEmail(credencial) {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return regex.test(credencial);
     }
 
-    // VERSÃO CORRIGIDA - se precisar usar no futuro
+ // VERSÃO CORRIGIDA - se precisar usar no futuro
     verifyPageAccess() {
         if (!this.currentUser) return;
 
         const currentPage = window.location.pathname;
         const currentPageName = currentPage.split('/').pop() || 'index.html';
 
-        console.log('🔍 Verificando acesso à página:', currentPageName);
+        console.log(' Verificando acesso à página:', currentPageName);
 
-        // Páginas PROIBIDAS para cada tipo (em vez de permitidas)
+ // Páginas PROIBIDAS para cada tipo (em vez de permitidas)
         const forbiddenPages = {
             'aluno': ['admin.html', 'professor-dashboard.html', 'gerenciar-usuarios'],
             'professor': ['admin.html', 'gerenciar-usuarios'],
@@ -148,66 +148,66 @@ class AuthManager {
         const isForbidden = userForbidden.some(page => currentPageName.includes(page));
 
         if (isForbidden) {
-            console.log('🚫 Acesso proibido. Redirecionando...');
+            console.log(' Acesso proibido. Redirecionando...');
             this.redirectByUserType(this.currentUser);
         } else {
-            console.log('✅ Acesso permitido');
+            console.log(' Acesso permitido');
         }
     }
 
     setupLoginForm() {
-        console.log('🔧 SETUP: Configurando formulários de login...');
+        console.log(' SETUP: Configurando formulários de login...');
 
-        // Configurar formulário MOBILE
+ // Configurar formulário MOBILE
         const loginForm = document.getElementById('loginForm');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const loginBtn = document.getElementById('loginBtn');
 
-        // Configurar formulário DESKTOP
+ // Configurar formulário DESKTOP
         const loginFormDesktop = document.getElementById('loginFormDesktop');
         const emailInputDesktop = document.getElementById('emailDesktop');
         const passwordInputDesktop = document.getElementById('passwordDesktop');
         const loginBtnDesktop = document.getElementById('loginBtnDesktop');
 
-        console.log('📱 Elementos Mobile:', {
+        console.log(' Elementos Mobile:', {
             loginForm: !!loginForm,
             emailInput: !!emailInput,
             passwordInput: !!passwordInput,
             loginBtn: !!loginBtn
         });
 
-        console.log('💻 Elementos Desktop:', {
+        console.log(' Elementos Desktop:', {
             loginFormDesktop: !!loginFormDesktop,
             emailInputDesktop: !!emailInputDesktop,
             passwordInputDesktop: !!passwordInputDesktop,
             loginBtnDesktop: !!loginBtnDesktop
         });
 
-        // Configurar MOBILE
+ // Configurar MOBILE
         if (loginForm) {
             loginForm.addEventListener('submit', (e) => this.handleLogin(e, 'mobile'));
-            console.log('✅ Event listener adicionado ao formulário mobile');
+            console.log(' Event listener adicionado ao formulário mobile');
         } else {
-            console.log('❌ Formulário mobile não encontrado (#loginForm)');
+            console.log(' Formulário mobile não encontrado (#loginForm)');
         }
 
-        // Configurar DESKTOP
+ // Configurar DESKTOP
         if (loginFormDesktop) {
             loginFormDesktop.addEventListener('submit', (e) => this.handleLogin(e, 'desktop'));
-            console.log('✅ Event listener adicionado ao formulário desktop');
+            console.log(' Event listener adicionado ao formulário desktop');
         } else {
-            console.log('❌ Formulário desktop não encontrado (#loginFormDesktop)');
+            console.log(' Formulário desktop não encontrado (#loginFormDesktop)');
         }
 
-        // Validação em tempo real para MOBILE
+ // Validação em tempo real para MOBILE
         if (emailInput && passwordInput && loginBtn) {
             emailInput.addEventListener('input', () => this.validateLoginForm('mobile'));
             passwordInput.addEventListener('input', () => this.validateLoginForm('mobile'));
             this.validateLoginForm('mobile');
         }
 
-        // Validação em tempo real para DESKTOP
+ // Validação em tempo real para DESKTOP
         if (emailInputDesktop && passwordInputDesktop && loginBtnDesktop) {
             emailInputDesktop.addEventListener('input', () => this.validateLoginForm('desktop'));
             passwordInputDesktop.addEventListener('input', () => this.validateLoginForm('desktop'));
@@ -230,10 +230,10 @@ class AuthManager {
 
     }
 
-    // 🔥 MÉTODO handleLogin MODIFICADO para aceitar email ou matrícula
+ // MÉTODO handleLogin MODIFICADO para aceitar email ou matrícula
     async handleLogin(event, version = 'desktop') {
         event.preventDefault();
-        console.log(`🎯 HANDLELOGIN: Processando login (${version})...`);
+        console.log(` HANDLELOGIN: Processando login (${version})...`);
 
         const credencial = version === 'mobile'
             ? document.getElementById('email')?.value
@@ -247,7 +247,7 @@ class AuthManager {
             ? document.getElementById('loginBtn')
             : document.getElementById('loginBtnDesktop');
 
-        // Validação básica
+ // Validação básica
         if (!credencial || !password) {
             this.showError('Por favor, preencha todos os campos', version);
             return;
@@ -257,31 +257,31 @@ class AuthManager {
         this.hideError(version);
 
         try {
-            // 🔥 DETERMINAR SE É EMAIL OU MATRÍCULA
+ // DETERMINAR SE É EMAIL OU MATRÍCULA
             let dadosLogin = { senha: password };
 
             if (this.validarEmail(credencial)) {
                 dadosLogin.email = credencial;
-                console.log('📧 Login com email detectado');
+                console.log(' Login com email detectado');
             } else {
                 dadosLogin.matricula = credencial;
-                console.log('🔢 Login com matrícula detectado');
+                console.log(' Login com matrícula detectado');
             }
 
-            console.log(`📤 Enviando dados de login:`, dadosLogin);
+            console.log(` Enviando dados de login:`, dadosLogin);
 
-            // 🔥 CHAMADA ÚNICA PARA A API
+ // CHAMADA ÚNICA PARA A API
             const result = await api.login(dadosLogin);
 
             if (result.success) {
-                console.log('✅ LOGIN BEM-SUCEDIDO via API!', result);
-                console.log('🔍 TIPO DE USUÁRIO RECEBIDO:', result.user.tipo);
+                console.log(' LOGIN BEM-SUCEDIDO via API!', result);
+                console.log(' TIPO DE USUÁRIO RECEBIDO:', result.user.tipo);
                 if (result.user.tipo === 'aluno' && (!result.user.periodo || !result.user.turma_id)) {
-                    // O selecaoPeriodoManager vai detectar automaticamente e mostrar o modal
-                    console.log('🎯 Aluno precisa selecionar período/turma');
+ // O selecaoPeriodoManager vai detectar automaticamente e mostrar o modal
+                    console.log(' Aluno precisa selecionar período/turma');
                 }
 
-                // Salvar dados de autenticação
+ // Salvar dados de autenticação
                 this.isAuthenticated = true;
                 this.currentUser = result.user;
                 this.token = result.token;
@@ -289,20 +289,20 @@ class AuthManager {
                 localStorage.setItem('authToken', result.token);
                 localStorage.setItem('userData', JSON.stringify(result.user));
 
-                console.log('🔄 Redirecionando IMEDIATAMENTE...');
+                console.log(' Redirecionando IMEDIATAMENTE...');
 
-                // ✅✅✅ REDIRECIONAMENTO IMEDIATO
+ // REDIRECIONAMENTO IMEDIATO
                 this.redirectByUserType(result.user);
 
             } else {
-                // MOSTRAR ERRO ESPECÍFICO DA API
+ // MOSTRAR ERRO ESPECÍFICO DA API
                 throw new Error(result.error || 'Email/matrícula ou senha inválidos');
             }
 
         } catch (error) {
-            console.error('❌ ERRO NO LOGIN:', error);
+            console.error(' ERRO NO LOGIN:', error);
 
-            // Mensagens de erro específicas
+ // Mensagens de erro específicas
             let errorMessage = 'Erro ao fazer login. Tente novamente.';
             if (error.message.includes('não cadastrado')) {
                 errorMessage = error.message;
@@ -324,16 +324,16 @@ class AuthManager {
     }
 
     async handleGoogleLogin(version = 'desktop') {
-        console.log(`🔐 Iniciando login com Google (${version})...`);
+        console.log(` Iniciando login com Google (${version})...`);
 
         try {
-            // Carregar Google Identity Services se não estiver carregado
+ // Carregar Google Identity Services se não estiver carregado
             if (typeof google === 'undefined') {
-                console.log('📚 Carregando Google Identity Services...');
+                console.log(' Carregando Google Identity Services...');
                 await this.loadGoogleScript();
             }
 
-            // Inicializar Google Identity Services
+ // Inicializar Google Identity Services
             const client = google.accounts.oauth2.initTokenClient({
                 client_id: '432080672502-ba91tog3jvoc6c0mac01iq2b5k5q3mb1.apps.googleusercontent.com',
                 scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
@@ -341,17 +341,17 @@ class AuthManager {
                     if (response.access_token) {
                         await this.processGoogleToken(response.access_token, version);
                     } else {
-                        console.error('❌ Erro no callback do Google');
+                        console.error(' Erro no callback do Google');
                         this.showError('Erro na autenticação Google', version);
                     }
                 },
             });
 
-            console.log('🔄 Solicitando token de acesso Google...');
+            console.log(' Solicitando token de acesso Google...');
             client.requestAccessToken();
 
         } catch (error) {
-            console.error('❌ Erro no login Google:', error);
+            console.error(' Erro no login Google:', error);
             this.showError('Erro ao conectar com Google: ' + error.message, version);
         }
     }
@@ -374,10 +374,10 @@ class AuthManager {
     }
 
     async processGoogleToken(accessToken, version) {
-        console.log('🔄 Processando token Google...');
+        console.log(' Processando token Google...');
 
         try {
-            // Obter informações do usuário
+ // Obter informações do usuário
             const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`
@@ -391,17 +391,17 @@ class AuthManager {
             const userInfo = await userInfoResponse.json();
             const { email, name, picture } = userInfo;
 
-            console.log('✅ Informações do usuário Google obtidas:', email);
+            console.log(' Informações do usuário Google obtidas:', email);
 
-            // Enviar para nossa API
-            console.log('🔄 Enviando para API UNIMAP...');
+ // Enviar para nossa API
+            console.log(' Enviando para API UNIMAP...');
             const result = await api.googleLogin(accessToken);
 
             if (result.success) {
-                console.log('✅ LOGIN GOOGLE BEM-SUCEDIDO!', result.user);
-                console.log('🔍 TIPO DE USUÁRIO RECEBIDO:', result.user.tipo);
+                console.log(' LOGIN GOOGLE BEM-SUCEDIDO!', result.user);
+                console.log(' TIPO DE USUÁRIO RECEBIDO:', result.user.tipo);
 
-                // Salvar dados de autenticação
+ // Salvar dados de autenticação
                 this.isAuthenticated = true;
                 this.currentUser = result.user;
                 this.token = result.token;
@@ -409,7 +409,7 @@ class AuthManager {
                 localStorage.setItem('authToken', result.token);
                 localStorage.setItem('userData', JSON.stringify(result.user));
 
-                // Feedback visual RÁPIDO
+ // Feedback visual RÁPIDO
                 const loginBtn = version === 'mobile'
                     ? document.getElementById('loginBtn')
                     : document.getElementById('loginBtnDesktop');
@@ -419,9 +419,9 @@ class AuthManager {
                     loginBtn.style.backgroundColor = '#28a745';
                 }
 
-                console.log('🔄 Redirecionando IMEDIATAMENTE...');
+                console.log(' Redirecionando IMEDIATAMENTE...');
 
-                // ✅✅✅ REDIRECIONAMENTO IMEDIATO - SEM DELAY ✅✅✅
+ // REDIRECIONAMENTO IMEDIATO - SEM DELAY 
                 this.redirectByUserType(result.user);
 
             } else {
@@ -429,7 +429,7 @@ class AuthManager {
             }
 
         } catch (error) {
-            console.error('❌ ERRO NO LOGIN GOOGLE:', error);
+            console.error(' ERRO NO LOGIN GOOGLE:', error);
             this.showError('Erro no login com Google: ' + error.message, version);
         }
     }
@@ -460,9 +460,9 @@ class AuthManager {
         if (errorDiv) {
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
-            console.log('❌ Mostrando erro:', message);
+            console.log(' Mostrando erro:', message);
         } else {
-            console.log('❌ Div de erro não encontrada, mostrando alerta');
+            console.log(' Div de erro não encontrada, mostrando alerta');
             alert('Erro: ' + message);
         }
     }
@@ -484,21 +484,21 @@ class AuthManager {
         this.token = null;
         localStorage.removeItem('authToken');
         localStorage.removeItem('userData');
-        console.log('🔓 Auth limpo - usuário deslogado');
+        console.log(' Auth limpo - usuário deslogado');
     }
 
     redirectToDashboard() {
-        console.log('🔄 Redirecionando para página principal...');
+        console.log(' Redirecionando para página principal...');
         window.location.href = 'index.html';
     }
 
     logout() {
-        console.log('🚪 Executando logout...');
+        console.log(' Executando logout...');
         this.clearAuth();
         window.location.href = 'login.html';
     }
 
-    // Métodos para uso externo
+ // Métodos para uso externo
     getCurrentUser() {
         return this.currentUser;
     }
@@ -511,12 +511,12 @@ class AuthManager {
         return this.isAuthenticated;
     }
 
-    // 🔥 NOVO MÉTODO: Redirecionar se autenticado
+ // NOVO MÉTODO: Redirecionar se autenticado
     redirectIfAuthenticated() {
         if (this.isAuthenticated && this.currentUser) {
-            console.log('🔄 Redirecionando usuário autenticado...', this.currentUser.tipo);
+            console.log(' Redirecionando usuário autenticado...', this.currentUser.tipo);
 
-            // Não redirecionar se já estiver na página correta
+ // Não redirecionar se já estiver na página correta
             const currentPage = window.location.pathname;
             const shouldRedirect =
                 currentPage.includes('login.html') ||
@@ -527,7 +527,7 @@ class AuthManager {
                 (this.currentUser.tipo === 'admin' && !currentPage.includes('admin.html'));
 
             if (shouldRedirect) {
-                console.log('🎯 Redirecionando para página correta...');
+                console.log(' Redirecionando para página correta...');
                 setTimeout(() => {
                     this.redirectByUserType(this.currentUser);
                 }, 1000);
@@ -539,7 +539,7 @@ class AuthManager {
 // RegisterManager - Gerenciador de Cadastro (CORRIGIDO)
 class RegisterManager {
     constructor() {
-        console.log('🔧 CONSTRUCTOR: RegisterManager sendo construído...');
+        console.log(' CONSTRUCTOR: RegisterManager sendo construído...');
         this.isInitialized = false;
         this.bindMethods();
     }
@@ -550,10 +550,10 @@ class RegisterManager {
         this.handleRegister = this.handleRegister.bind(this);
         this.handleGoogleRegister = this.handleGoogleRegister.bind(this);
         this.validateRegisterForm = this.validateRegisterForm.bind(this);
-        this.setupRealTimeValidation = this.setupRealTimeValidation.bind(this); // 🔥 ADICIONADO
-        this.getFormInputs = this.getFormInputs.bind(this); // 🔥 ADICIONADO
-        this.validateData = this.validateData.bind(this); // 🔥 ADICIONADO
-        this.getFieldName = this.getFieldName.bind(this); // 🔥 ADICIONADO
+        this.setupRealTimeValidation = this.setupRealTimeValidation.bind(this); //  ADICIONADO
+        this.getFormInputs = this.getFormInputs.bind(this); //  ADICIONADO
+        this.validateData = this.validateData.bind(this); //  ADICIONADO
+        this.getFieldName = this.getFieldName.bind(this); //  ADICIONADO
         this.showLoading = this.showLoading.bind(this);
         this.hideLoading = this.hideLoading.bind(this);
         this.showError = this.showError.bind(this);
@@ -564,46 +564,46 @@ class RegisterManager {
     init() {
         if (this.isInitialized) return;
 
-        console.log('🎯 INIT: Inicializando RegisterManager...');
+        console.log(' INIT: Inicializando RegisterManager...');
         this.setupRegisterForm();
         this.isInitialized = true;
-        console.log('✅ INIT: RegisterManager inicializado com sucesso');
+        console.log(' INIT: RegisterManager inicializado com sucesso');
     }
 
     setupRegisterForm() {
-        console.log('🔧 SETUP: Configurando formulários de cadastro...');
+        console.log(' SETUP: Configurando formulários de cadastro...');
 
-        // Configurar formulário DESKTOP
+ // Configurar formulário DESKTOP
         const registerFormDesktop = document.getElementById('registerFormDesktop');
         const registerBtnDesktop = document.getElementById('registerBtnDesktop');
 
-        // Configurar formulário MOBILE
+ // Configurar formulário MOBILE
         const registerFormMobile = document.getElementById('registerFormMobile');
         const registerBtnMobile = document.getElementById('registerBtnMobile');
 
-        console.log('💻 Elementos Desktop:', {
+        console.log(' Elementos Desktop:', {
             registerFormDesktop: !!registerFormDesktop,
             registerBtnDesktop: !!registerBtnDesktop
         });
 
-        console.log('📱 Elementos Mobile:', {
+        console.log(' Elementos Mobile:', {
             registerFormMobile: !!registerFormMobile,
             registerBtnMobile: !!registerBtnMobile
         });
 
-        // Configurar DESKTOP
+ // Configurar DESKTOP
         if (registerFormDesktop) {
             registerFormDesktop.addEventListener('submit', (e) => this.handleRegister(e, 'desktop'));
-            console.log('✅ Event listener adicionado ao formulário desktop');
+            console.log(' Event listener adicionado ao formulário desktop');
         }
 
-        // Configurar MOBILE
+ // Configurar MOBILE
         if (registerFormMobile) {
             registerFormMobile.addEventListener('submit', (e) => this.handleRegister(e, 'mobile'));
-            console.log('✅ Event listener adicionado ao formulário mobile');
+            console.log(' Event listener adicionado ao formulário mobile');
         }
 
-        // Validação em tempo real
+ // Validação em tempo real
         this.setupRealTimeValidation('desktop');
         this.setupRealTimeValidation('mobile');
     }
@@ -648,14 +648,14 @@ class RegisterManager {
 
     async handleRegister(event, version = 'desktop') {
         event.preventDefault();
-        console.log(`🎯 HANDLEREGISTER: Processando cadastro (${version})...`);
+        console.log(` HANDLEREGISTER: Processando cadastro (${version})...`);
 
         const inputs = this.getFormInputs(version);
         const registerBtn = version === 'mobile'
             ? document.getElementById('registerBtnMobile')
             : document.getElementById('registerBtnDesktop');
 
-        // Validar dados
+ // Validar dados
         const validation = this.validateData(inputs);
         if (!validation.isValid) {
             this.showError(validation.message, version);
@@ -666,9 +666,9 @@ class RegisterManager {
         this.hideError(version);
 
         try {
-            console.log('🔄 Fazendo chamada REAL para API de cadastro...');
+            console.log(' Fazendo chamada REAL para API de cadastro...');
 
-            // DADOS CORRETOS PARA SEU BACKEND
+ // DADOS CORRETOS PARA SEU BACKEND
             const userData = {
                 nome: inputs.fullName.value.trim(),
                 email: inputs.email.value.trim(),
@@ -676,19 +676,19 @@ class RegisterManager {
                 senha: inputs.password.value
             };
 
-            console.log('📤 Dados enviados para cadastro:', userData);
+            console.log(' Dados enviados para cadastro:', userData);
 
-            // CHAMADA REAL PARA A API
+ // CHAMADA REAL PARA A API
             const result = await api.register(userData);
 
             if (result.success) {
-                console.log('✅ CADASTRO BEM-SUCEDIDO via API!', result);
+                console.log(' CADASTRO BEM-SUCEDIDO via API!', result);
 
-                // Mostrar mensagem de sucesso
+ // Mostrar mensagem de sucesso
                 this.showSuccess(registerBtn);
 
-                // Redirecionar para login
-                console.log('🔄 Redirecionando para login em 2 segundos...');
+ // Redirecionar para login
+                console.log(' Redirecionando para login em 2 segundos...');
                 setTimeout(() => {
                     window.location.href = 'login.html';
                 }, 2000);
@@ -698,9 +698,9 @@ class RegisterManager {
             }
 
         } catch (error) {
-            console.error('❌ ERRO NO CADASTRO:', error);
+            console.error(' ERRO NO CADASTRO:', error);
 
-            // Mensagens de erro específicas
+ // Mensagens de erro específicas
             let errorMessage = 'Erro ao fazer cadastro. Tente novamente.';
             if (error.message.includes('Email já cadastrado')) {
                 errorMessage = 'Este email já está cadastrado.';
@@ -718,12 +718,12 @@ class RegisterManager {
     }
 
     async handleGoogleRegister(version = 'desktop') {
-        console.log(`🔐 Iniciando cadastro com Google (${version})...`);
+        console.log(` Iniciando cadastro com Google (${version})...`);
         await authManager.handleGoogleLogin(version);
     }
 
     validateData(inputs) {
-        // Verificar se todos os campos estão preenchidos
+ // Verificar se todos os campos estão preenchidos
         for (let [key, input] of Object.entries(inputs)) {
             if (!input || !input.value.trim()) {
                 return {
@@ -733,7 +733,7 @@ class RegisterManager {
             }
         }
 
-        // Validar email
+ // Validar email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(inputs.email.value.trim())) {
             return {
@@ -742,7 +742,7 @@ class RegisterManager {
             };
         }
 
-        // Validar senha
+ // Validar senha
         if (inputs.password.value.length < 8) {
             return {
                 isValid: false,
@@ -750,7 +750,7 @@ class RegisterManager {
             };
         }
 
-        // Validar confirmação de senha
+ // Validar confirmação de senha
         if (inputs.password.value !== inputs.confirmPassword.value) {
             return {
                 isValid: false,
@@ -797,9 +797,9 @@ class RegisterManager {
         if (errorDiv) {
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
-            console.log('❌ Mostrando erro:', message);
+            console.log(' Mostrando erro:', message);
         } else {
-            console.log('❌ Div de erro não encontrada, mostrando alerta');
+            console.log(' Div de erro não encontrada, mostrando alerta');
             alert('Erro: ' + message);
         }
     }
@@ -832,22 +832,22 @@ const registerManager = new RegisterManager();
 // Inicialização do AuthManager
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('📄 DOM carregado, inicializando AuthManager...');
+        console.log(' DOM carregado, inicializando AuthManager...');
         authManager.init();
     });
 } else {
-    console.log('📄 DOM já carregado, inicializando AuthManager...');
+    console.log(' DOM já carregado, inicializando AuthManager...');
     authManager.init();
 }
 
 // Inicialização do RegisterManager
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('📄 DOM carregado, inicializando RegisterManager...');
+        console.log(' DOM carregado, inicializando RegisterManager...');
         registerManager.init();
     });
 } else {
-    console.log('📄 DOM já carregado, inicializando RegisterManager...');
+    console.log(' DOM já carregado, inicializando RegisterManager...');
     registerManager.init();
 }
 

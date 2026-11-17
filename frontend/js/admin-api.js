@@ -16,14 +16,14 @@ class AdminAPI {
                 ...options
             };
 
-            console.log(`📤 API Request: ${endpoint}`, config);
+            console.log(` API Request: ${endpoint}`, config);
 
             const response = await fetch(url, config);
 
             if (!response.ok) {
                 if (response.status === 404) {
                     if (endpoint.includes('/favoritos-count')) {
-                        console.log('🔄 Tentando rota alternativa para favoritos...');
+                        console.log(' Tentando rota alternativa para favoritos...');
                         const alternativeEndpoint = endpoint.replace('/favoritos-count', '/favoritos');
                         return this.request(alternativeEndpoint, options);
                     }
@@ -42,14 +42,14 @@ class AdminAPI {
                 throw new Error(`Resposta não é JSON: ${text.substring(0, 100)}`);
             }
 
-            console.log(`📥 API Response: ${endpoint}`, data);
+            console.log(` API Response: ${endpoint}`, data);
             return data;
 
         } catch (error) {
-            console.error(`❌ API Error (${endpoint}):`, error);
+            console.error(` API Error (${endpoint}):`, error);
 
             if (endpoint.includes('/favoritos-count') || endpoint.includes('/favoritos')) {
-                console.log('🔄 Retornando dados de fallback para favoritos');
+                console.log(' Retornando dados de fallback para favoritos');
                 return {
                     count: 0,
                     alunos: []
@@ -57,7 +57,7 @@ class AdminAPI {
             }
 
             if (endpoint.includes('/aulas/professor/')) {
-                console.log('🔄 Retornando dados de fallback para aulas');
+                console.log(' Retornando dados de fallback para aulas');
                 return [];
             }
 
@@ -123,7 +123,7 @@ class AdminAPI {
         return this.post('/api/aulas/importar-csv', { csvData });
     }
 
-    // 🔧 CRIAR AULAS EM LOTE
+ // CRIAR AULAS EM LOTE
     async criarAulasLote(aulas) {
         return this.post('/api/aulas/criar-lote', { aulas });
     }

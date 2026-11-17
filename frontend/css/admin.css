@@ -2767,7 +2767,9 @@ tbody td {
 }
 
 .aula-preview-card:not(.card-editing) .editable-field:hover::after {
-    content: ' ✎';
+    content: '\f303';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
     color: #3498db;
     font-size: 0.8em;
     margin-left: 4px;
@@ -3723,22 +3725,30 @@ tbody td {
 
 /* Ícone para cada turno (usando pseudo-elementos) */
 .turno-badge[data-turno="Manhã"]::before {
-    content: "☀️";
+    content: '\f185';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
     font-size: 10px;
 }
 
 .turno-badge[data-turno="Tarde"]::before {
-    content: "⛅";
+    content: '\f6c4';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
     font-size: 10px;
 }
 
 .turno-badge[data-turno="Noite"]::before {
-    content: "🌙";
+    content: '\f186';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
     font-size: 10px;
 }
 
 .turno-badge[data-turno="Integral"]::before {
-    content: "🕒";
+    content: '\f017';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
     font-size: 10px;
 }
 
@@ -3808,7 +3818,9 @@ tr:has(.status-inativo) .turno-badge {
 
 /* Indicador de seleção nos checkboxes */
 .checkbox-label input[type="checkbox"]:checked::after {
-    content: "✓";
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
     position: absolute;
     color: white;
     font-size: 12px;

@@ -55,15 +55,15 @@ class TurmasManager {
     }
 
     async vincularAlunos(turmaId) {
-        // Implementar modal para vincular alunos
+ // Implementar modal para vincular alunos
     }
 
     async verAlunos(turmaId) {
-        // Implementar modal para ver alunos
+ // Implementar modal para ver alunos
     }
 
     setupEventListeners() {
-        // Configurar eventos
+ // Configurar eventos
     }
 }
 

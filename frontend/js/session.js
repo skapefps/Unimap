@@ -25,20 +25,20 @@
     let encerrando = false;
 
     /**
-     * Limpa a sessão e volta ao login, preservando o destino para
-     * retomar depois do novo login.
-     */
+ * Limpa a sessão e volta ao login, preservando o destino para
+ * retomar depois do novo login.
+ */
     function encerrarSessao(motivo) {
         if (encerrando || emPaginaPublica()) return;
         encerrando = true;
 
-        console.warn('🔐 Sessão encerrada:', motivo);
+        console.warn(' Sessão encerrada:', motivo);
 
         try {
             const destino = window.location.pathname + window.location.search;
             sessionStorage.setItem('unimap:redirecionarPara', destino);
         } catch (e) {
-            // sessionStorage pode falhar em modo privado; não é crítico.
+ // sessionStorage pode falhar em modo privado; não é crítico.
         }
 
         localStorage.removeItem('authToken');
@@ -60,23 +60,23 @@
     window.fetch = async function (recurso, opcoes) {
         const resposta = await fetchOriginal(recurso, opcoes);
 
-        // Só reage a chamadas da própria API.
+ // Só reage a chamadas da própria API.
         const url = typeof recurso === 'string' ? recurso : (recurso && recurso.url) || '';
         const eApiPropria = url.includes('/api/');
 
         if (resposta.status === 401 && eApiPropria) {
-            // Não derruba a sessão por um 401 do próprio login: ali o 401
-            // significa "senha errada", não "sessão inválida".
+ // Não derruba a sessão por um 401 do próprio login: ali o 401
+ // significa "senha errada", não "sessão inválida".
             const eRotaDeLogin = /\/api\/auth\/(login|login-professor|google|register|forgot-password|reset-password)/.test(url);
 
             if (!eRotaDeLogin) {
                 let expirada = false;
                 try {
-                    // Clona: o corpo original precisa seguir legível para quem chamou.
+ // Clona: o corpo original precisa seguir legível para quem chamou.
                     const corpo = await resposta.clone().json();
                     expirada = corpo && corpo.expired === true;
                 } catch (e) {
-                    // Resposta sem JSON; trata como sessão inválida genérica.
+ // Resposta sem JSON; trata como sessão inválida genérica.
                 }
                 encerrarSessao(expirada ? 'expirada' : 'invalida');
             }
@@ -86,9 +86,9 @@
     };
 
     /**
-     * Na página de login, mostra o motivo de a sessão ter caído, para o
-     * usuário não ficar sem explicação depois de um redirecionamento.
-     */
+ * Na página de login, mostra o motivo de a sessão ter caído, para o
+ * usuário não ficar sem explicação depois de um redirecionamento.
+ */
     function exibirMensagemPendente() {
         let msg;
         try {

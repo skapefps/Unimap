@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>UNIMAP - Cadastre-se</title>
     <link rel="stylesheet" href="css/cadastro.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link rel="shortcut icon" type="imagex/png" href="../frontend/images/logo-unipam 2.png">
     <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
     <script src="js/session.js"></script>
     <script src="js/config.js"></script>
+    <script src="js/icones.js"></script>
     <script src="js/api.js"></script>
     <script></script>
 </head>
@@ -201,12 +203,12 @@
     });
 
     function setupOurForms() {
-        console.log('🔧 Configurando formulários...');
+        console.log(' Configurando formulários...');
         
         const desktopBtn = document.getElementById('registerBtnDesktop');
         if (desktopBtn) {
             desktopBtn.onclick = function(e) {
-                console.log('🎯 Cadastro desktop iniciado');
+                console.log(' Cadastro desktop iniciado');
                 handleRegister('desktop');
             };
         }
@@ -214,12 +216,12 @@
         const mobileBtn = document.getElementById('registerBtnMobile');
         if (mobileBtn) {
             mobileBtn.onclick = function(e) {
-                console.log('🎯 Cadastro mobile iniciado');
+                console.log(' Cadastro mobile iniciado');
                 handleRegister('mobile');
             };
         }
         
-        console.log('✅ Formulários configurados!');
+        console.log(' Formulários configurados!');
     }
 
     async function handleRegister(version = 'desktop') {
@@ -229,7 +231,7 @@
         }
         
         isProcessing = true;
-        console.log('🎯 INICIANDO CADASTRO...');
+        console.log(' INICIANDO CADASTRO...');
         
         const inputs = getFormInputs(version);
         const registerBtn = version === 'mobile' 
@@ -238,13 +240,13 @@
 
         const validation = validateData(inputs);
         if (!validation.isValid) {
-            showMessage('❌ ' + validation.message, 'error', 4000);
+            showMessage(validation.message, 'error', 4000);
             isProcessing = false;
             return;
         }
 
         if (registerBtn) {
-            registerBtn.textContent = '🔄 CADASTRANDO...';
+            registerBtn.textContent = 'CADASTRANDO...';
             registerBtn.disabled = true;
             registerBtn.style.opacity = '0.7';
         }
@@ -257,18 +259,18 @@
                 senha: inputs.password.value
             };
 
-            console.log('📤 Enviando dados:', userData);
+            console.log(' Enviando dados:', userData);
             const result = await api.register(userData);
             
             if (result.success) {
-                console.log('✅ Cadastro realizado com sucesso!');
+                console.log(' Cadastro realizado com sucesso!');
                 
-                showMessage('✅ ' + result.message + ' Redirecionando para login...', 'success', 3000);
+                showMessage(result.message + ' Redirecionando para login...', 'success', 3000);
 
                 clearForm(inputs);
                 
                 setTimeout(() => {
-                    console.log('🔄 Redirecionando para login...');
+                    console.log(' Redirecionando para login...');
                     window.location.href = 'login.html';
                 }, 3000);
                 
@@ -279,16 +281,16 @@
         } catch (error) {
             console.error('Erro no cadastro:', error);
 
-            // A mensagem do servidor é o padrão.
-            //
-            // Antes, o padrão era o texto genérico abaixo e só três
-            // mensagens conhecidas o substituíam — então qualquer erro de
-            // validação ("a senha precisa de ao menos 8 caracteres", por
-            // exemplo) chegava ao usuário como "Erro ao fazer cadastro.
-            // Tente novamente.", sem dizer o que corrigir.
+ // A mensagem do servidor é o padrão.
+ //
+ // Antes, o padrão era o texto genérico abaixo e só três
+ // mensagens conhecidas o substituíam — então qualquer erro de
+ // validação ("a senha precisa de ao menos 8 caracteres", por
+ // exemplo) chegava ao usuário como "Erro ao fazer cadastro.
+ // Tente novamente.", sem dizer o que corrigir.
             let errorMessage = error.message || 'Erro ao fazer cadastro. Tente novamente.';
 
-            // Reescritas apenas onde dá para ser mais claro que o servidor.
+ // Reescritas apenas onde dá para ser mais claro que o servidor.
             if (error.message && error.message.includes('email já está cadastrado')) {
                 errorMessage = 'Este email já está cadastrado. Use outro email ou faça login.';
             } else if (error.message && error.message.includes('matrícula')) {
@@ -372,7 +374,9 @@
     }
 
     function showMessage(message, type = 'info', duration = 3000) {
-        console.log('💬 Mostrando mensagem:', message, 'Duração:', duration);
+ // O tipo decide o ícone; a chamada passa só o texto.
+        if (window.UnimapIcones) message = window.UnimapIcones.semEmoji(message);
+        console.log(' Mostrando mensagem:', message, 'Duração:', duration);
         
         const existingMessages = document.querySelectorAll('.custom-message');
         existingMessages.forEach(msg => {
@@ -389,7 +393,7 @@
             messageDiv.className = `custom-message custom-message-${type}`;
 
             const closeButton = document.createElement('button');
-            closeButton.innerHTML = '✕';
+            closeButton.innerHTML = '<i class="fas fa-xmark" aria-hidden="true"></i>';
             closeButton.onclick = function() {
                 messageDiv.style.animation = 'slideOut 0.3s ease';
                 setTimeout(() => {
@@ -412,7 +416,7 @@
             
             document.body.appendChild(messageDiv);
             
-            console.log('✅ Mensagem exibida:', message);
+            console.log(' Mensagem exibida:', message);
 
             if (duration > 0) {
                 setTimeout(() => {
@@ -421,7 +425,7 @@
                         setTimeout(() => {
                             if (messageDiv.parentElement) {
                                 messageDiv.remove();
-                                console.log('✅ Mensagem removida automaticamente');
+                                console.log(' Mensagem removida automaticamente');
                             }
                         }, 500);
                     }
@@ -432,7 +436,7 @@
 
     async function registerWithGoogle() {
         try {
-            console.log('🔐 Iniciando cadastro com Google...');
+            console.log(' Iniciando cadastro com Google...');
             
             const token = await new Promise((resolve, reject) => {
                 if (typeof google === 'undefined') {
@@ -454,7 +458,7 @@
                 client.requestAccessToken();
             });
 
-            console.log('✅ Token Google obtido, enviando para API...');
+            console.log(' Token Google obtido, enviando para API...');
             
             const response = await fetch(`${Config.getBaseURL()}/auth/google`, {
                 method: "POST",
@@ -463,25 +467,25 @@
             });
 
             const data = await response.json();
-            console.log('📥 Resposta da API:', data);
+            console.log(' Resposta da API:', data);
 
             if (data.success) {
                 localStorage.setItem("authToken", data.token);
                 localStorage.setItem("userData", JSON.stringify(data.user));
                 
-                showMessage(`🎉 Cadastro realizado! Bem-vindo(a), ${data.user.nome}!`, 'success', 3000);
+                showMessage(`Cadastro realizado! Bem-vindo(a), ${data.user.nome}!`, 'success', 3000);
                 
                 setTimeout(() => {
                     window.location.href = "index.html";
                 }, 3000);
                 
             } else {
-                console.log('❌ Erro no cadastro Google:', data.error);
+                console.log(' Erro no cadastro Google:', data.error);
                 
                 if (data.error.includes('já está cadastrado')) {
-                    showMessage(`❌ ${data.error} Vá para a página de login.`, 'error', 5000);
+                    showMessage(`${data.error} Vá para a página de login.`, 'error', 5000);
                 } else {
-                    showMessage(`❌ ${data.error || 'Erro no cadastro com Google'}`, 'error', 5000);
+                    showMessage(`${data.error || 'Erro no cadastro com Google'}`, 'error', 5000);
                 }
             }
 
@@ -489,9 +493,9 @@
             console.error("Erro no cadastro Google:", error);
             
             if (error.message.includes('cancelou')) {
-                showMessage('⚠️ Cadastro com Google cancelado', 'warning', 3000);
+                showMessage('Cadastro com Google cancelado', 'warning', 3000);
             } else {
-                showMessage('❌ Erro no cadastro com Google: ' + error.message, 'error', 5000);
+                showMessage('Erro no cadastro com Google: ' + error.message, 'error', 5000);
             }
         }
     }

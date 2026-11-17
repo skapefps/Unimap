@@ -611,7 +611,9 @@ select.select-desabilitado {
 }
 
 .professor-checkbox-label input[type="checkbox"]:checked+.professor-checkmark::after {
-    content: '✓';
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
     position: absolute;
     color: white;
     font-size: 14px;
@@ -1055,7 +1057,9 @@ select.select-desabilitado {
     }
 
     .professor-aula-card::after {
-        content: '👆 Detalhes';
+        content: '\f0a6  Detalhes';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
         font-size: 0.65rem;
     }
 

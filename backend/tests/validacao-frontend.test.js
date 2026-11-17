@@ -142,6 +142,41 @@ describe('Nenhuma URL fixa de desenvolvimento no frontend', () => {
     });
 });
 
+describe('Interface sem emoji', () => {
+    /**
+     * O frontend tinha 1.311 emojis: 931 em console.log e 380 que
+     * podiam chegar à tela. Emoji não tem o mesmo desenho em cada
+     * sistema operacional, não acompanha tamanho de fonte nem tema, e
+     * leitor de tela anuncia o nome dele junto do texto.
+     *
+     * Em lugar deles, Font Awesome, que já era usado no projeto.
+     */
+    const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E0}-\u{1F1FF}]/u;
+
+    const arquivos = [
+        ...fs.readdirSync(FRONTEND).filter((f) => f.endsWith('.html')),
+        ...fs.readdirSync(path.join(FRONTEND, 'js')).filter((f) => f.endsWith('.js')).map((f) => `js/${f}`),
+        ...fs.readdirSync(path.join(FRONTEND, 'css')).filter((f) => f.endsWith('.css')).map((f) => `css/${f}`)
+    ];
+
+    test.each(arquivos)('%s não tem emoji', (arquivo) => {
+        const linhas = ler(arquivo).split('\n')
+            .map((texto, i) => ({ n: i + 1, texto }))
+            .filter(({ texto }) => EMOJI.test(texto))
+            .map((l) => `linha ${l.n}: ${l.texto.trim().slice(0, 60)}`);
+
+        expect(linhas).toEqual([]);
+    });
+
+    test('todas as páginas carregam a biblioteca de ícones', () => {
+        const semIcones = arquivos
+            .filter((f) => f.endsWith('.html'))
+            .filter((f) => !ler(f).includes('font-awesome'));
+
+        expect(semIcones).toEqual([]);
+    });
+});
+
 describe('Erros do servidor chegam ao usuário', () => {
     // O catch do cadastro só reconhecia três mensagens específicas e
     // trocava todo o resto por "Erro ao fazer cadastro. Tente

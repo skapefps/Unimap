@@ -7,10 +7,10 @@ class ApiService {
         this.cacheTTL = 30000; // 30 segundos
         this.maxRetries = 3;
         this.initialRetryDelay = 1000;
-        console.log('🌐 API Base URL:', this.baseURL);
+        console.log(' API Base URL:', this.baseURL);
     }
 
-    // 🔧 MÉTODOS PRINCIPAIS OTIMIZADOS
+ // MÉTODOS PRINCIPAIS OTIMIZADOS
     getHeaders(additionalHeaders = {}) {
         const token = localStorage.getItem('authToken');
         const baseHeaders = {
@@ -53,7 +53,7 @@ class ApiService {
         }
     }
 
-    // API para todos os professores (se necessário)
+ // API para todos os professores (se necessário)
     async getProfessores() {
         try {
             const token = localStorage.getItem('authToken');
@@ -90,19 +90,19 @@ class ApiService {
         const cacheKey = this.generateCacheKey(endpoint, options);
         const queueKey = this.generateQueueKey(endpoint);
 
-        // 🔥 Cache otimizado para GET
+ // Cache otimizado para GET
         if (options.method === 'GET' && this.cache.has(cacheKey)) {
-            console.log('📦 Retornando do cache:', cacheKey);
+            console.log(' Retornando do cache:', cacheKey);
             return this.cache.get(cacheKey);
         }
 
-        // 🔥 Prevenção de requisições duplicadas
+ // Prevenção de requisições duplicadas
         if (this.requestQueue.has(queueKey)) {
             return this.requestQueue.get(queueKey);
         }
 
         try {
-            console.log('📤 Enviando requisição:', endpoint, this.sanitizeLog(options));
+            console.log(' Enviando requisição:', endpoint, this.sanitizeLog(options));
 
             const requestPromise = this.executeRequest(endpoint, options, cacheKey);
             this.requestQueue.set(queueKey, requestPromise);
@@ -114,7 +114,7 @@ class ApiService {
 
         } catch (error) {
             this.requestQueue.delete(queueKey);
-            console.error(`❌ Erro na requisição ${endpoint}:`, error);
+            console.error(` Erro na requisição ${endpoint}:`, error);
             return {
                 success: false,
                 error: error.message || 'Erro de conexão com o servidor'
@@ -130,7 +130,7 @@ class ApiService {
 
         const result = await this.handleResponse(response, endpoint);
 
-        // Cache otimizado para respostas bem-sucedidas GET
+ // Cache otimizado para respostas bem-sucedidas GET
         if (options.method === 'GET' && result.success) {
             this.setCache(cacheKey, result);
         }
@@ -165,9 +165,9 @@ class ApiService {
         }
     }
 
-    // No api.js, na função handleResponse, você pode adicionar:
+ // No api.js, na função handleResponse, você pode adicionar:
     async handleResponse(response, endpoint) {
-        console.log(`📥 Resposta de ${endpoint}:`, response.status);
+        console.log(` Resposta de ${endpoint}:`, response.status);
 
         try {
             const data = await this.parseResponse(response);
@@ -177,20 +177,20 @@ class ApiService {
             } else {
                 const errorMessage = this.extractErrorMessage(data, response);
 
-                // 🔥 CORREÇÃO: Tratamento específico para 403
+ // CORREÇÃO: Tratamento específico para 403
                 if (response.status === 403) {
-                    console.error(`🚫 Acesso negado em ${endpoint}`);
+                    console.error(` Acesso negado em ${endpoint}`);
                     return {
                         success: false,
                         error: 'Acesso negado. Você não tem permissão para acessar este recurso.'
                     };
                 }
 
-                console.error(`❌ Erro ${response.status} em ${endpoint}:`, errorMessage);
+                console.error(` Erro ${response.status} em ${endpoint}:`, errorMessage);
                 return { success: false, error: errorMessage };
             }
         } catch (error) {
-            console.error('❌ Erro ao processar resposta:', error);
+            console.error(' Erro ao processar resposta:', error);
             return {
                 success: false,
                 error: 'Resposta inválida do servidor'
@@ -214,9 +214,9 @@ class ApiService {
             `Erro ${response.status}: ${response.statusText}`;
     }
 
-    // 🔥 MÉTODOS DE AUTENTICAÇÃO OTIMIZADOS
+ // MÉTODOS DE AUTENTICAÇÃO OTIMIZADOS
     async register(userData) {
-        console.log('👤 Registrando usuário:', this.sanitizeUserData(userData));
+        console.log(' Registrando usuário:', this.sanitizeUserData(userData));
         return this.request('/auth/register', {
             method: 'POST',
             body: JSON.stringify(userData)
@@ -224,7 +224,7 @@ class ApiService {
     }
 
     async login(dadosLogin) {
-        console.log('🔐 Realizando login:', this.sanitizeUserData(dadosLogin));
+        console.log(' Realizando login:', this.sanitizeUserData(dadosLogin));
 
         try {
             const response = await fetch(`${this.baseURL}/auth/login`, {
@@ -236,7 +236,7 @@ class ApiService {
             const result = await this.handleResponse(response, '/auth/login');
 
             if (result.success) {
-                console.log('✅ Login realizado com sucesso');
+                console.log(' Login realizado com sucesso');
                 return {
                     success: true,
                     user: result.data.user,
@@ -245,20 +245,20 @@ class ApiService {
             }
             return result;
         } catch (error) {
-            console.error('❌ Erro no login:', error);
+            console.error(' Erro no login:', error);
             return { success: false, error: error.message };
         }
     }
 
     async googleLogin(token) {
-        console.log('🔐 Realizando login Google');
+        console.log(' Realizando login Google');
         return this.request('/auth/google', {
             method: 'POST',
             body: JSON.stringify({ token })
         });
     }
 
-    // 🔥 MÉTODOS PARA SALAS OTIMIZADOS
+ // MÉTODOS PARA SALAS OTIMIZADOS
     async getSalas() {
         return this.request('/salas');
     }
@@ -279,7 +279,7 @@ class ApiService {
         return this.request(`/salas/bloco/${bloco}/andares`);
     }
 
-    // 🔥 MÉTODOS PARA AULAS OTIMIZADOS
+ // MÉTODOS PARA AULAS OTIMIZADOS
     async getAulas() {
         return this.request('/aulas');
     }
@@ -295,10 +295,10 @@ class ApiService {
     }
 
     async criarAula(dadosAula) {
-        console.log('📝 Criando aula:', dadosAula);
+        console.log(' Criando aula:', dadosAula);
         this.clearCacheByPattern('/aulas');
 
-        // 🔧 CORREÇÃO: Garantir que todos os campos obrigatórios estão presentes
+ // CORREÇÃO: Garantir que todos os campos obrigatórios estão presentes
         const dadosCompletos = {
             disciplina: dadosAula.disciplina,
             sala_id: dadosAula.sala_id,
@@ -310,7 +310,7 @@ class ApiService {
             periodo: dadosAula.periodo || 5
         };
 
-        console.log('📤 Dados completos para API:', dadosCompletos);
+        console.log(' Dados completos para API:', dadosCompletos);
 
         return this.request('/aulas', {
             method: 'POST',
@@ -319,7 +319,7 @@ class ApiService {
     }
 
     async excluirAula(aulaId) {
-        console.log('🗑️ Excluindo aula:', aulaId);
+        console.log(' Excluindo aula:', aulaId);
         this.clearCacheByPattern('/aulas');
 
         return this.request(`/aulas/${aulaId}`, {
@@ -328,7 +328,7 @@ class ApiService {
     }
 
     async atualizarAula(aulaId, dadosAula) {
-        console.log('✏️ Atualizando aula:', aulaId, dadosAula);
+        console.log(' Atualizando aula:', aulaId, dadosAula);
         this.clearCacheByPattern('/aulas');
 
         return this.request(`/aulas/${aulaId}`, {
@@ -337,25 +337,25 @@ class ApiService {
         });
     }
 
-    // 🔥 MÉTODOS PARA CANCELAR/REATIVAR AULA
+ // MÉTODOS PARA CANCELAR/REATIVAR AULA
     async cancelarAula(aulaId) {
-        console.log('🚫 Cancelando aula:', aulaId);
+        console.log(' Cancelando aula:', aulaId);
         this.clearCacheByPattern('/aulas');
         return this.request(`/aulas/${aulaId}/cancelar`, { method: 'PUT' });
     }
 
     async reativarAula(aulaId) {
-        console.log('🔄 Reativando aula:', aulaId);
+        console.log(' Reativando aula:', aulaId);
         this.clearCacheByPattern('/aulas');
         return this.request(`/aulas/${aulaId}/reativar`, { method: 'PUT' });
     }
 
-    // 🔥 MÉTODOS ESPECÍFICOS PARA PROFESSORES
+ // MÉTODOS ESPECÍFICOS PARA PROFESSORES
     async getMinhasAulasProfessor() {
         return this.request('/aulas/professor/minhas-aulas');
     }
 
-    // 🔥 MÉTODOS PARA CURSOS OTIMIZADOS
+ // MÉTODOS PARA CURSOS OTIMIZADOS
     async getCursos() {
         return this.request('/cursos');
     }
@@ -372,7 +372,7 @@ class ApiService {
         return this.request('/cursos/detalhados');
     }
 
-    // 🔧 MÉTODOS DE GESTÃO DE CACHE OTIMIZADOS
+ // MÉTODOS DE GESTÃO DE CACHE OTIMIZADOS
     clearCacheByPattern(pattern) {
         let clearedCount = 0;
         for (const key of this.cache.keys()) {
@@ -381,13 +381,13 @@ class ApiService {
                 clearedCount++;
             }
         }
-        console.log('🧹 Cache limpo:', clearedCount, 'itens para padrão:', pattern);
+        console.log(' Cache limpo:', clearedCount, 'itens para padrão:', pattern);
     }
 
     clearAllCache() {
         const size = this.cache.size;
         this.cache.clear();
-        console.log('🧹 Todo o cache limpo:', size, 'itens removidos');
+        console.log(' Todo o cache limpo:', size, 'itens removidos');
     }
 
     getCacheStats() {
@@ -398,9 +398,9 @@ class ApiService {
         };
     }
 
-    // 🔧 MÉTODO PARA REQUISIÇÕES EM LOTE OTIMIZADO
+ // MÉTODO PARA REQUISIÇÕES EM LOTE OTIMIZADO
     async batchRequests(requests) {
-        console.log('🔄 Executando lote de requisições:', requests.length);
+        console.log(' Executando lote de requisições:', requests.length);
 
         const results = await Promise.allSettled(
             requests.map(req => this.request(req.endpoint, req.options))
@@ -422,7 +422,7 @@ class ApiService {
         };
     }
 
-    // 🔧 MÉTODO PARA HEALTH CHECK OTIMIZADO
+ // MÉTODO PARA HEALTH CHECK OTIMIZADO
     async healthCheck() {
         const startTime = Date.now();
 
@@ -453,11 +453,11 @@ class ApiService {
         }
     }
 
-    // 🔧 MÉTODO PARA RETRY AUTOMÁTICO OTIMIZADO
+ // MÉTODO PARA RETRY AUTOMÁTICO OTIMIZADO
     async requestWithRetry(endpoint, options = {}, maxRetries = this.maxRetries, delay = this.initialRetryDelay) {
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                console.log(`🔄 Tentativa ${attempt}/${maxRetries} para ${endpoint}`);
+                console.log(` Tentativa ${attempt}/${maxRetries} para ${endpoint}`);
                 const result = await this.request(endpoint, options);
 
                 if (result.success || !this.shouldRetry(result.error)) {
@@ -470,7 +470,7 @@ class ApiService {
                     delay *= 2; // Exponential backoff
                 }
             } catch (error) {
-                console.error(`❌ Tentativa ${attempt} falhou:`, error);
+                console.error(` Tentativa ${attempt} falhou:`, error);
                 if (attempt === maxRetries || !this.shouldRetry(error.message)) {
                     throw error;
                 }
@@ -492,7 +492,7 @@ class ApiService {
         );
     }
 
-    // 🔧 MÉTODOS DE AUTENTICAÇÃO ADICIONAIS OTIMIZADOS
+ // MÉTODOS DE AUTENTICAÇÃO ADICIONAIS OTIMIZADOS
     async verifyToken() {
         const token = localStorage.getItem('authToken');
         if (!token) {
@@ -519,7 +519,7 @@ class ApiService {
     }
 
     async updateUserProfile(userData) {
-        console.log('👤 Atualizando perfil do usuário');
+        console.log(' Atualizando perfil do usuário');
         return this.request('/auth/profile', {
             method: 'PUT',
             body: JSON.stringify(userData)
@@ -527,7 +527,7 @@ class ApiService {
     }
 
     async requestPasswordReset(email) {
-        console.log('🔑 Solicitando recuperação de senha para:', email);
+        console.log(' Solicitando recuperação de senha para:', email);
         return this.request('/auth/forgot-password', {
             method: 'POST',
             body: JSON.stringify({ email })
@@ -535,7 +535,7 @@ class ApiService {
     }
 
     async logout() {
-        console.log('🚪 Realizando logout');
+        console.log(' Realizando logout');
         this.clearAllCache();
         this.requestQueue.clear();
 
@@ -548,7 +548,7 @@ class ApiService {
         };
     }
 
-    // 🔧 UTILITÁRIOS OTIMIZADOS
+ // UTILITÁRIOS OTIMIZADOS
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
@@ -569,15 +569,15 @@ class ApiService {
         return password && password.length >= 6;
     }
 
-    // 🔧 MÉTODOS DE DEBUG E MONITORAMENTO
+ // MÉTODOS DE DEBUG E MONITORAMENTO
     enableDebugMode() {
         this.debugMode = true;
-        console.log('🐛 Modo debug ativado');
+        console.log(' Modo debug ativado');
     }
 
     disableDebugMode() {
         this.debugMode = false;
-        console.log('🐛 Modo debug desativado');
+        console.log(' Modo debug desativado');
     }
 
     getPerformanceMetrics() {
@@ -590,14 +590,14 @@ class ApiService {
     }
 }
 
-// ✅ INSTÂNCIA GLOBAL OTIMIZADA
+// INSTÂNCIA GLOBAL OTIMIZADA
 const api = new ApiService();
 
-// 🔧 EXPORTAÇÃO PARA USO GLOBAL
+// EXPORTAÇÃO PARA USO GLOBAL
 if (typeof window !== 'undefined') {
     window.api = api;
 
-    // 🔧 FERRAMENTAS DE DEBUG OTIMIZADAS
+ // FERRAMENTAS DE DEBUG OTIMIZADAS
     window.apiDebug = {
         cacheStats: () => api.getCacheStats(),
         clearCache: () => api.clearAllCache(),
@@ -613,7 +613,7 @@ if (typeof window !== 'undefined') {
     };
 }
 
-console.log('🌐 API Service carregado e otimizado:', {
+console.log(' API Service carregado e otimizado:', {
     cache: api.cache.size,
     baseURL: api.baseURL,
     features: ['cache', 'retry', 'batch', 'healthCheck']

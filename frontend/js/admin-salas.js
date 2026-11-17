@@ -2,11 +2,11 @@
 class AdminSalas {
     constructor() {
         this.salas = [];
-        // Resolve pela origem atual. Estava fixo em localhost, o que
-        // deixava esta tela inteira sem backend em producao.
+ // Resolve pela origem atual. Estava fixo em localhost, o que
+ // deixava esta tela inteira sem backend em producao.
         this.API_BASE = Config.getBaseURL() + '/admin';
         
-        // Configurações de paginação
+ // Configurações de paginação
         this.pagination = {
             currentPage: 1,
             totalPages: 1,
@@ -16,7 +16,7 @@ class AdminSalas {
             hasPrev: false
         };
         
-        // Filtros atuais
+ // Filtros atuais
         this.filters = {
             bloco: 'todos',
             andar: 'todos',
@@ -26,7 +26,7 @@ class AdminSalas {
             busca: '' // ⭐ NOVO: filtro de busca
         };
 
-        // Opções de filtros disponíveis
+ // Opções de filtros disponíveis
         this.filterOptions = {
             blocos: [],
             andares: [],
@@ -34,12 +34,12 @@ class AdminSalas {
             campi: []
         };
 
-        // ⭐ NOVO: Timer para busca em tempo real
+ // ⭐ NOVO: Timer para busca em tempo real
         this.buscaTimeout = null;
     }
 
     init() {
-        console.log('🎯 Inicializando Admin Salas...');
+        console.log(' Inicializando Admin Salas...');
         if (!this.verificarAutenticacao()) return;
         
         this.setupEventListeners();
@@ -49,14 +49,14 @@ class AdminSalas {
     verificarAutenticacao() {
         this.token = localStorage.getItem('authToken') || localStorage.getItem('unimap_token');
         if (!this.token) {
-            console.error('❌ Token não encontrado!');
+            console.error(' Token não encontrado!');
             this.showNotification('Usuário não autenticado. Faça login novamente.', 'error');
             setTimeout(() => {
                 window.location.href = 'login.html';
             }, 2000);
             return false;
         }
-        console.log('✅ Token encontrado');
+        console.log(' Token encontrado');
         return true;
     }
 
@@ -69,7 +69,7 @@ class AdminSalas {
             });
         }
 
-        // Event listeners para filtros
+ // Event listeners para filtros
         const filterIds = ['filter-bloco', 'filter-andar', 'filter-tipo', 'filter-ativo', 'filter-campus'];
         filterIds.forEach(id => {
             const element = document.getElementById(id);
@@ -78,20 +78,20 @@ class AdminSalas {
             }
         });
 
-        // Event listener para tamanho da página
+ // Event listener para tamanho da página
         const pageSize = document.getElementById('page-size');
         if (pageSize) {
             pageSize.addEventListener('change', (e) => this.alterarTamanhoPagina(e.target.value));
         }
 
-        // ⭐ NOVO: Event listener para busca em tempo real
+ // ⭐ NOVO: Event listener para busca em tempo real
         const buscaInput = document.getElementById('filter-busca');
         if (buscaInput) {
             buscaInput.addEventListener('input', (e) => {
                 this.aplicarBuscaEmTempoReal(e.target.value);
             });
             
-            // Permitir busca com Enter
+ // Permitir busca com Enter
             buscaInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     this.aplicarBusca();
@@ -100,12 +100,12 @@ class AdminSalas {
         }
     }
 
-    // ⭐⭐ NOVO: Métodos para busca
+ // ⭐⭐ NOVO: Métodos para busca
     aplicarBuscaEmTempoReal(termo) {
-        // Limpar timeout anterior
+ // Limpar timeout anterior
         clearTimeout(this.buscaTimeout);
         
-        // Configurar novo timeout (debounce de 500ms)
+ // Configurar novo timeout (debounce de 500ms)
         this.buscaTimeout = setTimeout(() => {
             this.filters.busca = termo.trim();
             this.pagination.currentPage = 1;
@@ -127,7 +127,7 @@ class AdminSalas {
         this.carregarSalasComPaginacao();
     }
 
-    // ⭐ ATUALIZADO: Método para limpar todos os filtros
+ // ⭐ ATUALIZADO: Método para limpar todos os filtros
     limparFiltros() {
         this.filters = {
             bloco: 'todos',
@@ -138,7 +138,7 @@ class AdminSalas {
             busca: '' // ⭐ NOVO: também limpa a busca
         };
 
-        // Resetar valores dos selects
+ // Resetar valores dos selects
         document.getElementById('filter-bloco').value = 'todos';
         document.getElementById('filter-andar').value = 'todos';
         document.getElementById('filter-tipo').value = 'todos';
@@ -150,7 +150,7 @@ class AdminSalas {
         this.carregarSalasComPaginacao();
     }
 
-    // ⭐ ATUALIZADO: Método para aplicar filtros (mantém a busca)
+ // ⭐ ATUALIZADO: Método para aplicar filtros (mantém a busca)
     aplicarFiltros() {
         this.filters = {
             bloco: document.getElementById('filter-bloco').value,
@@ -161,27 +161,27 @@ class AdminSalas {
             busca: this.filters.busca // ⭐ NOVO: mantém o termo de busca atual
         };
 
-        // Reset para primeira página quando aplicar filtros
+ // Reset para primeira página quando aplicar filtros
         this.pagination.currentPage = 1;
         this.carregarSalasComPaginacao();
     }
 
-    // Método principal para carregar salas com paginação
+ // Método principal para carregar salas com paginação
     async carregarSalasComPaginacao() {
         if (!this.verificarAutenticacao()) return;
 
         try {
             this.showLoading(true);
-            console.log('📚 Carregando salas com paginação e busca...');
+            console.log(' Carregando salas com paginação e busca...');
 
-            // Construir parâmetros da URL
+ // Construir parâmetros da URL
             const params = new URLSearchParams({
                 page: this.pagination.currentPage,
                 limit: this.pagination.itemsPerPage,
                 ...this.filters
             });
 
-            // Remover parâmetros com valor 'todos' ou vazio
+ // Remover parâmetros com valor 'todos' ou vazio
             params.forEach((value, key) => {
                 if (value === 'todos' || value === '') {
                     params.delete(key);
@@ -195,17 +195,17 @@ class AdminSalas {
                 }
             });
 
-            console.log('📡 Response status:', response.status);
-            console.log('🔗 URL chamada:', `${this.API_BASE}/salas/todos?${params}`);
+            console.log(' Response status:', response.status);
+            console.log(' URL chamada:', `${this.API_BASE}/salas/todos?${params}`);
             
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('❌ Erro na resposta:', errorText);
+                console.error(' Erro na resposta:', errorText);
                 throw new Error(`Erro ${response.status}: ${errorText}`);
             }
 
             const data = await response.json();
-            console.log('📦 Dados recebidos:', data);
+            console.log(' Dados recebidos:', data);
             
             if (!data.success) {
                 throw new Error(data.error || 'Erro ao carregar salas');
@@ -215,12 +215,12 @@ class AdminSalas {
             this.pagination = data.data.pagination || this.pagination;
             this.filterOptions = data.data.filters || this.filterOptions;
 
-            // ⭐ NOVO: Mostrar info de busca se estiver ativa
+ // ⭐ NOVO: Mostrar info de busca se estiver ativa
             if (this.filters.busca) {
-                console.log(`🎯 Busca por "${this.filters.busca}": ${this.salas.length} resultados`);
+                console.log(` Busca por "${this.filters.busca}": ${this.salas.length} resultados`);
             }
 
-            console.log(`✅ ${this.salas.length} salas carregadas (página ${this.pagination.currentPage} de ${this.pagination.totalPages})`);
+            console.log(` ${this.salas.length} salas carregadas (página ${this.pagination.currentPage} de ${this.pagination.totalPages})`);
 
             this.renderizarSalas();
             this.atualizarFiltros();
@@ -229,7 +229,7 @@ class AdminSalas {
             return true;
 
         } catch (error) {
-            console.error('❌ Erro ao carregar salas:', error);
+            console.error(' Erro ao carregar salas:', error);
             this.showNotification('Erro ao carregar lista de salas: ' + error.message, 'error');
             return false;
         } finally {
@@ -237,7 +237,7 @@ class AdminSalas {
         }
     }
 
-    // Atualizar opções dos filtros
+ // Atualizar opções dos filtros
     atualizarFiltros() {
         this.preencherSelect('filter-bloco', this.filterOptions.blocos, this.filters.bloco);
         this.preencherSelect('filter-andar', this.filterOptions.andares, this.filters.andar);
@@ -249,7 +249,7 @@ class AdminSalas {
         const select = document.getElementById(selectId);
         if (!select) return;
 
-        // Manter o valor atual selecionado
+ // Manter o valor atual selecionado
         const currentValue = selectedValue;
 
         select.innerHTML = '<option value="todos">Todos</option>';
@@ -267,7 +267,7 @@ class AdminSalas {
         }
     }
 
-    // Controles de paginação
+ // Controles de paginação
     alterarTamanhoPagina(novoTamanho) {
         this.pagination.itemsPerPage = parseInt(novoTamanho);
         this.pagination.currentPage = 1; // Voltar para primeira página
@@ -295,9 +295,9 @@ class AdminSalas {
         }
     }
 
-    // Atualizar controles de paginação na UI
+ // Atualizar controles de paginação na UI
     atualizarControlesPaginacao() {
-        // Informações da paginação
+ // Informações da paginação
         const startItem = ((this.pagination.currentPage - 1) * this.pagination.itemsPerPage) + 1;
         const endItem = Math.min(this.pagination.currentPage * this.pagination.itemsPerPage, this.pagination.totalItems);
         
@@ -307,17 +307,17 @@ class AdminSalas {
                 `Mostrando ${startItem}-${endItem} de ${this.pagination.totalItems} salas`;
         }
 
-        // Botões anterior/próximo
+ // Botões anterior/próximo
         const prevBtn = document.getElementById('prev-page');
         const nextBtn = document.getElementById('next-page');
         if (prevBtn) prevBtn.disabled = !this.pagination.hasPrev;
         if (nextBtn) nextBtn.disabled = !this.pagination.hasNext;
 
-        // Números das páginas
+ // Números das páginas
         this.renderizarNumerosPaginas();
     }
 
-    // Renderizar números das páginas
+ // Renderizar números das páginas
     renderizarNumerosPaginas() {
         const container = document.getElementById('pagination-numbers');
         if (!container) return;
@@ -328,12 +328,12 @@ class AdminSalas {
         let startPage = Math.max(1, this.pagination.currentPage - Math.floor(maxPagesToShow / 2));
         let endPage = Math.min(this.pagination.totalPages, startPage + maxPagesToShow - 1);
 
-        // Ajustar se não estamos mostrando páginas suficientes no início
+ // Ajustar se não estamos mostrando páginas suficientes no início
         if (endPage - startPage + 1 < maxPagesToShow) {
             startPage = Math.max(1, endPage - maxPagesToShow + 1);
         }
 
-        // Botão primeira página
+ // Botão primeira página
         if (startPage > 1) {
             const firstBtn = this.criarBotaoPagina(1, '1');
             container.appendChild(firstBtn);
@@ -346,7 +346,7 @@ class AdminSalas {
             }
         }
 
-        // Páginas numeradas
+ // Páginas numeradas
         for (let i = startPage; i <= endPage; i++) {
             const pageBtn = this.criarBotaoPagina(i, i.toString());
             if (i === this.pagination.currentPage) {
@@ -358,7 +358,7 @@ class AdminSalas {
             container.appendChild(pageBtn);
         }
 
-        // Botão última página
+ // Botão última página
         if (endPage < this.pagination.totalPages) {
             if (endPage < this.pagination.totalPages - 1) {
                 const ellipsis = document.createElement('span');
@@ -401,7 +401,7 @@ class AdminSalas {
         return button;
     }
 
-    // ⭐ ATUALIZADO: Renderizar salas com destaque para busca
+ // ⭐ ATUALIZADO: Renderizar salas com destaque para busca
     renderizarSalas() {
         const tbody = document.getElementById('salas-body');
         if (!tbody) return;
@@ -419,7 +419,7 @@ class AdminSalas {
             const isAtiva = sala.ativa === 1 || sala.ativa === true;
             const localizacao = `${sala.bloco || ''}${sala.andar ? ` - ${sala.andar}` : ''}${sala.campus ? ` | ${sala.campus}` : ''}`.trim();
 
-            // ⭐ NOVO: Destacar termo de busca se estiver ativo
+ // ⭐ NOVO: Destacar termo de busca se estiver ativo
             let numeroDisplay = this.escapeHtml(sala.numero);
             let tipoDisplay = this.escapeHtml(sala.tipo || '');
             
@@ -482,7 +482,7 @@ class AdminSalas {
         }).join('');
     }
 
-    // ⭐ NOVO: Método para destacar texto da busca
+ // ⭐ NOVO: Método para destacar texto da busca
     destacarTexto(texto, termo) {
         if (!texto || !termo) return this.escapeHtml(texto);
         
@@ -490,7 +490,7 @@ class AdminSalas {
         return this.escapeHtml(texto).replace(regex, '<mark class="busca-destaque">$1</mark>');
     }
 
-    // ⭐ NOVO: Método utilitário para escapar regex
+ // ⭐ NOVO: Método utilitário para escapar regex
     escapeRegex(string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
@@ -506,7 +506,7 @@ class AdminSalas {
         const salasAtivas = this.salas.filter(sala => sala.ativa === 1 || sala.ativa === true).length;
         const salasInativas = this.salas.length - salasAtivas;
 
-        console.log(`📊 Estatísticas: Total=${totalSalas}, Ativas=${salasAtivas}, Inativas=${salasInativas}`);
+        console.log(` Estatísticas: Total=${totalSalas}, Ativas=${salasAtivas}, Inativas=${salasInativas}`);
 
         const totalElement = document.getElementById('total-salas');
         const ativasElement = document.getElementById('salas-ativas');
@@ -573,7 +573,7 @@ class AdminSalas {
 
         const formData = this.getFormData();
 
-        // Validação básica
+ // Validação básica
         if (!formData.numero || formData.numero.trim() === '') {
             this.showNotification('Número da sala é obrigatório', 'error');
             return;
@@ -597,7 +597,7 @@ class AdminSalas {
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
             }
 
-            console.log('💾 Enviando dados da sala:', formData);
+            console.log(' Enviando dados da sala:', formData);
 
             const url = formData.id 
                 ? `${this.API_BASE}/salas/${formData.id}`
@@ -626,8 +626,8 @@ class AdminSalas {
                     campus: formData.campus
                 };
 
-            console.log(formData.id ? `✏️ Editando sala ID: ${formData.id}` : '🆕 Criando nova sala');
-            console.log('🔗 URL:', url);
+            console.log(formData.id ? ` Editando sala ID: ${formData.id}` : '🆕 Criando nova sala');
+            console.log(' URL:', url);
 
             const response = await fetch(url, {
                 method: method,
@@ -638,13 +638,13 @@ class AdminSalas {
                 body: JSON.stringify(requestBody)
             });
 
-            console.log('📨 Status da resposta:', response.status);
+            console.log(' Status da resposta:', response.status);
             
             const responseData = await response.json();
-            console.log('📨 Resposta completa:', responseData);
+            console.log(' Resposta completa:', responseData);
 
             if (response.ok && responseData.success === true) {
-                console.log('✅ Sala salva com sucesso');
+                console.log(' Sala salva com sucesso');
                 this.fecharModalSala();
                 await this.carregarSalasComPaginacao();
                 this.showNotification(responseData.message || 'Sala salva com sucesso!', 'success');
@@ -653,7 +653,7 @@ class AdminSalas {
             }
 
         } catch (error) {
-            console.error('❌ Erro ao salvar sala:', error);
+            console.error(' Erro ao salvar sala:', error);
             this.showNotification('Erro ao salvar sala: ' + error.message, 'error');
         } finally {
             this.showLoading(false);
@@ -696,7 +696,7 @@ class AdminSalas {
 
         try {
             this.showLoading(true);
-            console.log(`⏸️ Desativando sala ID: ${salaId}`);
+            console.log(`⏸ Desativando sala ID: ${salaId}`);
 
             const response = await fetch(`${this.API_BASE}/salas/${salaId}`, {
                 method: 'DELETE',
@@ -706,9 +706,9 @@ class AdminSalas {
                 }
             });
 
-            console.log('📨 Status da desativação:', response.status);
+            console.log(' Status da desativação:', response.status);
             const responseData = await response.json();
-            console.log('📨 Resposta da desativação:', responseData);
+            console.log(' Resposta da desativação:', responseData);
 
             if (!response.ok || !responseData.success) {
                 throw new Error(responseData.error || `Erro ${response.status}`);
@@ -718,7 +718,7 @@ class AdminSalas {
             this.showNotification(responseData.message || 'Sala desativada com sucesso!', 'success');
 
         } catch (error) {
-            console.error('❌ Erro ao desativar sala:', error);
+            console.error(' Erro ao desativar sala:', error);
             this.showNotification('Erro ao desativar sala: ' + error.message, 'error');
         } finally {
             this.showLoading(false);
@@ -740,7 +740,7 @@ class AdminSalas {
 
         try {
             this.showLoading(true);
-            console.log(`▶️ Ativando sala ID: ${salaId}`);
+            console.log(`▶ Ativando sala ID: ${salaId}`);
 
             const response = await fetch(`${this.API_BASE}/salas/${salaId}`, {
                 method: 'PUT',
@@ -760,9 +760,9 @@ class AdminSalas {
                 })
             });
 
-            console.log('📨 Status da ativação:', response.status);
+            console.log(' Status da ativação:', response.status);
             const responseData = await response.json();
-            console.log('📨 Resposta da ativação:', responseData);
+            console.log(' Resposta da ativação:', responseData);
 
             if (!response.ok || !responseData.success) {
                 throw new Error(responseData.error || `Erro ${response.status}`);
@@ -772,7 +772,7 @@ class AdminSalas {
             this.showNotification(responseData.message || 'Sala ativada com sucesso!', 'success');
 
         } catch (error) {
-            console.error('❌ Erro ao ativar sala:', error);
+            console.error(' Erro ao ativar sala:', error);
             this.showNotification('Erro ao ativar sala: ' + error.message, 'error');
         } finally {
             this.showLoading(false);
@@ -793,13 +793,13 @@ class AdminSalas {
             return;
         }
 
-        if (!confirm(`⚠️ ATENÇÃO: Esta ação não pode ser desfeita!\n\nTem certeza que deseja EXCLUIR PERMANENTEMENTE a sala "${sala.numero}" - ${sala.bloco}?\n\nTodos os dados relacionados a esta sala serão perdidos.`)) {
+        if (!confirm(`ATENÇÃO: Esta ação não pode ser desfeita!\n\nTem certeza que deseja EXCLUIR PERMANENTEMENTE a sala "${sala.numero}"- ${sala.bloco}?\n\nTodos os dados relacionados a esta sala serão perdidos.`)) {
             return;
         }
 
         try {
             this.showLoading(true);
-            console.log(`🗑️ Excluindo permanentemente sala ID: ${salaId}`);
+            console.log(` Excluindo permanentemente sala ID: ${salaId}`);
 
             const response = await fetch(`${this.API_BASE}/salas/admin/excluir-permanentemente/${salaId}`, {
                 method: 'DELETE',
@@ -809,9 +809,9 @@ class AdminSalas {
                 }
             });
 
-            console.log('📨 Status da exclusão:', response.status);
+            console.log(' Status da exclusão:', response.status);
             const responseData = await response.json();
-            console.log('📨 Resposta da exclusão:', responseData);
+            console.log(' Resposta da exclusão:', responseData);
 
             if (!response.ok || !responseData.success) {
                 throw new Error(responseData.error || `Erro ${response.status}`);
@@ -821,7 +821,7 @@ class AdminSalas {
             this.showNotification(responseData.message || 'Sala excluída permanentemente com sucesso!', 'success');
 
         } catch (error) {
-            console.error('❌ Erro ao excluir sala:', error);
+            console.error(' Erro ao excluir sala:', error);
             this.showNotification('Erro ao excluir sala: ' + error.message, 'error');
         } finally {
             this.showLoading(false);
@@ -834,7 +834,7 @@ class AdminSalas {
             const status = (sala.ativa === 1 || sala.ativa === true) ? 'Ativa' : 'Inativa';
             const localizacao = `${sala.bloco || ''}${sala.andar ? ` - ${sala.andar}` : ''}${sala.campus ? ` | ${sala.campus}` : ''}`.trim();
             
-            alert(`📋 Detalhes da Sala: ${sala.numero}\n\n📍 Localização: ${localizacao}\n🏷️ Tipo: ${sala.tipo || 'Não definido'}\n💺 Capacidade: ${sala.capacidade} lugares\n🛠️ Recursos: ${sala.recursos || 'Nenhum'}\n📊 Status: ${status}`);
+            alert(`Detalhes da Sala: ${sala.numero}\n\n Localização: ${localizacao}\n Tipo: ${sala.tipo || 'Não definido'}\n Capacidade: ${sala.capacidade} lugares\n Recursos: ${sala.recursos || 'Nenhum'}\n Status: ${status}`);
         }
     }
 
@@ -842,7 +842,7 @@ class AdminSalas {
         this.abrirModalEditarSala(salaId);
     }
 
-    // Métodos utilitários
+ // Métodos utilitários
     showLoading(show) {
         if (show) {
             document.body.style.cursor = 'wait';
@@ -852,7 +852,7 @@ class AdminSalas {
     }
 
     showNotification(message, type = 'info') {
-        // Remover notificações existentes
+ // Remover notificações existentes
         const existingNotifications = document.querySelectorAll('.notification');
         existingNotifications.forEach(notification => {
             notification.remove();
@@ -862,10 +862,12 @@ class AdminSalas {
         notification.className = `notification ${type}`;
 
         const icons = {
-            success: '✅',
-            error: '❌',
-            info: 'ℹ️',
-            warning: '⚠️'
+            // Vão para innerHTML; usar Font Awesome mantém o ícone igual
+            // em todo sistema operacional e acompanha tamanho e tema.
+            success: '<i class="fas fa-circle-check" aria-hidden="true"></i>',
+            error: '<i class="fas fa-circle-xmark" aria-hidden="true"></i>',
+            info: '<i class="fas fa-circle-info" aria-hidden="true"></i>',
+            warning: '<i class="fas fa-triangle-exclamation" aria-hidden="true"></i>'
         };
 
         notification.innerHTML = `
@@ -880,7 +882,7 @@ class AdminSalas {
 
         document.body.appendChild(notification);
 
-        // Auto-remover após 5 segundos
+ // Auto-remover após 5 segundos
         setTimeout(() => {
             if (notification.parentElement) {
                 notification.remove();
@@ -899,12 +901,12 @@ class AdminSalas {
             .replace(/'/g, "&#039;");
     }
 
-    // Método para recarregar dados
+ // Método para recarregar dados
     recarregarDados() {
         this.carregarSalasComPaginacao();
     }
 
-    // Método mantido para compatibilidade
+ // Método mantido para compatibilidade
     carregarSalas() {
         this.recarregarDados();
     }
@@ -928,7 +930,7 @@ class AdminSalas {
 
     async testarConexao() {
         try {
-            console.log('🧪 Testando conexão com a API de admin salas...');
+            console.log(' Testando conexão com a API de admin salas...');
             const response = await fetch(`${this.API_BASE}/salas/test`, {
                 headers: {
                     'Authorization': `Bearer ${this.token}`,
@@ -938,14 +940,14 @@ class AdminSalas {
             
             if (response.ok) {
                 const data = await response.json();
-                console.log('✅ Teste bem-sucedido:', data);
+                console.log(' Teste bem-sucedido:', data);
                 this.showNotification('Conexão com a API funcionando!', 'success');
                 return true;
             } else {
                 throw new Error(`Erro ${response.status}`);
             }
         } catch (error) {
-            console.error('❌ Erro no teste de conexão:', error);
+            console.error(' Erro no teste de conexão:', error);
             this.showNotification('Erro na conexão com a API: ' + error.message, 'error');
             return false;
         }
@@ -954,10 +956,10 @@ class AdminSalas {
 
 // Inicializar automaticamente
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🚀 DOM carregado, inicializando Admin Salas...');
+    console.log(' DOM carregado, inicializando Admin Salas...');
     window.adminSalas = new AdminSalas();
     
-    // Pequeno delay para garantir que tudo está carregado
+ // Pequeno delay para garantir que tudo está carregado
     setTimeout(() => {
         if (window.adminSalas && typeof window.adminSalas.init === 'function') {
             window.adminSalas.init();

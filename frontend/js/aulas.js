@@ -10,21 +10,21 @@ class AulasManager {
     }
 
     async init() {
-        console.log('🎯 Inicializando AulasManager...');
+        console.log(' Inicializando AulasManager...');
 
-        // Inicializar containers
+ // Inicializar containers
         this.containerDesktop = document.getElementById('aulas-list-desktop');
         this.containerMobile = document.getElementById('aulas-list-mobile');
 
-        console.log('📱 Containers:', {
+        console.log(' Containers:', {
             desktop: this.containerDesktop,
             mobile: this.containerMobile
         });
 
-        // Verificar se o usuário está logado
+ // Verificar se o usuário está logado
         const userData = localStorage.getItem('userData');
         if (!userData) {
-            console.error('❌ Usuário não está logado');
+            console.error(' Usuário não está logado');
             this.mostrarErro('Você precisa fazer login para acessar as aulas');
             setTimeout(() => {
                 window.location.href = 'login.html';
@@ -38,44 +38,44 @@ class AulasManager {
             this.tipoUsuario = user.tipo;
             this.usuarioId = user.id;
 
-            console.log('👤 Usuário carregado:', user);
+            console.log(' Usuário carregado:', user);
 
             if (!user.id) {
                 throw new Error('ID do usuário não encontrado');
             }
 
-            // Carregar aulas baseado no tipo de usuário
+ // Carregar aulas baseado no tipo de usuário
             await this.carregarERenderizarAulas();
 
         } catch (error) {
-            console.error('❌ Erro na inicialização:', error);
+            console.error(' Erro na inicialização:', error);
             this.mostrarErro('Erro ao carregar dados: ' + error.message);
         }
     }
 
-    // 🔥 CORREÇÃO: Método gerarHTMLAulas que estava faltando
+ // CORREÇÃO: Método gerarHTMLAulas que estava faltando
     gerarHTMLAulas(aulas) {
-        console.log('🎨 Gerando HTML para', aulas.length, 'aulas');
+        console.log(' Gerando HTML para', aulas.length, 'aulas');
 
-        // Salvar as aulas na instância
+ // Salvar as aulas na instância
         this.aulas = aulas;
 
         if (!aulas || aulas.length === 0) {
             return this.getHTMLNenhumaAula();
         }
 
-        // Baseado no tipo de usuário, usar o método apropriado
+ // Baseado no tipo de usuário, usar o método apropriado
         if (this.tipoUsuario === 'aluno') {
             return this.gerarHTMLAulasAluno();
         } else if (this.tipoUsuario === 'professor') {
             return this.gerarHTMLAulasProfessor();
         } else {
-            // Fallback para outros tipos de usuário
+ // Fallback para outros tipos de usuário
             return this.gerarHTMLAulasGenerico(aulas);
         }
     }
 
-    // 🔥 CORREÇÃO: Método genérico para fallback
+ // CORREÇÃO: Método genérico para fallback
     gerarHTMLAulasGenerico(aulas) {
         return `
             <div class="aulas-grid">
@@ -84,7 +84,7 @@ class AulasManager {
                         <div class="aula-header">
                             <h4>${aula.disciplina || 'Disciplina'}</h4>
                             <span class="status ${aula.ativa ? 'ativa' : 'cancelada'}">
-                                ${aula.ativa ? '🟢 Ativa' : '🔴 Cancelada'}
+                                ${aula.ativa ? ' Ativa' : ' Cancelada'}
                             </span>
                         </div>
                         <div class="aula-info">
@@ -101,35 +101,35 @@ class AulasManager {
 
     async carregarAulasAluno(alunoId) {
     try {
-        console.log('📚 Carregando aulas para aluno:', alunoId);
+        console.log(' Carregando aulas para aluno:', alunoId);
 
         const response = await api.request(`/aulas/aluno/${alunoId}`, {
             method: 'GET'
         });
 
         if (response.success) {
-            // ✅ PRIMEIRO: Filtrar por período e turma (se necessário)
+ // PRIMEIRO: Filtrar por período e turma (se necessário)
             const aulasFiltradasPeriodoTurma = this.filtrarAulasPorPeriodoTurma(response.data);
             
-            // ✅ DEPOIS: Filtrar apenas aulas futuras
+ // DEPOIS: Filtrar apenas aulas futuras
             const aulasFiltradas = this.filtrarAulasFuturas(aulasFiltradasPeriodoTurma);
             
-            console.log(`✅ ${response.data.length} aulas carregadas, ${aulasFiltradas.length} aulas futuras para o aluno`);
+            console.log(` ${response.data.length} aulas carregadas, ${aulasFiltradas.length} aulas futuras para o aluno`);
             return aulasFiltradas;
         } else {
             throw new Error(response.error || 'Erro ao carregar aulas');
         }
     } catch (error) {
-        console.error('❌ Erro ao carregar aulas do aluno:', error);
+        console.error(' Erro ao carregar aulas do aluno:', error);
         throw error;
     }
 }
 
-// ✅ NOVO MÉTODO: Filtrar por período e turma do aluno
+// NOVO MÉTODO: Filtrar por período e turma do aluno
 filtrarAulasPorPeriodoTurma(aulas) {
     if (!aulas || !aulas.length) return [];
     
-    // Buscar dados do aluno do localStorage
+ // Buscar dados do aluno do localStorage
     const userData = localStorage.getItem('userData');
     if (!userData) return aulas;
     
@@ -137,131 +137,131 @@ filtrarAulasPorPeriodoTurma(aulas) {
     const periodoAluno = parseInt(aluno.periodo);
     const turmaAluno = aluno.turma ? aluno.turma.trim().toLowerCase() : '';
     
-    console.log('🎯 Filtrando aulas por período e turma:', {
+    console.log(' Filtrando aulas por período e turma:', {
         periodo: periodoAluno,
         turma: turmaAluno || 'NÃO DEFINIDA'
     });
     
     const aulasFiltradas = aulas.filter(aula => {
-        // Verificar período
+ // Verificar período
         const periodoAula = parseInt(aula.periodo);
         if (periodoAula !== periodoAluno) {
-            console.log(`❌ Período diferente - Aula: ${periodoAula}, Aluno: ${periodoAluno} - ${aula.disciplina}`);
+            console.log(` Período diferente - Aula: ${periodoAula}, Aluno: ${periodoAluno} - ${aula.disciplina}`);
             return false;
         }
         
-        // Se turma estiver definida, verificar turma também
+ // Se turma estiver definida, verificar turma também
         if (turmaAluno) {
             const turmaAula = aula.turma ? aula.turma.trim().toLowerCase() : '';
             if (turmaAula !== turmaAluno) {
-                console.log(`❌ Turma diferente - Aula: "${turmaAula}", Aluno: "${turmaAluno}" - ${aula.disciplina}`);
+                console.log(` Turma diferente - Aula: "${turmaAula}", Aluno: "${turmaAluno}" - ${aula.disciplina}`);
                 return false;
             }
         }
         
-        console.log(`✅ Aula compatível: ${aula.disciplina} - Período ${periodoAula} - Turma ${aula.turma}`);
+        console.log(` Aula compatível: ${aula.disciplina} - Período ${periodoAula} - Turma ${aula.turma}`);
         return true;
     });
     
-    console.log(`📊 Filtro período/turma: ${aulas.length} → ${aulasFiltradas.length} aulas compatíveis`);
+    console.log(` Filtro período/turma: ${aulas.length} → ${aulasFiltradas.length} aulas compatíveis`);
     return aulasFiltradas;
 }
 
-// ✅ MÉTODO: Filtrar apenas aulas futuras
+// MÉTODO: Filtrar apenas aulas futuras
 filtrarAulasFuturas(aulas) {
     if (!aulas || !aulas.length) return [];
     
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0); // Zerar horas para comparar apenas a data
     
-    console.log('📅 Filtrando aulas futuras. Hoje:', hoje.toISOString().split('T')[0]);
+    console.log(' Filtrando aulas futuras. Hoje:', hoje.toISOString().split('T')[0]);
     
     const aulasFuturas = aulas.filter(aula => {
         if (!aula.data_aula) return false;
         
         try {
-            // Converter data da aula para objeto Date
+ // Converter data da aula para objeto Date
             const [ano, mes, dia] = aula.data_aula.split('-').map(Number);
             const dataAula = new Date(ano, mes - 1, dia);
             
-            // Manter apenas aulas de hoje ou futuras
+ // Manter apenas aulas de hoje ou futuras
             const manterAula = dataAula >= hoje;
             
             if (!manterAula) {
-                console.log(`❌ Removendo aula antiga: ${aula.data_aula} - ${aula.disciplina}`);
+                console.log(` Removendo aula antiga: ${aula.data_aula} - ${aula.disciplina}`);
             }
             
             return manterAula;
             
         } catch (error) {
-            console.error('❌ Erro ao processar data da aula:', aula.data_aula, error);
+            console.error(' Erro ao processar data da aula:', aula.data_aula, error);
             return false;
         }
     });
     
-    console.log(`📊 Filtro de data aplicado: ${aulas.length} → ${aulasFuturas.length} aulas`);
+    console.log(` Filtro de data aplicado: ${aulas.length} → ${aulasFuturas.length} aulas`);
     return aulasFuturas;
 }
 
     async carregarAulasProfessor() {
         try {
-            console.log('👨‍🏫 Carregando aulas do professor');
+            console.log('Carregando aulas do professor');
 
             const response = await api.request('/aulas/professor/minhas-aulas', {
                 method: 'GET'
             });
 
             if (response.success) {
-                console.log(`✅ ${response.data.length} aulas carregadas para o professor`);
+                console.log(` ${response.data.length} aulas carregadas para o professor`);
                 return response.data;
             } else {
                 throw new Error(response.error || 'Erro ao carregar aulas do professor');
             }
         } catch (error) {
-            console.error('❌ Erro ao carregar aulas do professor:', error);
+            console.error(' Erro ao carregar aulas do professor:', error);
             throw error;
         }
     }
 
     async carregarTodasAulas() {
         try {
-            console.log('👑 Carregando todas as aulas (admin)');
+            console.log(' Carregando todas as aulas (admin)');
 
             const response = await api.request('/aulas', {
                 method: 'GET'
             });
 
             if (response.success) {
-                console.log(`✅ ${response.data.length} aulas carregadas (admin)`);
+                console.log(` ${response.data.length} aulas carregadas (admin)`);
                 return response.data;
             } else {
                 throw new Error(response.error || 'Erro ao carregar todas as aulas');
             }
         } catch (error) {
-            console.error('❌ Erro ao carregar todas as aulas:', error);
+            console.error(' Erro ao carregar todas as aulas:', error);
             throw error;
         }
     }
 
     renderizarAulas(aulas) {
-        console.log('🎨 Renderizando aulas:', aulas.length);
+        console.log(' Renderizando aulas:', aulas.length);
 
         try {
             const aulasHTML = this.gerarHTMLAulas(aulas);
 
-            // Atualizar desktop
+ // Atualizar desktop
             if (this.containerDesktop) {
                 this.containerDesktop.innerHTML = aulasHTML;
             }
 
-            // Atualizar mobile
+ // Atualizar mobile
             if (this.containerMobile) {
                 this.containerMobile.innerHTML = aulasHTML;
             }
 
-            console.log('✅ Aulas renderizadas com sucesso');
+            console.log(' Aulas renderizadas com sucesso');
         } catch (error) {
-            console.error('❌ Erro ao renderizar aulas:', error);
+            console.error(' Erro ao renderizar aulas:', error);
             this.mostrarErro('Erro ao exibir aulas: ' + error.message);
         }
     }
@@ -274,21 +274,21 @@ filtrarAulasFuturas(aulas) {
     }
 
     agruparAulasPorData(aulas) {
-        console.log('📅 Agrupando TODAS as aulas por data');
+        console.log(' Agrupando TODAS as aulas por data');
 
         const grupos = {};
 
         aulas.forEach(aula => {
             if (!aula.data_aula) {
-                console.log('⚠️ Aula sem data, pulando:', aula.id);
+                console.log(' Aula sem data, pulando:', aula.id);
                 return;
             }
 
-            // Usar a data completa como chave (YYYY-MM-DD)
+ // Usar a data completa como chave (YYYY-MM-DD)
             const dataKey = aula.data_aula;
 
             if (!grupos[dataKey]) {
-                // Criar novo grupo para esta data
+ // Criar novo grupo para esta data
                 grupos[dataKey] = {
                     nome: this.formatarDataDisplay(aula.data_aula),
                     data: new Date(aula.data_aula),
@@ -299,19 +299,19 @@ filtrarAulasFuturas(aulas) {
             grupos[dataKey].aulas.push(aula);
         });
 
-        // Ordenar os grupos por data (mais antiga primeiro)
+ // Ordenar os grupos por data (mais antiga primeiro)
         const gruposOrdenados = Object.values(grupos).sort((a, b) => a.data - b.data);
 
-        // Ordenar aulas dentro de cada grupo por horário
+ // Ordenar aulas dentro de cada grupo por horário
         gruposOrdenados.forEach(grupo => {
             grupo.aulas.sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
         });
 
-        console.log(`📊 ${gruposOrdenados.length} grupos de data criados`);
+        console.log(` ${gruposOrdenados.length} grupos de data criados`);
         return gruposOrdenados;
     }
 
-    // 🔧 CORREÇÃO: MÉTODO agruparAulasPorDia CORRIGIDO
+ // CORREÇÃO: MÉTODO agruparAulasPorDia CORRIGIDO
     agruparAulasPorDia(aulas) {
         const dias = {
             1: { nome: 'Segunda-feira', aulas: [] },
@@ -322,49 +322,49 @@ filtrarAulasFuturas(aulas) {
         };
 
         aulas.forEach(aula => {
-            // Usar data_aula para determinar o dia da semana
+ // Usar data_aula para determinar o dia da semana
             let diaNumero;
             if (aula.data_aula) {
-                // 🔥 CORREÇÃO: Usar UTC para cálculo consistente
+ // CORREÇÃO: Usar UTC para cálculo consistente
                 const [ano, mes, dia] = aula.data_aula.split('-').map(Number);
                 const data = new Date(Date.UTC(ano, mes - 1, dia));
                 const diaSemanaUTC = data.getUTCDay(); // 0=Domingo, 1=Segunda, etc.
 
-                // 🔥 CORREÇÃO: Converter corretamente para 1-5 (Segunda a Sexta)
+ // CORREÇÃO: Converter corretamente para 1-5 (Segunda a Sexta)
                 diaNumero = diaSemanaUTC === 0 ? 7 : diaSemanaUTC; // 1=Segunda, 7=Domingo
 
-                console.log(`📅 Frontend - Data: ${aula.data_aula}, UTC Day: ${diaSemanaUTC}, Dia Calculado: ${diaNumero}`);
+                console.log(` Frontend - Data: ${aula.data_aula}, UTC Day: ${diaSemanaUTC}, Dia Calculado: ${diaNumero}`);
 
-                // Se for sábado (6) ou domingo (7), pular
+ // Se for sábado (6) ou domingo (7), pular
                 if (diaNumero === 6 || diaNumero === 7) {
-                    console.log(`⏭️ Pulando aula de ${aula.data_aula} - Fim de semana (dia ${diaNumero})`);
+                    console.log(`⏭ Pulando aula de ${aula.data_aula} - Fim de semana (dia ${diaNumero})`);
                     return;
                 }
             } else if (aula.dia_semana) {
-                // Fallback para dia_semana do banco (já deve estar correto)
+ // Fallback para dia_semana do banco (já deve estar correto)
                 diaNumero = parseInt(aula.dia_semana);
-                console.log(`📅 Usando dia_semana do banco: ${diaNumero} para aula ${aula.id}`);
+                console.log(` Usando dia_semana do banco: ${diaNumero} para aula ${aula.id}`);
             } else {
-                console.log('⚠️ Aula sem data_aula e dia_semana, pulando:', aula.id);
+                console.log(' Aula sem data_aula e dia_semana, pulando:', aula.id);
                 return; // Pular aula sem dia definido
             }
 
             if (dias[diaNumero]) {
                 dias[diaNumero].aulas.push(aula);
-                console.log(`✅ Aula ${aula.id} (${aula.data_aula}) adicionada à ${dias[diaNumero].nome}`);
+                console.log(` Aula ${aula.id} (${aula.data_aula}) adicionada à ${dias[diaNumero].nome}`);
             } else {
-                console.log(`❌ Dia número ${diaNumero} não encontrado para aula ${aula.id}`);
+                console.log(` Dia número ${diaNumero} não encontrado para aula ${aula.id}`);
             }
         });
 
-        // Ordenar aulas por horário em cada dia
+ // Ordenar aulas por horário em cada dia
         Object.values(dias).forEach(dia => {
             dia.aulas.sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
         });
 
-        // Debug: mostrar quantas aulas em cada dia
+ // Debug: mostrar quantas aulas em cada dia
         Object.entries(dias).forEach(([diaNum, diaInfo]) => {
-            console.log(`📊 ${diaInfo.nome}: ${diaInfo.aulas.length} aulas`);
+            console.log(` ${diaInfo.nome}: ${diaInfo.aulas.length} aulas`);
         });
 
         return dias;
@@ -490,20 +490,20 @@ filtrarAulasFuturas(aulas) {
             const semanaQueVem = new Date(hoje);
             semanaQueVem.setDate(semanaQueVem.getDate() + 7);
 
-            // Verificar se é hoje, amanhã ou outra data
+ // Verificar se é hoje, amanhã ou outra data
             if (data.getTime() === hoje.getTime()) {
                 return 'Hoje';
             } else if (data.getTime() === amanha.getTime()) {
                 return 'Amanhã';
             } else if (data > hoje && data <= semanaQueVem) {
-                // Próximos 7 dias - mostrar dia da semana
+ // Próximos 7 dias - mostrar dia da semana
                 return data.toLocaleDateString('pt-BR', {
                     weekday: 'long',
                     day: 'numeric',
                     month: 'long'
                 });
             } else {
-                // Datas futuras - mostrar data completa
+ // Datas futuras - mostrar data completa
                 return data.toLocaleDateString('pt-BR', {
                     weekday: 'long',
                     day: 'numeric',
@@ -512,7 +512,7 @@ filtrarAulasFuturas(aulas) {
                 });
             }
         } catch (error) {
-            console.error('❌ Erro ao formatar data:', error);
+            console.error(' Erro ao formatar data:', error);
             return dataString;
         }
     }
@@ -522,7 +522,7 @@ filtrarAulasFuturas(aulas) {
             return this.getHTMLNenhumaAula();
         }
 
-        // 🔥 CORREÇÃO: Usar agrupamento por data em vez de por dia da semana
+ // CORREÇÃO: Usar agrupamento por data em vez de por dia da semana
         const gruposData = this.agruparAulasPorData(this.aulas);
         return this.gerarHTMLAulasPorData(gruposData);
     }
@@ -625,7 +625,7 @@ filtrarAulasFuturas(aulas) {
     }
 
     getAulaStatusClass(aula) {
-        // 🔥 CORREÇÃO: Verificar múltiplas formas de identificar aula cancelada
+ // CORREÇÃO: Verificar múltiplas formas de identificar aula cancelada
         const isCancelada = aula.ativa === 0 ||
             aula.ativa === false ||
             aula.status === 'cancelada' ||
@@ -635,7 +635,7 @@ filtrarAulasFuturas(aulas) {
             return 'aula-cancelada';
         }
 
-        // 🔥 CORREÇÃO: Comparação de datas mais robusta
+ // CORREÇÃO: Comparação de datas mais robusta
         const agora = new Date();
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
@@ -649,7 +649,7 @@ filtrarAulasFuturas(aulas) {
                 return '';
             }
         } catch (error) {
-            console.error('❌ Erro ao processar data da aula:', aula.data_aula, error);
+            console.error(' Erro ao processar data da aula:', aula.data_aula, error);
             return '';
         }
 
@@ -673,7 +673,7 @@ filtrarAulasFuturas(aulas) {
     }
 
     getStatusBadge(aula) {
-        // 🔥 CORREÇÃO: Verificar múltiplas formas de identificar aula cancelada
+ // CORREÇÃO: Verificar múltiplas formas de identificar aula cancelada
         const isCancelada = aula.ativa === 0 ||
             aula.ativa === false ||
             aula.status === 'cancelada' ||
@@ -683,35 +683,35 @@ filtrarAulasFuturas(aulas) {
             return '<span class="aula-status-badge cancelada compact">Cancelada</span>';
         }
 
-        // 🔥 CORREÇÃO: Comparação de datas mais robusta
+ // CORREÇÃO: Comparação de datas mais robusta
         const agora = new Date();
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0); // Zerar horas para comparar apenas a data
 
         let dataAula;
         try {
-            // Converter a data da aula para objeto Date
+ // Converter a data da aula para objeto Date
             if (aula.data_aula) {
                 const [ano, mes, dia] = aula.data_aula.split('-').map(Number);
                 dataAula = new Date(ano, mes - 1, dia);
             } else {
-                // Se não tem data_aula, não podemos determinar se é hoje
+ // Se não tem data_aula, não podemos determinar se é hoje
                 return '<span class="aula-status-badge ativa compact">Ativa</span>';
             }
         } catch (error) {
-            console.error('❌ Erro ao processar data da aula:', aula.data_aula, error);
+            console.error(' Erro ao processar data da aula:', aula.data_aula, error);
             return '<span class="aula-status-badge ativa compact">Ativa</span>';
         }
 
-        // 🔥 CORREÇÃO: Comparar apenas ano, mês e dia
+ // CORREÇÃO: Comparar apenas ano, mês e dia
         const isHoje = dataAula.getDate() === hoje.getDate() &&
             dataAula.getMonth() === hoje.getMonth() &&
             dataAula.getFullYear() === hoje.getFullYear();
 
-        console.log(`📅 Verificando status - Data aula: ${aula.data_aula}, Hoje: ${hoje.toISOString().split('T')[0]}, É hoje: ${isHoje}`);
+        console.log(` Verificando status - Data aula: ${aula.data_aula}, Hoje: ${hoje.toISOString().split('T')[0]}, É hoje: ${isHoje}`);
 
         if (isHoje) {
-            // Verificar se está em andamento
+ // Verificar se está em andamento
             const horaAtual = agora.getHours() + (agora.getMinutes() / 60);
             const [horaInicio, minutoInicio] = aula.horario_inicio.split(':').map(Number);
             const [horaFim, minutoFim] = aula.horario_fim.split(':').map(Number);
@@ -727,17 +727,17 @@ filtrarAulasFuturas(aulas) {
             }
         }
 
-        // Se não é hoje e não está cancelada, é "Ativa"
+ // Se não é hoje e não está cancelada, é "Ativa"
         return '<span class="aula-status-badge ativa compact">Ativa</span>';
     }
 
     gerarHTMLAulasProfessor() {
         if (typeof professorManager !== 'undefined') {
-            console.log('📊 ProfessorManager encontrado, delegando renderização...');
+            console.log(' ProfessorManager encontrado, delegando renderização...');
             return '';
         }
 
-        // Fallback básico para professor
+ // Fallback básico para professor
         return `
             <div class="professor-aulas-grid">
                 ${this.aulas.map(aula => `
@@ -745,7 +745,7 @@ filtrarAulasFuturas(aulas) {
                         <div class="aula-header">
                             <h4>${aula.disciplina || 'Disciplina'}</h4>
                             <span class="status ${aula.ativa ? 'ativa' : 'cancelada'}">
-                                ${aula.ativa ? '🟢 Ativa' : '🔴 Cancelada'}
+                                ${aula.ativa ? ' Ativa' : ' Cancelada'}
                             </span>
                         </div>
                         <div class="aula-info">
@@ -849,12 +849,12 @@ filtrarAulasFuturas(aulas) {
     }
 
     esconderLoading() {
-        console.log('✅ Escondendo loading...');
+        console.log(' Escondendo loading...');
     }
 
     async carregarERenderizarAulas() {
         try {
-            console.log('🔄 Carregando aulas...');
+            console.log(' Carregando aulas...');
             this.mostrarLoading();
 
             const userData = localStorage.getItem('userData');
@@ -866,8 +866,8 @@ filtrarAulasFuturas(aulas) {
             this.currentUser = user;
             this.tipoUsuario = user.tipo;
 
-            console.log('👤 Tipo de usuário:', user.tipo);
-            console.log('👤 ID do usuário:', user.id);
+            console.log(' Tipo de usuário:', user.tipo);
+            console.log(' ID do usuário:', user.id);
 
             let aulas = [];
 
@@ -881,11 +881,11 @@ filtrarAulasFuturas(aulas) {
                 throw new Error('Tipo de usuário não suportado: ' + user.tipo);
             }
 
-            console.log(`✅ ${aulas.length} aulas carregadas`);
+            console.log(` ${aulas.length} aulas carregadas`);
             this.renderizarAulas(aulas);
 
         } catch (error) {
-            console.error('❌ Erro ao carregar e renderizar aulas:', error);
+            console.error(' Erro ao carregar e renderizar aulas:', error);
             this.mostrarErro('Erro ao carregar aulas: ' + error.message);
         } finally {
             this.esconderLoading();
@@ -893,7 +893,7 @@ filtrarAulasFuturas(aulas) {
     }
 
     mostrarErro(mensagem) {
-        console.error('❌ Erro:', mensagem);
+        console.error(' Erro:', mensagem);
 
         const errorHTML = `
             <div class="error-state">
@@ -914,13 +914,13 @@ filtrarAulasFuturas(aulas) {
         }
     }
 
-    // Outros métodos mantidos para compatibilidade
+ // Outros métodos mantidos para compatibilidade
     async criarAula(dadosAula) {
         try {
             const result = await api.criarAula(dadosAula);
             return result;
         } catch (error) {
-            console.error('❌ Erro ao criar aula:', error);
+            console.error(' Erro ao criar aula:', error);
             throw error;
         }
     }
@@ -930,7 +930,7 @@ filtrarAulasFuturas(aulas) {
             const result = await api.excluirAula(aulaId);
             return result;
         } catch (error) {
-            console.error('❌ Erro ao excluir aula:', error);
+            console.error(' Erro ao excluir aula:', error);
             throw error;
         }
     }
@@ -965,7 +965,7 @@ filtrarAulasFuturas(aulas) {
     }
 }
 
-// ✅ INICIALIZAÇÃO GLOBAL
+// INICIALIZAÇÃO GLOBAL
 const aulasManager = new AulasManager();
 
 window.fecharModalDetalhesAluno = function () {

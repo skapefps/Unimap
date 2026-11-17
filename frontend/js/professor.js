@@ -12,7 +12,7 @@ class ProfessorManager {
         this.init();
     }
 
-    // ========== INICIALIZAÇÃO ==========
+ // ========== INICIALIZAÇÃO ==========
     async init() {
         const userData = localStorage.getItem('userData');
         if (!userData) {
@@ -26,7 +26,7 @@ class ProfessorManager {
         this.configurarFiltros();
     }
 
-    // 🔧 ATUALIZAR O CARREGAMENTO DE DADOS INICIAIS
+ // ATUALIZAR O CARREGAMENTO DE DADOS INICIAIS
     async carregarDadosIniciais() {
         const carregamentos = [
             this.carregarMinhasAulas(),
@@ -44,7 +44,7 @@ class ProfessorManager {
         }
     }
 
-    // 🔧 NOVA FUNÇÃO PARA CARREGAR DADOS DO PROFESSOR
+ // NOVA FUNÇÃO PARA CARREGAR DADOS DO PROFESSOR
     async carregarDadosProfessor() {
         try {
             const token = localStorage.getItem('authToken');
@@ -60,10 +60,10 @@ class ProfessorManager {
             if (response.ok) {
                 const professorData = await response.json();
                 this.dadosProfessor = professorData;
-                console.log('✅ Dados do professor carregados:', professorData);
+                console.log(' Dados do professor carregados:', professorData);
             }
         } catch (error) {
-            console.error('❌ Erro ao carregar dados do professor:', error);
+            console.error(' Erro ao carregar dados do professor:', error);
         }
     }
 
@@ -74,7 +74,7 @@ class ProfessorManager {
         this.configurarDataMinima();
     }
 
-    // ========== CARREGAMENTO DE DADOS ==========
+ // ========== CARREGAMENTO DE DADOS ==========
     async carregarMinhasAulas() {
         try {
             const result = await api.getMinhasAulasProfessor();
@@ -167,7 +167,7 @@ class ProfessorManager {
         }
     }
 
-    // ========== FALLBACKS ==========
+ // ========== FALLBACKS ==========
     usarSalasPadrao() {
         this.salasDisponiveis = [
             { id: 1, numero: 'A101', bloco: 'A', tipo: 'Sala de Aula', capacidade: 40 },
@@ -197,7 +197,7 @@ class ProfessorManager {
         ];
     }
 
-    // ========== CONFIGURAÇÃO DE EVENTOS ==========
+ // ========== CONFIGURAÇÃO DE EVENTOS ==========
     configurarEventosFormulario() {
         this.configurarEventoCurso();
         this.configurarEventoPeriodo();
@@ -310,7 +310,7 @@ class ProfessorManager {
         searchInput.style.backgroundColor = '';
     }
 
-    // ========== CONTROLE DE INTERFACE ==========
+ // ========== CONTROLE DE INTERFACE ==========
     habilitarPeriodo() {
         this.toggleElemento('periodoSelect', true);
     }
@@ -368,7 +368,7 @@ class ProfessorManager {
         }
     }
 
-    // ========== POPULAÇÃO DE SELECTS ==========
+ // ========== POPULAÇÃO DE SELECTS ==========
     popularSelectCursos() {
         const select = document.getElementById('cursoSelect');
         if (!select || !this.cursos) return;
@@ -425,7 +425,7 @@ class ProfessorManager {
             ).join('');
     }
 
-    // ========== SISTEMA DE FILTROS ==========
+ // ========== SISTEMA DE FILTROS ==========
 
     configurarFiltros() {
         this.configurarFiltroTexto('filtroDisciplina', 'disciplina');
@@ -435,11 +435,11 @@ class ProfessorManager {
         this.configurarFiltroTexto('filtroSala', 'sala');
         this.configurarFiltroSelect('filtroStatus', 'status');
 
-        // Carregar dados para os selects
+ // Carregar dados para os selects
         this.carregarCursosParaFiltro();
         this.carregarProfessoresParaFiltro();
 
-        // Botão limpar filtros
+ // Botão limpar filtros
         const btnLimparFiltros = document.getElementById('btnLimparFiltros');
         if (btnLimparFiltros) {
             btnLimparFiltros.addEventListener('click', () => this.limparFiltros());
@@ -450,7 +450,7 @@ class ProfessorManager {
         const input = document.getElementById(inputId);
         if (!input) return;
 
-        // Debounce para não filtrar a cada tecla pressionada
+ // Debounce para não filtrar a cada tecla pressionada
         let timeout;
         input.addEventListener('input', (e) => {
             clearTimeout(timeout);
@@ -459,7 +459,7 @@ class ProfessorManager {
             }, 300);
         });
 
-        // Também filtrar ao pressionar Enter
+ // Também filtrar ao pressionar Enter
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.filtrarAulas();
@@ -482,7 +482,7 @@ class ProfessorManager {
 
         select.innerHTML = '<option value="">Todos os professores</option>';
 
-        // Ordenar professores por nome
+ // Ordenar professores por nome
         professores.sort((a, b) => a.nome.localeCompare(b.nome));
 
         professores.forEach(professor => {
@@ -515,7 +515,7 @@ class ProfessorManager {
         try {
             select.classList.add('loading');
 
-            // USAR A ROTA DE PROFESSORES ATIVOS
+ // USAR A ROTA DE PROFESSORES ATIVOS
             const result = await api.getProfessoresAtivos();
             if (result?.success) {
                 this.professores = result.data;
@@ -531,7 +531,7 @@ class ProfessorManager {
         }
     }
 
-    // ========== CARREGAR DADOS PARA OS FILTROS ==========
+ // ========== CARREGAR DADOS PARA OS FILTROS ==========
 
     async carregarCursosParaFiltro() {
         const select = document.getElementById('filtroCurso');
@@ -559,7 +559,7 @@ class ProfessorManager {
         }
     }
 
-    // ========== ATUALIZAR CONTADOR DE FILTROS ATIVOS ==========
+ // ========== ATUALIZAR CONTADOR DE FILTROS ATIVOS ==========
 
     atualizarContadorFiltros(totalFiltrado) {
         const contador = document.getElementById('contadorAulas');
@@ -589,7 +589,7 @@ class ProfessorManager {
         this.atualizarContadorFiltros(aulasFiltradas.length);
     }
 
-    // 🔧 CORREÇÃO: Remover dia_semana dos filtros
+ // CORREÇÃO: Remover dia_semana dos filtros
     obterValoresFiltros() {
         return {
             disciplina: document.getElementById('filtroDisciplina')?.value.toLowerCase().trim() || '',
@@ -603,31 +603,31 @@ class ProfessorManager {
 
     aplicarFiltros(aulas, filtros) {
         return aulas.filter(aula => {
-            // Filtro por disciplina
+ // Filtro por disciplina
             if (filtros.disciplina) {
                 const disciplina = (aula.disciplina || aula.disciplina_nome || '').toLowerCase();
                 if (!disciplina.includes(filtros.disciplina)) return false;
             }
 
-            // Filtro por curso
+ // Filtro por curso
             if (filtros.curso) {
                 const curso = (aula.curso || '');
                 if (curso !== filtros.curso) return false;
             }
 
-            // Filtro por professor
+ // Filtro por professor
             if (filtros.professor) {
                 const professor = (aula.professor_nome || '');
                 if (professor !== filtros.professor) return false;
             }
 
-            // Filtro por turma
+ // Filtro por turma
             if (filtros.turma) {
                 const turma = (aula.turma || '').toLowerCase();
                 if (!turma.includes(filtros.turma)) return false;
             }
 
-            // Filtro por sala
+ // Filtro por sala
             if (filtros.sala) {
                 const salaNumero = (aula.sala_numero || '').toLowerCase();
                 const salaBloco = (aula.sala_bloco || '').toLowerCase();
@@ -673,27 +673,27 @@ class ProfessorManager {
         </div>`;
     }
 
-    // 🔧 CORREÇÃO: Remover filtroDia da limpeza
+ // CORREÇÃO: Remover filtroDia da limpeza
     limparFiltros() {
-        // Limpar campos de texto
+ // Limpar campos de texto
         const inputsTexto = ['filtroDisciplina', 'filtroTurma', 'filtroSala'];
         inputsTexto.forEach(id => {
             const input = document.getElementById(id);
             if (input) input.value = '';
         });
 
-        // Limpar selects
+ // Limpar selects
         const selects = ['filtroCurso', 'filtroProfessor', 'filtroStatus'];
         selects.forEach(id => {
             const select = document.getElementById(id);
             if (select) select.selectedIndex = 0;
         });
 
-        // Re-renderizar todas as aulas
+ // Re-renderizar todas as aulas
         this.filtrarAulas();
     }
 
-    // ========== GESTÃO DE AULAS ==========
+ // ========== GESTÃO DE AULAS ==========
     renderizarAulas() {
         this.filtrarAulas();
     }
@@ -745,7 +745,7 @@ class ProfessorManager {
     formatarDataDisplay(dataString) {
         if (!dataString) return 'Data não definida';
 
-        // 🔥 CORREÇÃO SIMPLIFICADA: Usar data local simples
+ // CORREÇÃO SIMPLIFICADA: Usar data local simples
         const [ano, mes, dia] = dataString.split('-').map(Number);
         const data = new Date(ano, mes - 1, dia);
 
@@ -755,7 +755,7 @@ class ProfessorManager {
         const amanha = new Date(hoje);
         amanha.setDate(amanha.getDate() + 1);
 
-        // Verificar se é hoje, amanhã ou outra data
+ // Verificar se é hoje, amanhã ou outra data
         if (data.getTime() === hoje.getTime()) {
             return 'Hoje';
         } else if (data.getTime() === amanha.getTime()) {
@@ -925,13 +925,13 @@ class ProfessorManager {
         this.pendingRequest = requestKey;
 
         try {
-            // 🔥 CORREÇÃO RADICAL: SEM VALIDAÇÃO DE DATA
+ // CORREÇÃO RADICAL: SEM VALIDAÇÃO DE DATA
             const dadosFormatados = {
                 ...dadosAula,
                 periodo: parseInt(dadosAula.periodo) || 5
             };
 
-            console.log('📤 Enviando dados para API (sem validação de data):', dadosFormatados);
+            console.log(' Enviando dados para API (sem validação de data):', dadosFormatados);
 
             const result = await api.criarAula(dadosFormatados);
 
@@ -1036,7 +1036,7 @@ class ProfessorManager {
         }
     }
 
-    // ========== MODAIS ==========
+ // ========== MODAIS ==========
     mostrarModalEdicaoAula(aula) {
         const modalHTML = this.gerarHTMLModalEdicao(aula);
         document.querySelectorAll('.modal-overlay').forEach(modal => modal.remove());
@@ -1065,7 +1065,7 @@ class ProfessorManager {
         return div.innerHTML;
     }
 
-    // ========== UTILITÁRIOS ==========
+ // ========== UTILITÁRIOS ==========
     htmlToElement(html) {
         const template = document.createElement('template');
         template.innerHTML = html.trim();
@@ -1186,7 +1186,7 @@ class ProfessorManager {
         if (window.showNotification) {
             showNotification(mensagem, 'success');
         } else {
-            alert('✅ ' + mensagem);
+            alert(''+ mensagem);
         }
     }
 
@@ -1194,11 +1194,11 @@ class ProfessorManager {
         if (window.showNotification) {
             showNotification(mensagem, 'error');
         } else {
-            alert('❌ ' + mensagem);
+            alert(''+ mensagem);
         }
     }
 
-    // ========== EDIÇÃO AVANÇADA ==========
+ // ========== EDIÇÃO AVANÇADA ==========
     gerarHTMLModalEdicao(aula) {
         return `
 <div class="modal-overlay" id="modalEdicaoAula">
@@ -1304,7 +1304,7 @@ class ProfessorManager {
 </div>`;
     }
 
-    // 🔧 CORREÇÃO: Remover referência a dias da semana na inicialização do modal
+ // CORREÇÃO: Remover referência a dias da semana na inicialização do modal
     async inicializarModalEdicao(aula) {
         try {
             document.getElementById('editarAulaId').value = aula.id;
@@ -1313,10 +1313,10 @@ class ProfessorManager {
 
             await this.configurarSalasEdicao(aula.sala_id);
 
-            // Configurar curso, período e turma
+ // Configurar curso, período e turma
             await this.configurarCursoPeriodoTurmaEdicao(aula);
 
-            // Configurar eventos APÓS os dados estarem preenchidos
+ // Configurar eventos APÓS os dados estarem preenchidos
             this.configurarEventosEdicao();
 
         } catch (error) {
@@ -1656,11 +1656,11 @@ class ProfessorManager {
                 periodo: parseInt(document.getElementById('editarPeriodoSelect')?.value)
             };
 
-            // 🔥 CORREÇÃO: REMOVER VALIDAÇÃO DE DATA PARA EDIÇÃO
-            // Permitir edição de qualquer data, incluindo passadas
-            console.log('📅 Editando aula (sem validação de data):', dadosAtualizados.data_aula);
+ // CORREÇÃO: REMOVER VALIDAÇÃO DE DATA PARA EDIÇÃO
+ // Permitir edição de qualquer data, incluindo passadas
+            console.log(' Editando aula (sem validação de data):', dadosAtualizados.data_aula);
 
-            // Processar horário
+ // Processar horário
             const horario = document.getElementById('editarHorarioSelect')?.value;
             if (horario) {
                 const [horario_inicio, horario_fim] = horario.split('-');
@@ -1668,7 +1668,7 @@ class ProfessorManager {
                 dadosAtualizados.horario_fim = horario_fim.trim();
             }
 
-            // Validações (exceto data)
+ // Validações (exceto data)
             const erros = [];
             if (!dadosAtualizados.curso) erros.push('Selecione um curso');
             if (!dadosAtualizados.periodo || isNaN(dadosAtualizados.periodo)) erros.push('Selecione um período válido');
@@ -1720,7 +1720,7 @@ class ProfessorManager {
         }
     }
 
-    // ========== DESTRUIDOR ==========
+ // ========== DESTRUIDOR ==========
     destruir() {
         this.cache.clear();
         document.removeEventListener('keydown', this.keyHandler);

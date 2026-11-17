@@ -12,7 +12,7 @@ class AdminCSV {
     }
 
     init() {
-        console.log('📊 Inicializando Admin CSV...');
+        console.log(' Inicializando Admin CSV...');
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -36,15 +36,15 @@ class AdminCSV {
         const file = event.target.files[0];
         if (!file) return;
 
-        console.log('📁 Arquivo selecionado:', file.name);
+        console.log(' Arquivo selecionado:', file.name);
 
-        // Validar tipo de arquivo
+ // Validar tipo de arquivo
         if (!file.name.toLowerCase().endsWith('.csv')) {
             this.mostrarErro('Por favor, selecione um arquivo CSV.');
             return;
         }
 
-        // Mostrar informações do arquivo
+ // Mostrar informações do arquivo
         this.mostrarInfoArquivo(file);
 
         this.mostrarLoading('Processando arquivo CSV...');
@@ -54,10 +54,10 @@ class AdminCSV {
         reader.onload = (e) => {
             try {
                 const csvText = e.target.result;
-                console.log('📄 Conteúdo do CSV carregado');
+                console.log(' Conteúdo do CSV carregado');
                 this.processarCSV(csvText);
             } catch (error) {
-                console.error('❌ Erro ao ler arquivo:', error);
+                console.error(' Erro ao ler arquivo:', error);
                 this.mostrarErro('Erro ao ler arquivo: ' + error.message);
             }
         };
@@ -100,7 +100,7 @@ class AdminCSV {
             fileInfo.style.display = 'none';
         }
 
-        // Limpar qualquer preview existente, mas manter os event listeners
+ // Limpar qualquer preview existente, mas manter os event listeners
         const previewSection = document.querySelector('.preview-section');
         const errosSection = document.querySelector('.erros-section');
         const globalActions = document.querySelector('.global-actions');
@@ -109,23 +109,23 @@ class AdminCSV {
         if (errosSection) errosSection.remove();
         if (globalActions) globalActions.remove();
 
-        // Mostrar o drop zone novamente
+ // Mostrar o drop zone novamente
         const dropZone = document.getElementById('dropZone');
         if (dropZone) {
             dropZone.style.display = 'block';
         }
 
-        // Resetar estatísticas
+ // Resetar estatísticas
         this.aulasProcessadas = [];
         this.errosProcessamento = [];
 
-        console.log('🗑️ Arquivo removido, pronto para nova seleção');
+        console.log(' Arquivo removido, pronto para nova seleção');
     }
 
     configurarEventListeners() {
-        // Prevenir configuração múltipla
+ // Prevenir configuração múltipla
         if (this.eventListenersConfigured) {
-            console.log('⚠️ Event listeners já configurados, ignorando...');
+            console.log(' Event listeners já configurados, ignorando...');
             return;
         }
 
@@ -135,19 +135,19 @@ class AdminCSV {
         const btnRemover = document.getElementById('btnRemover');
 
         if (!dropZone || !fileInput || !btnImport) {
-            console.error('❌ Elementos não encontrados para configurar event listeners');
+            console.error(' Elementos não encontrados para configurar event listeners');
             return;
         }
 
-        console.log('🔧 Configurando event listeners...');
+        console.log(' Configurando event listeners...');
 
-        // **SOLUÇÃO: Usar event delegation e evitar múltiplos registros**
+ // **SOLUÇÃO: Usar event delegation e evitar múltiplos registros**
 
-        // 1. Botão de importação - CLIQUE ÚNICO
+ // 1. Botão de importação - CLIQUE ÚNICO
         btnImport.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('📁 Clique no botão de importação');
+            console.log(' Clique no botão de importação');
 
             if (this.isProcessing) {
                 console.log('⏳ Já processando, ignorando clique...');
@@ -157,22 +157,22 @@ class AdminCSV {
             this.isProcessing = true;
             fileInput.click();
 
-            // Reset após um tempo
+ // Reset após um tempo
             setTimeout(() => {
                 this.isProcessing = false;
             }, 1000);
         });
 
-        // 2. Input file - CHANGE ÚNICO
+ // 2. Input file - CHANGE ÚNICO
         const fileInputHandler = (e) => {
             if (e.target.files.length > 0) {
-                console.log('📁 Arquivo selecionado via input:', e.target.files[0].name);
+                console.log(' Arquivo selecionado via input:', e.target.files[0].name);
                 this.handleFileSelect(e);
 
-                // Remover o listener temporariamente para evitar duplicação
+ // Remover o listener temporariamente para evitar duplicação
                 fileInput.removeEventListener('change', fileInputHandler);
 
-                // Re-adicionar após processamento
+ // Re-adicionar após processamento
                 setTimeout(() => {
                     fileInput.addEventListener('change', fileInputHandler);
                 }, 1000);
@@ -181,7 +181,7 @@ class AdminCSV {
 
         fileInput.addEventListener('change', fileInputHandler);
 
-        // 3. Drag & drop - Configurar apenas uma vez
+ // 3. Drag & drop - Configurar apenas uma vez
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropZone.classList.add('active');
@@ -197,7 +197,7 @@ class AdminCSV {
 
             const files = e.dataTransfer.files;
             if (files.length > 0 && !this.isProcessing) {
-                console.log('📁 Arquivo arrastado e solto:', files[0].name);
+                console.log(' Arquivo arrastado e solto:', files[0].name);
                 this.isProcessing = true;
                 fileInput.files = files;
                 this.handleFileSelect({ target: { files: files } });
@@ -208,7 +208,7 @@ class AdminCSV {
             }
         });
 
-        // 4. Botão remover
+ // 4. Botão remover
         if (btnRemover) {
             btnRemover.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -216,25 +216,25 @@ class AdminCSV {
             });
         }
 
-        // Marcar como configurado
+ // Marcar como configurado
         this.eventListenersConfigured = true;
-        console.log('✅ Event listeners configurados com sucesso');
+        console.log(' Event listeners configurados com sucesso');
     }
 
     processarCSV(csvText) {
         try {
-            console.log('🔧 Processando CSV...');
+            console.log(' Processando CSV...');
 
             const lines = csvText.split('\n').filter(line => line.trim() !== '');
             if (lines.length < 2) {
                 throw new Error('Arquivo CSV vazio ou com apenas cabeçalho');
             }
 
-            // Parse do cabeçalho
+ // Parse do cabeçalho
             const headers = lines[0].split(',').map(header => header.trim());
-            console.log('📋 Cabeçalhos:', headers);
+            console.log(' Cabeçalhos:', headers);
 
-            // Validar cabeçalho esperado
+ // Validar cabeçalho esperado
             const expectedHeaders = ['Professor', 'Curso', 'Período', 'Turma', 'Disciplina', 'Sala', 'Horário', 'Data da Aula'];
             const hasRequiredHeaders = expectedHeaders.every(header =>
                 headers.some(h => h.toLowerCase().includes(header.toLowerCase()))
@@ -244,7 +244,7 @@ class AdminCSV {
                 throw new Error(`Cabeçalhos esperados: ${expectedHeaders.join(', ')}`);
             }
 
-            // Processar linhas
+ // Processar linhas
             const csvData = [];
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i];
@@ -259,11 +259,11 @@ class AdminCSV {
                 }
             }
 
-            console.log('📊 Dados extraídos:', csvData);
+            console.log(' Dados extraídos:', csvData);
             this.enviarParaBackend(csvData);
 
         } catch (error) {
-            console.error('❌ Erro ao processar CSV:', error);
+            console.error(' Erro ao processar CSV:', error);
             this.mostrarErro('Erro ao processar CSV: ' + error.message);
         }
     }
@@ -292,13 +292,13 @@ class AdminCSV {
 
     async enviarParaBackend(csvData) {
         try {
-            console.log('📤 Enviando dados para backend...');
+            console.log(' Enviando dados para backend...');
             this.mostrarLoading('Validando dados com o servidor...');
 
             const response = await adminAPI.importarCSV(csvData);
 
             if (response.success) {
-                console.log('✅ CSV processado com sucesso:', response.data);
+                console.log(' CSV processado com sucesso:', response.data);
                 this.aulasProcessadas = response.data.aulasValidas;
                 this.errosProcessamento = response.data.erros;
                 this.exibirPreview();
@@ -307,33 +307,33 @@ class AdminCSV {
             }
 
         } catch (error) {
-            console.error('❌ Erro ao enviar para backend:', error);
+            console.error(' Erro ao enviar para backend:', error);
             this.mostrarErro('Erro ao processar CSV: ' + error.message);
         }
     }
 
     exibirPreview() {
-        console.log('🎨 Exibindo preview...');
+        console.log(' Exibindo preview...');
 
         let main = document.querySelector('main');
         if (!main) {
-            console.error('❌ Elemento main não encontrado');
+            console.error(' Elemento main não encontrado');
             return;
         }
 
-        // Limpar conteúdo anterior
+ // Limpar conteúdo anterior
         main.innerHTML = '';
 
-        // Criar container principal
+ // Criar container principal
         const container = document.createElement('div');
         container.className = 'csv-import-container';
 
-        // Título
+ // Título
         const titulo = document.createElement('h2');
         titulo.innerHTML = '<i class="fas fa-file-import"></i> Importação de CSV - Preview';
         container.appendChild(titulo);
 
-        // Estatísticas - usando classes específicas do CSV
+ // Estatísticas - usando classes específicas do CSV
         const stats = document.createElement('div');
         stats.className = 'csv-stats-grid';
         stats.innerHTML = `
@@ -353,7 +353,7 @@ class AdminCSV {
         </div>
     `;
         container.appendChild(stats);
-        // Seção de erros
+ // Seção de erros
         if (this.errosProcessamento.length > 0) {
             const errosSection = document.createElement('div');
             errosSection.className = 'erros-section';
@@ -383,7 +383,7 @@ class AdminCSV {
             container.appendChild(errosSection);
         }
 
-        // Seção de preview das aulas válidas
+ // Seção de preview das aulas válidas
         if (this.aulasProcessadas.length > 0) {
             const previewSection = document.createElement('div');
             previewSection.className = 'preview-section';
@@ -403,7 +403,7 @@ class AdminCSV {
 
             previewSection.appendChild(aulasGrid);
 
-            // Ações
+ // Ações
             const actions = document.createElement('div');
             actions.className = 'preview-actions';
             actions.innerHTML = `
@@ -501,29 +501,29 @@ class AdminCSV {
     }
 
     editarAula(linha) {
-        console.log('✏️ Editando aula da linha:', linha);
-        // Implementar edição inline
+        console.log(' Editando aula da linha:', linha);
+ // Implementar edição inline
         const aula = this.aulasProcessadas.find(a => a.linha === linha);
         if (aula) {
             this.mostrarModalEdicao(aula);
         }
     }
 
-    // 🔧 MÉTODOS DE EDIÇÃO
+ // MÉTODOS DE EDIÇÃO
 
     habilitarEdicao(linha) {
         const card = document.querySelector(`.aula-preview-card[data-linha="${linha}"]`);
         if (!card) return;
 
-        // Configurar validação em tempo real
+ // Configurar validação em tempo real
         this.configurarValidacaoTempoReal();
 
-        // Salvar estado original
+ // Salvar estado original
         const camposEditaveis = card.querySelectorAll('.editable-field');
         camposEditaveis.forEach(campo => {
             const field = campo.getAttribute('data-field');
 
-            // Para o campo de data, mostrar o valor original (YYYY-MM-DD) em vez do valor formatado
+ // Para o campo de data, mostrar o valor original (YYYY-MM-DD) em vez do valor formatado
             if (field === 'data_aula') {
                 campo.textContent = campo.getAttribute('data-original');
             }
@@ -532,7 +532,7 @@ class AdminCSV {
             campo.contentEditable = true;
             campo.classList.add('editing');
 
-            // Adicionar placeholder para campos específicos
+ // Adicionar placeholder para campos específicos
             if (field === 'data_aula') {
                 campo.setAttribute('data-placeholder', 'YYYY-MM-DD');
             } else if (field === 'horario') {
@@ -540,15 +540,15 @@ class AdminCSV {
             }
         });
 
-        // Mostrar/ocultar botões
+ // Mostrar/ocultar botões
         card.querySelector('.btn-edit').style.display = 'none';
         card.querySelector('.btn-save').style.display = 'inline-block';
         card.querySelector('.btn-cancel').style.display = 'inline-block';
 
-        // Adicionar estilos de edição
+ // Adicionar estilos de edição
         card.classList.add('card-editing');
 
-        console.log(`✏️ Editando aula da linha ${linha}`);
+        console.log(` Editando aula da linha ${linha}`);
     }
 
     salvarEdicao(linha) {
@@ -567,15 +567,15 @@ class AdminCSV {
             const field = campo.getAttribute('data-field');
             const newValue = campo.textContent.trim();
 
-            console.log(`🔍 Processando campo ${field}: "${newValue}"`);
+            console.log(` Processando campo ${field}: "${newValue}"`);
 
-            // Validações específicas por campo
+ // Validações específicas por campo
             switch (field) {
                 case 'data_aula':
-                    // Primeiro tente a validação simplificada para debug
+ // Primeiro tente a validação simplificada para debug
                     if (!this.validarDataSimplificada(newValue)) {
-                        console.log('❌ Validação simplificada falhou');
-                        // Se a simplificada falhar, tente a completa
+                        console.log(' Validação simplificada falhou');
+ // Se a simplificada falhar, tente a completa
                         if (!this.validarData(newValue)) {
                             this.mostrarErroCampo(campo, 'Data inválida. Use formato YYYY-MM-DD (ex: 2025-11-10)');
                             hasErrors = true;
@@ -583,10 +583,10 @@ class AdminCSV {
                         }
                     }
                     aula.dados.data_aula = newValue;
-                    // Recalcular dia da semana
+ // Recalcular dia da semana
                     aula.dados.dia_semana = this.calcularDiaSemana(newValue);
                     aula.dados.dia_semana_nome = this.getNomeDiaSemana(aula.dados.dia_semana);
-                    // Atualizar o valor de display
+ // Atualizar o valor de display
                     campo.setAttribute('data-display', this.formatarDataDisplay(newValue));
                     break;
 
@@ -599,7 +599,7 @@ class AdminCSV {
                     }
                     aula.dados.horario_inicio = horarioValido.inicio;
                     aula.dados.horario_fim = horarioValido.fim;
-                    // Atualizar o valor original do horário
+ // Atualizar o valor original do horário
                     campo.setAttribute('data-original', `${horarioValido.inicio}-${horarioValido.fim}`);
                     break;
 
@@ -622,7 +622,7 @@ class AdminCSV {
                     break;
 
                 case 'sala_numero':
-                    // Extrair apenas o número da sala (ex: "D206" de "D206 (Bloco D)")
+ // Extrair apenas o número da sala (ex: "D206" de "D206 (Bloco D)")
                     const salaMatch = newValue.match(/([A-Z]\d+)/);
                     if (salaMatch) {
                         aula.dados.sala_numero = salaMatch[1];
@@ -639,7 +639,7 @@ class AdminCSV {
             campo.classList.remove('editing');
             campo.classList.remove('error');
 
-            // Remover tooltips de erro se existirem
+ // Remover tooltips de erro se existirem
             const tooltipExistente = campo.parentNode.querySelector('.field-error-tooltip');
             if (tooltipExistente) {
                 tooltipExistente.remove();
@@ -647,29 +647,29 @@ class AdminCSV {
         });
 
         if (hasErrors) {
-            console.log('❌ Erros de validação encontrados, cancelando salvamento');
+            console.log(' Erros de validação encontrados, cancelando salvamento');
             return; // Não salvar se houver erros
         }
 
-        // Atualizar display dos campos formatados
+ // Atualizar display dos campos formatados
         this.atualizarDisplayAula(card, aula);
 
-        // Mostrar/ocultar botões
+ // Mostrar/ocultar botões
         card.querySelector('.btn-edit').style.display = 'inline-block';
         card.querySelector('.btn-save').style.display = 'none';
         card.querySelector('.btn-cancel').style.display = 'none';
 
-        // Remover estilos de edição
+ // Remover estilos de edição
         card.classList.remove('card-editing');
 
-        // Atualizar no array
+ // Atualizar no array
         this.aulasProcessadas[aulaIndex] = aula;
 
         this.mostrarNotificacao('Alterações salvas com sucesso!', 'success');
-        console.log(`✅ Alterações salvas para linha ${linha}`);
+        console.log(` Alterações salvas para linha ${linha}`);
     }
 
-    // 🔧 VALIDAÇÃO EM TEMPO REAL DURANTE A EDIÇÃO
+ // VALIDAÇÃO EM TEMPO REAL DURANTE A EDIÇÃO
     configurarValidacaoTempoReal() {
         document.addEventListener('input', (e) => {
             if (e.target.classList.contains('editable-field') && e.target.classList.contains('editing')) {
@@ -686,7 +686,7 @@ class AdminCSV {
     }
 
     validarEmTempoReal(campo, valor, tipo) {
-        // Remover estilos anteriores
+ // Remover estilos anteriores
         campo.classList.remove('valid');
         campo.classList.remove('error');
 
@@ -719,7 +719,7 @@ class AdminCSV {
             const field = campo.getAttribute('data-field');
             const originalValue = campo.getAttribute('data-original');
 
-            // Para o campo de data, restaurar o valor de display em vez do valor original
+ // Para o campo de data, restaurar o valor de display em vez do valor original
             if (field === 'data_aula') {
                 const displayValue = campo.getAttribute('data-display') || this.formatarDataDisplay(originalValue);
                 campo.textContent = displayValue;
@@ -731,26 +731,26 @@ class AdminCSV {
             campo.classList.remove('editing');
             campo.classList.remove('error');
 
-            // Remover tooltips de erro se existirem
+ // Remover tooltips de erro se existirem
             const tooltipExistente = campo.parentNode.querySelector('.field-error-tooltip');
             if (tooltipExistente) {
                 tooltipExistente.remove();
             }
         });
 
-        // Mostrar/ocultar botões
+ // Mostrar/ocultar botões
         card.querySelector('.btn-edit').style.display = 'inline-block';
         card.querySelector('.btn-save').style.display = 'none';
         card.querySelector('.btn-cancel').style.display = 'none';
 
-        // Remover estilos de edição
+ // Remover estilos de edição
         card.classList.remove('card-editing');
 
-        console.log(`❌ Edição cancelada para linha ${linha}`);
+        console.log(` Edição cancelada para linha ${linha}`);
     }
 
     atualizarDisplayAula(card, aula) {
-        // Atualizar campos formatados
+ // Atualizar campos formatados
         const disciplinaField = card.querySelector('[data-field="disciplina"]');
         const dataField = card.querySelector('[data-field="data_aula"]');
         const horarioField = card.querySelector('[data-field="horario"]');
@@ -802,72 +802,72 @@ class AdminCSV {
         }
     }
 
-    // 🔧 MÉTODOS DE VALIDAÇÃO
+ // MÉTODOS DE VALIDAÇÃO
 
     validarData(dataString) {
-        console.log(`🔍 Validando data: "${dataString}"`);
+        console.log(` Validando data: "${dataString}"`);
 
-        // Remover espaços em branco
+ // Remover espaços em branco
         const dataLimpa = dataString.trim();
 
-        // Verificar formato básico YYYY-MM-DD
+ // Verificar formato básico YYYY-MM-DD
         const regex = /^(\d{4})-(\d{2})-(\d{2})$/;
         if (!regex.test(dataLimpa)) {
-            console.log('❌ Formato de data inválido - não corresponde ao padrão YYYY-MM-DD');
+            console.log(' Formato de data inválido - não corresponde ao padrão YYYY-MM-DD');
             return false;
         }
 
         const [ano, mes, dia] = dataLimpa.split('-').map(Number);
 
-        // Verificar intervalos básicos
+ // Verificar intervalos básicos
         if (ano < 2000 || ano > 2100) {
-            console.log(`❌ Ano fora do intervalo válido: ${ano}`);
+            console.log(` Ano fora do intervalo válido: ${ano}`);
             return false;
         }
         if (mes < 1 || mes > 12) {
-            console.log(`❌ Mês fora do intervalo válido: ${mes}`);
+            console.log(` Mês fora do intervalo válido: ${mes}`);
             return false;
         }
         if (dia < 1 || dia > 31) {
-            console.log(`❌ Dia fora do intervalo válido: ${dia}`);
+            console.log(` Dia fora do intervalo válido: ${dia}`);
             return false;
         }
 
-        // Verificar meses com 30 dias
+ // Verificar meses com 30 dias
         const meses30Dias = [4, 6, 9, 11];
         if (meses30Dias.includes(mes) && dia > 30) {
-            console.log(`❌ Mês ${mes} tem apenas 30 dias`);
+            console.log(` Mês ${mes} tem apenas 30 dias`);
             return false;
         }
 
-        // Verificar fevereiro e anos bissextos
+ // Verificar fevereiro e anos bissextos
         if (mes === 2) {
             const isBissexto = (ano % 4 === 0 && ano % 100 !== 0) || (ano % 400 === 0);
             const maxDiasFevereiro = isBissexto ? 29 : 28;
             if (dia > maxDiasFevereiro) {
-                console.log(`❌ Fevereiro de ${ano} tem apenas ${maxDiasFevereiro} dias`);
+                console.log(` Fevereiro de ${ano} tem apenas ${maxDiasFevereiro} dias`);
                 return false;
             }
         }
 
-        // Verificação final com Date object (mais permissiva)
+ // Verificação final com Date object (mais permissiva)
         const date = new Date(ano, mes - 1, dia);
         const isValid = date.getFullYear() === ano &&
             date.getMonth() === mes - 1 &&
             date.getDate() === dia;
 
-        console.log(`✅ Data válida: ${dataLimpa} -> ${isValid ? 'VÁLIDA' : 'INVÁLIDA'}`);
+        console.log(` Data válida: ${dataLimpa} -> ${isValid ? 'VÁLIDA' : 'INVÁLIDA'}`);
         return isValid;
     }
 
     validarDataSimplificada(dataString) {
-        console.log(`🔍 [DEBUG] Validando data: "${dataString}"`);
+        console.log(` [DEBUG] Validando data: "${dataString}"`);
 
-        // Verificação básica de formato
+ // Verificação básica de formato
         const regex = /^\d{4}-\d{2}-\d{2}$/;
         const isValid = regex.test(dataString.trim());
 
-        console.log(`🔍 [DEBUG] Resultado: ${isValid ? 'VÁLIDA' : 'INVÁLIDA'}`);
+        console.log(` [DEBUG] Resultado: ${isValid ? 'VÁLIDA' : 'INVÁLIDA'}`);
         return isValid;
     }
 
@@ -882,7 +882,7 @@ class AdminCSV {
             return false;
         }
 
-        // Verificar se horário de início é antes do fim
+ // Verificar se horário de início é antes do fim
         const inicioMinutos = this.horaParaMinutos(inicio);
         const fimMinutos = this.horaParaMinutos(fim);
 
@@ -901,17 +901,17 @@ class AdminCSV {
     mostrarErroCampo(campo, mensagem) {
         campo.classList.add('error');
 
-        // Remover tooltip anterior se existir
+ // Remover tooltip anterior se existir
         const tooltipExistente = campo.parentNode.querySelector('.field-error-tooltip');
         if (tooltipExistente) {
             tooltipExistente.remove();
         }
 
-        // Adicionar tooltip de erro
+ // Adicionar tooltip de erro
         const tooltip = document.createElement('div');
         tooltip.className = 'field-error-tooltip';
 
-        // Para campo de data, mostrar exemplo do formato esperado
+ // Para campo de data, mostrar exemplo do formato esperado
         if (mensagem.includes('Data inválida')) {
             tooltip.innerHTML = `${mensagem}<br><small>Exemplo: 2025-11-10</small>`;
         } else if (mensagem.includes('Horário inválido')) {
@@ -922,13 +922,13 @@ class AdminCSV {
 
         campo.parentNode.appendChild(tooltip);
 
-        // Focar no campo com erro
+ // Focar no campo com erro
         campo.focus();
 
-        // Rolagem suave para o campo com erro
+ // Rolagem suave para o campo com erro
         campo.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-    // 🔧 FUNÇÕES AUXILIARES (adicionar ao final da classe)
+ // FUNÇÕES AUXILIARES (adicionar ao final da classe)
 
     calcularDiaSemana(dataString) {
         const [ano, mes, dia] = dataString.split('-').map(Number);
@@ -964,7 +964,7 @@ class AdminCSV {
                 day: 'numeric'
             });
         } catch (error) {
-            console.error('❌ Erro ao formatar data:', error);
+            console.error(' Erro ao formatar data:', error);
             return dataString;
         }
     }
@@ -986,10 +986,10 @@ class AdminCSV {
 
         document.body.appendChild(notification);
 
-        // Animação de entrada
+ // Animação de entrada
         setTimeout(() => notification.classList.add('show'), 100);
 
-        // Auto-remover após 5 segundos
+ // Auto-remover após 5 segundos
         setTimeout(() => {
             notification.classList.remove('show');
             setTimeout(() => {
@@ -1001,27 +1001,27 @@ class AdminCSV {
     }
 
     exibirPreview() {
-        console.log('🎨 Exibindo preview...');
+        console.log(' Exibindo preview...');
 
         let main = document.querySelector('main');
         if (!main) {
-            console.error('❌ Elemento main não encontrado');
+            console.error(' Elemento main não encontrado');
             return;
         }
 
-        // Limpar conteúdo anterior
+ // Limpar conteúdo anterior
         main.innerHTML = '';
 
-        // Criar container principal
+ // Criar container principal
         const container = document.createElement('div');
         container.className = 'csv-import-container';
 
-        // Título
+ // Título
         const titulo = document.createElement('h2');
         titulo.innerHTML = '<i class="fas fa-file-import"></i> Importação de CSV - Preview';
         container.appendChild(titulo);
 
-        // Estatísticas
+ // Estatísticas
         const stats = document.createElement('div');
         stats.className = 'import-stats';
         stats.innerHTML = `
@@ -1036,7 +1036,7 @@ class AdminCSV {
     `;
         container.appendChild(stats);
 
-        // Ações globais
+ // Ações globais
         const globalActions = document.createElement('div');
         globalActions.className = 'global-actions';
         globalActions.innerHTML = `
@@ -1049,7 +1049,7 @@ class AdminCSV {
     `;
         container.appendChild(globalActions);
 
-        // Seção de erros
+ // Seção de erros
         if (this.errosProcessamento.length > 0) {
             const errosSection = document.createElement('div');
             errosSection.className = 'erros-section';
@@ -1079,7 +1079,7 @@ class AdminCSV {
             container.appendChild(errosSection);
         }
 
-        // Seção de preview das aulas válidas
+ // Seção de preview das aulas válidas
         if (this.aulasProcessadas.length > 0) {
             const previewSection = document.createElement('div');
             previewSection.className = 'preview-section';
@@ -1099,7 +1099,7 @@ class AdminCSV {
 
             previewSection.appendChild(aulasGrid);
 
-            // Ações
+ // Ações
             const actions = document.createElement('div');
             actions.className = 'preview-actions';
             actions.innerHTML = `
@@ -1130,7 +1130,7 @@ class AdminCSV {
         main.appendChild(container);
     }
 
-    // 🔧 MÉTODOS DE EDIÇÃO EM MASSA
+ // MÉTODOS DE EDIÇÃO EM MASSA
 
     habilitarTodasEdicoes() {
         this.aulasProcessadas.forEach(aula => {
@@ -1147,9 +1147,9 @@ class AdminCSV {
     }
 
     mostrarModalEdicao(aula) {
-        // Implementar modal de edição
-        console.log('📝 Modal de edição para:', aula);
-        // Para versão inicial, vamos apenas alert
+ // Implementar modal de edição
+        console.log(' Modal de edição para:', aula);
+ // Para versão inicial, vamos apenas alert
         alert(`Edição da linha ${aula.linha} - Em desenvolvimento`);
     }
 
@@ -1170,13 +1170,13 @@ class AdminCSV {
             const response = await adminAPI.criarAulasLote(aulasParaCriar);
 
             if (response.success) {
-                // Salvar as estatísticas para usar no modal de sucesso
+ // Salvar as estatísticas para usar no modal de sucesso
                 this.importacaoSucesso = {
                     sucessos: response.data.sucessos.length,
                     erros: response.data.erros.length
                 };
 
-                // Mostrar modal de sucesso
+ // Mostrar modal de sucesso
                 let mensagemSucesso;
                 if (response.data.erros.length > 0) {
                     mensagemSucesso = `
@@ -1197,7 +1197,7 @@ class AdminCSV {
             }
 
         } catch (error) {
-            console.error('❌ Erro ao criar aulas:', error);
+            console.error(' Erro ao criar aulas:', error);
             this.mostrarNotificacao('Erro ao criar aulas: ' + error.message, 'error');
         } finally {
             this.esconderLoading();
@@ -1215,12 +1215,12 @@ class AdminCSV {
     }
 
     mostrarLoading(mensagem = 'Carregando...') {
-        // Implementar loading
+ // Implementar loading
         console.log('⏳', mensagem);
     }
 
     mostrarErro(mensagem) {
-        alert('❌ ' + mensagem);
+        alert(''+ mensagem);
     }
 
     mostrarSucesso(mensagem) {
@@ -1291,13 +1291,13 @@ class AdminCSV {
     fecharModalSucesso() {
         const modal = document.querySelector('.success-modal-overlay');
         if (modal) {
-            // Adicionar animação de saída
+ // Adicionar animação de saída
             modal.style.animation = 'fadeOut 0.3s ease forwards';
             setTimeout(() => {
                 modal.remove();
             }, 300);
         }
-        // Redirecionar para o dashboard
+ // Redirecionar para o dashboard
         window.location.href = 'admin.html';
     }
 

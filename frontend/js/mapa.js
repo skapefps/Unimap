@@ -11,9 +11,9 @@ class MapaManager {
     }
 
     async init() {
-        console.log('🗺️ Inicializando MapaManager...');
+        console.log(' Inicializando MapaManager...');
         await this.carregarSalas();
-        console.log('✅ MapaManager pronto!');
+        console.log(' MapaManager pronto!');
     }
 
     async carregarSalas() {
@@ -25,23 +25,23 @@ class MapaManager {
         this.carregando = true;
         
         try {
-            console.log('📡 Carregando salas da API...');
+            console.log(' Carregando salas da API...');
             
-            // 🔧 USAR A NOVA API COM AUTENTICAÇÃO
+ // USAR A NOVA API COM AUTENTICAÇÃO
             const result = await api.getSalas();
             
             if (result && result.success) {
                 this.salas = result.data;
-                console.log(`✅ ${this.salas.length} salas carregadas do banco`);
+                console.log(` ${this.salas.length} salas carregadas do banco`);
                 
                 this.mostrarResumoSalas();
                 
             } else {
-                console.error('❌ Erro ao carregar salas:', result?.error);
+                console.error(' Erro ao carregar salas:', result?.error);
                 this.usarDadosExemplo();
             }
         } catch (error) {
-            console.error('❌ Erro de conexão:', error);
+            console.error(' Erro de conexão:', error);
             this.usarDadosExemplo();
         } finally {
             this.carregando = false;
@@ -49,24 +49,24 @@ class MapaManager {
     }
 
     mostrarResumoSalas() {
-        console.log('📊 RESUMO DAS SALAS CARREGADAS:');
+        console.log(' RESUMO DAS SALAS CARREGADAS:');
         const blocos = [...new Set(this.salas.map(s => s.bloco))].sort();
         blocos.forEach(bloco => {
             const salasBloco = this.salas.filter(s => s.bloco === bloco);
-            console.log(`   Bloco ${bloco}: ${salasBloco.length} salas`);
+            console.log(`Bloco ${bloco}: ${salasBloco.length} salas`);
             
             const andares = [...new Set(salasBloco.map(s => s.andar))].sort();
             andares.forEach(andar => {
                 const salasAndar = salasBloco.filter(s => s.andar === andar);
                 if (salasAndar.length > 0) {
-                    console.log(`     Andar ${andar}: ${salasAndar.length} salas`);
+                    console.log(`Andar ${andar}: ${salasAndar.length} salas`);
                 }
             });
         });
     }
 
     usarDadosExemplo() {
-        console.log('🔄 Usando dados de exemplo...');
+        console.log(' Usando dados de exemplo...');
         this.salas = [
             { id: 1, numero: '101', bloco: 'A', andar: 1, tipo: 'Sala de Aula', capacidade: 40, recursos: 'Projetor, Quadro', ativa: 1 },
             { id: 2, numero: '102', bloco: 'A', andar: 1, tipo: 'Sala de Aula', capacidade: 35, recursos: 'Projetor, Quadro', ativa: 1 },
@@ -76,9 +76,9 @@ class MapaManager {
     }
 
     async mostrarSalas(bloco, andar) {
-        console.log(`🏫 Buscando salas: Bloco ${bloco}, Andar ${andar}`);
+        console.log(` Buscando salas: Bloco ${bloco}, Andar ${andar}`);
         
-        // Salvar andar selecionado para paginação
+ // Salvar andar selecionado para paginação
         sessionStorage.setItem('andarSelecionado', andar);
         
         const andarNumero = parseInt(andar);
@@ -86,12 +86,12 @@ class MapaManager {
             sala.bloco === bloco && sala.andar === andarNumero
         );
 
-        console.log(`🔍 Encontradas ${salasFiltradas.length} salas no Bloco ${bloco}, Andar ${andar}`);
+        console.log(` Encontradas ${salasFiltradas.length} salas no Bloco ${bloco}, Andar ${andar}`);
         
         this.renderizarSalas(salasFiltradas, bloco, andar);
     }
     verificarStatusSala(sala) {
-    // ativa = 1 → Disponível | ativa = 0 → Ocupada/Indisponível
+ // ativa = 1 → Disponível | ativa = 0 → Ocupada/Indisponível
     const estaDisponivel = sala.ativa === 1;
     
     if (!estaDisponivel) {
@@ -113,16 +113,16 @@ class MapaManager {
     const title = document.getElementById('sala-title');
     
     if (!container) {
-        console.error('❌ Container .salas-grid não encontrado!');
+        console.error(' Container .salas-grid não encontrado!');
         return;
     }
 
     if (!title) {
-        console.error('❌ Elemento sala-title não encontrado!');
+        console.error(' Elemento sala-title não encontrado!');
         return;
     }
 
-    // ✅ ATUALIZAR TÍTULO COM CONTADOR
+ // ATUALIZAR TÍTULO COM CONTADOR
     title.innerHTML = `
         Bloco ${bloco} > ${andar}° Andar 
         <span class="salas-counter">${salas.length} salas</span>
@@ -139,7 +139,7 @@ class MapaManager {
         return;
     }
 
-    // ✅ FILTROS RÁPIDOS
+ // FILTROS RÁPIDOS
     const tipos = [...new Set(salas.map(s => s.tipo))];
     const filtrosHTML = `
         <div class="salas-filters">
@@ -159,28 +159,28 @@ class MapaManager {
         </div>
     `;
 
-    // ✅ APLICAR FILTRO ATUAL
+ // APLICAR FILTRO ATUAL
     let salasFiltradas = salas;
     if (this.filtroTipo !== 'todas') {
         salasFiltradas = salas.filter(s => s.tipo === this.filtroTipo);
     }
 
-    // ✅ PAGINAÇÃO
+ // PAGINAÇÃO
     const inicio = (this.paginaAtual - 1) * this.salasPorPagina;
     const fim = inicio + this.salasPorPagina;
-    const salasPagina = salasFiltradas.slice(inicio, fim); // ✅ AGORA ESTÁ DEFINIDA
+    const salasPagina = salasFiltradas.slice(inicio, fim); //  AGORA ESTÁ DEFINIDA
     const totalPaginas = Math.ceil(salasFiltradas.length / this.salasPorPagina);
 
-    // ✅ RENDERIZAR SALAS COM STATUS DE OCUPAÇÃO
+ // RENDERIZAR SALAS COM STATUS DE OCUPAÇÃO
     const salasHTML = salasPagina.map(sala => {
-        // ✅ VERIFICAR STATUS PELA COLUNA 'ativa'
+ // VERIFICAR STATUS PELA COLUNA 'ativa'
         const salaOcupada = this.verificarStatusSala(sala);
         const estaDisponivel = sala.ativa === 1;
         
-        // ✅ CORES: Vermelho se inativa, Verde se ativa
+ // CORES: Vermelho se inativa, Verde se ativa
         const bordaCor = estaDisponivel ? '#27ae60' : '#e74c3c';
         const statusClasse = estaDisponivel ? 'disponivel' : 'ocupada';
-        const statusTexto = estaDisponivel ? '🟢 Disponível' : '🔴 Indisponível';
+        const statusTexto = estaDisponivel ? ' Disponível' : ' Indisponível';
 
         return `
             <div class="sala-card" data-sala-id="${sala.id}" 
@@ -191,16 +191,16 @@ class MapaManager {
                 
                 ${sala.recursos ? `<p><strong>Recursos:</strong> ${sala.recursos}</p>` : ''}
                 
-                <!-- ✅ EXIBIR MOTIVO SE ESTIVER INDISPONÍVEL -->
+                <!--  EXIBIR MOTIVO SE ESTIVER INDISPONÍVEL -->
                 ${!estaDisponivel ? `
                     <div class="sala-aula-info">
-                        <p style="margin: 0 0 5px 0; font-weight: 600; color: #c0392b;">🚫 Sala Indisponível</p>
+                        <p style="margin: 0 0 5px 0; font-weight: 600; color: #c0392b;"> Sala Indisponível</p>
                         <p style="margin: 2px 0; font-size: 0.9em;"><strong>Motivo:</strong> Em manutenção ou reservada</p>
                         <p style="margin: 2px 0; font-size: 0.9em;"><strong>Status:</strong> Não disponível para aulas</p>
                     </div>
                 ` : `
                     <div class="sala-aula-info" style="background: #e8f5e8; border-left-color: #27ae60;">
-                        <p style="margin: 0 0 5px 0; font-weight: 600; color: #27ae60;">✅ Sala Disponível</p>
+                        <p style="margin: 0 0 5px 0; font-weight: 600; color: #27ae60;"> Sala Disponível</p>
                         <p style="margin: 2px 0; font-size: 0.9em;"><strong>Status:</strong> Pronta para uso</p>
                         <p style="margin: 2px 0; font-size: 0.9em;"><strong>Disponibilidade:</strong> Livre para reserva</p>
                     </div>
@@ -212,7 +212,7 @@ class MapaManager {
             </div>
         `;
     }).join('');
-        // ✅ PAGINAÇÃO (se necessário)
+ // PAGINAÇÃO (se necessário)
         let paginacaoHTML = '';
         if (totalPaginas > 1) {
             paginacaoHTML = this.criarPaginacao(totalPaginas);
@@ -220,11 +220,11 @@ class MapaManager {
 
         container.innerHTML = filtrosHTML + salasHTML + paginacaoHTML;
 
-        console.log(`✅ ${salasPagina.length} salas renderizadas (página ${this.paginaAtual} de ${totalPaginas})`);
+        console.log(` ${salasPagina.length} salas renderizadas (página ${this.paginaAtual} de ${totalPaginas})`);
     }
 
     filtrarSalas(tipo) {
-        console.log(`🎯 Filtrando salas por: ${tipo}`);
+        console.log(` Filtrando salas por: ${tipo}`);
         this.filtroTipo = tipo;
         this.paginaAtual = 1;
         
@@ -273,7 +273,7 @@ class MapaManager {
     return aulaAtiva || null;
 }
 usarAulasAtivasExemplo() {
-    console.log('🔄 Usando dados de exemplo para aulas ativas...');
+    console.log(' Usando dados de exemplo para aulas ativas...');
     this.aulasAtivas = [
         {
             id: 1,
@@ -287,13 +287,13 @@ usarAulasAtivasExemplo() {
             horario_fim: '10:00',
             turma: 'SI3N'
         }
-        // ... mais aulas de exemplo
+ // ... mais aulas de exemplo
     ];
 }
-// ✅ NOVO MÉTODO: Carregar aulas ativas
+// NOVO MÉTODO: Carregar aulas ativas
 async carregarAulasAtivas() {
     try {
-        console.log('📚 Carregando aulas ativas...');
+        console.log(' Carregando aulas ativas...');
         const token = localStorage.getItem('authToken');
         const response = await fetch('/api/aulas/ativas', {
             headers: token ? { 'Authorization': `Bearer ${token}` } : {}
@@ -301,19 +301,19 @@ async carregarAulasAtivas() {
         
         if (response.ok) {
             this.aulasAtivas = await response.json();
-            console.log(`✅ ${this.aulasAtivas.length} aulas ativas carregadas`);
+            console.log(` ${this.aulasAtivas.length} aulas ativas carregadas`);
         } else {
             this.usarAulasAtivasExemplo();
         }
     } catch (error) {
-        console.error('❌ Erro ao carregar aulas ativas:', error);
+        console.error(' Erro ao carregar aulas ativas:', error);
         this.usarAulasAtivasExemplo();
     }
 }
 
 
     mudarPagina(novaPagina) {
-        console.log(`📄 Mudando para página: ${novaPagina}`);
+        console.log(` Mudando para página: ${novaPagina}`);
         this.paginaAtual = novaPagina;
         
         const bloco = sessionStorage.getItem('blocoSelecionado') || 'A';
@@ -321,16 +321,16 @@ async carregarAulasAtivas() {
         
         this.mostrarSalas(bloco, andar);
         
-        // Scroll para o topo
+ // Scroll para o topo
         const container = document.querySelector('#mapa-salas .salas-grid');
         if (container) {
             container.scrollTop = 0;
         }
     }
 
-    // 🔧 MÉTODO PARA FORÇAR RECARREGAMENTO
+ // MÉTODO PARA FORÇAR RECARREGAMENTO
     async forcarRecarregamento() {
-        console.log('🔄 Forçando recarregamento de salas...');
+        console.log(' Forçando recarregamento de salas...');
         this.salas = [];
         this.paginaAtual = 1;
         this.filtroTipo = 'todas';
@@ -338,13 +338,13 @@ async carregarAulasAtivas() {
     }
 }
 
-// ✅ INICIALIZAR IMEDIATAMENTE
-console.log('🚀 Criando MapaManager...');
+// INICIALIZAR IMEDIATAMENTE
+console.log(' Criando MapaManager...');
 const mapaManager = new MapaManager();
 
-// 🔧 FUNÇÕES GLOBAIS PARA DEBUG E CONTROLE
+// FUNÇÕES GLOBAIS PARA DEBUG E CONTROLE
 window.debugMapa = function() {
-    console.log('🔍 DEBUG MapaManager:');
+    console.log(' DEBUG MapaManager:');
     console.log('- Total de salas:', mapaManager.salas.length);
     console.log('- Carregando:', mapaManager.carregando);
     console.log('- Página atual:', mapaManager.paginaAtual);
@@ -352,7 +352,7 @@ window.debugMapa = function() {
     console.log('- Bloco selecionado:', sessionStorage.getItem('blocoSelecionado'));
     console.log('- Andar selecionado:', sessionStorage.getItem('andarSelecionado'));
     
-    // 🔧 VERIFICAR AUTENTICAÇÃO
+ // VERIFICAR AUTENTICAÇÃO
     const token = localStorage.getItem('authToken');
     const userData = localStorage.getItem('userData');
     console.log('- Token presente:', !!token);
@@ -364,12 +364,12 @@ window.debugMapa = function() {
 };
 
 window.recarregarMapa = function() {
-    console.log('🔄 Recarregando mapa...');
+    console.log(' Recarregando mapa...');
     mapaManager.forcarRecarregamento();
 };
 
 window.testarBloco = function(bloco = 'A', andar = 1) {
-    console.log(`🧪 Testando: Bloco ${bloco}, Andar ${andar}`);
+    console.log(` Testando: Bloco ${bloco}, Andar ${andar}`);
     mapaManager.mostrarSalas(bloco, andar);
 };
 

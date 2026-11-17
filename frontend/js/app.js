@@ -12,9 +12,9 @@ class UnimapApp {
     
 
     init() {
-        console.log('🚀 Inicializando UNIMAP App...');
+        console.log(' Inicializando UNIMAP App...');
 
-        // 🔥 CORREÇÃO: Verificar autenticação primeiro
+ // CORREÇÃO: Verificar autenticação primeiro
         this.checkAuthAndRedirect();
         this.showSection('aulas-mobile');
         this.setupEventListeners();
@@ -27,7 +27,7 @@ class UnimapApp {
         const token = localStorage.getItem('authToken');
 
         if (!userData || !token) {
-            console.log('🔐 Usuário não autenticado - Redirecionando para login');
+            console.log(' Usuário não autenticado - Redirecionando para login');
             window.location.href = 'login.html';
             return;
         }
@@ -37,7 +37,7 @@ class UnimapApp {
             this.updateUserInfo();
             this.checkAdminPermissions();
         } catch (error) {
-            console.error('❌ Erro ao carregar usuário:', error);
+            console.error(' Erro ao carregar usuário:', error);
             localStorage.removeItem('unimap_user');
             localStorage.removeItem('userData');
             localStorage.removeItem('authToken');
@@ -46,7 +46,7 @@ class UnimapApp {
     }
     
 
-    // ✅ CONFIGURAR FUNÇÕES GLOBAIS
+ // CONFIGURAR FUNÇÕES GLOBAIS
     setupGlobalFunctions() {
         window.showSection = (sectionId) => this.showSection(sectionId);
         window.showAndares = (bloco) => this.showAndares(bloco);
@@ -60,7 +60,7 @@ class UnimapApp {
     checkAuth() {
         const userData = localStorage.getItem('unimap_user') || localStorage.getItem('userData');
         if (!userData) {
-            console.log('⚠️ Usuário não autenticado');
+            console.log(' Usuário não autenticado');
             return;
         }
 
@@ -69,7 +69,7 @@ class UnimapApp {
             this.updateUserInfo();
             this.checkAdminPermissions();
         } catch (error) {
-            console.error('❌ Erro ao carregar usuário:', error);
+            console.error(' Erro ao carregar usuário:', error);
         }
     }
 
@@ -84,19 +84,19 @@ class UnimapApp {
     }
 
     checkAdminPermissions() {
-        console.log('🔍 Verificando permissões de admin...');
+        console.log(' Verificando permissões de admin...');
 
         if (!this.user) {
-            console.log('⚠️ Nenhum usuário para verificar permissões');
+            console.log(' Nenhum usuário para verificar permissões');
             return;
         }
 
-        console.log('👤 Usuário:', this.user.nome, '- Tipo:', this.user.tipo);
+        console.log(' Usuário:', this.user.nome, '- Tipo:', this.user.tipo);
 
         const isAdmin = this.user.tipo === 'admin' || this.user.tipo === 'professor';
-        console.log(`🎯 É admin/professor: ${isAdmin}`);
+        console.log(` É admin/professor: ${isAdmin}`);
 
-        // Mostrar/ocultar elementos admin
+ // Mostrar/ocultar elementos admin
         const adminElements = document.querySelectorAll('.admin-only');
         adminElements.forEach(element => {
             element.style.display = isAdmin ? 'block' : 'none';
@@ -114,22 +114,22 @@ class UnimapApp {
     }
 
     setupEventListeners() {
-        // Navegação inicial baseada no tamanho da tela
+ // Navegação inicial baseada no tamanho da tela
         if (window.innerWidth >= 768) {
             this.showSection('aulas-desktop');
         }
     }
 
     showSection(sectionId) {
-        console.log('📱 Mostrando seção:', sectionId);
+        console.log(' Mostrando seção:', sectionId);
 
-        // Esconder todas as seções
+ // Esconder todas as seções
         document.querySelectorAll('.section').forEach(section => {
             section.style.display = 'none';
             section.classList.remove('active');
         });
 
-        // Mostrar seção selecionada
+ // Mostrar seção selecionada
         const targetSection = document.getElementById(sectionId);
         if (targetSection) {
             targetSection.style.display = 'block';
@@ -137,47 +137,47 @@ class UnimapApp {
             this.currentSection = sectionId;
         }
 
-        // Atualizar navegação ativa
+ // Atualizar navegação ativa
         this.updateActiveNav(sectionId);
 
-        // Fechar menu mobile se estiver aberto
+ // Fechar menu mobile se estiver aberto
         this.closeMenu();
 
-        // 🔥 CARREGAR DADOS AUTOMATICAMENTE
+ // CARREGAR DADOS AUTOMATICAMENTE
         this.carregarDadosDaSecao(sectionId);
     }
 
     carregarDadosDaSecao(sectionId) {
-    // ✅ CORREÇÃO: Adicionar controle de carregamento
+ // CORREÇÃO: Adicionar controle de carregamento
     if (this.carregamentoEmAndamento) {
-        console.log('🔄 Carregamento já em andamento, ignorando...');
+        console.log(' Carregamento já em andamento, ignorando...');
         return;
     }
 
     switch (sectionId) {
         case 'aulas-mobile':
         case 'aulas-desktop':
-            console.log('📚 [APP] Carregando seção de aulas:', sectionId);
+            console.log(' [APP] Carregando seção de aulas:', sectionId);
 
             this.carregamentoEmAndamento = true;
 
-            // ✅ CORREÇÃO: Usar apenas UMA abordagem
+ // CORREÇÃO: Usar apenas UMA abordagem
             setTimeout(() => {
                 const isMobile = window.innerWidth < 768;
                 const containerId = isMobile ? 'aulas-list-mobile' : 'aulas-list-desktop';
 
-                // ✅ PRIORIDADE: Usar AulasManager se disponível
+ // PRIORIDADE: Usar AulasManager se disponível
                 if (window.aulasManager && window.aulasManager.carregarERenderizarAulas) {
-                    console.log('🎯 [APP] Usando AulasManager para:', containerId);
+                    console.log(' [APP] Usando AulasManager para:', containerId);
                     window.aulasManager.carregarERenderizarAulas(containerId);
                 } 
-                // ✅ FALLBACK: Usar função global
+ // FALLBACK: Usar função global
                 else if (typeof carregarAulas === 'function') {
-                    console.log('🎯 [APP] Usando carregarAulas global para:', containerId);
+                    console.log(' [APP] Usando carregarAulas global para:', containerId);
                     carregarAulas(containerId);
                 } 
                 else {
-                    console.error('❌ [APP] Nenhum método de carregamento disponível');
+                    console.error(' [APP] Nenhum método de carregamento disponível');
                 }
 
                 this.carregamentoEmAndamento = false;
@@ -185,7 +185,7 @@ class UnimapApp {
             break;
 
         case 'professores':
-            // ... código existente
+ // ... código existente
             break;
         case 'mapa-blocos':
             break;
@@ -208,7 +208,7 @@ class UnimapApp {
                 const data = await response.json();
 
                 if (!data.cadastro_completo) {
-                    console.log('⚠️ Cadastro do aluno incompleto');
+                    console.log(' Cadastro do aluno incompleto');
                     this.mostrarModalCompletarCadastro();
                     return false;
                 }
@@ -217,12 +217,12 @@ class UnimapApp {
             }
             return false;
         } catch (error) {
-            console.error('❌ Erro ao verificar cadastro:', error);
+            console.error(' Erro ao verificar cadastro:', error);
             return true; // Continua mesmo com erro
         }
     }
 
-    // ✅ MOSTRAR MODAL PARA COMPLETAR CADASTRO
+ // MOSTRAR MODAL PARA COMPLETAR CADASTRO
     mostrarModalCompletarCadastro() {
         const modalHTML = `
         <div class="modal-overlay" id="modalCompletarCadastro">
@@ -233,9 +233,9 @@ class UnimapApp {
                 <div class="modal-body">
                     <p>Para visualizar suas aulas, é necessário completar seu cadastro com:</p>
                     <ul>
-                        <li>✅ Curso</li>
-                        <li>✅ Período</li>  
-                        <li>✅ Turma</li>
+                        <li> Curso</li>
+                        <li> Período</li>  
+                        <li> Turma</li>
                     </ul>
                     <p>Clique no botão abaixo para completar seu cadastro.</p>
                 </div>
@@ -280,21 +280,21 @@ class UnimapApp {
         return null;
     }
 
-    // ==================== SISTEMA DE MAPA DO ALUNO ====================
+ // ==================== SISTEMA DE MAPA DO ALUNO ====================
 
-    // ✅ INICIALIZAR MAPA DO ALUNO
+ // INICIALIZAR MAPA DO ALUNO
     initMapaAluno() {
-        console.log('🗺️ Inicializando mapa do aluno...');
+        console.log(' Inicializando mapa do aluno...');
         this.carregarBlocosAluno();
         this.configurarEventosMapaAluno();
     }
 
-    // ✅ CARREGAR BLOCOS PARA ALUNO
+ // CARREGAR BLOCOS PARA ALUNO
     async carregarBlocosAluno() {
         try {
-            console.log('📡 Carregando blocos para aluno...');
+            console.log(' Carregando blocos para aluno...');
 
-            // Usar a API global se disponível, senão fazer fetch direto
+ // Usar a API global se disponível, senão fazer fetch direto
             let blocos;
             if (typeof api !== 'undefined' && api.getBlocos) {
                 const result = await api.getBlocos();
@@ -304,7 +304,7 @@ class UnimapApp {
                     throw new Error(result?.error || 'Erro na API');
                 }
             } else {
-                // Fallback: fetch direto
+ // Fallback: fetch direto
                 const token = localStorage.getItem('authToken') || localStorage.getItem('unimap_token');
                 const response = await fetch('/api/salas/blocos', {
                     headers: token ? { 'Authorization': `Bearer ${token}` } : {}
@@ -314,21 +314,21 @@ class UnimapApp {
                 blocos = await response.json();
             }
 
-            console.log('✅ Blocos carregados para aluno:', blocos);
+            console.log(' Blocos carregados para aluno:', blocos);
             this.blocosData = blocos;
             this.renderizarBlocosAluno(blocos);
 
         } catch (error) {
-            console.error('❌ Erro ao carregar blocos para aluno:', error);
+            console.error(' Erro ao carregar blocos para aluno:', error);
             this.usarBlocosPadraoAluno();
         }
     }
 
-    // ✅ RENDERIZAR BLOCOS PARA ALUNO
+ // RENDERIZAR BLOCOS PARA ALUNO
     renderizarBlocosAluno(blocos) {
         const container = document.getElementById('blocos-grid-aluno');
         if (!container) {
-            console.log('⚠️ Container de blocos do aluno não encontrado');
+            console.log(' Container de blocos do aluno não encontrado');
             return;
         }
 
@@ -358,12 +358,12 @@ class UnimapApp {
             </div>
         `).join('');
 
-        console.log(`✅ ${blocos.length} blocos renderizados para aluno`);
+        console.log(` ${blocos.length} blocos renderizados para aluno`);
     }
 
-    // ✅ FALLBACK PARA BLOCOS
+ // FALLBACK PARA BLOCOS
     usarBlocosPadraoAluno() {
-        console.log('🔄 Usando blocos padrão para aluno...');
+        console.log(' Usando blocos padrão para aluno...');
         const blocosPadrao = [
             { letra: 'A', total_salas: 58, total_andares: 4 },
             { letra: 'B', total_salas: 46, total_andares: 4 },
@@ -383,29 +383,29 @@ class UnimapApp {
         this.renderizarBlocosAluno(blocosPadrao);
     }
 
-    // ✅ SELECIONAR BLOCO (ALUNO)
+ // SELECIONAR BLOCO (ALUNO)
     async selecionarBlocoAluno(bloco) {
-        console.log(`🏢 Aluno selecionando bloco: ${bloco}`);
+        console.log(` Aluno selecionando bloco: ${bloco}`);
         this.currentBloco = bloco;
         sessionStorage.setItem('blocoSelecionado', bloco);
 
-        // Atualizar título
+ // Atualizar título
         const blocoTitle = document.getElementById('bloco-title-aluno');
         if (blocoTitle) {
             blocoTitle.textContent = `Bloco ${bloco}`;
         }
 
-        // Mostrar loading
+ // Mostrar loading
         this.showLoadingAndaresAluno(bloco);
 
-        // Carregar andares
+ // Carregar andares
         await this.carregarAndaresAluno(bloco);
     }
 
-    // ✅ CARREGAR ANDARES (ALUNO)
+ // CARREGAR ANDARES (ALUNO)
     async carregarAndaresAluno(bloco) {
         try {
-            console.log(`📡 Carregando andares do bloco ${bloco} para aluno...`);
+            console.log(` Carregando andares do bloco ${bloco} para aluno...`);
 
             let andares;
             if (typeof api !== 'undefined' && api.getAndaresPorBloco) {
@@ -416,7 +416,7 @@ class UnimapApp {
                     throw new Error(result?.error || 'Erro na API');
                 }
             } else {
-                // Fallback: fetch direto
+ // Fallback: fetch direto
                 const token = localStorage.getItem('authToken') || localStorage.getItem('unimap_token');
                 const response = await fetch(`/api/salas/bloco/${bloco}/andares`, {
                     headers: token ? { 'Authorization': `Bearer ${token}` } : {}
@@ -426,20 +426,20 @@ class UnimapApp {
                 andares = await response.json();
             }
 
-            console.log(`✅ Andares carregados para aluno:`, andares);
+            console.log(` Andares carregados para aluno:`, andares);
             this.renderizarAndaresAluno(andares);
             this.showSection('mapa-andares');
 
         } catch (error) {
-            console.error('❌ Erro ao carregar andares para aluno:', error);
+            console.error(' Erro ao carregar andares para aluno:', error);
             this.showErrorAndaresAluno('Erro ao carregar andares: ' + error.message);
         }
     }
 
-    // ✅ ATUALIZAR FUNÇÃO CARREGAR AULAS DO ALUNO
+ // ATUALIZAR FUNÇÃO CARREGAR AULAS DO ALUNO
     async carregarAulasAluno() {
         try {
-            // Verificar se cadastro está completo
+ // Verificar se cadastro está completo
             const cadastroCompleto = await this.verificarCadastroCompletoAluno();
             if (!cadastroCompleto) {
                 console.log('⏳ Cadastro incompleto - aguardando completar');
@@ -448,11 +448,11 @@ class UnimapApp {
 
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData || userData.tipo !== 'aluno') {
-                console.log('⚠️ Não é aluno ou usuário não autenticado');
+                console.log(' Não é aluno ou usuário não autenticado');
                 return;
             }
 
-            console.log('🎓 Carregando aulas para aluno:', userData.id);
+            console.log(' Carregando aulas para aluno:', userData.id);
 
             const response = await fetch(`/api/aluno/${userData.id}/aulas`, {
                 headers: {
@@ -466,38 +466,38 @@ class UnimapApp {
             }
 
             const aulas = await response.json();
-            console.log(`✅ ${aulas.length} aulas carregadas para o aluno`);
+            console.log(` ${aulas.length} aulas carregadas para o aluno`);
 
-            // Renderizar as aulas no frontend
+ // Renderizar as aulas no frontend
             this.renderizarAulasAluno(aulas);
 
         } catch (error) {
-            console.error('❌ Erro ao carregar aulas do aluno:', error);
+            console.error(' Erro ao carregar aulas do aluno:', error);
             this.mostrarErro('Erro ao carregar aulas: ' + error.message);
         }
     }
 
-    // ✅ MOSTRAR ERRO
+ // MOSTRAR ERRO
     mostrarErro(mensagem) {
-        console.error('❌ Erro:', mensagem);
+        console.error(' Erro:', mensagem);
 
-        // Usar notification system se disponível, senão usar alert
+ // Usar notification system se disponível, senão usar alert
         if (typeof showNotification === 'function') {
             showNotification(mensagem, 'error');
         } else {
-            alert('❌ ' + mensagem);
+            alert(''+ mensagem);
         }
     }
 
-    // ✅ RENDERIZAR AULAS DO ALUNO
+ // RENDERIZAR AULAS DO ALUNO
     renderizarAulasAluno(aulas) {
-        // Para mobile
+ // Para mobile
         const containerMobile = document.getElementById('aulas-list-mobile');
-        // Para desktop  
+ // Para desktop  
         const containerDesktop = document.getElementById('aulas-list-desktop');
 
         if (!containerMobile && !containerDesktop) {
-            console.error('❌ Containers de aulas não encontrados');
+            console.error(' Containers de aulas não encontrados');
             return;
         }
 
@@ -507,7 +507,7 @@ class UnimapApp {
         if (containerDesktop) containerDesktop.innerHTML = htmlAulas;
     }
 
-    // ✅ GERAR HTML DAS AULAS DO ALUNO
+ // GERAR HTML DAS AULAS DO ALUNO
     gerarHTMLAulasAluno(aulas) {
         if (!aulas || aulas.length === 0) {
             return `
@@ -520,12 +520,12 @@ class UnimapApp {
         `;
         }
 
-        // Agrupar aulas por dia da semana
+ // Agrupar aulas por dia da semana
         const aulasPorDia = this.agruparAulasPorDia(aulas);
         return this.gerarHTMLAulasPorDia(aulasPorDia);
     }
 
-    // ✅ AGRUPAR AULAS POR DIA DA SEMANA
+ // AGRUPAR AULAS POR DIA DA SEMANA
     agruparAulasPorDia(aulas) {
         const dias = {
             1: { nome: 'Segunda-feira', aulas: [] },
@@ -542,7 +542,7 @@ class UnimapApp {
             }
         });
 
-        // Ordenar aulas por horário em cada dia
+ // Ordenar aulas por horário em cada dia
         Object.values(dias).forEach(dia => {
             dia.aulas.sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
         });
@@ -550,7 +550,7 @@ class UnimapApp {
         return dias;
     }
 
-    // ✅ GERAR HTML DAS AULAS AGRUPADAS POR DIA
+ // GERAR HTML DAS AULAS AGRUPADAS POR DIA
     gerarHTMLAulasPorDia(aulasPorDia) {
         let html = '';
 
@@ -601,7 +601,7 @@ class UnimapApp {
         return html;
     }
 
-    // ✅ RENDERIZAR ANDARES (ALUNO)
+ // RENDERIZAR ANDARES (ALUNO)
     renderizarAndaresAluno(andares) {
         const container = document.getElementById('andares-grid-aluno');
         if (!container) return;
@@ -626,42 +626,42 @@ class UnimapApp {
             </div>
         `).join('');
 
-        console.log(`✅ ${andares.length} andares renderizados para aluno`);
+        console.log(` ${andares.length} andares renderizados para aluno`);
     }
 
-    // ✅ SELECIONAR ANDAR (ALUNO)
+ // SELECIONAR ANDAR (ALUNO)
     async selecionarAndarAluno(andar) {
-        console.log(`🚪 Aluno selecionando andar: ${andar}`);
+        console.log(` Aluno selecionando andar: ${andar}`);
         const bloco = this.currentBloco || sessionStorage.getItem('blocoSelecionado') || 'A';
         this.currentAndar = andar;
 
-        // Mostrar loading
+ // Mostrar loading
         this.showLoadingSalasAluno(bloco, andar);
 
-        // Usar o MapaManager existente para mostrar salas
+ // Usar o MapaManager existente para mostrar salas
         if (typeof mapaManager !== 'undefined') {
             try {
-                // Garantir que as salas estão carregadas
+ // Garantir que as salas estão carregadas
                 if (mapaManager.salas.length === 0) {
-                    console.log('🔄 Carregando salas...');
+                    console.log(' Carregando salas...');
                     await mapaManager.carregarSalas();
                 }
 
-                // Mostrar salas usando o MapaManager
+ // Mostrar salas usando o MapaManager
                 await mapaManager.mostrarSalas(bloco, andar);
                 this.mostrarFiltrosSalas();
 
             } catch (error) {
-                console.error('❌ Erro ao carregar salas:', error);
+                console.error(' Erro ao carregar salas:', error);
                 this.showErrorSalasAluno('Erro ao carregar salas: ' + error.message);
             }
         } else {
-            console.error('❌ MapaManager não encontrado');
+            console.error(' MapaManager não encontrado');
             this.showErrorSalasAluno('Sistema de mapa não carregado');
         }
     }
 
-    // ✅ MOSTRAR FILTROS DE SALAS
+ // MOSTRAR FILTROS DE SALAS
     mostrarFiltrosSalas() {
         const filters = document.getElementById('salas-filters');
         if (filters) {
@@ -669,7 +669,7 @@ class UnimapApp {
         }
     }
 
-    // ✅ LOADING ANDARES (ALUNO)
+ // LOADING ANDARES (ALUNO)
     showLoadingAndaresAluno(bloco) {
         const container = document.getElementById('andares-grid-aluno');
         if (container) {
@@ -683,7 +683,7 @@ class UnimapApp {
         this.showSection('mapa-andares');
     }
 
-    // ✅ LOADING SALAS (ALUNO)
+ // LOADING SALAS (ALUNO)
     showLoadingSalasAluno(bloco, andar) {
         const container = document.getElementById('salas-grid-aluno');
         const title = document.getElementById('sala-title');
@@ -701,7 +701,7 @@ class UnimapApp {
             `;
         }
 
-        // Esconder filtros durante o loading
+ // Esconder filtros durante o loading
         const filters = document.getElementById('salas-filters');
         if (filters) {
             filters.style.display = 'none';
@@ -710,7 +710,7 @@ class UnimapApp {
         this.showSection('mapa-salas');
     }
 
-    // ✅ ERRO ANDARES (ALUNO)
+ // ERRO ANDARES (ALUNO)
     showErrorAndaresAluno(message) {
         const container = document.getElementById('andares-grid-aluno');
         if (container) {
@@ -726,7 +726,7 @@ class UnimapApp {
         }
     }
 
-    // ✅ ERRO SALAS (ALUNO)
+ // ERRO SALAS (ALUNO)
     showErrorSalasAluno(message) {
         const container = document.getElementById('salas-grid-aluno');
         if (container) {
@@ -742,9 +742,9 @@ class UnimapApp {
         }
     }
 
-    // ✅ RECARREGAR MAPA (ALUNO)
+ // RECARREGAR MAPA (ALUNO)
     async recarregarMapaAluno() {
-        console.log('🔄 Recarregando mapa para aluno...');
+        console.log(' Recarregando mapa para aluno...');
         if (typeof mapaManager !== 'undefined') {
             await mapaManager.forcarRecarregamento();
             const bloco = this.currentBloco || 'A';
@@ -755,9 +755,9 @@ class UnimapApp {
         }
     }
 
-    // ✅ CONFIGURAR EVENTOS DO MAPA (ALUNO)
+ // CONFIGURAR EVENTOS DO MAPA (ALUNO)
     configurarEventosMapaAluno() {
-        // Filtro de pesquisa de salas
+ // Filtro de pesquisa de salas
         const searchInput = document.getElementById('searchSalaAluno');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
@@ -765,7 +765,7 @@ class UnimapApp {
             });
         }
 
-        // Filtro de tipo de sala
+ // Filtro de tipo de sala
         const tipoFilter = document.getElementById('filterTipoSalaAluno');
         if (tipoFilter) {
             tipoFilter.addEventListener('change', (e) => {
@@ -774,7 +774,7 @@ class UnimapApp {
         }
     }
 
-    // ✅ FILTRAR SALAS POR TEXTO (ALUNO)
+ // FILTRAR SALAS POR TEXTO (ALUNO)
     filtrarSalasAluno(termo) {
         const salas = document.querySelectorAll('#salas-grid-aluno .sala-card');
         const termoLower = termo.toLowerCase();
@@ -785,7 +785,7 @@ class UnimapApp {
         });
     }
 
-    // ✅ FILTRAR SALAS POR TIPO (ALUNO)
+ // FILTRAR SALAS POR TIPO (ALUNO)
     filtrarSalasPorTipoAluno(tipo) {
         const salas = document.querySelectorAll('#salas-grid-aluno .sala-card');
 
@@ -803,22 +803,22 @@ class UnimapApp {
         });
     }
 
-    // ✅ VOLTAR PARA BLOCOS (ALUNO)
+ // VOLTAR PARA BLOCOS (ALUNO)
     voltarParaBlocosAluno() {
         this.showSection('mapa-blocos');
         this.currentBloco = null;
     }
 
-    // ✅ VOLTAR PARA ANDARES (ALUNO)
+ // VOLTAR PARA ANDARES (ALUNO)
     voltarParaAndaresAluno() {
         this.showSection('mapa-andares');
         this.currentAndar = null;
     }
 
-    // ==================== MÉTODOS ORIGINAIS (COMPATIBILIDADE) ====================
+ // ==================== MÉTODOS ORIGINAIS (COMPATIBILIDADE) ====================
 
     showAndares(bloco) {
-        console.log('🏢 Mostrando andares do bloco:', bloco);
+        console.log(' Mostrando andares do bloco:', bloco);
         this.currentBloco = bloco;
         sessionStorage.setItem('blocoSelecionado', bloco);
 
@@ -830,7 +830,7 @@ class UnimapApp {
     }
 
     async showSalas(andar) {
-        console.log('🚪 Mostrando salas do andar:', andar);
+        console.log(' Mostrando salas do andar:', andar);
 
         const bloco = this.currentBloco || sessionStorage.getItem('blocoSelecionado') || 'A';
         this.currentAndar = andar;
@@ -840,7 +840,7 @@ class UnimapApp {
         if (typeof mapaManager !== 'undefined') {
             try {
                 if (mapaManager.salas.length === 0) {
-                    console.log('🔄 Forçando carregamento de salas...');
+                    console.log(' Forçando carregamento de salas...');
                     await mapaManager.carregarSalas();
                 }
 
@@ -848,11 +848,11 @@ class UnimapApp {
                 this.showSection('mapa-salas');
 
             } catch (error) {
-                console.error('❌ Erro ao carregar salas:', error);
+                console.error(' Erro ao carregar salas:', error);
                 this.showErrorSalas('Erro ao carregar salas: ' + error.message);
             }
         } else {
-            console.error('❌ MapaManager não encontrado');
+            console.error(' MapaManager não encontrado');
             this.showErrorSalas('Sistema de mapa não carregado');
         }
     }
@@ -893,7 +893,7 @@ class UnimapApp {
     }
 
     openTab(tabId) {
-        console.log('📑 Abrindo aba:', tabId);
+        console.log(' Abrindo aba:', tabId);
 
         document.querySelectorAll('.tab-content').forEach(tab => {
             tab.classList.remove('active');
@@ -921,7 +921,7 @@ class UnimapApp {
     }
 
     logout() {
-        console.log('👋 Fazendo logout...');
+        console.log(' Fazendo logout...');
         localStorage.removeItem('unimap_user');
         localStorage.removeItem('unimap_token');
         localStorage.removeItem('authToken');
@@ -936,7 +936,7 @@ function showSection(sectionId) {
     if (window.app) {
         window.app.showSection(sectionId);
     } else {
-        console.error('❌ App não inicializado');
+        console.error(' App não inicializado');
     }
 }
 
@@ -977,24 +977,24 @@ function logout() {
     }
 }
 
-// ✅ FUNÇÕES PARA AULAS (compatibilidade)
+// FUNÇÕES PARA AULAS (compatibilidade)
 function filtrarAulas(filtro) {
-    console.log('🔍 Filtrando aulas:', filtro);
+    console.log(' Filtrando aulas:', filtro);
     alert(`Filtrando por: ${filtro} - Em desenvolvimento`);
 }
 
 function filtrarAulasDesktop(filtro) {
-    console.log('🔍 Filtrando aulas desktop:', filtro);
+    console.log(' Filtrando aulas desktop:', filtro);
     alert(`Filtrando por: ${filtro} - Em desenvolvimento`);
 }
 
 function verDetalhesAula(idAula) {
-    console.log('📖 Ver detalhes da aula:', idAula);
+    console.log(' Ver detalhes da aula:', idAula);
     alert(`Detalhes da aula ${idAula}\n\nEm desenvolvimento...`);
 }
 
 function abrirMapaSala(bloco, andar, sala) {
-    console.log('🗺️ Abrindo mapa para:', bloco, andar, sala);
+    console.log(' Abrindo mapa para:', bloco, andar, sala);
 
     showSection('mapa-blocos');
 
@@ -1006,7 +1006,7 @@ function abrirMapaSala(bloco, andar, sala) {
     }, 300);
 }
 
-// ✅ FUNÇÕES DE NAVEGAÇÃO DO MAPA (ALUNO) - GLOBAIS
+// FUNÇÕES DE NAVEGAÇÃO DO MAPA (ALUNO) - GLOBAIS
 function voltarParaBlocosAluno() {
     if (window.app) {
         window.app.voltarParaBlocosAluno();
@@ -1019,7 +1019,7 @@ function voltarParaAndaresAluno() {
     }
 }
 
-// ✅ DETECTAR MUDANÇA DE TELA
+// DETECTAR MUDANÇA DE TELA
 window.addEventListener('resize', () => {
     if (window.app) {
         if (window.innerWidth >= 768 && window.app.currentSection === 'aulas-mobile') {
@@ -1030,21 +1030,21 @@ window.addEventListener('resize', () => {
     }
 });
 
-// ✅ FUNÇÕES DE DEBUG
+// FUNÇÕES DE DEBUG
 window.debugApp = function () {
-    console.log('🔍 DEBUG App:');
+    console.log(' DEBUG App:');
     console.log('- Seção atual:', window.app?.currentSection);
     console.log('- Bloco atual:', window.app?.currentBloco);
     console.log('- Andar atual:', window.app?.currentAndar);
     console.log('- Blocos carregados:', window.app?.blocosData?.length || 0);
-    console.log('- MapaManager:', typeof mapaManager !== 'undefined' ? '✅ Carregado' : '❌ Não carregado');
+    console.log('- MapaManager:', typeof mapaManager !== 'undefined' ? ' Carregado' : ' Não carregado');
     if (typeof mapaManager !== 'undefined') {
         console.log('- Salas carregadas:', mapaManager.salas.length);
     }
 };
 
 window.testarMapa = function (bloco = 'A', andar = '1º Andar') {
-    console.log(`🧪 Testando mapa: Bloco ${bloco}, Andar ${andar}`);
+    console.log(` Testando mapa: Bloco ${bloco}, Andar ${andar}`);
     if (window.app) {
         window.app.selecionarBlocoAluno(bloco);
         setTimeout(() => {
@@ -1053,12 +1053,12 @@ window.testarMapa = function (bloco = 'A', andar = '1º Andar') {
     }
 };
 
-// ✅ INICIALIZAÇÃO
+// INICIALIZAÇÃO
 window.addEventListener('DOMContentLoaded', () => {
-    console.log('📄 DOM carregado, inicializando app...');
+    console.log(' DOM carregado, inicializando app...');
     window.app = new UnimapApp();
 
-    // Inicializar managers se existirem
+ // Inicializar managers se existirem
     if (typeof aulasManager !== 'undefined') {
         aulasManager.init();
     }

@@ -15,7 +15,7 @@
     <!-- ==================== HEADER MOBILE ==================== -->
     <header class="mobile-header">
         <div class="header-top">
-            <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
+            <button class="menu-hamburger" onclick="toggleMenu()" aria-label="Abrir menu"><i class="fas fa-bars" aria-hidden="true"></i></button>
             <h1>UNIMAP - Professor</h1>
             <span class="user-name" id="mobileUserName">Professor</span>
         </div>
@@ -336,6 +336,7 @@
     <!-- ==================== SCRIPTS ==================== -->
     <script src="js/session.js"></script>
     <script src="js/config.js"></script>
+    <script src="js/icones.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/professor.js"></script>
@@ -343,12 +344,12 @@
     <script src="js/professor-mapa.js"></script>
 
     <script>
-        // ==================== VARIÁVEIS GLOBAIS ====================
+ // ==================== VARIÁVEIS GLOBAIS ====================
         let blocosData = [];
         let currentBloco = null;
         let currentAndar = null;
 
-        // ==================== FUNÇÕES DE NAVEGAÇÃO E UI ====================
+ // ==================== FUNÇÕES DE NAVEGAÇÃO E UI ====================
         function toggleMenu() {
             const nav = document.getElementById('mobileNav');
             nav.classList.toggle('active');
@@ -371,13 +372,13 @@
                 }
             });
 
-            console.log('📅 Data configurada (sem restrições)');
+            console.log(' Data configurada (sem restrições)');
         }
 
         function showSection(sectionId) {
             closeMenu();
 
-            // Atualizar navegação ativa
+ // Atualizar navegação ativa
             document.querySelectorAll('.nav-link').forEach(link => {
                 link.classList.remove('active');
             });
@@ -396,7 +397,7 @@
                 clickedMobileLink.classList.add('active');
             }
 
-            // Mostrar seção
+ // Mostrar seção
             document.querySelectorAll('.section').forEach(section => {
                 section.classList.remove('active');
             });
@@ -405,9 +406,9 @@
             if (targetSection) {
                 targetSection.classList.add('active');
 
-                // Configurar formulário quando a seção de criar aula for aberta
+ // Configurar formulário quando a seção de criar aula for aberta
                 if (sectionId === 'criar-aula') {
-                    console.log('🎯 Seção criar-aula aberta, configurando formulário...');
+                    console.log(' Seção criar-aula aberta, configurando formulário...');
                     setTimeout(() => {
                         configurarFormularioAula();
                         professorManager.carregarSalasDisponiveis();
@@ -419,6 +420,7 @@
         }
 
         function showNotification(message, type = 'info') {
+            if (window.UnimapIcones) message = window.UnimapIcones.semEmoji(message);
             const notification = document.createElement('div');
             notification.className = `custom-notification ${type}`;
             notification.innerHTML = `
@@ -442,16 +444,16 @@
             }, 5000);
         }
 
-        // ==================== FUNÇÕES DE INTERFACE DO USUÁRIO ====================
+ // ==================== FUNÇÕES DE INTERFACE DO USUÁRIO ====================
         function atualizarInterfaceUsuario() {
             const userData = localStorage.getItem('userData');
             if (userData) {
                 try {
                     const user = JSON.parse(userData);
 
-                    console.log('👤 Atualizando interface para usuário:', user);
+                    console.log(' Atualizando interface para usuário:', user);
 
-                    // Atualizar desktop
+ // Atualizar desktop
                     const desktopUser = document.getElementById('desktopUserName');
                     if (desktopUser) {
                         desktopUser.innerHTML = `
@@ -468,7 +470,7 @@
                         `;
                     }
 
-                    // Atualizar mobile
+ // Atualizar mobile
                     const mobileUser = document.getElementById('mobileUserName');
                     if (mobileUser) {
                         mobileUser.innerHTML = `${user.nome} <span style="
@@ -481,7 +483,7 @@
                         ">PROF</span>`;
                     }
 
-                    // Atualizar navegação mobile
+ // Atualizar navegação mobile
                     const navUser = document.getElementById('mobileNavUser');
                     if (navUser) {
                         navUser.innerHTML = `<i class="fas fa-chalkboard-teacher"></i> ${user.nome} <span style="
@@ -495,16 +497,16 @@
                     }
 
                 } catch (error) {
-                    console.error('❌ Erro ao carregar usuário:', error);
+                    console.error(' Erro ao carregar usuário:', error);
                 }
             } else {
-                console.warn('⚠️ Nenhum usuário encontrado no localStorage');
+                console.warn(' Nenhum usuário encontrado no localStorage');
             }
         }
 
-        // ==================== INICIALIZAÇÃO DO DASHBOARD ====================
+ // ==================== INICIALIZAÇÃO DO DASHBOARD ====================
         function initializeProfessorDashboard() {
-            console.log('🎯 Inicializando dashboard do professor...');
+            console.log(' Inicializando dashboard do professor...');
 
             const user = authManager.getCurrentUser();
 
@@ -514,62 +516,62 @@
                 return;
             }
 
-            console.log('👤 Professor carregado:', user);
+            console.log(' Professor carregado:', user);
 
             atualizarInterfaceUsuario();
             configurarFormularioAula();
             inicializarMapaProfessor();
         }
 
-        // ==================== CONFIGURAÇÃO DO FORMULÁRIO ====================
-        // ==================== CONFIGURAÇÃO DO FORMULÁRIO ====================
+ // ==================== CONFIGURAÇÃO DO FORMULÁRIO ====================
+ // ==================== CONFIGURAÇÃO DO FORMULÁRIO ====================
         let formSubmitHandler = null;
 
         function configurarFormularioAula() {
             const formCriarAula = document.getElementById('formCriarAula');
-            console.log('🔍 Procurando formulário:', formCriarAula);
+            console.log(' Procurando formulário:', formCriarAula);
 
             if (formCriarAula) {
-                console.log('✅ Formulário encontrado, configurando evento submit...');
+                console.log(' Formulário encontrado, configurando evento submit...');
                 configurarDataMinima();
-                // 🔥 CORREÇÃO: Remover event listener anterior se existir
+ // CORREÇÃO: Remover event listener anterior se existir
                 if (formSubmitHandler) {
                     formCriarAula.removeEventListener('submit', formSubmitHandler);
                 }
 
-                // 🔥 CORREÇÃO: Criar handler único e reutilizável
+ // CORREÇÃO: Criar handler único e reutilizável
                 formSubmitHandler = async function (e) {
-                    console.log('🎯 EVENTO SUBMIT DISPARADO!');
+                    console.log(' EVENTO SUBMIT DISPARADO!');
                     e.preventDefault();
-                    e.stopImmediatePropagation(); // 🔥 Impede múltiplas execuções
+                    e.stopImmediatePropagation(); //  Impede múltiplas execuções
 
                     const submitBtn = e.target.querySelector('button[type="submit"]');
 
-                    // 🔥 CORREÇÃO: Prevenir duplo clique
+ // CORREÇÃO: Prevenir duplo clique
                     if (submitBtn.disabled) {
-                        console.log('⚠️ Botão já está processando, ignorando clique...');
+                        console.log(' Botão já está processando, ignorando clique...');
                         return;
                     }
 
                     try {
                         await handleFormSubmit(e);
                     } catch (error) {
-                        console.error('❌ Erro no evento submit:', error);
+                        console.error(' Erro no evento submit:', error);
                         showNotification('Erro ao processar formulário: ' + error.message, 'error');
 
-                        // Reativar botão em caso de erro
+ // Reativar botão em caso de erro
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = '<i class="fas fa-save"></i> Criar Aula';
                     }
                 };
 
                 formCriarAula.addEventListener('submit', formSubmitHandler);
-                console.log('✅ Evento submit configurado com sucesso!');
+                console.log(' Evento submit configurado com sucesso!');
             } else {
-                console.error('❌ Formulário não encontrado!');
+                console.error(' Formulário não encontrado!');
             }
 
-            // Configurar busca de salas (mantido igual)
+ // Configurar busca de salas (mantido igual)
             const searchInput = document.getElementById('searchSala');
             const salaSelect = document.getElementById('salaSelect');
 
@@ -588,17 +590,17 @@
             }
         }
 
-        // 🔥 CORREÇÃO SIMPLIFICADA: Função para formatar data
+ // CORREÇÃO SIMPLIFICADA: Função para formatar data
         function formatarDataParaEnvio(dataString) {
-            // Simplesmente retorna a string da data, pois o input já está em YYYY-MM-DD
+ // Simplesmente retorna a string da data, pois o input já está em YYYY-MM-DD
             return dataString;
         }
 
-        // 🔥 CORREÇÃO: Configurar data mínima para hoje
+ // CORREÇÃO: Configurar data mínima para hoje
         function configurarDataMinima() {
             const dataInputs = document.querySelectorAll('input[type="date"]');
 
-            // Usar data atual do sistema (local)
+ // Usar data atual do sistema (local)
             const hoje = new Date();
             const ano = hoje.getFullYear();
             const mes = String(hoje.getMonth() + 1).padStart(2, '0');
@@ -607,32 +609,32 @@
 
             dataInputs.forEach(input => {
                 input.setAttribute('min', hojeFormatada);
-                // Se não tiver valor, definir como hoje
+ // Se não tiver valor, definir como hoje
                 if (!input.value) {
                     input.value = hojeFormatada;
                 }
             });
 
-            console.log('📅 Data mínima configurada:', hojeFormatada);
+            console.log(' Data mínima configurada:', hojeFormatada);
         }
 
-        // 🔥 CORREÇÃO: Validação de data no frontend - Permitir hoje
+ // CORREÇÃO: Validação de data no frontend - Permitir hoje
         function validarDataAula(dataAula, horarioFim) {
             if (!dataAula) return { valido: false, erro: 'Selecione uma data' };
 
             const dataSelecionada = new Date(dataAula);
             const hoje = new Date();
 
-            // Resetar horas para comparar apenas as datas
+ // Resetar horas para comparar apenas as datas
             dataSelecionada.setHours(0, 0, 0, 0);
             hoje.setHours(0, 0, 0, 0);
 
-            // Permitir hoje e datas futuras
+ // Permitir hoje e datas futuras
             if (dataSelecionada < hoje) {
                 return { valido: false, erro: 'Não é possível agendar aulas para datas passadas' };
             }
 
-            // Se for hoje, verificar se o horário já passou
+ // Se for hoje, verificar se o horário já passou
             if (dataSelecionada.getTime() === hoje.getTime() && horarioFim) {
                 const agora = new Date();
                 const [horaAtual, minutoAtual] = [agora.getHours(), agora.getMinutes()];
@@ -653,7 +655,7 @@
             const form = e.target;
             const submitBtn = form.querySelector('button[type="submit"]');
 
-            // Coletar dados do formulário
+ // Coletar dados do formulário
             const dadosAula = {
                 disciplina: document.getElementById('disciplinaInput').value.trim(),
                 sala_id: document.getElementById('salaSelect').value,
@@ -663,35 +665,35 @@
                 data_aula: document.getElementById('dataAula').value
             };
 
-            console.log('📋 Dados coletados do formulário:', dadosAula);
+            console.log(' Dados coletados do formulário:', dadosAula);
 
-            // Validação básica apenas dos campos obrigatórios
+ // Validação básica apenas dos campos obrigatórios
             if (!dadosAula.curso) {
-                showNotification('❌ Selecione um curso', 'error');
+                showNotification('Selecione um curso', 'error');
                 return;
             }
             if (!dadosAula.turma) {
-                showNotification('❌ Selecione uma turma', 'error');
+                showNotification('Selecione uma turma', 'error');
                 return;
             }
             if (!dadosAula.sala_id) {
-                showNotification('❌ Selecione uma sala', 'error');
+                showNotification('Selecione uma sala', 'error');
                 return;
             }
             if (!dadosAula.disciplina) {
-                showNotification('❌ Digite o nome da disciplina', 'error');
+                showNotification('Digite o nome da disciplina', 'error');
                 return;
             }
             if (!dadosAula.horario) {
-                showNotification('❌ Selecione um horário', 'error');
+                showNotification('Selecione um horário', 'error');
                 return;
             }
             if (!dadosAula.data_aula) {
-                showNotification('❌ Selecione uma data para a aula', 'error');
+                showNotification('Selecione uma data para a aula', 'error');
                 return;
             }
 
-            // Processar horário
+ // Processar horário
             if (dadosAula.horario) {
                 const [horario_inicio, horario_fim] = dadosAula.horario.split('-');
                 dadosAula.horario_inicio = horario_inicio.trim();
@@ -699,22 +701,22 @@
                 delete dadosAula.horario;
             }
 
-            // 🔥 CORREÇÃO RADICAL: SEM VALIDAÇÃO DE DATA
-            console.log('📅 Data selecionada (sem validação):', dadosAula.data_aula);
+ // CORREÇÃO RADICAL: SEM VALIDAÇÃO DE DATA
+            console.log(' Data selecionada (sem validação):', dadosAula.data_aula);
 
-            // Adicionar período
+ // Adicionar período
             const periodoSelect = document.getElementById('periodoSelect');
             if (periodoSelect && periodoSelect.value) {
                 dadosAula.periodo = parseInt(periodoSelect.value);
             } else {
-                showNotification('❌ Selecione um período', 'error');
+                showNotification('Selecione um período', 'error');
                 return;
             }
 
-            console.log('🚀 Dados completos para criação:', dadosAula);
-            console.log('🚀 Chamando professorManager.criarAula...');
+            console.log(' Dados completos para criação:', dadosAula);
+            console.log(' Chamando professorManager.criarAula...');
 
-            // Mostrar loading
+ // Mostrar loading
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando Aula...';
             submitBtn.disabled = true;
@@ -722,25 +724,25 @@
             try {
                 await professorManager.criarAula(dadosAula);
             } catch (error) {
-                console.error('❌ Erro no handleFormSubmit:', error);
+                console.error(' Erro no handleFormSubmit:', error);
                 showNotification('Erro ao criar aula: ' + error.message, 'error');
             } finally {
-                // Restaurar botão
+ // Restaurar botão
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
             }
         }
 
-        // ==================== FUNÇÕES DO MAPA ====================
+ // ==================== FUNÇÕES DO MAPA ====================
         function inicializarMapaProfessor() {
-            console.log('🗺️ Inicializando mapa do professor...');
+            console.log(' Inicializando mapa do professor...');
             carregarBlocos();
             configurarEventosMapa();
         }
 
         async function carregarBlocos() {
             try {
-                console.log('📡 Carregando blocos da API...');
+                console.log(' Carregando blocos da API...');
 
                 const token = localStorage.getItem('authToken');
                 const response = await fetch('/api/salas/blocos', {
@@ -751,13 +753,13 @@
 
                 if (response.ok) {
                     blocosData = await response.json();
-                    console.log('✅ Blocos carregados:', blocosData);
+                    console.log(' Blocos carregados:', blocosData);
                     renderizarBlocos(blocosData);
                 } else {
                     throw new Error('Erro ao carregar blocos');
                 }
             } catch (error) {
-                console.error('❌ Erro ao carregar blocos:', error);
+                console.error(' Erro ao carregar blocos:', error);
                 usarBlocosPadrao();
             }
         }
@@ -792,11 +794,11 @@
                 </div>
             `).join('');
 
-            console.log(`✅ ${blocos.length} blocos renderizados`);
+            console.log(` ${blocos.length} blocos renderizados`);
         }
 
         function usarBlocosPadrao() {
-            console.log('🔄 Usando blocos padrão...');
+            console.log(' Usando blocos padrão...');
             const blocosPadrao = [
                 { letra: 'A', total_salas: 58, total_andares: 4 },
                 { letra: 'B', total_salas: 46, total_andares: 4 },
@@ -817,7 +819,7 @@
         }
 
         async function selecionarBloco(bloco) {
-            console.log(`🏢 Selecionando bloco: ${bloco}`);
+            console.log(` Selecionando bloco: ${bloco}`);
             currentBloco = bloco;
 
             document.getElementById('bloco-selecionado-title').textContent = `Bloco ${bloco}`;
@@ -838,7 +840,7 @@
 
         async function carregarAndares(bloco) {
             try {
-                console.log(`📡 Carregando andares do bloco ${bloco}...`);
+                console.log(` Carregando andares do bloco ${bloco}...`);
 
                 const token = localStorage.getItem('authToken');
                 const response = await fetch(`/api/salas/bloco/${bloco}/andares`, {
@@ -849,13 +851,13 @@
 
                 if (response.ok) {
                     const andares = await response.json();
-                    console.log(`✅ Andares carregados:`, andares);
+                    console.log(` Andares carregados:`, andares);
                     renderizarAndares(andares);
                 } else {
                     throw new Error('Erro ao carregar andares');
                 }
             } catch (error) {
-                console.error('❌ Erro ao carregar andares:', error);
+                console.error(' Erro ao carregar andares:', error);
                 usarAndaresPadrao();
             }
         }
@@ -884,7 +886,7 @@
                 </div>
             `).join('');
 
-            console.log(`✅ ${andares.length} andares renderizados`);
+            console.log(` ${andares.length} andares renderizados`);
         }
 
         function usarAndaresPadrao() {
@@ -893,7 +895,7 @@
         }
 
         async function selecionarAndar(andar) {
-            console.log(`🚪 Selecionando andar: ${andar} do bloco ${currentBloco}`);
+            console.log(` Selecionando andar: ${andar} do bloco ${currentBloco}`);
             currentAndar = andar;
 
             document.getElementById('andar-selecionado-title').textContent = `Bloco ${currentBloco} > ${andar}`;
@@ -913,7 +915,7 @@
 
         async function carregarSalas(bloco, andar) {
             try {
-                console.log(`📡 Carregando salas: Bloco ${bloco}, Andar ${andar}`);
+                console.log(` Carregando salas: Bloco ${bloco}, Andar ${andar}`);
 
                 const token = localStorage.getItem('authToken');
                 const response = await fetch(`/api/salas/bloco/${bloco}/andar/${andar}`, {
@@ -924,13 +926,13 @@
 
                 if (response.ok) {
                     const salas = await response.json();
-                    console.log(`✅ ${salas.length} salas carregadas`);
+                    console.log(` ${salas.length} salas carregadas`);
                     renderizarSalas(salas);
                 } else {
                     throw new Error('Erro ao carregar salas');
                 }
             } catch (error) {
-                console.error('❌ Erro ao carregar salas:', error);
+                console.error(' Erro ao carregar salas:', error);
                 document.getElementById('salas-grid').innerHTML = `
                     <div class="professor-empty-state">
                         <i class="fas fa-exclamation-triangle fa-3x"></i>
@@ -960,7 +962,7 @@
                 <div class="professor-sala-card">
                     <div class="professor-sala-header">
                         <h4>Sala ${sala.numero}</h4>
-                        <span class="professor-sala-status disponivel">🟢 Disponível</span>
+                        <span class="professor-sala-status disponivel"><i class="fas fa-circle" aria-hidden="true"></i> Disponível</span>
                     </div>
                     <div class="professor-sala-info">
                         <p><strong>Tipo:</strong> ${sala.tipo}</p>
@@ -977,7 +979,7 @@
                 </div>
             `).join('');
 
-            console.log(`✅ ${salas.length} salas renderizadas`);
+            console.log(` ${salas.length} salas renderizadas`);
         }
 
         function voltarParaBlocos() {
@@ -1037,17 +1039,17 @@
             alert(`Detalhes da sala ${salaId}\n\nEm desenvolvimento...`);
         }
 
-        // ==================== FUNÇÕES DE DEBUG ====================
+ // ==================== FUNÇÕES DE DEBUG ====================
         function debugSections() {
-            console.log('🔍 DEBUG SECTIONS:');
+            console.log(' DEBUG SECTIONS:');
 
             document.querySelectorAll('.section').forEach(section => {
                 console.log(`--- ${section.id} ---`);
                 console.log('- display:', window.getComputedStyle(section).display);
                 console.log('- active:', section.classList.contains('active'));
-                console.log('- formCriarAula:', section.querySelector('#formCriarAula') ? '✅ ENCONTRADO' : '❌ NÃO ENCONTRADO');
+                console.log('- formCriarAula:', section.querySelector('#formCriarAula') ? ' ENCONTRADO' : ' NÃO ENCONTRADO');
 
-                // Mostrar todo o HTML interno da section
+ // Mostrar todo o HTML interno da section
                 if (section.id === 'criar-aula') {
                     console.log('- HTML:', section.innerHTML.substring(0, 500) + '...');
                 }
@@ -1055,7 +1057,7 @@
         }
 
         function debugForm() {
-            console.log('🔍 DEBUG FORMULÁRIO:');
+            console.log(' DEBUG FORMULÁRIO:');
             console.log('- formCriarAula:', document.getElementById('formCriarAula'));
             console.log('- botão submit:', document.querySelector('#formCriarAula button[type="submit"]'));
             console.log('- professorManager:', typeof professorManager);
@@ -1063,18 +1065,18 @@
         }
 
         function debugCursoPeriodo() {
-            console.log('🎓 DEBUG CURSO/PERÍODO:');
+            console.log(' DEBUG CURSO/PERÍODO:');
 
             const cursoSelect = document.getElementById('cursoSelect');
             const periodoSelect = document.getElementById('periodoSelect');
 
-            console.log('📊 Curso Select:');
+            console.log(' Curso Select:');
             console.log('- Elemento:', cursoSelect);
             console.log('- Valor:', cursoSelect?.value);
             console.log('- Disabled:', cursoSelect?.disabled);
             console.log('- Options:', cursoSelect?.options?.length);
 
-            console.log('📊 Período Select:');
+            console.log(' Período Select:');
             console.log('- Elemento:', periodoSelect);
             console.log('- Valor:', periodoSelect?.value);
             console.log('- Disabled:', periodoSelect?.disabled);
@@ -1082,19 +1084,19 @@
         }
 
         function testarHabilitarPeriodo() {
-            console.log('🧪 TESTE MANUAL: Habilitar Período');
+            console.log(' TESTE MANUAL: Habilitar Período');
 
             const periodoSelect = document.getElementById('periodoSelect');
             if (!periodoSelect) {
-                console.error('❌ periodoSelect não encontrado');
+                console.error(' periodoSelect não encontrado');
                 return;
             }
 
-            console.log('📊 Estado atual do período:');
+            console.log(' Estado atual do período:');
             console.log('- disabled:', periodoSelect.disabled);
             console.log('- classes:', periodoSelect.className);
 
-            // Habilitar manualmente
+ // Habilitar manualmente
             periodoSelect.disabled = false;
             periodoSelect.classList.remove('select-desabilitado');
             periodoSelect.classList.add('select-habilitado');
@@ -1102,11 +1104,11 @@
             periodoSelect.style.cursor = 'pointer';
             periodoSelect.style.backgroundColor = '';
 
-            console.log('📊 Estado após habilitar manualmente:');
+            console.log(' Estado após habilitar manualmente:');
             console.log('- disabled:', periodoSelect.disabled);
             console.log('- classes:', periodoSelect.className);
 
-            // Popular com alguns períodos de exemplo
+ // Popular com alguns períodos de exemplo
             periodoSelect.innerHTML = '';
             const placeholder = document.createElement('option');
             placeholder.value = '';
@@ -1120,7 +1122,7 @@
                 periodoSelect.appendChild(option);
             }
 
-            console.log('✅ Período habilitado manualmente para teste');
+            console.log(' Período habilitado manualmente para teste');
         }
 
         function debugLog(mensagem) {
@@ -1132,7 +1134,7 @@
             console.log(mensagem);
         }
 
-        // ==================== EVENT LISTENERS GLOBAIS ====================
+ // ==================== EVENT LISTENERS GLOBAIS ====================
         document.addEventListener('click', function (event) {
             const nav = document.getElementById('mobileNav');
             const hamburger = document.querySelector('.menu-hamburger');
@@ -1145,28 +1147,28 @@
         });
 
         document.addEventListener('DOMContentLoaded', function () {
-            console.log('📄 DOM carregado - Inicializando dashboard do professor...');
+            console.log(' DOM carregado - Inicializando dashboard do professor...');
 
             setTimeout(() => {
                 atualizarInterfaceUsuario();
                 initializeProfessorDashboard();
 
-                console.log('✅ Inicialização completa');
-                console.log('📊 Estado inicial:');
+                console.log(' Inicialização completa');
+                console.log(' Estado inicial:');
                 console.log('- professorManager:', typeof professorManager);
                 console.log('- formCriarAula:', document.getElementById('formCriarAula'));
 
             }, 500);
         });
 
-        // ==================== EXPORTAÇÃO PARA CONSOLE ====================
+ // ==================== EXPORTAÇÃO PARA CONSOLE ====================
         window.debugForm = debugForm;
         window.debugSections = debugSections;
         window.debugCursoPeriodo = debugCursoPeriodo;
         window.testarHabilitarPeriodo = testarHabilitarPeriodo;
         window.debugLog = debugLog;
         window.debugMapaProfessor = function () {
-            console.log('🔍 DEBUG MAPA PROFESSOR:');
+            console.log(' DEBUG MAPA PROFESSOR:');
             console.log('- Blocos carregados:', blocosData.length);
             console.log('- Bloco atual:', currentBloco);
             console.log('- Andar atual:', currentAndar);

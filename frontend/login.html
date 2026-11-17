@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>UNIMAP - Login</title>
     <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link rel="shortcut icon" type="imagex/png" href="../frontend/images/logo-unipam 2.png">
     <link rel="shortcut icon" type="imagex/png" href="images/logo-unipam 2.png">
@@ -60,50 +61,51 @@
 
     <script src="js/session.js"></script>
     <script src="js/config.js"></script>
+    <script src="js/icones.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
 <script>
     
-    // Inicialização do login - SIMPLIFICADA
+ // Inicialização do login - SIMPLIFICADA
     /*document.addEventListener('DOMContentLoaded', function() {
-        console.log('🔧 UNIMAP Login carregado - Inicializando...');
+        console.log(' UNIMAP Login carregado - Inicializando...');
         
-        // Verificar se authManager existe
+ // Verificar se authManager existe
         if (typeof authManager !== 'undefined') {
-            console.log('✅ AuthManager encontrado');
+            console.log(' AuthManager encontrado');
             authManager.init();
         } else {
-            console.error('❌ AuthManager NÃO encontrado!');
+            console.error(' AuthManager NÃO encontrado!');
         }
         
-        // Configurar formulário manualmente como fallback
+ // Configurar formulário manualmente como fallback
         const loginForm = document.getElementById('loginFormDesktop');
         const loginBtn = document.getElementById('loginBtnDesktop');
         
         if (loginForm) {
             loginForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                console.log('📝 Formulário submetido manualmente');
+                console.log(' Formulário submetido manualmente');
                 
                 const email = document.getElementById('emailDesktop').value;
                 const password = document.getElementById('passwordDesktop').value;
                 
                 if (!email || !password) {
-                    showMessage('❌ Email e senha são obrigatórios', 'error');
+                    showMessage('Email e senha são obrigatórios', 'error');
                     return;
                 }
                 
-                // Mostrar loading
+ // Mostrar loading
                 loginBtn.disabled = true;
-                loginBtn.innerHTML = '🔄 Entrando...';
+                loginBtn.innerHTML = ' Entrando...';
                 
                 try {
-                    console.log('📤 Enviando login manual...');
+                    console.log(' Enviando login manual...');
                     const result = await api.login(email, password);
-                    console.log('📥 Resposta:', result);
+                    console.log(' Resposta:', result);
                     
                     if (result.success) {
-                        showMessage('✅ Login realizado! Redirecionando...', 'success');
+                        showMessage('Login realizado! Redirecionando...', 'success');
                         localStorage.setItem('authToken', result.token);
                         localStorage.setItem('userData', JSON.stringify(result.user));
                         
@@ -114,8 +116,8 @@
                         throw new Error(result.error);
                     }
                 } catch (error) {
-                    console.error('❌ Erro no login:', error);
-                    showMessage('❌ ' + error.message, 'error');
+                    console.error(' Erro no login:', error);
+                    showMessage(error.message, 'error');
                 } finally {
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = 'Entrar';
@@ -136,7 +138,7 @@
 
 async function loginWithGoogle() {
     try {
-        console.log('🔐 Iniciando login com Google...');
+        console.log(' Iniciando login com Google...');
 
         if (typeof google === 'undefined') {
             throw new Error('Google Identity Services não carregada');
@@ -157,7 +159,7 @@ async function loginWithGoogle() {
             client.requestAccessToken();
         });
 
-        console.log('✅ Token Google obtido:', token ? 'SIM' : 'NÃO');
+        console.log(' Token Google obtido:', token ? 'SIM' : 'NÃO');
         
         const response = await fetch(`${window.location.origin}/api/auth/google`, {
         method: "POST",
@@ -166,19 +168,19 @@ async function loginWithGoogle() {
     });
 
         const data = await response.json();
-        console.log('📥 Resposta da API Google:', data);
+        console.log(' Resposta da API Google:', data);
 
         if (data.success) {
             localStorage.setItem("authToken", data.token);
             localStorage.setItem("userData", JSON.stringify(data.user));
-            showMessage(`✅ Bem-vindo(a), ${data.user.nome}!`, 'success');
+            showMessage(`Bem-vindo(a), ${data.user.nome}!`, 'success');
             
             setTimeout(() => {
                 window.location.href = "index.html";
             }, 1000);
         } else {
             if (data.error && data.error.includes('já está cadastrado')) {
-                showMessage('✅ Login realizado com sucesso!', 'success');
+                showMessage('Login realizado com sucesso!', 'success');
 
                 setTimeout(() => {
                     window.location.href = "index.html";
@@ -189,7 +191,7 @@ async function loginWithGoogle() {
         }
 
     } catch (error) {
-        console.error("❌ Erro no login Google:", error);
+        console.error(" Erro no login Google:", error);
 
         let errorMessage = 'Erro no login com Google';
         if (error.message.includes('cancelou')) {
@@ -198,7 +200,7 @@ async function loginWithGoogle() {
             errorMessage = 'Email já cadastrado. Use o login normal.';
         }
         
-        showMessage('❌ ' + errorMessage, 'error');
+        showMessage(errorMessage, 'error');
     }
 }
     function showMessage(message, type = 'info') {
@@ -209,9 +211,20 @@ async function loginWithGoogle() {
         
         const messageDiv = document.createElement('div');
         messageDiv.className = `custom-message custom-message-${type}`;
+ // O tipo decide o ícone; a chamada passa só o texto.
+        const icone = window.UnimapIcones
+            ? window.UnimapIcones.iconeDe(type)
+            : '';
+        const texto = window.UnimapIcones
+            ? window.UnimapIcones.semEmoji(message)
+            : message;
+
         messageDiv.innerHTML = `
-            <span>${message}</span>
-            <button onclick="this.parentElement.remove()">×</button>
+            ${icone}
+            <span>${texto}</span>
+            <button onclick="this.parentElement.remove()" aria-label="Fechar">
+                <i class="fas fa-xmark" aria-hidden="true"></i>
+            </button>
         `;
 
         const form = document.querySelector('.login-form');
@@ -284,23 +297,23 @@ async function loginWithGoogle() {
     `;
     document.head.appendChild(style);
 setTimeout(() => {
-    console.log('🔍 DEBUG - Scripts carregados:');
+    console.log(' DEBUG - Scripts carregados:');
     console.log('- api:', typeof api);
     console.log('- authManager:', typeof authManager);
     console.log('- ApiService:', typeof ApiService);
     
     if (typeof authManager === 'undefined') {
-        console.log('🔄 Tentando carregar auth.js manualmente...');
+        console.log(' Tentando carregar auth.js manualmente...');
         const script = document.createElement('script');
         script.src = '/js/auth.js';
         script.onload = function() {
-            console.log('✅ auth.js carregado manualmente!');
+            console.log(' auth.js carregado manualmente!');
             if (typeof authManager !== 'undefined') {
                 authManager.init();
             }
         };
         script.onerror = function() {
-            console.error('❌ Erro ao carregar auth.js manualmente');
+            console.error(' Erro ao carregar auth.js manualmente');
         };
         document.head.appendChild(script);
     }

@@ -12,7 +12,7 @@ class SelecaoPeriodoManager {
     init() {
         if (this.isInitialized) return;
 
-        console.log('🎯 DEBUG: Inicializando SelecaoPeriodoManager...');
+        console.log(' DEBUG: Inicializando SelecaoPeriodoManager...');
         this.setupEventListeners();
 
         setTimeout(() => {
@@ -48,7 +48,7 @@ class SelecaoPeriodoManager {
 
     async verificarSelecaoNecessaria() {
         if (this.verificacaoEmAndamento) {
-            console.log('⚠️ DEBUG: Verificação já em andamento, ignorando...');
+            console.log(' DEBUG: Verificação já em andamento, ignorando...');
             return;
         }
         this.verificacaoEmAndamento = true;
@@ -56,35 +56,35 @@ class SelecaoPeriodoManager {
         try {
             const userData = localStorage.getItem('userData');
             if (!userData) {
-                console.log('❌ DEBUG: Nenhum usuário logado');
+                console.log(' DEBUG: Nenhum usuário logado');
                 return;
             }
 
             const user = JSON.parse(userData);
-            console.log('👤 DEBUG: Usuário logado:', user.nome, '- Tipo:', user.tipo, '- ID:', user.id);
+            console.log(' DEBUG: Usuário logado:', user.nome, '- Tipo:', user.tipo, '- ID:', user.id);
 
             if (user.tipo !== 'aluno') {
-                console.log('✅ DEBUG: Não é aluno, não precisa de seleção');
+                console.log(' DEBUG: Não é aluno, não precisa de seleção');
                 return;
             }
 
-            console.log('🎯 DEBUG: É aluno, verificando dados no BANCO...');
+            console.log(' DEBUG: É aluno, verificando dados no BANCO...');
 
-            // VERIFICAÇÃO DIRETA NO BANCO
+ // VERIFICAÇÃO DIRETA NO BANCO
             const precisaSelecionar = await this.verificarDadosAlunoNoBanco(user.id);
-            console.log('🎯 DEBUG: RESULTADO FINAL DA VERIFICAÇÃO - precisaSelecionar =', precisaSelecionar);
+            console.log(' DEBUG: RESULTADO FINAL DA VERIFICAÇÃO - precisaSelecionar =', precisaSelecionar);
 
             if (precisaSelecionar && !this.modalAberto) {
-                console.log('🚀 DEBUG: MOSTRANDO MODAL - Aluno precisa completar cadastro');
+                console.log(' DEBUG: MOSTRANDO MODAL - Aluno precisa completar cadastro');
                 this.mostrarModal();
             } else if (!precisaSelecionar) {
-                console.log('✅ DEBUG: NÃO MOSTRAR MODAL - Aluno já tem cadastro completo');
+                console.log(' DEBUG: NÃO MOSTRAR MODAL - Aluno já tem cadastro completo');
             } else {
-                console.log('⚠️ DEBUG: Modal já está aberto ou condição não atendida');
+                console.log(' DEBUG: Modal já está aberto ou condição não atendida');
             }
 
         } catch (error) {
-            console.error('❌ DEBUG: Erro na verificação:', error);
+            console.error(' DEBUG: Erro na verificação:', error);
         } finally {
             this.verificacaoEmAndamento = false;
         }
@@ -92,7 +92,7 @@ class SelecaoPeriodoManager {
 
     async verificarDadosAlunoNoBanco(alunoId) {
         try {
-            console.log('🔍 DEBUG: Chamando API /api/aluno/dados-completos/' + alunoId);
+            console.log(' DEBUG: Chamando API /api/aluno/dados-completos/' + alunoId);
 
             const token = authManager ? authManager.getToken() : localStorage.getItem('authToken');
             const response = await fetch(`/api/aluno/dados-completos/${alunoId}`, {
@@ -109,12 +109,12 @@ class SelecaoPeriodoManager {
 
             const resultado = await response.json();
 
-            console.log('📊 DEBUG: Resposta COMPLETA da API:', resultado);
+            console.log(' DEBUG: Resposta COMPLETA da API:', resultado);
 
             if (resultado.success && resultado.data) {
                 const aluno = resultado.data;
 
-                console.log('📊 DEBUG: Dados REAIS do aluno:', aluno);
+                console.log(' DEBUG: Dados REAIS do aluno:', aluno);
 
                 const temCurso = aluno.curso && aluno.curso.trim() !== '';
                 const temPeriodo = aluno.periodo !== null && aluno.periodo !== undefined;
@@ -122,7 +122,7 @@ class SelecaoPeriodoManager {
 
                 const precisaSelecionar = !temCurso || !temPeriodo || !temTurma;
 
-                console.log('🎯 DEBUG: Análise CORRIGIDA:', {
+                console.log(' DEBUG: Análise CORRIGIDA:', {
                     temCurso: temCurso,
                     temPeriodo: temPeriodo,
                     temTurma: temTurma,
@@ -131,32 +131,32 @@ class SelecaoPeriodoManager {
 
                 return precisaSelecionar;
             } else {
-                console.error('❌ DEBUG: API não retornou dados válidos');
+                console.error(' DEBUG: API não retornou dados válidos');
                 return true;
             }
 
         } catch (error) {
-            console.error('❌ DEBUG: Erro na verificação do banco:', error);
+            console.error(' DEBUG: Erro na verificação do banco:', error);
             return true;
         }
     }
 
     async mostrarModal() {
-        console.log('🔄 DEBUG: Tentando mostrar modal...');
+        console.log(' DEBUG: Tentando mostrar modal...');
 
         if (this.modalAberto) {
-            console.log('⚠️ DEBUG: Modal já está aberto, ignorando...');
+            console.log(' DEBUG: Modal já está aberto, ignorando...');
             return;
         }
 
         const modalExistente = document.getElementById('modalSelecaoPeriodo');
         if (modalExistente && modalExistente.style.display === 'flex') {
-            console.log('⚠️ DEBUG: Modal já está visível no DOM');
+            console.log(' DEBUG: Modal já está visível no DOM');
             this.modalAberto = true;
             return;
         }
 
-        console.log('🏗️ DEBUG: Criando modal HTML...');
+        console.log(' DEBUG: Criando modal HTML...');
 
         if (!modalExistente) {
             this.criarModalHTML();
@@ -167,11 +167,11 @@ class SelecaoPeriodoManager {
             modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
             this.modalAberto = true;
-            console.log('✅ DEBUG: Modal aberto com sucesso!');
+            console.log(' DEBUG: Modal aberto com sucesso!');
 
             await this.carregarDadosIniciais();
         } else {
-            console.error('❌ DEBUG: Modal não foi criado corretamente');
+            console.error(' DEBUG: Modal não foi criado corretamente');
         }
     }
 
@@ -241,16 +241,16 @@ class SelecaoPeriodoManager {
             modal.style.display = 'none';
             document.body.style.overflow = 'auto';
             this.modalAberto = false;
-            console.log('✅ DEBUG: Modal fechado');
+            console.log(' DEBUG: Modal fechado');
         }
     }
 
     async carregarDadosIniciais() {
         try {
-            console.log('📥 DEBUG: Carregando dados iniciais...');
+            console.log(' DEBUG: Carregando dados iniciais...');
             await this.carregarCursos();
         } catch (error) {
-            console.error('❌ DEBUG: Erro ao carregar dados iniciais:', error);
+            console.error(' DEBUG: Erro ao carregar dados iniciais:', error);
             this.mostrarMensagemStatus('Erro ao carregar dados. Tente novamente.', 'error');
         }
     }
@@ -263,7 +263,7 @@ class SelecaoPeriodoManager {
             cursoSelect.innerHTML = '<option value="">Carregando cursos...</option>';
             cursoSelect.disabled = true;
 
-            // 🔥 CORREÇÃO: Usar a rota que retorna cursos COM total_periodos
+ // CORREÇÃO: Usar a rota que retorna cursos COM total_periodos
             const token = authManager ? authManager.getToken() : localStorage.getItem('authToken');
             const response = await fetch('/api/cursos/com-periodos', {
                 method: 'GET',
@@ -286,11 +286,11 @@ class SelecaoPeriodoManager {
                 const option = document.createElement('option');
                 option.value = curso.id;
                 option.textContent = curso.nome;
-                // 🔥 CORREÇÃO: Armazenar total_periodos para uso posterior
+ // CORREÇÃO: Armazenar total_periodos para uso posterior
                 option.dataset.totalPeriodos = curso.total_periodos;
                 cursoSelect.appendChild(option);
 
-                console.log('📚 Curso disponível:', {
+                console.log(' Curso disponível:', {
                     id: curso.id,
                     nome: curso.nome,
                     total_periodos: curso.total_periodos
@@ -299,10 +299,10 @@ class SelecaoPeriodoManager {
 
             cursoSelect.disabled = false;
             this.atualizarProgresso(1);
-            console.log(`✅ DEBUG: ${this.cursos.length} cursos carregados COM períodos`);
+            console.log(` DEBUG: ${this.cursos.length} cursos carregados COM períodos`);
 
         } catch (error) {
-            console.error('❌ DEBUG: Erro ao carregar cursos:', error);
+            console.error(' DEBUG: Erro ao carregar cursos:', error);
             this.mostrarMensagemStatus('Erro ao carregar cursos. Tente novamente.', 'error');
         }
     }
@@ -322,18 +322,18 @@ class SelecaoPeriodoManager {
             return;
         }
 
-        // 🔥 CORREÇÃO: Buscar o curso selecionado para obter o total_periodos REAL
+ // CORREÇÃO: Buscar o curso selecionado para obter o total_periodos REAL
         const cursoSelecionado = this.cursos.find(curso => curso.id == cursoId);
 
         if (!cursoSelecionado) {
-            console.error('❌ Curso selecionado não encontrado:', cursoId);
+            console.error(' Curso selecionado não encontrado:', cursoId);
             return;
         }
 
-        // 🔥 CORREÇÃO: Usar total_periodos REAL do curso (não valor padrão)
+ // CORREÇÃO: Usar total_periodos REAL do curso (não valor padrão)
         const totalPeriodos = cursoSelecionado.total_periodos || 8;
 
-        console.log('📊 DEBUG: Curso selecionado:', {
+        console.log(' DEBUG: Curso selecionado:', {
             nome: cursoSelecionado.nome,
             total_periodos: totalPeriodos,
             curso_id: cursoId
@@ -342,7 +342,7 @@ class SelecaoPeriodoManager {
         periodoSelect.disabled = true;
         periodoSelect.innerHTML = '<option value="">Carregando períodos...</option>';
 
-        // 🔥 CORREÇÃO: Passar o totalPeriodos REAL
+ // CORREÇÃO: Passar o totalPeriodos REAL
         await this.carregarPeriodos(totalPeriodos);
 
         periodoSelect.disabled = false;
@@ -358,7 +358,7 @@ class SelecaoPeriodoManager {
             const periodoSelect = document.getElementById('periodoSelect');
             if (!periodoSelect) return;
 
-            console.log('🔄 DEBUG: Carregando períodos. Total:', totalPeriodos);
+            console.log(' DEBUG: Carregando períodos. Total:', totalPeriodos);
 
             periodoSelect.innerHTML = '<option value="">Carregando períodos...</option>';
             periodoSelect.disabled = true;
@@ -385,10 +385,10 @@ class SelecaoPeriodoManager {
 
             periodoSelect.disabled = false;
 
-            console.log(`✅ DEBUG: ${periodos.length} períodos carregados para o curso`);
+            console.log(` DEBUG: ${periodos.length} períodos carregados para o curso`);
 
         } catch (error) {
-            console.error('❌ DEBUG: Erro ao carregar períodos:', error);
+            console.error(' DEBUG: Erro ao carregar períodos:', error);
 
             const periodoSelect = document.getElementById('periodoSelect');
             if (periodoSelect) {
@@ -454,7 +454,7 @@ class SelecaoPeriodoManager {
                     throw new Error('Erro ao carregar turmas públicas');
                 }
             } catch (error) {
-                console.error('❌ DEBUG: Erro ao carregar turmas:', error);
+                console.error(' DEBUG: Erro ao carregar turmas:', error);
                 turmasEncontradas = this.getTurmasFallback(cursoId, periodo);
             }
 
@@ -477,7 +477,7 @@ class SelecaoPeriodoManager {
             turmaSelect.disabled = false;
 
         } catch (error) {
-            console.error('❌ DEBUG: Erro ao carregar turmas:', error);
+            console.error(' DEBUG: Erro ao carregar turmas:', error);
 
             const turmaSelect = document.getElementById('turmaSelect');
             if (turmaSelect) {
@@ -536,7 +536,7 @@ class SelecaoPeriodoManager {
             const authToken = localStorage.getItem('authToken');
 
             if (!userData || !authToken) {
-                console.error('❌ DEBUG: Usuário não autenticado');
+                console.error(' DEBUG: Usuário não autenticado');
                 this.mostrarMensagemStatus('Erro de autenticação. Faça login novamente.', 'error');
                 return;
             }
@@ -558,11 +558,11 @@ class SelecaoPeriodoManager {
                 turma_id: turmaSelect.value
             };
 
-            console.log('💾 DEBUG: Salvando seleção:', selecao);
+            console.log(' DEBUG: Salvando seleção:', selecao);
 
             this.mostrarLoading(true);
 
-            // 🔥 FALLBACK: Usar fetch direto
+ // FALLBACK: Usar fetch direto
             const response = await fetch('/api/aluno/completar-cadastro', {
                 method: 'POST',
                 headers: {
@@ -575,11 +575,11 @@ class SelecaoPeriodoManager {
             const resultado = await response.json();
 
             if (resultado.success) {
-                console.log('✅ DEBUG: Dados salvos no banco!');
+                console.log(' DEBUG: Dados salvos no banco!');
 
                 if (resultado.user) {
                     localStorage.setItem('userData', JSON.stringify(resultado.user));
-                    console.log('✅ DEBUG: localStorage atualizado');
+                    console.log(' DEBUG: localStorage atualizado');
                 }
 
                 this.mostrarMensagemStatus('Cadastro completado com sucesso!', 'success');
@@ -589,7 +589,7 @@ class SelecaoPeriodoManager {
                     this.mostrarAlertaSucesso();
 
                     setTimeout(() => {
-                        console.log('🔄 DEBUG: Recarregando página...');
+                        console.log(' DEBUG: Recarregando página...');
                         window.location.reload();
                     }, 1500);
                 }, 1000);
@@ -598,7 +598,7 @@ class SelecaoPeriodoManager {
             }
 
         } catch (error) {
-            console.error('❌ DEBUG: Erro ao salvar:', error);
+            console.error(' DEBUG: Erro ao salvar:', error);
             this.mostrarMensagemStatus('Erro ao salvar: ' + error.message, 'error');
         } finally {
             this.mostrarLoading(false);
@@ -653,7 +653,7 @@ class SelecaoPeriodoManager {
                             <i class="fas fa-check-circle"></i>
                         </div>
                         <div class="alerta-texto">
-                            <h3>Cadastro Completo! 🎉</h3>
+                            <h3>Cadastro Completo! </h3>
                             <p>Agora você tem acesso a todas as funcionalidades do UNIMAP</p>
                         </div>
                         <button class="alerta-fechar" onclick="this.parentElement.parentElement.remove()">
@@ -687,13 +687,13 @@ const selecaoPeriodoManager = new SelecaoPeriodoManager();
 // Inicialização
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('📄 DEBUG: DOM carregado, aguardando inicialização...');
+        console.log(' DEBUG: DOM carregado, aguardando inicialização...');
         setTimeout(() => {
             selecaoPeriodoManager.init();
         }, 500);
     });
 } else {
-    console.log('📄 DEBUG: DOM já carregado, aguardando inicialização...');
+    console.log(' DEBUG: DOM já carregado, aguardando inicialização...');
     setTimeout(() => {
         selecaoPeriodoManager.init();
     }, 500);

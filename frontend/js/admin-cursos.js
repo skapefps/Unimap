@@ -2,13 +2,13 @@
 class AdminCursos {
     constructor() {
         this.cursos = [];
-        // Resolve pela origem atual. Estava fixo em localhost, o que
-        // deixava esta tela inteira sem backend em producao.
+ // Resolve pela origem atual. Estava fixo em localhost, o que
+ // deixava esta tela inteira sem backend em producao.
         this.API_BASE = Config.getBaseURL() + '';
     }
 
     init() {
-        console.log('🎯 Inicializando Admin Cursos...');
+        console.log(' Inicializando Admin Cursos...');
         this.verificarAutenticacao();
         this.carregarTodosCursos();
         this.setupEventListeners();
@@ -17,14 +17,14 @@ class AdminCursos {
     verificarAutenticacao() {
         this.token = localStorage.getItem('authToken') || localStorage.getItem('unimap_token');
         if (!this.token) {
-            console.error('❌ Token não encontrado!');
+            console.error(' Token não encontrado!');
             this.showNotification('Usuário não autenticado. Faça login novamente.', 'error');
             setTimeout(() => {
                 window.location.href = 'login.html';
             }, 2000);
             return false;
         }
-        console.log('✅ Token encontrado');
+        console.log(' Token encontrado');
         return true;
     }
 
@@ -40,7 +40,7 @@ class AdminCursos {
 
         try {
             this.showLoading(true);
-            console.log('📚 Carregando TODOS os cursos...');
+            console.log(' Carregando TODOS os cursos...');
 
             const response = await fetch(`${this.API_BASE}/cursos/todos`, {
                 headers: { 'Authorization': `Bearer ${this.token}` }
@@ -51,9 +51,9 @@ class AdminCursos {
             }
 
             this.cursos = await response.json();
-            console.log(`✅ ${this.cursos.length} cursos carregados (ativos + inativos)`);
+            console.log(` ${this.cursos.length} cursos carregados (ativos + inativos)`);
 
-            // Ordenar por ID
+ // Ordenar por ID
             this.cursos.sort((a, b) => a.id - b.id);
 
             this.renderizarCursos();
@@ -61,7 +61,7 @@ class AdminCursos {
             return true;
 
         } catch (error) {
-            console.error('❌ Erro ao carregar cursos:', error);
+            console.error(' Erro ao carregar cursos:', error);
             this.showNotification('Erro ao recarregar lista de cursos: ' + error.message, 'error');
             return false;
         } finally {
@@ -80,7 +80,7 @@ class AdminCursos {
         tbody.innerHTML = this.cursos.map(curso => {
             const isAtivo = curso.ativo === 1;
 
-            // Formatar turnos para exibição
+ // Formatar turnos para exibição
             const turnosExibicao = curso.turno ?
                 curso.turno.split(',').map(t => `<span class="turno-badge">${t}</span>`).join('') :
                 '-';
@@ -139,7 +139,7 @@ class AdminCursos {
         const cursosAtivos = this.cursos.filter(curso => curso.ativo === 1).length;
         const cursosInativos = totalCursos - cursosAtivos;
 
-        console.log(`📊 Estatísticas: Total=${totalCursos}, Ativos=${cursosAtivos}, Inativos=${cursosInativos}`);
+        console.log(` Estatísticas: Total=${totalCursos}, Ativos=${cursosAtivos}, Inativos=${cursosInativos}`);
 
         document.getElementById('total-cursos').textContent = totalCursos;
         document.getElementById('cursos-ativos').textContent = cursosAtivos;
@@ -167,7 +167,7 @@ class AdminCursos {
         document.getElementById('cursoNome').value = curso.nome;
         document.getElementById('cursoPeriodos').value = curso.total_periodos;
 
-        // Preencher checkboxes de turno (múltiplos)
+ // Preencher checkboxes de turno (múltiplos)
         const turnos = curso.turno ? curso.turno.split(',') : [];
         const checkboxes = document.querySelectorAll('input[name="cursoTurno"]');
 
@@ -190,20 +190,20 @@ class AdminCursos {
         document.getElementById('cursoForm').reset();
         document.getElementById('cursoId').value = '';
 
-        // Limpar checkboxes
+ // Limpar checkboxes
         const checkboxes = document.querySelectorAll('input[name="cursoTurno"]');
         checkboxes.forEach(checkbox => {
             checkbox.checked = false;
         });
     }
 
-    // ⭐⭐ MÉTODO SALVAR CURSO - CORRIGIDO E SIMPLIFICADO ⭐⭐
+ // ⭐⭐ MÉTODO SALVAR CURSO - CORRIGIDO E SIMPLIFICADO ⭐⭐
     async salvarCurso() {
         if (!this.verificarAutenticacao()) return;
 
         const formData = this.getFormData();
 
-        // Validação básica
+ // Validação básica
         if (!formData.nome || formData.nome.trim() === '') {
             this.showNotification('Nome do curso é obrigatório', 'error');
             return;
@@ -220,9 +220,9 @@ class AdminCursos {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
 
-            console.log('💾 Enviando dados do curso:', formData);
+            console.log(' Enviando dados do curso:', formData);
 
-            // Configurar requisição
+ // Configurar requisição
             const url = formData.id 
                 ? `${this.API_BASE}/cursos/${formData.id}`
                 : `${this.API_BASE}/cursos`;
@@ -244,9 +244,9 @@ class AdminCursos {
                     total_periodos: formData.total_periodos
                 };
 
-            console.log(formData.id ? `✏️ Editando curso ID: ${formData.id}` : '🆕 Criando novo curso');
+            console.log(formData.id ? ` Editando curso ID: ${formData.id}` : '🆕 Criando novo curso');
 
-            // Fazer requisição
+ // Fazer requisição
             const response = await fetch(url, {
                 method: method,
                 headers: {
@@ -256,26 +256,26 @@ class AdminCursos {
                 body: JSON.stringify(requestBody)
             });
 
-            console.log('📨 Status da resposta:', response.status);
+            console.log(' Status da resposta:', response.status);
             
-            // Processar resposta
+ // Processar resposta
             const responseData = await response.json();
-            console.log('📨 Resposta completa:', responseData);
+            console.log(' Resposta completa:', responseData);
 
-            // ⭐⭐ VERIFICAÇÃO SIMPLES E DIRETA ⭐⭐
+ // ⭐⭐ VERIFICAÇÃO SIMPLES E DIRETA ⭐⭐
             if (response.ok && responseData.success === true) {
-                // ✅ SUCESSO
-                console.log('✅ Curso salvo com sucesso');
+ // SUCESSO
+                console.log(' Curso salvo com sucesso');
                 this.fecharModalCurso();
                 await this.carregarTodosCursos();
                 this.showNotification(responseData.message, 'success');
             } else {
-                // ❌ ERRO
+ // ERRO
                 throw new Error(responseData.error || responseData.message || `Erro ${response.status}`);
             }
 
         } catch (error) {
-            console.error('❌ Erro ao salvar curso:', error);
+            console.error(' Erro ao salvar curso:', error);
             this.showNotification('Erro ao salvar curso: ' + error.message, 'error');
         } finally {
             this.showLoading(false);
@@ -318,7 +318,7 @@ class AdminCursos {
         try {
             this.showLoading(true);
 
-            console.log(`⏸️ Desativando curso ID: ${cursoId}`);
+            console.log(`⏸ Desativando curso ID: ${cursoId}`);
 
             const response = await fetch(`${this.API_BASE}/cursos/${cursoId}`, {
                 method: 'DELETE',
@@ -327,9 +327,9 @@ class AdminCursos {
                 }
             });
 
-            console.log('📨 Status da desativação:', response.status);
+            console.log(' Status da desativação:', response.status);
             const responseData = await response.json();
-            console.log('📨 Resposta da desativação:', responseData);
+            console.log(' Resposta da desativação:', responseData);
 
             if (!response.ok || !responseData.success) {
                 throw new Error(responseData.error || `Erro ${response.status}`);
@@ -339,7 +339,7 @@ class AdminCursos {
             this.showNotification(responseData.message, 'success');
 
         } catch (error) {
-            console.error('❌ Erro ao desativar curso:', error);
+            console.error(' Erro ao desativar curso:', error);
             this.showNotification('Erro ao desativar curso: ' + error.message, 'error');
         } finally {
             this.showLoading(false);
@@ -362,7 +362,7 @@ class AdminCursos {
         try {
             this.showLoading(true);
 
-            console.log(`▶️ Ativando curso ID: ${cursoId}`);
+            console.log(`▶ Ativando curso ID: ${cursoId}`);
 
             const response = await fetch(`${this.API_BASE}/cursos/${cursoId}`, {
                 method: 'PUT',
@@ -379,9 +379,9 @@ class AdminCursos {
                 })
             });
 
-            console.log('📨 Status da ativação:', response.status);
+            console.log(' Status da ativação:', response.status);
             const responseData = await response.json();
-            console.log('📨 Resposta da ativação:', responseData);
+            console.log(' Resposta da ativação:', responseData);
 
             if (!response.ok || !responseData.success) {
                 throw new Error(responseData.error || `Erro ${response.status}`);
@@ -391,7 +391,7 @@ class AdminCursos {
             this.showNotification(responseData.message, 'success');
 
         } catch (error) {
-            console.error('❌ Erro ao ativar curso:', error);
+            console.error(' Erro ao ativar curso:', error);
             this.showNotification('Erro ao ativar curso: ' + error.message, 'error');
         } finally {
             this.showLoading(false);
@@ -412,14 +412,14 @@ class AdminCursos {
             return;
         }
 
-        if (!confirm(`⚠️ ATENÇÃO: Esta ação não pode ser desfeita!\n\nTem certeza que deseja EXCLUIR PERMANENTEMENTE o curso "${curso.nome}"?\n\nTodos os dados relacionados a este curso serão perdidos.`)) {
+        if (!confirm(`ATENÇÃO: Esta ação não pode ser desfeita!\n\nTem certeza que deseja EXCLUIR PERMANENTEMENTE o curso "${curso.nome}"?\n\nTodos os dados relacionados a este curso serão perdidos.`)) {
             return;
         }
 
         try {
             this.showLoading(true);
 
-            console.log(`🗑️ Excluindo permanentemente curso ID: ${cursoId}`);
+            console.log(` Excluindo permanentemente curso ID: ${cursoId}`);
 
             const response = await fetch(`${this.API_BASE}/cursos/admin/excluir-permanentemente/${cursoId}`, {
                 method: 'DELETE',
@@ -428,9 +428,9 @@ class AdminCursos {
                 }
             });
 
-            console.log('📨 Status da exclusão:', response.status);
+            console.log(' Status da exclusão:', response.status);
             const responseData = await response.json();
-            console.log('📨 Resposta da exclusão:', responseData);
+            console.log(' Resposta da exclusão:', responseData);
 
             if (!response.ok || !responseData.success) {
                 throw new Error(responseData.error || `Erro ${response.status}`);
@@ -440,7 +440,7 @@ class AdminCursos {
             this.showNotification(responseData.message, 'success');
 
         } catch (error) {
-            console.error('❌ Erro ao excluir curso:', error);
+            console.error(' Erro ao excluir curso:', error);
             this.showNotification('Erro ao excluir curso: ' + error.message, 'error');
         } finally {
             this.showLoading(false);
@@ -451,7 +451,7 @@ class AdminCursos {
         const curso = this.cursos.find(c => c.id === cursoId);
         if (curso) {
             const status = curso.ativo === 1 ? 'Ativo' : 'Inativo';
-            alert(`📚 Disciplinas vinculadas ao curso: ${curso.nome}\n📊 Status: ${status}\n\n🔧 Funcionalidade em desenvolvimento\n\nA vinculação de disciplinas aos cursos ainda está sendo implementada no banco de dados.`);
+            alert(`Disciplinas vinculadas ao curso: ${curso.nome}\n Status: ${status}\n\n Funcionalidade em desenvolvimento\n\nA vinculação de disciplinas aos cursos ainda está sendo implementada no banco de dados.`);
         }
     }
 
@@ -459,7 +459,7 @@ class AdminCursos {
         this.abrirModalEditarCurso(cursoId);
     }
 
-    // Métodos utilitários
+ // Métodos utilitários
     showLoading(show) {
         if (show) {
             document.body.style.cursor = 'wait';
@@ -469,21 +469,23 @@ class AdminCursos {
     }
 
     showNotification(message, type = 'info') {
-        // Remover notificações existentes
+ // Remover notificações existentes
         const existingNotifications = document.querySelectorAll('.notification');
         existingNotifications.forEach(notification => {
             notification.remove();
         });
 
-        // Criar nova notificação
+ // Criar nova notificação
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
 
         const icons = {
-            success: '✅',
-            error: '❌',
-            info: 'ℹ️',
-            warning: '⚠️'
+            // Vão para innerHTML; usar Font Awesome mantém o ícone igual
+            // em todo sistema operacional e acompanha tamanho e tema.
+            success: '<i class="fas fa-circle-check" aria-hidden="true"></i>',
+            error: '<i class="fas fa-circle-xmark" aria-hidden="true"></i>',
+            info: '<i class="fas fa-circle-info" aria-hidden="true"></i>',
+            warning: '<i class="fas fa-triangle-exclamation" aria-hidden="true"></i>'
         };
 
         notification.innerHTML = `
@@ -498,7 +500,7 @@ class AdminCursos {
 
         document.body.appendChild(notification);
 
-        // Auto-remover após 5 segundos
+ // Auto-remover após 5 segundos
         setTimeout(() => {
             if (notification.parentElement) {
                 notification.remove();
@@ -506,7 +508,7 @@ class AdminCursos {
         }, 5000);
     }
 
-    // Métodos auxiliares para debug
+ // Métodos auxiliares para debug
     carregarCursos() {
         this.carregarTodosCursos();
     }
@@ -526,7 +528,7 @@ class AdminCursos {
 
 // Inicializar automaticamente
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🚀 DOM carregado, inicializando Admin Cursos...');
+    console.log(' DOM carregado, inicializando Admin Cursos...');
     window.adminCursos = new AdminCursos();
     adminCursos.init();
 });

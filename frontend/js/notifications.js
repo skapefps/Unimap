@@ -6,7 +6,7 @@ class NotificationManager {
     }
 
     init() {
-        // Criar container de notificações se não existir
+ // Criar container de notificações se não existir
         if (!document.getElementById('notifications-container')) {
             this.container = document.createElement('div');
             this.container.id = 'notifications-container';
@@ -46,12 +46,12 @@ class NotificationManager {
 
         this.container.appendChild(notification);
 
-        // Animação de entrada
+ // Animação de entrada
         setTimeout(() => {
             notification.classList.add('show');
         }, 10);
 
-        // Auto-remover após duração
+ // Auto-remover após duração
         if (duration > 0) {
             setTimeout(() => {
                 if (notification.parentElement) {
@@ -84,7 +84,7 @@ class NotificationManager {
         return this.show(message, 'info', duration);
     }
 
-    // Método global para compatibilidade
+ // Método global para compatibilidade
     static show(message, type = 'info', duration = 5000) {
         if (!window.notificationManager) {
             window.notificationManager = new NotificationManager();
@@ -123,6 +123,7 @@ class NotificationManager {
 
 // Funções globais para compatibilidade
 function showNotification(message, type = 'info', duration = 5000) {
+    if (window.UnimapIcones) message = window.UnimapIcones.semEmoji(message);
     return NotificationManager.show(message, type, duration);
 }
 

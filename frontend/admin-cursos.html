@@ -14,7 +14,7 @@
 <body>
     <header class="mobile-header">
         <div class="header-top">
-            <button class="menu-hamburger" onclick="toggleMenu()">☰</button>
+            <button class="menu-hamburger" onclick="toggleMenu()" aria-label="Abrir menu"><i class="fas fa-bars" aria-hidden="true"></i></button>
             <h1>UNIMAP - Cursos</h1>
             <span class="user-name" id="mobileUserName">Admin</span>
         </div>
@@ -193,6 +193,7 @@
 
     <script src="js/session.js"></script>
     <script src="js/config.js"></script>
+    <script src="js/icones.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/admin-cursos.js"></script>
@@ -237,7 +238,7 @@
                 }
             }
 
-            // Inicializar gerenciador de cursos
+ // Inicializar gerenciador de cursos
             if (window.adminCursos) {
                 adminCursos.init();
             }

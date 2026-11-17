@@ -10,11 +10,11 @@ class AdminManager {
         this.setupEventListeners();
         this.updateUserInfo();
         
-        // SINCRONIZAR COM adminTurmas SE ESTIVER DISPONÍVEL
+ // SINCRONIZAR COM adminTurmas SE ESTIVER DISPONÍVEL
         this.sincronizarAdminTurmas();
     }
 
-    // 🔥 MÉTODO checkAdminAccess ADICIONADO
+ // MÉTODO checkAdminAccess ADICIONADO
     async checkAdminAccess() {
         const userData = localStorage.getItem('userData');
         if (!userData) {
@@ -25,16 +25,16 @@ class AdminManager {
         try {
             const user = JSON.parse(userData);
             if (user.tipo !== 'admin') {
-                alert('❌ Acesso restrito a administradores!');
+                alert('Acesso restrito a administradores!');
                 window.location.href = 'index.html';
                 return;
             }
         } catch (error) {
-            console.error('❌ Erro ao verificar acesso:', error);
+            console.error(' Erro ao verificar acesso:', error);
             window.location.href = 'login.html';
         }
     }
-    // MÉTODOS PARA O DASHBOARD - CORRIGIDOS
+ // MÉTODOS PARA O DASHBOARD - CORRIGIDOS
 vincularAlunosTurma(turmaId) {
     this.verificarEExecutar(() => {
         adminTurmas.vincularAlunosTurma(turmaId);
@@ -53,7 +53,7 @@ async verAlunosTurmaDashboard(turmaId) {
     }, 'verAlunosTurma');
 }
 
-// 🔥 NOVO MÉTODO: Verificar e executar com fallback
+// NOVO MÉTODO: Verificar e executar com fallback
 verificarEExecutar(callback, acao) {
     return new Promise((resolve) => {
         const tentarExecutar = (tentativa = 0) => {
@@ -61,10 +61,10 @@ verificarEExecutar(callback, acao) {
                 const resultado = callback();
                 resolve(resultado);
             } else if (tentativa < 5) {
-                console.log(`🔄 Tentativa ${tentativa + 1}/5 - Aguardando adminTurmas...`);
+                console.log(` Tentativa ${tentativa + 1}/5 - Aguardando adminTurmas...`);
                 setTimeout(() => tentarExecutar(tentativa + 1), 500);
             } else {
-                console.error(`❌ adminTurmas não carregado após 5 tentativas para: ${acao}`);
+                console.error(` adminTurmas não carregado após 5 tentativas para: ${acao}`);
                 this.showNotification('Sistema de turmas não carregado. Recarregue a página.', 'error');
                 resolve(null);
             }
@@ -74,23 +74,23 @@ verificarEExecutar(callback, acao) {
     });
 }
 
- // 🔥 MÉTODO CORRIGIDO: Sincronizar com adminTurmas
+ // MÉTODO CORRIGIDO: Sincronizar com adminTurmas
 async sincronizarAdminTurmas() {
-    console.log('🔄 Iniciando sincronização com adminTurmas...');
+    console.log(' Iniciando sincronização com adminTurmas...');
     
-    // Aguardar o adminTurmas carregar com timeout
+ // Aguardar o adminTurmas carregar com timeout
     let tentativas = 0;
     const maxTentativas = 10;
     
     while (tentativas < maxTentativas) {
         if (window.adminTurmas && typeof adminTurmas.carregarTurmas === 'function') {
-            console.log('✅ adminTurmas carregado, sincronizando...');
+            console.log(' adminTurmas carregado, sincronizando...');
             try {
                 await adminTurmas.carregarTurmas();
-                console.log('✅ Sincronização com adminTurmas concluída');
+                console.log(' Sincronização com adminTurmas concluída');
                 return true;
             } catch (error) {
-                console.error('❌ Erro na sincronização:', error);
+                console.error(' Erro na sincronização:', error);
                 return false;
             }
         }
@@ -100,49 +100,49 @@ async sincronizarAdminTurmas() {
         await new Promise(resolve => setTimeout(resolve, 1000));
     }
     
-    console.error('❌ Timeout: adminTurmas não carregado após 10 segundos');
+    console.error(' Timeout: adminTurmas não carregado após 10 segundos');
     return false;
 }
 
     async loadDashboardData() {
         try {
-            console.log('📊 Carregando dados do dashboard...');
+            console.log(' Carregando dados do dashboard...');
             const token = localStorage.getItem('authToken');
             
             if (!token) {
-                console.error('❌ Token não encontrado');
+                console.error(' Token não encontrado');
                 this.showEmptyState();
                 return;
             }
 
-            // Carregar estatísticas
+ // Carregar estatísticas
             const statsResponse = await fetch('/api/dashboard/estatisticas', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             
             if (statsResponse.ok) {
                 const stats = await statsResponse.json();
-                console.log('📈 Estatísticas carregadas:', stats);
+                console.log(' Estatísticas carregadas:', stats);
                 this.updateStats(stats);
             } else {
-                console.error('❌ Erro ao carregar estatísticas:', statsResponse.status);
+                console.error(' Erro ao carregar estatísticas:', statsResponse.status);
                 this.useFallbackStats();
             }
 
-            // Carregar últimos usuários
+ // Carregar últimos usuários
             await this.carregarUsuarios();
 
-            // CARREGAR TURMAS DO BANCO DIRETAMENTE
+ // CARREGAR TURMAS DO BANCO DIRETAMENTE
             await this.carregarTurmasDashboard();
 
         } catch (error) {
-            console.error('❌ Erro ao carregar dashboard:', error);
+            console.error(' Erro ao carregar dashboard:', error);
             this.useFallbackStats();
             this.showEmptyState();
         }
     }
 
-    // MÉTODO: Carregar turmas para o dashboard
+ // MÉTODO: Carregar turmas para o dashboard
     async carregarTurmasDashboard() {
         try {
             const token = localStorage.getItem('authToken');
@@ -152,21 +152,21 @@ async sincronizarAdminTurmas() {
             
             if (response.ok) {
                 const turmasData = await response.json();
-                console.log('📚 Turmas carregadas para dashboard:', turmasData);
+                console.log(' Turmas carregadas para dashboard:', turmasData);
                 this.renderizarTurmasDashboard(turmasData);
             } else {
-                console.error('❌ Erro ao carregar turmas:', response.status);
+                console.error(' Erro ao carregar turmas:', response.status);
             }
         } catch (error) {
-            console.error('❌ Erro ao carregar turmas do dashboard:', error);
+            console.error(' Erro ao carregar turmas do dashboard:', error);
         }
     }
 
-    // MÉTODO: Renderizar turmas no dashboard
+ // MÉTODO: Renderizar turmas no dashboard
     renderizarTurmasDashboard(turmasData) {
         const tbody = document.getElementById('turmas-body');
         if (!tbody) {
-            console.log('ℹ️ Tabela de turmas não encontrada no dashboard');
+            console.log('ℹ Tabela de turmas não encontrada no dashboard');
             return;
         }
 
@@ -214,7 +214,7 @@ async sincronizarAdminTurmas() {
         `).join('');
     }
 
-    // MÉTODOS PARA O DASHBOARD
+ // MÉTODOS PARA O DASHBOARD
     vincularAlunosTurma(turmaId) {
         if (window.adminTurmas) {
             adminTurmas.vincularAlunosTurma(turmaId);
@@ -239,7 +239,7 @@ async sincronizarAdminTurmas() {
         }
     }
 
-    // ATUALIZAR ESTATÍSTICAS
+ // ATUALIZAR ESTATÍSTICAS
     updateStats(stats) {
         try {
             const elements = {
@@ -262,7 +262,7 @@ async sincronizarAdminTurmas() {
         }
     }
 
-    // MÉTODO: Carregar usuários
+ // MÉTODO: Carregar usuários
     async carregarUsuarios() {
         try {
             const token = localStorage.getItem('authToken');
@@ -270,15 +270,15 @@ async sincronizarAdminTurmas() {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             
-            console.log('🔍 Status da resposta:', response.status);
+            console.log(' Status da resposta:', response.status);
             
             if (response.ok) {
                 const result = await response.json();
-                console.log('👥 Resposta da API:', result);
+                console.log(' Resposta da API:', result);
                 
                 let usuariosArray = [];
                 
-                // Diferentes estruturas de resposta possíveis
+ // Diferentes estruturas de resposta possíveis
                 if (result.success && Array.isArray(result.data)) {
                     usuariosArray = result.data;
                 } else if (Array.isArray(result)) {
@@ -288,29 +288,29 @@ async sincronizarAdminTurmas() {
                 } else if (result.usuarios && Array.isArray(result.usuarios)) {
                     usuariosArray = result.usuarios;
                 } else {
-                    console.warn('⚠️ Estrutura inesperada, tentando usar resultado direto:', result);
+                    console.warn(' Estrutura inesperada, tentando usar resultado direto:', result);
                     usuariosArray = result || [];
                 }
                 
-                console.log('👥 Usuários para renderizar:', usuariosArray);
+                console.log(' Usuários para renderizar:', usuariosArray);
                 this.renderUsuarios(usuariosArray);
                 
             } else {
-                console.error('❌ Erro HTTP ao carregar usuários:', response.status);
+                console.error(' Erro HTTP ao carregar usuários:', response.status);
                 this.showErrorState('Erro ao carregar usuários: ' + response.status);
             }
             
         } catch (error) {
-            console.error('❌ Erro ao carregar usuários:', error);
+            console.error(' Erro ao carregar usuários:', error);
             this.showErrorState('Erro de conexão');
         }
     }
 
-   // admin.js - ATUALIZAR O MÉTODO renderUsuarios
+ // admin.js - ATUALIZAR O MÉTODO renderUsuarios
 renderUsuarios(usuarios) {
     const tbody = document.getElementById('usuarios-body');
     if (!tbody) {
-        console.error('❌ Tabela de usuários não encontrada');
+        console.error(' Tabela de usuários não encontrada');
         return;
     }
 
@@ -320,7 +320,7 @@ renderUsuarios(usuarios) {
     }
 
     try {
-        // Mostrar apenas os 5 primeiros usuários no dashboard
+ // Mostrar apenas os 5 primeiros usuários no dashboard
         const usuariosParaMostrar = usuarios.slice(0, 5);
         
         tbody.innerHTML = usuariosParaMostrar.map(usuario => `
@@ -341,15 +341,15 @@ renderUsuarios(usuarios) {
             </tr>
         `).join('');
 
-        console.log('✅ Usuários renderizados no dashboard:', usuariosParaMostrar.length);
+        console.log(' Usuários renderizados no dashboard:', usuariosParaMostrar.length);
         
     } catch (error) {
-        console.error('❌ Erro ao renderizar usuários:', error);
+        console.error(' Erro ao renderizar usuários:', error);
         this.showErrorState('Erro ao exibir usuários');
     }
 }
 
-    // MÉTODO: Mostrar estado vazio
+ // MÉTODO: Mostrar estado vazio
     showEmptyState() {
         const tbody = document.getElementById('usuarios-body');
         if (tbody) {
@@ -364,7 +364,7 @@ renderUsuarios(usuarios) {
         }
     }
 
-    // MÉTODO: Mostrar estado de erro
+ // MÉTODO: Mostrar estado de erro
     showErrorState(mensagem) {
         const tbody = document.getElementById('usuarios-body');
         if (tbody) {
@@ -382,9 +382,9 @@ renderUsuarios(usuarios) {
         }
     }
 
-    // MÉTODO: Usar estatísticas fallback
+ // MÉTODO: Usar estatísticas fallback
     useFallbackStats() {
-        console.log('🔄 Usando estatísticas fallback...');
+        console.log(' Usando estatísticas fallback...');
         const fallbackStats = {
             'total-usuarios': '0',
             'total-professores': '0', 
@@ -401,7 +401,7 @@ renderUsuarios(usuarios) {
         });
     }
 
-    // MÉTODO: Obter display do tipo
+ // MÉTODO: Obter display do tipo
     getTipoDisplay(tipo) {
         const tipos = {
             'admin': 'Administrador',
@@ -411,12 +411,12 @@ renderUsuarios(usuarios) {
         return tipos[tipo] || 'Aluno';
     }
 
-    // MÉTODO: Formatar data
+ // MÉTODO: Formatar data
     formatarData(dataString) {
         try {
             if (!dataString) return 'N/A';
             
-            // Tenta converter a data
+ // Tenta converter a data
             const data = new Date(dataString);
             if (isNaN(data.getTime())) {
                 return 'Data inválida';
@@ -430,12 +430,12 @@ renderUsuarios(usuarios) {
                 minute: '2-digit'
             });
         } catch (error) {
-            console.warn('⚠️ Erro ao formatar data:', dataString, error);
+            console.warn(' Erro ao formatar data:', dataString, error);
             return 'N/A';
         }
     }
 
-    // MÉTODO: Atualizar informações do usuário
+ // MÉTODO: Atualizar informações do usuário
     updateUserInfo() {
         try {
             const userData = localStorage.getItem('userData');
@@ -451,9 +451,9 @@ renderUsuarios(usuarios) {
         }
     }
 
-    // MÉTODO: Configurar event listeners
+ // MÉTODO: Configurar event listeners
     setupEventListeners() {
-        // Logout
+ // Logout
         const logoutBtn = document.querySelector('.btn-sair-desktop');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
@@ -466,7 +466,7 @@ renderUsuarios(usuarios) {
             });
         }
 
-        // Botão de recarregar
+ // Botão de recarregar
         const recarregarBtn = document.querySelector('#recarregarUsuarios');
         if (recarregarBtn) {
             recarregarBtn.addEventListener('click', () => {
@@ -475,7 +475,7 @@ renderUsuarios(usuarios) {
         }
     }
 
-    // MÉTODO: Escapar HTML
+ // MÉTODO: Escapar HTML
     escapeHtml(unsafe) {
         if (unsafe === null || unsafe === undefined) return 'N/A';
         return unsafe
@@ -486,16 +486,16 @@ renderUsuarios(usuarios) {
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
     }
-    // 🔄 MÉTODO MELHORADO: Sincronizar com dashboard
+ // MÉTODO MELHORADO: Sincronizar com dashboard
 sincronizarComDashboard() {
-    console.log('🔄 Sincronizando com dashboard...');
+    console.log(' Sincronizando com dashboard...');
     
-    // Forçar atualização no AdminManager
+ // Forçar atualização no AdminManager
     if (window.adminManager && typeof adminManager.atualizarTurmasDashboard === 'function') {
         adminManager.atualizarTurmasDashboard();
     }
     
-    // Disparar evento customizado para outras partes do sistema
+ // Disparar evento customizado para outras partes do sistema
     const event = new CustomEvent('turmasAtualizadas', {
         detail: { turmas: this.turmas }
     });
@@ -503,10 +503,10 @@ sincronizarComDashboard() {
 }
 
 
-    // MÉTODO: Mostrar notificação
+ // MÉTODO: Mostrar notificação
     showNotification(message, type = 'info') {
         console.log(`[${type}] ${message}`);
-        // Implementação básica de notificação
+ // Implementação básica de notificação
         const notification = document.createElement('div');
         notification.style.cssText = `
             position: fixed;
@@ -529,12 +529,12 @@ sincronizarComDashboard() {
         }, 5000);
     }
 
-    // MÉTODO: Forçar atualização das turmas
+ // MÉTODO: Forçar atualização das turmas
     async atualizarTurmasDashboard() {
-        console.log('🔄 Atualizando turmas no dashboard...');
+        console.log(' Atualizando turmas no dashboard...');
         await this.carregarTurmasDashboard();
         
-        // Sincronizar com adminTurmas se disponível
+ // Sincronizar com adminTurmas se disponível
         if (window.adminTurmas) {
             await adminTurmas.carregarTurmas();
         }
@@ -543,19 +543,19 @@ sincronizarComDashboard() {
 
 // Inicializar admin
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Inicializando AdminManager...');
+    console.log(' Inicializando AdminManager...');
     window.adminManager = new AdminManager();
     
-    // Adicionar função para atualizar turmas
+ // Adicionar função para atualizar turmas
     window.atualizarTurmas = () => {
         if (window.adminManager) {
             adminManager.atualizarTurmasDashboard();
         }
     };
     
-    // Adicionar botão de debug se necessário
+ // Adicionar botão de debug se necessário
     window.debugAdmin = () => {
-        console.log('🔍 Debug AdminManager:');
+        console.log(' Debug AdminManager:');
         console.log('- Token:', localStorage.getItem('authToken'));
         console.log('- UserData:', localStorage.getItem('userData'));
         adminManager.carregarUsuarios();

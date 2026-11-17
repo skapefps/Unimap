@@ -12,88 +12,88 @@ class AdminTurmas {
 
     async init() {
         if (this.inicializado) {
-            console.log('✅ AdminTurmas já foi inicializado');
+            console.log(' AdminTurmas já foi inicializado');
             return;
         }
 
         try {
-            console.group('🚀 INICIALIZAÇÃO DO ADMIN TURMAS');
-            console.log('📚 Carregando dados iniciais...');
+            console.group('INICIALIZAÇÃO DO ADMIN TURMAS');
+            console.log(' Carregando dados iniciais...');
 
-            // 🔥 CORREÇÃO: Carregar cursos PRIMEIRO e AGUARDAR conclusão
+ // CORREÇÃO: Carregar cursos PRIMEIRO e AGUARDAR conclusão
             await this.carregarCursosDoBanco();
-            console.log('✅ Cursos carregados e selects configurados');
+            console.log(' Cursos carregados e selects configurados');
 
-            // 🔥 CORREÇÃO: Configurar eventos APÓS carregar cursos
+ // CORREÇÃO: Configurar eventos APÓS carregar cursos
             this.configurarEventosCursoPeriodo();
-            console.log('✅ Eventos configurados');
+            console.log(' Eventos configurados');
 
-            // Carregar demais dados em paralelo
+ // Carregar demais dados em paralelo
             await Promise.all([
                 this.carregarTurmas(),
                 this.carregarAlunos()
             ]);
-            console.log('✅ Turmas e alunos carregados');
+            console.log(' Turmas e alunos carregados');
 
-            // Configurar interface
+ // Configurar interface
             this.setupEventListeners();
             this.setupModalEventListeners();
 
             this.inicializado = true;
-            console.log('🎉 AdminTurmas inicializado com sucesso');
+            console.log(' AdminTurmas inicializado com sucesso');
             console.groupEnd();
 
-            // Debug automático após 2 segundos
+ // Debug automático após 2 segundos
             setTimeout(() => {
                 this.verificarEstadoInicial();
             }, 2000);
 
         } catch (error) {
-            console.error('❌ Erro na inicialização do AdminTurmas:', error);
+            console.error(' Erro na inicialização do AdminTurmas:', error);
             console.groupEnd();
             this.showNotification('Erro ao carregar dados do sistema', 'error');
 
-            // 🔥 CORREÇÃO: Tentar recarregar cursos mesmo com erro
+ // CORREÇÃO: Tentar recarregar cursos mesmo com erro
             await this.carregarCursosDoBanco();
         }
     }
 
-    // ========== GESTÃO DE CURSOS E PERÍODOS ==========
+ // ========== GESTÃO DE CURSOS E PERÍODOS ==========
 
     async carregarCursosDoBanco() {
         try {
-            console.log('📚 Carregando cursos para turmas...');
+            console.log(' Carregando cursos para turmas...');
 
-            // 🔥 CORREÇÃO: Usar a função makeRequest corretamente
+ // CORREÇÃO: Usar a função makeRequest corretamente
             const response = await this.makeRequest('/cursos/com-periodos');
-            console.log('📡 Resposta da API de cursos:', response);
+            console.log(' Resposta da API de cursos:', response);
 
-            // 🔥 CORREÇÃO: A API retorna array diretamente, não objeto com {success, data}
+ // CORREÇÃO: A API retorna array diretamente, não objeto com {success, data}
             let cursosData = [];
 
             if (Array.isArray(response)) {
-                // Resposta é um array direto (formato correto da API)
+ // Resposta é um array direto (formato correto da API)
                 cursosData = response;
-                console.log('✅ Cursos carregados (formato array direto)');
+                console.log(' Cursos carregados (formato array direto)');
             } else if (response && response.success && Array.isArray(response.data)) {
-                // Resposta tem formato {success: true, data: [...]}
+ // Resposta tem formato {success: true, data: [...]}
                 cursosData = response.data;
-                console.log('✅ Cursos carregados (formato objeto com data)');
+                console.log(' Cursos carregados (formato objeto com data)');
             } else if (response && Array.isArray(response.cursos)) {
-                // Resposta tem formato {cursos: [...]}
+ // Resposta tem formato {cursos: [...]}
                 cursosData = response.cursos;
-                console.log('✅ Cursos carregados (formato objeto com cursos)');
+                console.log(' Cursos carregados (formato objeto com cursos)');
             } else {
-                console.warn('⚠️ Estrutura de resposta inesperada para cursos:', response);
+                console.warn(' Estrutura de resposta inesperada para cursos:', response);
                 throw new Error('Estrutura de resposta inesperada para cursos');
             }
 
             this.cursosComPeriodos = {};
             this.cursosDisponiveis = [];
 
-            console.log('📊 Cursos recebidos da API:', cursosData);
+            console.log(' Cursos recebidos da API:', cursosData);
 
-            // Processar cursos do banco
+ // Processar cursos do banco
             cursosData.forEach(curso => {
                 if (curso && curso.nome) {
                     this.cursosComPeriodos[curso.nome] = curso.total_periodos || 8;
@@ -101,26 +101,26 @@ class AdminTurmas {
                 }
             });
 
-            console.log(`✅ ${this.cursosDisponiveis.length} cursos carregados do banco:`, this.cursosDisponiveis);
+            console.log(` ${this.cursosDisponiveis.length} cursos carregados do banco:`, this.cursosDisponiveis);
 
-            // 🔥 CORREÇÃO: Popular os cursos imediatamente após carregar
+ // CORREÇÃO: Popular os cursos imediatamente após carregar
             this.popularCursosNoModalTurma();
 
         } catch (error) {
-            console.error('❌ Erro ao carregar cursos do banco:', error);
+            console.error(' Erro ao carregar cursos do banco:', error);
 
-            // 🔥 CORREÇÃO: Tentar endpoint alternativo
+ // CORREÇÃO: Tentar endpoint alternativo
             await this.tentarEndpointAlternativoCursos();
         }
     }
 
-    // 🔥 NOVA FUNÇÃO: Tentar endpoint alternativo para cursos
+ // NOVA FUNÇÃO: Tentar endpoint alternativo para cursos
     async tentarEndpointAlternativoCursos() {
         try {
-            console.log('🔄 Tentando endpoint alternativo para cursos...');
+            console.log(' Tentando endpoint alternativo para cursos...');
 
             const response = await this.makeRequest('/cursos');
-            console.log('📡 Resposta do endpoint alternativo:', response);
+            console.log(' Resposta do endpoint alternativo:', response);
 
             let cursosData = [];
 
@@ -137,26 +137,26 @@ class AdminTurmas {
 
             cursosData.forEach(curso => {
                 if (curso && curso.nome) {
-                    // 🔥 CORREÇÃO: Se não tiver total_periodos, usar valor padrão 8
+ // CORREÇÃO: Se não tiver total_periodos, usar valor padrão 8
                     this.cursosComPeriodos[curso.nome] = curso.total_periodos || 8;
                     this.cursosDisponiveis.push(curso.nome);
                 }
             });
 
-            console.log(`✅ ${this.cursosDisponiveis.length} cursos carregados do endpoint alternativo`);
+            console.log(` ${this.cursosDisponiveis.length} cursos carregados do endpoint alternativo`);
             this.popularCursosNoModalTurma();
 
         } catch (error) {
-            console.error('❌ Endpoint alternativo também falhou:', error);
+            console.error(' Endpoint alternativo também falhou:', error);
             this.usarCursosFallbackTurmas();
         }
     }
 
 
     usarCursosFallbackTurmas() {
-        console.log('🔄 Usando cursos fallback para turmas...');
+        console.log(' Usando cursos fallback para turmas...');
 
-        // Buscar cursos do localStorage se existirem
+ // Buscar cursos do localStorage se existirem
         const cursosSalvos = localStorage.getItem('cursos_disponiveis');
         if (cursosSalvos) {
             try {
@@ -171,15 +171,15 @@ class AdminTurmas {
                     }
                 });
 
-                console.log('✅ Cursos recuperados do localStorage:', this.cursosDisponiveis);
+                console.log(' Cursos recuperados do localStorage:', this.cursosDisponiveis);
                 this.popularCursosNoModalTurma();
                 return;
             } catch (e) {
-                console.warn('⚠️ Erro ao ler cursos do localStorage:', e);
+                console.warn(' Erro ao ler cursos do localStorage:', e);
             }
         }
 
-        // Fallback padrão
+ // Fallback padrão
         const cursosFallback = {
             'Sistemas de Informação': 8,
             'Administração': 8,
@@ -196,23 +196,23 @@ class AdminTurmas {
         this.popularCursosNoModalTurma();
     }
 
-    // 🔥 CORREÇÃO: Função popularCursosNoModalTurma síncrona
+ // CORREÇÃO: Função popularCursosNoModalTurma síncrona
     popularCursosNoModalTurma(callback = null) {
         try {
             const selectCurso = document.getElementById('turmaCurso');
             if (!selectCurso) {
-                console.error('❌ Elemento turmaCurso não encontrado');
+                console.error(' Elemento turmaCurso não encontrado');
                 if (callback) callback();
                 return;
             }
 
-            console.log('📝 Populando cursos no modal de turma...');
+            console.log(' Populando cursos no modal de turma...');
 
-            // Limpar select
+ // Limpar select
             selectCurso.innerHTML = '<option value="">Selecione o curso</option>';
 
             if (!this.cursosDisponiveis || this.cursosDisponiveis.length === 0) {
-                console.warn('⚠️ Nenhum curso disponível para popular no modal');
+                console.warn(' Nenhum curso disponível para popular no modal');
                 const option = document.createElement('option');
                 option.value = '';
                 option.textContent = 'Nenhum curso disponível';
@@ -223,7 +223,7 @@ class AdminTurmas {
                 return;
             }
 
-            // Ordenar cursos alfabeticamente
+ // Ordenar cursos alfabeticamente
             const cursosOrdenados = [...this.cursosDisponiveis].sort();
 
             cursosOrdenados.forEach(curso => {
@@ -238,28 +238,28 @@ class AdminTurmas {
                 selectCurso.appendChild(option);
             });
 
-            console.log(`✅ ${cursosOrdenados.length} cursos adicionados ao modal de turma`);
+            console.log(` ${cursosOrdenados.length} cursos adicionados ao modal de turma`);
 
-            // Executar callback imediatamente
+ // Executar callback imediatamente
             if (callback) callback();
 
         } catch (error) {
-            console.error('❌ Erro ao popular cursos no modal:', error);
+            console.error(' Erro ao popular cursos no modal:', error);
             if (callback) callback();
         }
     }
 
-    // 🔥 NOVA FUNÇÃO: Verificar estado do formulário de edição
+ // NOVA FUNÇÃO: Verificar estado do formulário de edição
     verificarEstadoFormularioEdicao() {
         try {
-            console.group('🔍 VERIFICAÇÃO DO FORMULÁRIO DE EDIÇÃO');
+            console.group('VERIFICAÇÃO DO FORMULÁRIO DE EDIÇÃO');
 
             const elementos = {
                 turmaCurso: document.getElementById('turmaCurso'),
                 turmaPeriodo: document.getElementById('turmaPeriodo')
             };
 
-            console.log('📋 Estado dos elementos:');
+            console.log(' Estado dos elementos:');
             console.log('- turmaCurso:', {
                 existe: !!elementos.turmaCurso,
                 valor: elementos.turmaCurso ? elementos.turmaCurso.value : 'N/A',
@@ -273,7 +273,7 @@ class AdminTurmas {
             });
 
             if (this.turmaEditando) {
-                console.log('📊 Dados da turma em edição:', {
+                console.log(' Dados da turma em edição:', {
                     curso: this.turmaEditando.curso,
                     periodo: this.turmaEditando.periodo
                 });
@@ -282,7 +282,7 @@ class AdminTurmas {
             console.groupEnd();
 
         } catch (error) {
-            console.error('❌ Erro na verificação:', error);
+            console.error(' Erro na verificação:', error);
         }
     }
 
@@ -291,167 +291,167 @@ class AdminTurmas {
             const turmaCursoInput = document.getElementById('turmaCurso');
             if (!turmaCursoInput || !turma.curso) return;
 
-            console.log('💪 Forçando preenchimento do curso:', turma.curso);
+            console.log(' Forçando preenchimento do curso:', turma.curso);
 
-            // Tentativa 1: Definir value diretamente
+ // Tentativa 1: Definir value diretamente
             turmaCursoInput.value = turma.curso;
 
-            // Tentativa 2: Encontrar a option e marcar como selected
+ // Tentativa 2: Encontrar a option e marcar como selected
             const options = Array.from(turmaCursoInput.options);
             const cursoOption = options.find(opt => opt.value === turma.curso);
             if (cursoOption) {
                 cursoOption.selected = true;
             }
 
-            // Tentativa 3: Disparar eventos para notificar mudanças
+ // Tentativa 3: Disparar eventos para notificar mudanças
             turmaCursoInput.dispatchEvent(new Event('change', { bubbles: true }));
             turmaCursoInput.dispatchEvent(new Event('input', { bubbles: true }));
 
-            // Tentativa 4: Usar setAttribute (às vezes funciona melhor)
+ // Tentativa 4: Usar setAttribute (às vezes funciona melhor)
             turmaCursoInput.setAttribute('value', turma.curso);
 
-            // Tentativa 5: Verificação visual
+ // Tentativa 5: Verificação visual
             setTimeout(() => {
-                console.log('👀 Valor atual do select:', turmaCursoInput.value);
-                console.log('👀 Option selecionada:', turmaCursoInput.options[turmaCursoInput.selectedIndex]?.text);
+                console.log(' Valor atual do select:', turmaCursoInput.value);
+                console.log(' Option selecionada:', turmaCursoInput.options[turmaCursoInput.selectedIndex]?.text);
 
                 if (turmaCursoInput.value !== turma.curso) {
-                    console.warn('⚠️ Valor não foi mantido, tentando novamente...');
+                    console.warn(' Valor não foi mantido, tentando novamente...');
                     this.forcarPreenchimentoCurso(turma);
                 }
             }, 200);
 
         } catch (error) {
-            console.error('❌ Erro ao forçar preenchimento:', error);
+            console.error(' Erro ao forçar preenchimento:', error);
         }
     }
 
     configurarEventosCursoPeriodo() {
         try {
-            console.log('⚙️ Configurando eventos de curso e período...');
+            console.log(' Configurando eventos de curso e período...');
 
             const selectCurso = document.getElementById('turmaCurso');
             const selectPeriodo = document.getElementById('turmaPeriodo');
 
             if (selectCurso) {
-                // Remover event listeners antigos
+ // Remover event listeners antigos
                 const novoSelectCurso = selectCurso.cloneNode(true);
                 selectCurso.parentNode.replaceChild(novoSelectCurso, selectCurso);
 
-                // 🔥 CORREÇÃO: Configurar evento com debounce
+ // CORREÇÃO: Configurar evento com debounce
                 let timeoutId;
                 novoSelectCurso.addEventListener('change', (e) => {
-                    console.log('🎯 Evento change do curso disparado:', e.target.value);
+                    console.log(' Evento change do curso disparado:', e.target.value);
 
-                    // Debounce para evitar múltiplas chamadas
+ // Debounce para evitar múltiplas chamadas
                     clearTimeout(timeoutId);
                     timeoutId = setTimeout(() => {
                         this.atualizarPeriodosTurma(e.target.value);
                     }, 100);
                 });
 
-                // Configurar estado inicial
+ // Configurar estado inicial
                 novoSelectCurso.disabled = false;
                 novoSelectCurso.classList.remove('select-desabilitado');
                 novoSelectCurso.classList.add('select-habilitado');
 
-                console.log('✅ Evento do curso configurado');
+                console.log(' Evento do curso configurado');
             } else {
-                console.error('❌ Select de curso não encontrado');
+                console.error(' Select de curso não encontrado');
             }
 
             if (selectPeriodo) {
-                // Configurar estado inicial do período
+ // Configurar estado inicial do período
                 selectPeriodo.disabled = true;
                 selectPeriodo.classList.add('select-desabilitado');
                 selectPeriodo.classList.remove('select-habilitado');
                 selectPeriodo.innerHTML = '<option value="">Selecione o período</option>';
 
-                console.log('✅ Estado inicial do período configurado');
+                console.log(' Estado inicial do período configurado');
             }
         } catch (error) {
-            console.error('❌ Erro ao configurar eventos curso/período:', error);
+            console.error(' Erro ao configurar eventos curso/período:', error);
         }
     }
 
     debugEdicaoTurma(turmaId) {
         try {
-            console.group('🐛 DEBUG EDIÇÃO DE TURMA');
+            console.group('DEBUG EDIÇÃO DE TURMA');
 
             const turma = this.turmas.find(t => t.id === turmaId);
-            console.log('📋 Dados da turma:', turma);
+            console.log(' Dados da turma:', turma);
 
             const selectCurso = document.getElementById('turmaCurso');
-            console.log('🎯 Select de curso:', {
+            console.log(' Select de curso:', {
                 existe: !!selectCurso,
                 options: selectCurso ? selectCurso.options.length : 0,
                 valores: selectCurso ? Array.from(selectCurso.options).map(o => o.value) : []
             });
 
-            console.log('📊 Cursos disponíveis:', this.cursosDisponiveis);
-            console.log('📚 Mapeamento de períodos:', this.cursosComPeriodos);
+            console.log(' Cursos disponíveis:', this.cursosDisponiveis);
+            console.log(' Mapeamento de períodos:', this.cursosComPeriodos);
 
-            // Verificar se o curso da turma está na lista
+ // Verificar se o curso da turma está na lista
             if (turma && turma.curso) {
                 const cursoEncontrado = this.cursosDisponiveis.includes(turma.curso);
-                console.log('🔍 Curso da turma encontrado na lista?', cursoEncontrado);
+                console.log(' Curso da turma encontrado na lista?', cursoEncontrado);
 
                 if (!cursoEncontrado) {
-                    console.warn('⚠️ Curso da turma não encontrado na lista:', turma.curso);
+                    console.warn(' Curso da turma não encontrado na lista:', turma.curso);
                 }
             }
 
             console.groupEnd();
 
         } catch (error) {
-            console.error('❌ Erro no debug de edição:', error);
+            console.error(' Erro no debug de edição:', error);
         }
     }
 
-    // 🔥 CORREÇÃO: Função atualizarPeriodosTurma com callback de conclusão
+ // CORREÇÃO: Função atualizarPeriodosTurma com callback de conclusão
     atualizarPeriodosTurma(cursoSelecionado, callback = null) {
         try {
-            console.group('🔄 ATUALIZANDO PERÍODOS DA TURMA');
-            console.log('📋 Curso selecionado:', cursoSelecionado);
+            console.group('ATUALIZANDO PERÍODOS DA TURMA');
+            console.log(' Curso selecionado:', cursoSelecionado);
 
             const selectPeriodo = document.getElementById('turmaPeriodo');
             if (!selectPeriodo) {
-                console.error('❌ Elemento turmaPeriodo não encontrado no DOM');
+                console.error(' Elemento turmaPeriodo não encontrado no DOM');
                 console.groupEnd();
                 if (callback) callback(false);
                 return;
             }
 
-            // Limpar períodos anteriores
+ // Limpar períodos anteriores
             selectPeriodo.innerHTML = '<option value="">Selecione o período</option>';
 
-            // Resetar estado do select
+ // Resetar estado do select
             selectPeriodo.disabled = true;
             selectPeriodo.classList.add('select-desabilitado');
             selectPeriodo.classList.remove('select-habilitado');
 
             if (!cursoSelecionado) {
-                console.log('ℹ️ Nenhum curso selecionado');
+                console.log('ℹ Nenhum curso selecionado');
                 console.groupEnd();
                 if (callback) callback(false);
                 return;
             }
 
-            // Verificar se o curso existe no nosso mapeamento
+ // Verificar se o curso existe no nosso mapeamento
             if (!this.cursosComPeriodos || !this.cursosComPeriodos[cursoSelecionado]) {
-                console.warn('⚠️ Curso não encontrado no mapeamento:', cursoSelecionado);
-                console.log('📊 Cursos disponíveis:', this.cursosComPeriodos);
+                console.warn(' Curso não encontrado no mapeamento:', cursoSelecionado);
+                console.log(' Cursos disponíveis:', this.cursosComPeriodos);
 
-                // Tentar buscar o curso nos dados disponíveis
+ // Tentar buscar o curso nos dados disponíveis
                 const cursoEncontrado = this.cursosDisponiveis.find(curso =>
                     curso.toLowerCase() === cursoSelecionado.toLowerCase()
                 );
 
                 if (cursoEncontrado && this.cursosComPeriodos[cursoEncontrado]) {
-                    console.log('✅ Curso encontrado por busca case-insensitive:', cursoEncontrado);
+                    console.log(' Curso encontrado por busca case-insensitive:', cursoEncontrado);
                     cursoSelecionado = cursoEncontrado;
                 } else {
-                    console.error('❌ Curso não encontrado de forma alguma');
+                    console.error(' Curso não encontrado de forma alguma');
                     this.mostrarPeriodosGenericos(selectPeriodo);
                     console.groupEnd();
                     if (callback) callback(false);
@@ -460,17 +460,17 @@ class AdminTurmas {
             }
 
             const totalPeriodos = this.cursosComPeriodos[cursoSelecionado];
-            console.log(`📚 Curso "${cursoSelecionado}" tem ${totalPeriodos} períodos`);
+            console.log(` Curso "${cursoSelecionado}" tem ${totalPeriodos} períodos`);
 
             if (!totalPeriodos || totalPeriodos < 1) {
-                console.warn('⚠️ Número de períodos inválido, usando valor padrão (8)');
+                console.warn(' Número de períodos inválido, usando valor padrão (8)');
                 this.mostrarPeriodosGenericos(selectPeriodo);
                 console.groupEnd();
                 if (callback) callback(false);
                 return;
             }
 
-            // Popular períodos baseado no total do curso
+ // Popular períodos baseado no total do curso
             for (let i = 1; i <= totalPeriodos; i++) {
                 const option = document.createElement('option');
                 option.value = i;
@@ -478,25 +478,25 @@ class AdminTurmas {
                 selectPeriodo.appendChild(option);
             }
 
-            // Habilitar o select de período
+ // Habilitar o select de período
             selectPeriodo.disabled = false;
             selectPeriodo.classList.remove('select-desabilitado');
             selectPeriodo.classList.add('select-habilitado');
 
-            // Adicionar estilo visual de sucesso
+ // Adicionar estilo visual de sucesso
             selectPeriodo.style.borderColor = '#28a745';
             selectPeriodo.style.backgroundColor = '#f8fff9';
 
-            console.log(`✅ Gerados ${totalPeriodos} períodos para "${cursoSelecionado}"`);
+            console.log(` Gerados ${totalPeriodos} períodos para "${cursoSelecionado}"`);
             console.groupEnd();
 
-            // 🔥 CORREÇÃO: Executar callback se fornecido
+ // CORREÇÃO: Executar callback se fornecido
             if (callback) {
                 setTimeout(() => callback(true), 50);
             }
 
         } catch (error) {
-            console.error('❌ Erro crítico ao atualizar períodos:', error);
+            console.error(' Erro crítico ao atualizar períodos:', error);
             console.groupEnd();
             this.mostrarPeriodosGenericos(document.getElementById('turmaPeriodo'));
             if (callback) callback(false);
@@ -506,15 +506,15 @@ class AdminTurmas {
     mostrarPeriodosGenericos(selectPeriodo) {
         if (!selectPeriodo) return;
 
-        console.log('🔄 Mostrando períodos genéricos como fallback');
+        console.log(' Mostrando períodos genéricos como fallback');
 
-        // Limpar e desabilitar
+ // Limpar e desabilitar
         selectPeriodo.innerHTML = '<option value="">Selecione o período</option>';
         selectPeriodo.disabled = false;
         selectPeriodo.classList.remove('select-desabilitado');
         selectPeriodo.classList.add('select-habilitado');
 
-        // Mostrar períodos de 1 a 8 como fallback
+ // Mostrar períodos de 1 a 8 como fallback
         for (let i = 1; i <= 8; i++) {
             const option = document.createElement('option');
             option.value = i;
@@ -522,23 +522,23 @@ class AdminTurmas {
             selectPeriodo.appendChild(option);
         }
 
-        // Estilo de aviso
+ // Estilo de aviso
         selectPeriodo.style.borderColor = '#ffc107';
         selectPeriodo.style.backgroundColor = '#fffbf0';
 
-        console.log('✅ Períodos genéricos (1-8) carregados como fallback');
+        console.log(' Períodos genéricos (1-8) carregados como fallback');
     }
 
-    // ========== GESTÃO DE TURMAS ==========
+ // ========== GESTÃO DE TURMAS ==========
 
     async carregarTurmas() {
         try {
-            console.log('📚 Carregando turmas do banco (ativas e inativas)...');
+            console.log(' Carregando turmas do banco (ativas e inativas)...');
 
             const response = await this.makeRequest('/turmas');
-            console.log('📡 Resposta bruta da API de turmas:', response);
+            console.log(' Resposta bruta da API de turmas:', response);
 
-            // 🔥 CORREÇÃO: Processar turmas
+ // CORREÇÃO: Processar turmas
             let turmasData = [];
 
             if (Array.isArray(response)) {
@@ -548,15 +548,15 @@ class AdminTurmas {
             } else if (response && Array.isArray(response.turmas)) {
                 turmasData = response.turmas;
             } else {
-                console.warn('⚠️ Estrutura de resposta inesperada para turmas:', response);
+                console.warn(' Estrutura de resposta inesperada para turmas:', response);
                 throw new Error('Estrutura de resposta inesperada para turmas');
             }
 
             this.turmas = this.processarTurmas(turmasData);
-            console.log('✅ Turmas processadas (ativas e inativas):', this.turmas.length);
+            console.log(' Turmas processadas (ativas e inativas):', this.turmas.length);
 
-            // 🔥 CORREÇÃO: Atualizar quantidades de todas as turmas
-            console.log('🔄 Atualizando quantidades de alunos...');
+ // CORREÇÃO: Atualizar quantidades de todas as turmas
+            console.log(' Atualizando quantidades de alunos...');
             for (const turma of this.turmas) {
                 await this.atualizarQuantidadeAlunosTurma(turma.id);
             }
@@ -565,7 +565,7 @@ class AdminTurmas {
             this.atualizarEstatisticasTurmas();
 
         } catch (error) {
-            console.error('❌ Erro ao carregar turmas:', error);
+            console.error(' Erro ao carregar turmas:', error);
             this.showNotification('Erro ao carregar turmas do banco: ' + error.message, 'error');
             this.turmas = [];
             this.renderizarTurmas();
@@ -575,7 +575,7 @@ class AdminTurmas {
 
     processarTurmas(turmasData) {
         if (!Array.isArray(turmasData)) {
-            console.warn('⚠️ Dados de turmas não são um array:', turmasData);
+            console.warn(' Dados de turmas não são um array:', turmasData);
             return [];
         }
 
@@ -592,11 +592,11 @@ class AdminTurmas {
     }
 
     renderizarTurmas() {
-        console.log('🎯 Renderizando turmas (ativas e inativas)...');
+        console.log(' Renderizando turmas (ativas e inativas)...');
 
         const tbody = document.getElementById('turmas-body');
         if (!tbody) {
-            console.log('ℹ️ Tabela de turmas não encontrada');
+            console.log('ℹ Tabela de turmas não encontrada');
             return;
         }
 
@@ -651,7 +651,7 @@ class AdminTurmas {
         tbody.innerHTML = html;
         this.atualizarEstatisticasTurmas();
 
-        console.log('✅ Turmas renderizadas:', {
+        console.log(' Turmas renderizadas:', {
             ativas: turmasAtivas.length,
             inativas: turmasInativas.length,
             total: this.turmas.length
@@ -724,11 +724,11 @@ class AdminTurmas {
     `;
     }
 
-    // ========== GESTÃO DE ALUNOS ==========
+ // ========== GESTÃO DE ALUNOS ==========
 
     async carregarAlunos() {
         try {
-            console.log('👥 Carregando alunos do banco...');
+            console.log(' Carregando alunos do banco...');
 
             const response = await this.makeRequest('/usuarios?tipo=aluno');
 
@@ -742,23 +742,23 @@ class AdminTurmas {
                 } else if (response.data && Array.isArray(response.data.usuarios)) {
                     alunosArray = response.data.usuarios;
                 } else {
-                    console.warn('⚠️ Estrutura inesperada, usando resposta direta');
+                    console.warn(' Estrutura inesperada, usando resposta direta');
                     alunosArray = response.data || [];
                 }
 
                 this.alunos = alunosArray;
-                console.log('✅ Alunos carregados via API:', this.alunos.length);
+                console.log(' Alunos carregados via API:', this.alunos.length);
             } else {
                 throw new Error('Erro ao carregar alunos');
             }
         } catch (error) {
-            console.error('❌ Erro ao carregar alunos:', error);
+            console.error(' Erro ao carregar alunos:', error);
             this.showNotification('Erro ao carregar alunos do banco', 'error');
             this.alunos = [];
         }
     }
 
-    // ========== MODAIS E FORMULÁRIOS ==========
+ // ========== MODAIS E FORMULÁRIOS ==========
 
     abrirModalCriarTurma() {
         try {
@@ -770,7 +770,7 @@ class AdminTurmas {
             const modal = document.getElementById('turmaModal');
 
             if (!modal) {
-                console.error('❌ Modal não encontrado no DOM');
+                console.error(' Modal não encontrado no DOM');
                 this.criarModalTurmaFallback();
                 return;
             }
@@ -785,7 +785,7 @@ class AdminTurmas {
             this.prepararModalMobile(modal);
 
         } catch (error) {
-            console.error('❌ Erro ao abrir modal de criação:', error);
+            console.error(' Erro ao abrir modal de criação:', error);
             this.criarModalTurmaFallback();
         }
     }
@@ -801,7 +801,7 @@ class AdminTurmas {
         if (turmaForm) turmaForm.reset();
     }
 
-    // 🔥 CORREÇÃO: Função editarTurma com preenchimento correto do período
+ // CORREÇÃO: Função editarTurma com preenchimento correto do período
     async editarTurma(turmaId) {
         try {
             const turma = this.turmas.find(t => t.id === turmaId);
@@ -813,12 +813,12 @@ class AdminTurmas {
 
             const modal = document.getElementById('turmaModal');
             if (!modal) {
-                console.log('ℹ️ Modal não encontrado, criando dinamicamente...');
+                console.log('ℹ Modal não encontrado, criando dinamicamente...');
                 await this.criarModalEdicaoFallback(turma);
                 return;
             }
 
-            // 🔥 CORREÇÃO: Capturar elementos DENTRO da função para evitar problemas de escopo
+ // CORREÇÃO: Capturar elementos DENTRO da função para evitar problemas de escopo
             const obterElementos = () => {
                 return {
                     modalTitle: document.getElementById('turmaModalTitle'),
@@ -834,81 +834,81 @@ class AdminTurmas {
             let elementos = obterElementos();
 
             if (!elementos.turmaNomeInput || !elementos.turmaCursoInput) {
-                console.warn('⚠️ Campos do formulário não encontrados, criando modal fallback');
+                console.warn(' Campos do formulário não encontrados, criando modal fallback');
                 await this.criarModalEdicaoFallback(turma);
                 return;
             }
 
-            // 🔥 CORREÇÃO: Garantir que os cursos estão carregados antes de preencher
+ // CORREÇÃO: Garantir que os cursos estão carregados antes de preencher
             if (this.cursosDisponiveis.length === 0) {
-                console.log('🔄 Carregando cursos antes de editar turma...');
+                console.log(' Carregando cursos antes de editar turma...');
                 await this.carregarCursosDoBanco();
             }
 
-            // Preencher dados básicos primeiro
+ // Preencher dados básicos primeiro
             if (elementos.modalTitle) elementos.modalTitle.textContent = 'Editar Turma';
             if (elementos.turmaIdInput) elementos.turmaIdInput.value = turma.id;
             if (elementos.turmaNomeInput) elementos.turmaNomeInput.value = turma.nome || '';
             if (elementos.turmaAnoInput) elementos.turmaAnoInput.value = turma.ano || new Date().getFullYear();
             if (elementos.turmaAtivaInput) elementos.turmaAtivaInput.value = turma.ativa ? 'true' : 'false';
 
-            // Mostrar modal primeiro
+ // Mostrar modal primeiro
             modal.style.display = 'flex';
             this.prepararModalMobile(modal);
 
-            // 🔥 CORREÇÃO: Popular cursos e preencher APÓS mostrar o modal
+ // CORREÇÃO: Popular cursos e preencher APÓS mostrar o modal
             const preencherCursoEPeriodo = async () => {
-                // Recapturar elementos para garantir que estão disponíveis
+ // Recapturar elementos para garantir que estão disponíveis
                 elementos = obterElementos();
 
                 if (!elementos.turmaCursoInput) {
-                    console.error('❌ Elemento turmaCurso não encontrado após abrir modal');
+                    console.error(' Elemento turmaCurso não encontrado após abrir modal');
                     return;
                 }
 
-                console.log('🎯 Iniciando preenchimento do curso e período...');
+                console.log(' Iniciando preenchimento do curso e período...');
 
-                // Popular cursos no modal
+ // Popular cursos no modal
                 this.popularCursosNoModalTurma(() => {
-                    // 🔥 CORREÇÃO: Recapturar elementos após popular o select
+ // CORREÇÃO: Recapturar elementos após popular o select
                     elementos = obterElementos();
 
                     if (!elementos.turmaCursoInput || !elementos.turmaPeriodoInput) {
-                        console.error('❌ Elementos não encontrados após popular cursos');
+                        console.error(' Elementos não encontrados após popular cursos');
                         return;
                     }
 
-                    console.log('🔄 Tentando preencher curso:', turma.curso);
+                    console.log(' Tentando preencher curso:', turma.curso);
 
-                    // Verificar se o curso existe nas opções
+ // Verificar se o curso existe nas opções
                     const cursoExiste = Array.from(elementos.turmaCursoInput.options).some(
                         option => option.value === turma.curso
                     );
 
                     if (cursoExiste) {
-                        // 🔥 CORREÇÃO: Preencher curso
+ // CORREÇÃO: Preencher curso
                         elementos.turmaCursoInput.value = turma.curso;
-                        console.log('✅ Curso preenchido:', elementos.turmaCursoInput.value);
+                        console.log(' Curso preenchido:', elementos.turmaCursoInput.value);
 
-                        // 🔥 CORREÇÃO: Disparar evento change para atualizar períodos
+ // CORREÇÃO: Disparar evento change para atualizar períodos
                         const changeEvent = new Event('change', { bubbles: true });
                         elementos.turmaCursoInput.dispatchEvent(changeEvent);
 
-                        // 🔥 CORREÇÃO: Aguardar ATIVAMENTE a atualização dos períodos
+ // CORREÇÃO: Aguardar ATIVAMENTE a atualização dos períodos
                         this.aguardarPeriodosAtualizados(turma.curso, turma.periodo, elementos);
                     } else {
-                        console.error('❌ Curso não encontrado:', turma.curso);
-                        console.log('📋 Cursos disponíveis:',
+                        console.error(' Curso não encontrado:', turma.curso);
+                        console.log(' Cursos disponíveis:',
                             Array.from(elementos.turmaCursoInput.options).map(o => o.value));
                     }
                 });
             };
 
-            // Iniciar o processo de preenchimento
+ // Iniciar o processo de preenchimento
             preencherCursoEPeriodo();
 
         } catch (error) {
-            console.error('❌ Erro ao abrir edição da turma:', error);
+            console.error(' Erro ao abrir edição da turma:', error);
             this.showNotification('Erro ao carregar dados da turma: ' + error.message, 'error');
 
             if (this.turmaEditando) {
@@ -917,7 +917,7 @@ class AdminTurmas {
         }
     }
 
-    // 🔥 NOVA FUNÇÃO: Aguardar ativamente a atualização dos períodos
+ // NOVA FUNÇÃO: Aguardar ativamente a atualização dos períodos
     aguardarPeriodosAtualizados(curso, periodo, elementos) {
         console.log('⏳ Aguardando atualização dos períodos para:', curso);
 
@@ -927,26 +927,26 @@ class AdminTurmas {
         const verificarPeriodos = setInterval(() => {
             tentativas++;
 
-            // Verificar se o select de período tem opções (mais que 1 = opção padrão + períodos)
+ // Verificar se o select de período tem opções (mais que 1 = opção padrão + períodos)
             const temPeriodos = elementos.turmaPeriodoInput &&
                 elementos.turmaPeriodoInput.options.length > 1;
 
             if (temPeriodos) {
                 clearInterval(verificarPeriodos);
-                console.log('✅ Períodos atualizados após', tentativas, 'tentativas');
+                console.log(' Períodos atualizados após', tentativas, 'tentativas');
 
-                // 🔥 CORREÇÃO: Preencher período agora que os períodos estão disponíveis
+ // CORREÇÃO: Preencher período agora que os períodos estão disponíveis
                 this.preencherPeriodoComSeguranca(periodo, elementos);
             } else if (tentativas >= maxTentativas) {
                 clearInterval(verificarPeriodos);
-                console.error('❌ Timeout: Períodos não foram atualizados após', maxTentativas, 'tentativas');
+                console.error(' Timeout: Períodos não foram atualizados após', maxTentativas, 'tentativas');
 
-                // 🔥 CORREÇÃO: Tentar preencher mesmo sem períodos (fallback)
+ // CORREÇÃO: Tentar preencher mesmo sem períodos (fallback)
                 this.preencherPeriodoComSeguranca(periodo, elementos);
             } else {
-                console.log('🔄 Aguardando períodos... tentativa', tentativas);
+                console.log(' Aguardando períodos... tentativa', tentativas);
 
-                // 🔥 CORREÇÃO: Re-disparar evento a cada 2 tentativas para garantir
+ // CORREÇÃO: Re-disparar evento a cada 2 tentativas para garantir
                 if (tentativas % 2 === 0) {
                     elementos.turmaCursoInput.dispatchEvent(new Event('change', { bubbles: true }));
                 }
@@ -954,48 +954,48 @@ class AdminTurmas {
         }, 500); // Verificar a cada 500ms
     }
 
-    // 🔥 NOVA FUNÇÃO: Preencher período com múltiplas estratégias
+ // NOVA FUNÇÃO: Preencher período com múltiplas estratégias
     preencherPeriodoComSeguranca(periodo, elementos) {
         try {
             if (!elementos.turmaPeriodoInput) {
-                console.error('❌ Select de período não encontrado');
+                console.error(' Select de período não encontrado');
                 return;
             }
 
-            console.log('🎯 Tentando preencher período:', periodo);
+            console.log(' Tentando preencher período:', periodo);
 
-            // Estratégia 1: Tentar definir value diretamente
+ // Estratégia 1: Tentar definir value diretamente
             elementos.turmaPeriodoInput.value = periodo;
 
-            // Estratégia 2: Verificar se o valor foi aceito
+ // Estratégia 2: Verificar se o valor foi aceito
             setTimeout(() => {
                 if (elementos.turmaPeriodoInput.value != periodo) {
-                    console.warn('⚠️ Valor não aceito, tentando estratégia alternativa...');
+                    console.warn(' Valor não aceito, tentando estratégia alternativa...');
 
-                    // Estratégia 3: Encontrar a option e marcar como selected
+ // Estratégia 3: Encontrar a option e marcar como selected
                     const options = Array.from(elementos.turmaPeriodoInput.options);
                     const periodoOption = options.find(opt => parseInt(opt.value) === parseInt(periodo));
 
                     if (periodoOption) {
                         periodoOption.selected = true;
-                        console.log('✅ Período preenchido via option selection');
+                        console.log(' Período preenchido via option selection');
                     } else {
-                        console.error('❌ Período não encontrado nas opções:', periodo);
-                        console.log('📋 Períodos disponíveis:', options.map(o => o.value));
+                        console.error(' Período não encontrado nas opções:', periodo);
+                        console.log(' Períodos disponíveis:', options.map(o => o.value));
 
-                        // Estratégia 4: Tentar o primeiro período disponível como fallback
+ // Estratégia 4: Tentar o primeiro período disponível como fallback
                         if (options.length > 1) {
                             elementos.turmaPeriodoInput.value = options[1].value; // Pula a opção padrão
-                            console.log('⚠️ Período original não encontrado, usando:', elementos.turmaPeriodoInput.value);
+                            console.log(' Período original não encontrado, usando:', elementos.turmaPeriodoInput.value);
                         }
                     }
                 } else {
-                    console.log('✅ Período preenchido com sucesso:', elementos.turmaPeriodoInput.value);
+                    console.log(' Período preenchido com sucesso:', elementos.turmaPeriodoInput.value);
                 }
             }, 100);
 
         } catch (error) {
-            console.error('❌ Erro ao preencher período:', error);
+            console.error(' Erro ao preencher período:', error);
         }
     }
 
@@ -1013,7 +1013,7 @@ class AdminTurmas {
                 quantidade_alunos: 0
             };
 
-            console.log('💾 Salvando turma:', { turmaId, dadosTurma });
+            console.log(' Salvando turma:', { turmaId, dadosTurma });
 
             if (!dadosTurma.nome) {
                 this.showNotification('Nome da turma é obrigatório', 'error');
@@ -1036,7 +1036,7 @@ class AdminTurmas {
 
             let response;
             if (turmaId) {
-                console.log('✏️ Editando turma existente:', turmaId);
+                console.log(' Editando turma existente:', turmaId);
                 response = await this.makeRequest(`/turmas/${turmaId}`, {
                     method: 'PUT',
                     body: JSON.stringify(dadosTurma)
@@ -1049,7 +1049,7 @@ class AdminTurmas {
                 });
             }
 
-            console.log('📡 Resposta da API:', response);
+            console.log(' Resposta da API:', response);
 
             if (response && response.success) {
                 this.showNotification(
@@ -1066,16 +1066,16 @@ class AdminTurmas {
             }
 
         } catch (error) {
-            console.error('❌ Erro ao salvar turma:', error);
+            console.error(' Erro ao salvar turma:', error);
             this.showNotification('Erro ao salvar turma: ' + error.message, 'error');
         }
     }
 
-    // ========== VINCULAÇÃO DE ALUNOS ==========
+ // ========== VINCULAÇÃO DE ALUNOS ==========
 
     async vincularAlunosTurma(turmaId) {
         try {
-            console.log('🎯 Vincular alunos à turma:', turmaId);
+            console.log(' Vincular alunos à turma:', turmaId);
 
             const turma = this.turmas.find(t => t.id === turmaId);
             if (!turma) {
@@ -1091,23 +1091,23 @@ class AdminTurmas {
             await this.abrirModalVincularAlunos(turma);
 
         } catch (error) {
-            console.error('❌ Erro ao abrir modal de vínculo:', error);
+            console.error(' Erro ao abrir modal de vínculo:', error);
             this.showNotification('Erro ao abrir modal: ' + error.message, 'error');
         }
     }
 
     async abrirModalVincularAlunos(turma) {
         try {
-            console.log('🎯 Abrindo modal de vínculo para turma:', turma);
+            console.log(' Abrindo modal de vínculo para turma:', turma);
 
             let modal = document.getElementById('vincularAlunosModal');
             if (!modal) {
-                console.log('🔄 Modal não encontrado, criando fallback...');
+                console.log(' Modal não encontrado, criando fallback...');
                 await this.criarModalVincularAlunosFallback();
                 modal = document.getElementById('vincularAlunosModal');
             }
 
-            // Garantir que os elementos existem
+ // Garantir que os elementos existem
             const turmaNomeElement = document.getElementById('turmaSelecionadaNome');
             const turmaCursoElement = document.getElementById('turmaSelecionadaCurso');
 
@@ -1121,16 +1121,16 @@ class AdminTurmas {
 
             await this.carregarAlunos();
 
-            // 🔥 CORREÇÃO: Aguardar a renderização completa
+ // CORREÇÃO: Aguardar a renderização completa
             await this.renderizarListaAlunosParaTurma();
 
             modal.style.display = 'flex';
             this.prepararModalMobile(modal);
 
-            console.log('✅ Modal de vínculo aberto com sucesso');
+            console.log(' Modal de vínculo aberto com sucesso');
 
         } catch (error) {
-            console.error('❌ Erro crítico no modal de vínculo:', error);
+            console.error(' Erro crítico no modal de vínculo:', error);
             this.showNotification('Erro ao abrir modal de vínculo: ' + error.message, 'error');
         }
     }
@@ -1166,7 +1166,7 @@ class AdminTurmas {
                 throw new Error('Turma não selecionada');
             }
 
-            console.log('🎯 Iniciando processo de matrícula para alunos...');
+            console.log(' Iniciando processo de matrícula para alunos...');
 
             const response = await this.makeRequest('/turmas/matricular-alunos', {
                 method: 'POST',
@@ -1176,16 +1176,16 @@ class AdminTurmas {
                 })
             });
 
-            console.log('📡 Resposta da matrícula:', response);
+            console.log(' Resposta da matrícula:', response);
 
             if (response && response.success) {
                 this.showNotification(response.message, 'success');
 
-                // 🔥 CORREÇÃO: Atualizar quantidade imediatamente após vincular
-                console.log('🔄 Atualizando quantidade após vinculação...');
+ // CORREÇÃO: Atualizar quantidade imediatamente após vincular
+                console.log(' Atualizando quantidade após vinculação...');
                 await this.atualizarQuantidadeAlunosTurma(turmaId);
 
-                // 🔥 CORREÇÃO: Recarregar dados completos
+ // CORREÇÃO: Recarregar dados completos
                 await Promise.all([
                     this.carregarTurmas(),
                     this.carregarAlunos()
@@ -1201,18 +1201,18 @@ class AdminTurmas {
             }
 
         } catch (error) {
-            console.error('❌ Erro ao vincular alunos:', error);
+            console.error(' Erro ao vincular alunos:', error);
             this.showNotification('Erro ao vincular alunos: ' + error.message, 'error');
         }
     }
 
-    // ========== FUNÇÕES AUXILIARES ==========
+ // ========== FUNÇÕES AUXILIARES ==========
 
     async makeRequest(endpoint, options = {}) {
         const token = localStorage.getItem('authToken');
 
         if (!token) {
-            console.error('❌ Token de autenticação não encontrado');
+            console.error(' Token de autenticação não encontrado');
             throw new Error('Usuário não autenticado');
         }
 
@@ -1225,17 +1225,17 @@ class AdminTurmas {
             ...options
         };
 
-        // 🔥 CORREÇÃO: Se body for objeto, converter para JSON
+ // CORREÇÃO: Se body for objeto, converter para JSON
         if (config.body && typeof config.body === 'object') {
             config.body = JSON.stringify(config.body);
         }
 
         try {
-            console.log(`📤 Fazendo requisição para: /api${endpoint}`, config.method || 'GET');
+            console.log(` Fazendo requisição para: /api${endpoint}`, config.method || 'GET');
 
             const response = await fetch(`/api${endpoint}`, config);
 
-            // 🔥 CORREÇÃO: Verificar se a resposta é JSON válido
+ // CORREÇÃO: Verificar se a resposta é JSON válido
             const contentType = response.headers.get('content-type');
             let data;
 
@@ -1243,11 +1243,11 @@ class AdminTurmas {
                 data = await response.json();
             } else {
                 const text = await response.text();
-                console.warn('⚠️ Resposta não é JSON:', text.substring(0, 100));
+                console.warn(' Resposta não é JSON:', text.substring(0, 100));
                 throw new Error('Resposta do servidor não é JSON válido');
             }
 
-            console.log(`📥 Resposta de /api${endpoint}:`, {
+            console.log(` Resposta de /api${endpoint}:`, {
                 status: response.status,
                 ok: response.ok,
                 data: data
@@ -1260,29 +1260,29 @@ class AdminTurmas {
             return data;
 
         } catch (error) {
-            console.error(`❌ Erro na requisição /api${endpoint}:`, error);
+            console.error(` Erro na requisição /api${endpoint}:`, error);
             throw error;
         }
     }
 
     setupEventListeners() {
-        console.log('✅ Configurando event listeners para turmas');
+        console.log(' Configurando event listeners para turmas');
 
-        // Formulário principal
+ // Formulário principal
         const turmaForm = document.getElementById('turmaForm');
         if (turmaForm) {
             turmaForm.addEventListener('submit', (e) => this.salvarTurma(e));
         } else {
-            console.log('ℹ️ Formulário de turma não encontrado no carregamento inicial');
+            console.log('ℹ Formulário de turma não encontrado no carregamento inicial');
         }
 
-        // Configurar eventos específicos de curso/período
+ // Configurar eventos específicos de curso/período
         this.configurarEventosCursoPeriodo();
 
-        // Eventos de modal
+ // Eventos de modal
         this.setupModalEventListeners();
 
-        console.log('✅ Todos os event listeners configurados');
+        console.log(' Todos os event listeners configurados');
     }
 
     setupModalEventListeners() {
@@ -1360,71 +1360,71 @@ class AdminTurmas {
         }
     }
 
-    // ========== FUNÇÕES DE DEBUG E DIAGNÓSTICO ==========
+ // ========== FUNÇÕES DE DEBUG E DIAGNÓSTICO ==========
 
     verificarEstadoInicial() {
-        console.group('🔍 VERIFICAÇÃO DO ESTADO INICIAL');
+        console.group('VERIFICAÇÃO DO ESTADO INICIAL');
 
         const selectCurso = document.getElementById('turmaCurso');
         const selectPeriodo = document.getElementById('turmaPeriodo');
 
-        console.log('📋 Select de curso:', {
+        console.log(' Select de curso:', {
             existe: !!selectCurso,
             habilitado: selectCurso ? !selectCurso.disabled : 'N/A',
             options: selectCurso ? selectCurso.options.length : 0,
             valor: selectCurso ? selectCurso.value : 'N/A'
         });
 
-        console.log('📋 Select de período:', {
+        console.log(' Select de período:', {
             existe: !!selectPeriodo,
             habilitado: selectPeriodo ? !selectPeriodo.disabled : 'N/A',
             options: selectPeriodo ? selectPeriodo.options.length : 0,
             valor: selectPeriodo ? selectPeriodo.value : 'N/A'
         });
 
-        console.log('📊 Dados internos:', {
+        console.log(' Dados internos:', {
             cursosDisponiveis: this.cursosDisponiveis ? this.cursosDisponiveis.length : 0,
             cursosComPeriodos: this.cursosComPeriodos ? Object.keys(this.cursosComPeriodos).length : 0
         });
 
         console.groupEnd();
 
-        // Se não há cursos, tentar recarregar
+ // Se não há cursos, tentar recarregar
         if (!this.cursosDisponiveis || this.cursosDisponiveis.length === 0) {
-            console.warn('⚠️ Nenhum curso disponível, tentando recarregar...');
+            console.warn(' Nenhum curso disponível, tentando recarregar...');
             this.carregarCursosDoBanco();
         }
     }
 
     async debugCursos() {
-        console.group('🐛 DEBUG CURSOS - DETALHADO');
+        console.group('DEBUG CURSOS - DETALHADO');
 
         try {
-            console.log('🔍 Verificando estado atual dos cursos:');
-            console.log('📊 Cursos disponíveis:', this.cursosDisponiveis);
-            console.log('📚 Mapeamento períodos:', this.cursosComPeriodos);
+            console.log(' Verificando estado atual dos cursos:');
+            console.log(' Cursos disponíveis:', this.cursosDisponiveis);
+            console.log(' Mapeamento períodos:', this.cursosComPeriodos);
 
-            // Testar a API diretamente
+ // Testar a API diretamente
             const response = await fetch('/api/cursos/com-periodos', {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                 }
             });
 
-            console.log('🎯 Status da API:', response.status);
+            console.log(' Status da API:', response.status);
             const rawData = await response.json();
-            console.log('📡 Resposta bruta da API:', rawData);
+            console.log(' Resposta bruta da API:', rawData);
 
-            // Verificar estrutura do modal
+ // Verificar estrutura do modal
             const selectCurso = document.getElementById('turmaCurso');
-            console.log('📝 Select de curso no DOM:', {
+            console.log(' Select de curso no DOM:', {
                 existe: !!selectCurso,
                 options: selectCurso ? selectCurso.options.length : 0,
                 valor: selectCurso ? selectCurso.value : 'N/A'
             });
 
         } catch (error) {
-            console.error('❌ Erro no debug:', error);
+            console.error(' Erro no debug:', error);
         }
 
         console.groupEnd();
@@ -1433,10 +1433,10 @@ class AdminTurmas {
 
     async sincronizarQuantidades() {
         try {
-            console.log('🔄 Sincronizando quantidades de todas as turmas...');
+            console.log(' Sincronizando quantidades de todas as turmas...');
 
             if (!Array.isArray(this.turmas) || this.turmas.length === 0) {
-                console.log('ℹ️ Nenhuma turma para sincronizar');
+                console.log('ℹ Nenhuma turma para sincronizar');
                 return;
             }
 
@@ -1449,33 +1449,33 @@ class AdminTurmas {
                 }
             }
 
-            console.log(`✅ ${turmasAtualizadas}/${this.turmas.length} turmas sincronizadas`);
+            console.log(` ${turmasAtualizadas}/${this.turmas.length} turmas sincronizadas`);
             this.showNotification(`Quantidades de ${turmasAtualizadas} turmas atualizadas!`, 'success');
 
         } catch (error) {
-            console.error('❌ Erro na sincronização de quantidades:', error);
+            console.error(' Erro na sincronização de quantidades:', error);
             this.showNotification('Erro ao sincronizar quantidades: ' + error.message, 'error');
         }
     }
 
-    // ========== FUNÇÕES FALLBACK (PARA COMPATIBILIDADE) ==========
+ // ========== FUNÇÕES FALLBACK (PARA COMPATIBILIDADE) ==========
 
     criarModalTurmaFallback() {
-        console.log('🔄 Criando modal de turma fallback...');
-        // Implementação do fallback...
+        console.log(' Criando modal de turma fallback...');
+ // Implementação do fallback...
     }
 
     criarModalVincularAlunosFallback() {
-        console.log('🔄 Criando modal de vínculo fallback...');
-        // Implementação do fallback...
+        console.log(' Criando modal de vínculo fallback...');
+ // Implementação do fallback...
     }
 
     async criarModalEdicaoFallback(turma) {
-        console.log('🔄 Criando modal de edição fallback...');
-        // Implementação do fallback...
+        console.log(' Criando modal de edição fallback...');
+ // Implementação do fallback...
     }
 
-    // ========== OUTRAS FUNÇÕES (MANTIDAS PARA COMPATIBILIDADE) ==========
+ // ========== OUTRAS FUNÇÕES (MANTIDAS PARA COMPATIBILIDADE) ==========
 
     validarTurmaDuplicada(dadosTurma, turmaId = null) {
         const { nome, curso, periodo, ano } = dadosTurma;
@@ -1508,40 +1508,40 @@ class AdminTurmas {
 
     async atualizarQuantidadeAlunosTurma(turmaId) {
         try {
-            console.log('🔢 Atualizando quantidade de alunos para turma:', turmaId);
+            console.log(' Atualizando quantidade de alunos para turma:', turmaId);
 
             const alunosVinculados = await this.buscarAlunosVinculadosTurmaComId(turmaId);
             const novaQuantidade = alunosVinculados.length;
 
-            console.log(`✅ Encontrados ${novaQuantidade} alunos na turma ${turmaId}`);
+            console.log(` Encontrados ${novaQuantidade} alunos na turma ${turmaId}`);
 
             const turmaIndex = this.turmas.findIndex(t => t.id === turmaId);
             if (turmaIndex !== -1) {
                 this.turmas[turmaIndex].quantidade_alunos = novaQuantidade;
-                console.log(`✅ Quantidade atualizada para turma local: ${novaQuantidade}`);
+                console.log(` Quantidade atualizada para turma local: ${novaQuantidade}`);
 
                 this.renderizarTurmas();
                 this.atualizarEstatisticasTurmas();
                 return true;
             } else {
-                console.warn(`⚠️ Turma com ID ${turmaId} não encontrada na lista local`);
+                console.warn(` Turma com ID ${turmaId} não encontrada na lista local`);
                 return false;
             }
 
         } catch (error) {
-            console.error('❌ Erro ao atualizar quantidade:', error);
+            console.error(' Erro ao atualizar quantidade:', error);
             return false;
         }
     }
 
     async buscarAlunosVinculadosTurmaComId(turmaId) {
         try {
-            console.log('🔍 Buscando alunos vinculados da turma:', turmaId);
+            console.log(' Buscando alunos vinculados da turma:', turmaId);
 
             const response = await this.makeRequest(`/turmas/${turmaId}/alunos`);
-            console.log('📡 Resposta da API alunos vinculados:', response);
+            console.log(' Resposta da API alunos vinculados:', response);
 
-            // 🔥 CORREÇÃO: Tratar diferentes formatos de resposta
+ // CORREÇÃO: Tratar diferentes formatos de resposta
             let alunosVinculados = [];
 
             if (Array.isArray(response)) {
@@ -1551,15 +1551,15 @@ class AdminTurmas {
             } else if (response && Array.isArray(response.alunos)) {
                 alunosVinculados = response.alunos;
             } else {
-                console.warn('⚠️ Formato de resposta inesperado para alunos vinculados:', response);
+                console.warn(' Formato de resposta inesperado para alunos vinculados:', response);
                 alunosVinculados = [];
             }
 
-            console.log(`✅ ${alunosVinculados.length} alunos vinculados encontrados`);
+            console.log(` ${alunosVinculados.length} alunos vinculados encontrados`);
             return alunosVinculados;
 
         } catch (error) {
-            console.error('❌ Erro ao buscar alunos vinculados:', error);
+            console.error(' Erro ao buscar alunos vinculados:', error);
             return [];
         }
     }
@@ -1567,7 +1567,7 @@ class AdminTurmas {
     atualizarEstatisticasTurmas() {
         try {
             if (!Array.isArray(this.turmas)) {
-                console.warn('⚠️ Turmas não é um array:', this.turmas);
+                console.warn(' Turmas não é um array:', this.turmas);
                 return;
             }
             const totalTurmas = this.turmas.length;
@@ -1579,58 +1579,58 @@ class AdminTurmas {
             if (totalTurmasEl) totalTurmasEl.textContent = totalTurmas;
             if (totalAlunosVinculadosEl) totalAlunosVinculadosEl.textContent = totalAlunosVinculados;
             if (turmasComAlunosEl) turmasComAlunosEl.textContent = turmasComAlunos;
-            console.log('📊 Estatísticas de turmas atualizadas:', { totalTurmas, totalAlunosVinculados, turmasComAlunos });
+            console.log(' Estatísticas de turmas atualizadas:', { totalTurmas, totalAlunosVinculados, turmasComAlunos });
         } catch (error) {
-            console.error('❌ Erro ao atualizar estatísticas de turmas:', error);
+            console.error(' Erro ao atualizar estatísticas de turmas:', error);
         }
     }
 
     sincronizarComDashboard() {
         if (window.adminManager && typeof adminManager.atualizarTurmasDashboard === 'function') {
-            console.log('🔄 Sincronizando turmas com dashboard...');
+            console.log(' Sincronizando turmas com dashboard...');
             adminManager.atualizarTurmasDashboard();
         }
     }
 
-    // ========== FUNÇÕES DE GERENCIAMENTO DE ALUNOS ==========
+ // ========== FUNÇÕES DE GERENCIAMENTO DE ALUNOS ==========
 
     async buscarAlunosVinculadosTurma() {
         try {
             if (!this.turmaEditando?.id) {
-                console.log('⚠️ Nenhuma turma selecionada para buscar alunos vinculados');
+                console.log(' Nenhuma turma selecionada para buscar alunos vinculados');
                 return [];
             }
 
-            console.log('🔍 Buscando alunos vinculados da turma:', this.turmaEditando.id);
+            console.log(' Buscando alunos vinculados da turma:', this.turmaEditando.id);
 
             const response = await this.makeRequest(`/turmas/${this.turmaEditando.id}/alunos`);
-            console.log('📡 Resposta da API alunos vinculados:', response);
+            console.log(' Resposta da API alunos vinculados:', response);
 
-            // 🔥 CORREÇÃO: Tratar diferentes formatos de resposta
+ // CORREÇÃO: Tratar diferentes formatos de resposta
             let alunosVinculados = [];
 
             if (Array.isArray(response)) {
-                // Resposta é array direto
+ // Resposta é array direto
                 alunosVinculados = response;
             } else if (response && response.success && Array.isArray(response.data)) {
-                // Formato {success: true, data: [...]}
+ // Formato {success: true, data: [...]}
                 alunosVinculados = response.data;
             } else if (response && Array.isArray(response.alunos)) {
-                // Formato {alunos: [...]}
+ // Formato {alunos: [...]}
                 alunosVinculados = response.alunos;
             } else if (response && response.data && Array.isArray(response.data)) {
-                // Formato aninhado
+ // Formato aninhado
                 alunosVinculados = response.data;
             } else {
-                console.warn('⚠️ Formato de resposta inesperado para alunos vinculados:', response);
+                console.warn(' Formato de resposta inesperado para alunos vinculados:', response);
                 alunosVinculados = [];
             }
 
-            console.log(`✅ ${alunosVinculados.length} alunos vinculados encontrados`);
+            console.log(` ${alunosVinculados.length} alunos vinculados encontrados`);
             return alunosVinculados;
 
         } catch (error) {
-            console.error('❌ Erro ao buscar alunos vinculados:', error);
+            console.error(' Erro ao buscar alunos vinculados:', error);
             return [];
         }
     }
@@ -1638,7 +1638,7 @@ class AdminTurmas {
     async renderizarListaAlunosParaTurma() {
         const tbody = document.getElementById('listaAlunosTurma');
         if (!tbody) {
-            console.error('❌ Elemento listaAlunosTurma não encontrado');
+            console.error(' Elemento listaAlunosTurma não encontrado');
             return;
         }
 
@@ -1655,18 +1655,18 @@ class AdminTurmas {
         }
 
         try {
-            // 🔥 CORREÇÃO: Aguardar a Promise ser resolvida
+ // CORREÇÃO: Aguardar a Promise ser resolvida
             const alunosVinculados = await this.buscarAlunosVinculadosTurma();
 
-            // 🔥 CORREÇÃO: Garantir que é um array
+ // CORREÇÃO: Garantir que é um array
             const alunosVinculadosIds = Array.isArray(alunosVinculados)
                 ? alunosVinculados.map(aluno => aluno.id)
                 : [];
 
             this.alunosVinculadosInicialmente = new Set(alunosVinculadosIds);
 
-            console.log(`🎯 ${alunosVinculadosIds.length} alunos já vinculados à turma:`, alunosVinculadosIds);
-            console.log('📋 Estado inicial guardado:', Array.from(this.alunosVinculadosInicialmente));
+            console.log(` ${alunosVinculadosIds.length} alunos já vinculados à turma:`, alunosVinculadosIds);
+            console.log(' Estado inicial guardado:', Array.from(this.alunosVinculadosInicialmente));
 
             tbody.innerHTML = this.alunos.map(aluno => {
                 const turmaAluno = this.turmas.find(t => t.id === aluno.turma_id);
@@ -1705,7 +1705,7 @@ class AdminTurmas {
             this.configurarSelecaoAlunosComEventos();
 
         } catch (error) {
-            console.error('❌ Erro ao renderizar lista de alunos:', error);
+            console.error(' Erro ao renderizar lista de alunos:', error);
             tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="empty-state error">
@@ -1724,7 +1724,7 @@ class AdminTurmas {
         const checkboxes = document.querySelectorAll('.aluno-checkbox:not(:disabled)');
         const buscarInput = document.getElementById('buscarAlunosTurma');
 
-        console.log(`🔧 Configurando eventos para ${checkboxes.length} checkboxes`);
+        console.log(` Configurando eventos para ${checkboxes.length} checkboxes`);
 
         if (selecionarTodos) {
             selecionarTodos.onchange = (e) => {
@@ -1754,7 +1754,7 @@ class AdminTurmas {
                 const estaSelecionado = e.target.checked;
                 const estavaVinculadoInicialmente = this.alunosVinculadosInicialmente.has(alunoId);
 
-                console.log('🔄 Alteração de seleção:', {
+                console.log(' Alteração de seleção:', {
                     alunoId,
                     estaSelecionado,
                     estavaVinculadoInicialmente
@@ -1767,7 +1767,7 @@ class AdminTurmas {
                     }
                 }
                 else if (!estaSelecionado && !estavaVinculadoInicialmente) {
-                    console.log('ℹ️ Aluno não estava vinculado inicialmente - ignorando desvinculação');
+                    console.log('ℹ Aluno não estava vinculado inicialmente - ignorando desvinculação');
                 }
             };
         });
@@ -1777,15 +1777,15 @@ class AdminTurmas {
         try {
             const turmaId = this.turmaEditando?.id;
             if (!turmaId) {
-                console.error('❌ Turma não selecionada para desvinculação instantânea');
+                console.error(' Turma não selecionada para desvinculação instantânea');
                 return;
             }
 
-            // 🔥 VERIFICAÇÃO EXTRA: Confirmar que o aluno estava vinculado inicialmente
+ // VERIFICAÇÃO EXTRA: Confirmar que o aluno estava vinculado inicialmente
             if (!this.alunosVinculadosInicialmente.has(alunoId)) {
-                console.log('⚠️ Aluno não estava vinculado inicialmente - cancelando desvinculação');
+                console.log(' Aluno não estava vinculado inicialmente - cancelando desvinculação');
 
-                // 🔥 CORREÇÃO: Não restaurar o checkbox se não estava vinculado inicialmente
+ // CORREÇÃO: Não restaurar o checkbox se não estava vinculado inicialmente
                 const checkbox = document.querySelector(`.aluno-checkbox[value="${alunoId}"]`);
                 if (checkbox) {
                     checkbox.checked = false; // Manter desmarcado
@@ -1793,9 +1793,9 @@ class AdminTurmas {
                 return;
             }
 
-            console.log('⚡ Desvinculação instantânea:', { turmaId, alunoId, alunoNome });
+            console.log(' Desvinculação instantânea:', { turmaId, alunoId, alunoNome });
 
-            // Feedback visual
+ // Feedback visual
             const checkbox = document.querySelector(`.aluno-checkbox[value="${alunoId}"]`);
             if (checkbox) {
                 checkbox.disabled = true;
@@ -1818,17 +1818,17 @@ class AdminTurmas {
             });
 
             if (response && response.success) {
-                console.log('✅ Aluno desvinculado instantaneamente:', alunoNome);
+                console.log(' Aluno desvinculado instantaneamente:', alunoNome);
 
-                // 🔥 ATUALIZAR: Remover da lista de alunos vinculados inicialmente
+ // ATUALIZAR: Remover da lista de alunos vinculados inicialmente
                 this.alunosVinculadosInicialmente.delete(alunoId);
 
-                // Atualizar dados globais
+ // Atualizar dados globais
                 await this.atualizarQuantidadeAlunosTurma(turmaId);
                 await this.carregarAlunos();
                 this.renderizarTurmas();
 
-                // 🔥 CORREÇÃO: Atualizar apenas a linha específica em vez de recarregar todo o modal
+ // CORREÇÃO: Atualizar apenas a linha específica em vez de recarregar todo o modal
                 await this.atualizarApenasLinhaAluno(alunoId);
 
                 this.showNotification(`Aluno "${alunoNome}" desvinculado automaticamente`, 'info');
@@ -1837,13 +1837,13 @@ class AdminTurmas {
             }
 
         } catch (error) {
-            console.error('❌ Erro na desvinculação instantânea:', error);
+            console.error(' Erro na desvinculação instantânea:', error);
 
-            // Restaurar estado em caso de erro
+ // Restaurar estado em caso de erro
             const checkbox = document.querySelector(`.aluno-checkbox[value="${alunoId}"]`);
             if (checkbox) {
                 checkbox.disabled = false;
-                // 🔥 CORREÇÃO: Só restaurar como selecionado se estava vinculado inicialmente
+ // CORREÇÃO: Só restaurar como selecionado se estava vinculado inicialmente
                 if (this.alunosVinculadosInicialmente.has(alunoId)) {
                     checkbox.checked = true;
                 }
@@ -1893,7 +1893,7 @@ class AdminTurmas {
                     const estaSelecionado = e.target.checked;
                     const estavaVinculadoInicialmente = this.alunosVinculadosInicialmente.has(alunoId);
 
-                    console.log('🔄 Alteração de seleção:', {
+                    console.log(' Alteração de seleção:', {
                         alunoId,
                         estaSelecionado,
                         estavaVinculadoInicialmente
@@ -1909,17 +1909,17 @@ class AdminTurmas {
             }
 
         } catch (error) {
-            console.error('❌ Erro ao atualizar linha do aluno:', error);
+            console.error(' Erro ao atualizar linha do aluno:', error);
         }
     }
 
-    // ========== FUNÇÕES DE EXCLUSÃO E DESVINCULAÇÃO ==========
+ // ========== FUNÇÕES DE EXCLUSÃO E DESVINCULAÇÃO ==========
 
     async excluirTurma(turmaId) {
         const turma = this.turmas.find(t => t.id === turmaId);
         if (!turma) return;
 
-        console.log('🗑️ Tentando excluir turma:', {
+        console.log(' Tentando excluir turma:', {
             id: turma.id,
             nome: turma.nome,
             ativa: turma.ativa,
@@ -1971,7 +1971,7 @@ class AdminTurmas {
         try {
             const endpoint = turma.ativa ? `/turmas/${turmaId}` : `/turmas/permanent/${turmaId}`;
 
-            console.log('📤 Fazendo requisição de exclusão para:', endpoint);
+            console.log(' Fazendo requisição de exclusão para:', endpoint);
 
             const response = await this.makeRequest(endpoint, {
                 method: 'DELETE'
@@ -1984,7 +1984,7 @@ class AdminTurmas {
                 throw new Error(response?.error || 'Erro ao excluir turma');
             }
         } catch (error) {
-            console.error('❌ Erro ao excluir turma:', error);
+            console.error(' Erro ao excluir turma:', error);
             this.showNotification('Erro ao excluir turma: ' + error.message, 'error');
         }
     }
@@ -1999,13 +1999,13 @@ class AdminTurmas {
                 return;
             }
 
-            console.log('🗑️ Desvinculando todos os alunos da turma:', turmaId);
+            console.log(' Desvinculando todos os alunos da turma:', turmaId);
 
             const response = await this.makeRequest(`/turmas/${turmaId}/desvincular-todos`, {
                 method: 'POST'
             });
 
-            console.log('📡 Resposta da desvinculação total:', response);
+            console.log(' Resposta da desvinculação total:', response);
 
             if (response && response.success) {
                 this.showNotification(
@@ -2022,22 +2022,22 @@ class AdminTurmas {
             }
 
         } catch (error) {
-            console.error('❌ Erro ao desvincular todos os alunos:', error);
+            console.error(' Erro ao desvincular todos os alunos:', error);
             this.showNotification('Erro ao desvincular alunos: ' + error.message, 'error');
         }
     }
 
-    // ========== FUNÇÕES DE VISUALIZAÇÃO ==========
+ // ========== FUNÇÕES DE VISUALIZAÇÃO ==========
 
-    // 🔥 CORREÇÃO: Função verAlunosTurma corrigida
+ // CORREÇÃO: Função verAlunosTurma corrigida
     async verAlunosTurma(turmaId) {
         try {
-            console.log('👀 Ver alunos da turma:', turmaId);
+            console.log(' Ver alunos da turma:', turmaId);
 
-            // 🔥 CORREÇÃO: Usar a função auxiliar que já sabemos que funciona
+ // CORREÇÃO: Usar a função auxiliar que já sabemos que funciona
             const alunosVinculados = await this.buscarAlunosVinculadosTurmaComId(turmaId);
 
-            console.log(`✅ ${alunosVinculados.length} alunos carregados do banco`);
+            console.log(` ${alunosVinculados.length} alunos carregados do banco`);
 
             if (!Array.isArray(alunosVinculados)) {
                 throw new Error('Resposta inválida da API - não é um array');
@@ -2046,12 +2046,12 @@ class AdminTurmas {
             this.mostrarModalAlunosTurma(alunosVinculados, turmaId);
 
         } catch (error) {
-            console.error('❌ Erro ao carregar alunos da turma:', error);
+            console.error(' Erro ao carregar alunos da turma:', error);
             this.showNotification('Erro ao carregar alunos do banco: ' + error.message, 'error');
         }
     }
 
-    // 🔥 CORREÇÃO: Apenas aumento do tamanho do modal
+ // CORREÇÃO: Apenas aumento do tamanho do modal
     mostrarModalAlunosTurma(alunos, turmaId) {
         try {
             const turma = this.turmas.find(t => t.id === turmaId);
@@ -2059,7 +2059,7 @@ class AdminTurmas {
 
             const modalId = 'modal-ver-alunos-turma';
 
-            // Remover modal existente de forma segura
+ // Remover modal existente de forma segura
             const modalExistente = document.getElementById(modalId);
             if (modalExistente) {
                 modalExistente.remove();
@@ -2115,7 +2115,7 @@ class AdminTurmas {
                     </button>
                 </div>
                 <div class="modal-body" style="height: calc(100% - 120px);">
-                    <!-- 🔥 CORREÇÃO: Container com altura máxima e scroll -->
+                    <!--  CORREÇÃO: Container com altura máxima e scroll -->
                     <div class="table-responsive" style="
                         height: 100%;
                         overflow: auto;
@@ -2152,10 +2152,10 @@ class AdminTurmas {
 
             document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-            console.log('✅ Modal de ver alunos com tamanho aumentado (scroll reduzido)');
+            console.log(' Modal de ver alunos com tamanho aumentado (scroll reduzido)');
 
         } catch (error) {
-            console.error('❌ Erro ao criar modal de ver alunos:', error);
+            console.error(' Erro ao criar modal de ver alunos:', error);
             this.showNotification('Erro ao criar modal: ' + error.message, 'error');
         }
     }
@@ -2170,7 +2170,7 @@ class AdminTurmas {
             const confirmacao = confirm(`Tem certeza que deseja desvincular o aluno "${alunoNome}" da turma?`);
             if (!confirmacao) return;
 
-            console.log('🗑️ Desvinculando aluno individual:', { turmaId, alunoId });
+            console.log(' Desvinculando aluno individual:', { turmaId, alunoId });
 
             const response = await this.makeRequest('/turmas/desmatricular-aluno', {
                 method: 'POST',
@@ -2180,12 +2180,12 @@ class AdminTurmas {
                 })
             });
 
-            console.log('📡 Resposta da desvinculação individual:', response);
+            console.log(' Resposta da desvinculação individual:', response);
 
             if (response && response.success) {
                 this.showNotification(`Aluno "${alunoNome}" desvinculado com sucesso!`, 'success');
 
-                // Atualizar dados globais
+ // Atualizar dados globais
                 await this.atualizarQuantidadeAlunosTurma(turmaId);
                 await this.carregarAlunos();
                 this.renderizarTurmas();
@@ -2195,16 +2195,16 @@ class AdminTurmas {
             }
 
         } catch (error) {
-            console.error('❌ Erro ao desvincular aluno individual:', error);
+            console.error(' Erro ao desvincular aluno individual:', error);
             this.showNotification('Erro ao desvincular aluno: ' + error.message, 'error');
         }
     }
 
-    // ========== FUNÇÕES DE GERENCIAMENTO DE VÍNCULOS ==========
+ // ========== FUNÇÕES DE GERENCIAMENTO DE VÍNCULOS ==========
 
     async abrirModalGerenciarVinculos(turmaId) {
         try {
-            console.log('👥 Abrindo modal de gerenciar vínculos:', turmaId);
+            console.log(' Abrindo modal de gerenciar vínculos:', turmaId);
 
             const turma = this.turmas.find(t => t.id === turmaId);
             if (!turma) {
@@ -2213,33 +2213,33 @@ class AdminTurmas {
 
             this.turmaEditando = turma;
 
-            // 🔥 CORREÇÃO: Buscar alunos vinculados diretamente
+ // CORREÇÃO: Buscar alunos vinculados diretamente
             const alunosVinculados = await this.buscarAlunosVinculadosTurmaComId(turmaId);
-            console.log('📡 Alunos vinculados encontrados:', alunosVinculados);
+            console.log(' Alunos vinculados encontrados:', alunosVinculados);
 
             if (!Array.isArray(alunosVinculados)) {
                 throw new Error('Resposta inválida da API');
             }
 
-            console.log(`✅ ${alunosVinculados.length} alunos encontrados na turma`);
+            console.log(` ${alunosVinculados.length} alunos encontrados na turma`);
             this.mostrarModalGerenciarVinculos(turma, alunosVinculados);
 
         } catch (error) {
-            console.error('❌ Erro ao abrir modal de gerenciar vínculos:', error);
+            console.error(' Erro ao abrir modal de gerenciar vínculos:', error);
             this.showNotification('Erro ao carregar alunos da turma: ' + error.message, 'error');
         }
     }
 
     mostrarModalGerenciarVinculos(turma, alunosVinculados) {
         try {
-            console.log('🎯 Mostrando modal de gerenciar vínculos:', {
+            console.log(' Mostrando modal de gerenciar vínculos:', {
                 turma: turma.nome,
                 alunos: alunosVinculados.length
             });
 
             const modalId = 'modal-gerenciar-vinculos';
 
-            // 🔥 CORREÇÃO: Remover modal existente de forma mais segura
+ // CORREÇÃO: Remover modal existente de forma mais segura
             const modalExistente = document.getElementById(modalId);
             if (modalExistente) {
                 modalExistente.remove();
@@ -2345,15 +2345,15 @@ class AdminTurmas {
 
             document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-            // 🔥 CORREÇÃO: Configurar eventos após inserir no DOM
+ // CORREÇÃO: Configurar eventos após inserir no DOM
             if (alunosVinculados.length > 0) {
                 this.configurarModalGerenciarVinculos();
             }
 
-            console.log('✅ Modal de gerenciar vínculos criado com sucesso');
+            console.log(' Modal de gerenciar vínculos criado com sucesso');
 
         } catch (error) {
-            console.error('❌ Erro ao criar modal de gerenciar vínculos:', error);
+            console.error(' Erro ao criar modal de gerenciar vínculos:', error);
             this.showNotification('Erro ao criar modal: ' + error.message, 'error');
         }
     }
@@ -2373,7 +2373,7 @@ class AdminTurmas {
         }
     }
 
-    // 🔥 NOVA FUNÇÃO: Desvincular aluno do modal de ver alunos
+ // NOVA FUNÇÃO: Desvincular aluno do modal de ver alunos
     async desvincularAlunoIndividualModal(turmaId, alunoId, alunoNome = '') {
         try {
             if (!alunoNome) {
@@ -2384,7 +2384,7 @@ class AdminTurmas {
             const confirmacao = confirm(`Tem certeza que deseja desvincular o aluno "${alunoNome}" da turma?`);
             if (!confirmacao) return;
 
-            console.log('🗑️ Desvinculando aluno do modal:', { turmaId, alunoId });
+            console.log(' Desvinculando aluno do modal:', { turmaId, alunoId });
 
             const response = await this.makeRequest('/turmas/desmatricular-aluno', {
                 method: 'POST',
@@ -2394,17 +2394,17 @@ class AdminTurmas {
                 })
             });
 
-            console.log('📡 Resposta da desvinculação:', response);
+            console.log(' Resposta da desvinculação:', response);
 
             if (response && response.success) {
                 this.showNotification(`Aluno "${alunoNome}" desvinculado com sucesso!`, 'success');
 
-                // Atualizar dados globais
+ // Atualizar dados globais
                 await this.atualizarQuantidadeAlunosTurma(turmaId);
                 await this.carregarAlunos();
                 this.renderizarTurmas();
 
-                // 🔥 CORREÇÃO: Fechar e reabrir o modal para atualizar a lista
+ // CORREÇÃO: Fechar e reabrir o modal para atualizar a lista
                 this.fecharModalVerAlunos();
                 setTimeout(() => {
                     this.verAlunosTurma(turmaId);
@@ -2415,7 +2415,7 @@ class AdminTurmas {
             }
 
         } catch (error) {
-            console.error('❌ Erro ao desvincular aluno do modal:', error);
+            console.error(' Erro ao desvincular aluno do modal:', error);
             this.showNotification('Erro ao desvincular aluno: ' + error.message, 'error');
         }
     }
@@ -2430,7 +2430,7 @@ class AdminTurmas {
             const confirmacao = confirm(`Tem certeza que deseja desvincular o aluno "${alunoNome}" da turma?`);
             if (!confirmacao) return;
 
-            console.log('🗑️ Desvinculando aluno individual:', { turmaId, alunoId });
+            console.log(' Desvinculando aluno individual:', { turmaId, alunoId });
 
             const response = await this.makeRequest('/turmas/desmatricular-aluno', {
                 method: 'POST',
@@ -2440,17 +2440,17 @@ class AdminTurmas {
                 })
             });
 
-            console.log('📡 Resposta da desvinculação individual:', response);
+            console.log(' Resposta da desvinculação individual:', response);
 
             if (response && response.success) {
                 this.showNotification(`Aluno "${alunoNome}" desvinculado com sucesso!`, 'success');
 
-                // 🔥 CORREÇÃO: Atualizar dados globais
+ // CORREÇÃO: Atualizar dados globais
                 await this.atualizarQuantidadeAlunosTurma(turmaId);
                 await this.carregarAlunos();
                 this.renderizarTurmas();
 
-                // 🔥 CORREÇÃO: Fechar e reabrir o modal para atualizar a lista
+ // CORREÇÃO: Fechar e reabrir o modal para atualizar a lista
                 this.fecharModalGerenciarVinculos();
                 setTimeout(() => {
                     this.abrirModalGerenciarVinculos(turmaId);
@@ -2461,7 +2461,7 @@ class AdminTurmas {
             }
 
         } catch (error) {
-            console.error('❌ Erro ao desvincular aluno individual:', error);
+            console.error(' Erro ao desvincular aluno individual:', error);
             this.showNotification('Erro ao desvincular aluno: ' + error.message, 'error');
         }
     }
@@ -2469,7 +2469,7 @@ class AdminTurmas {
 
     configurarModalGerenciarVinculos() {
         try {
-            console.log('⚙️ Configurando modal de gerenciar vínculos...');
+            console.log(' Configurando modal de gerenciar vínculos...');
 
             const selecionarTodos = document.getElementById('selecionarTodosVinculados');
             const checkboxes = document.querySelectorAll('.aluno-vinculado-checkbox');
@@ -2482,9 +2482,9 @@ class AdminTurmas {
                     });
                 });
 
-                console.log('✅ "Selecionar Todos" configurado');
+                console.log(' "Selecionar Todos" configurado');
             } else {
-                console.warn('⚠️ Elementos de seleção não encontrados');
+                console.warn(' Elementos de seleção não encontrados');
             }
 
             if (buscarInput) {
@@ -2501,27 +2501,27 @@ class AdminTurmas {
                         if (deveMostrar) linhasVisiveis++;
                     });
 
-                    console.log(`🔍 Busca: ${linhasVisiveis}/${linhas.length} alunos encontrados`);
+                    console.log(` Busca: ${linhasVisiveis}/${linhas.length} alunos encontrados`);
                 });
 
-                console.log('✅ Busca configurada');
+                console.log(' Busca configurada');
             } else {
-                console.warn('⚠️ Campo de busca não encontrado');
+                console.warn(' Campo de busca não encontrado');
             }
 
         } catch (error) {
-            console.error('❌ Erro ao configurar modal de gerenciar vínculos:', error);
+            console.error(' Erro ao configurar modal de gerenciar vínculos:', error);
         }
     }
 
-    // 🔥 CORREÇÃO: Função desvincularAlunosSelecionados para fechar modal após desvincular
+ // CORREÇÃO: Função desvincularAlunosSelecionados para fechar modal após desvincular
     async desvincularAlunosSelecionados() {
         try {
-            console.log('🔍 Verificando seleção de alunos para desvincular...');
+            console.log(' Verificando seleção de alunos para desvincular...');
             const checkboxes = document.querySelectorAll('.aluno-vinculado-checkbox:checked');
             const alunosIds = Array.from(checkboxes).map(cb => {
                 const value = parseInt(cb.value);
-                console.log(`📋 Checkbox selecionado: ID ${value}`);
+                console.log(` Checkbox selecionado: ID ${value}`);
                 return value;
             });
 
@@ -2535,7 +2535,7 @@ class AdminTurmas {
                 throw new Error('Turma não selecionada');
             }
 
-            console.log(`🎯 Preparando para desvincular ${alunosIds.length} aluno(s) da turma ${turmaId}`);
+            console.log(` Preparando para desvincular ${alunosIds.length} aluno(s) da turma ${turmaId}`);
 
             const nomesAlunos = alunosIds.map(id => {
                 const aluno = this.alunos.find(a => a.id === id);
@@ -2548,18 +2548,18 @@ class AdminTurmas {
             );
 
             if (!confirmacao) {
-                console.log('❌ Usuário cancelou a desvinculação');
+                console.log(' Usuário cancelou a desvinculação');
                 return;
             }
 
-            console.log('🔄 Iniciando desvinculação em lote...');
+            console.log(' Iniciando desvinculação em lote...');
 
             let desvinculadosComSucesso = 0;
             let erros = [];
 
             for (const alunoId of alunosIds) {
                 try {
-                    console.log(`🔄 Desvinculando aluno ${alunoId}...`);
+                    console.log(` Desvinculando aluno ${alunoId}...`);
 
                     const response = await this.makeRequest('/turmas/desmatricular-aluno', {
                         method: 'POST',
@@ -2569,23 +2569,23 @@ class AdminTurmas {
                         })
                     });
 
-                    console.log(`📡 Resposta para aluno ${alunoId}:`, response);
+                    console.log(` Resposta para aluno ${alunoId}:`, response);
 
                     if (response && response.success) {
                         desvinculadosComSucesso++;
-                        console.log(`✅ Aluno ${alunoId} desvinculado com sucesso`);
+                        console.log(` Aluno ${alunoId} desvinculado com sucesso`);
                     } else {
                         throw new Error(response?.error || 'Erro na resposta da API');
                     }
 
                 } catch (error) {
-                    console.error(`❌ Erro ao desvincular aluno ${alunoId}:`, error);
+                    console.error(` Erro ao desvincular aluno ${alunoId}:`, error);
                     const alunoNome = this.alunos.find(a => a.id === alunoId)?.nome || `Aluno ID ${alunoId}`;
                     erros.push(`${alunoNome}: ${error.message}`);
                 }
             }
 
-            console.log(`📊 Resultado: ${desvinculadosComSucesso} sucesso(s), ${erros.length} erro(s)`);
+            console.log(` Resultado: ${desvinculadosComSucesso} sucesso(s), ${erros.length} erro(s)`);
 
             if (desvinculadosComSucesso > 0) {
                 if (erros.length === 0) {
@@ -2598,16 +2598,16 @@ class AdminTurmas {
                         `${desvinculadosComSucesso} aluno(s) desvinculado(s), ${erros.length} com erro.`,
                         'warning'
                     );
-                    console.error('❌ Erros detalhados:', erros);
+                    console.error(' Erros detalhados:', erros);
                 }
 
-                console.log('🔄 Atualizando dados após desvinculação...');
+                console.log(' Atualizando dados após desvinculação...');
                 await this.atualizarQuantidadeAlunosTurma(turmaId);
                 await this.carregarAlunos();
                 this.renderizarTurmas();
 
-                // 🔥 CORREÇÃO: Fechar o modal após desvincular com sucesso
-                console.log('🚪 Fechando modal de gerenciar vínculos...');
+ // CORREÇÃO: Fechar o modal após desvincular com sucesso
+                console.log(' Fechando modal de gerenciar vínculos...');
                 this.fecharModalGerenciarVinculos();
 
             } else {
@@ -2615,12 +2615,12 @@ class AdminTurmas {
             }
 
         } catch (error) {
-            console.error('❌ Erro ao desvincular alunos selecionados:', error);
+            console.error(' Erro ao desvincular alunos selecionados:', error);
             this.showNotification('Erro ao desvincular alunos: ' + error.message, 'error');
         }
     }
 
-    // ========== FUNÇÕES UTILITÁRIAS ==========
+ // ========== FUNÇÕES UTILITÁRIAS ==========
 
     formatarData(dataString) {
         if (!dataString) return 'N/A';
@@ -2636,14 +2636,14 @@ class AdminTurmas {
                 year: 'numeric'
             });
         } catch (error) {
-            console.warn('⚠️ Erro ao formatar data:', dataString, error);
+            console.warn(' Erro ao formatar data:', dataString, error);
             return 'N/A';
         }
     }
 
     filtrarTurmas(status) {
         try {
-            console.log(`🔍 Filtrando turmas por status: ${status}`);
+            console.log(` Filtrando turmas por status: ${status}`);
 
             const tbody = document.getElementById('turmas-body');
             if (!tbody) return;
@@ -2677,36 +2677,36 @@ class AdminTurmas {
                 }
             });
 
-            console.log(`✅ Filtro aplicado: ${status}`);
+            console.log(` Filtro aplicado: ${status}`);
         } catch (error) {
-            console.error('❌ Erro ao filtrar turmas:', error);
+            console.error(' Erro ao filtrar turmas:', error);
         }
     }
 
-    // ========== FUNÇÕES DE DIAGNÓSTICO AVANÇADO ==========
+ // ========== FUNÇÕES DE DIAGNÓSTICO AVANÇADO ==========
 
     async debugAlunoTurmas() {
         try {
-            console.group('🐛 DEBUG ALUNO-TURMAS - DETALHADO');
+            console.group('DEBUG ALUNO-TURMAS - DETALHADO');
 
-            console.log('📊 Dados atuais:');
+            console.log(' Dados atuais:');
             console.log('- Turmas:', this.turmas.length);
             console.log('- Alunos:', this.alunos.length);
 
             for (const turma of this.turmas) {
-                console.log(`\n🔍 Analisando turma: ${turma.nome} (ID: ${turma.id})`);
+                console.log(`\n Analisando turma: ${turma.nome} (ID: ${turma.id})`);
 
                 const alunosResponse = await this.makeRequest(`/turmas/${turma.id}/alunos`);
                 const alunosNaTurma = alunosResponse.success ? alunosResponse.data : [];
 
-                console.log(`   👥 Alunos na API: ${alunosNaTurma.length}`);
-                console.log(`   📊 Quantidade registrada: ${turma.quantidade_alunos}`);
+                console.log(`Alunos na API: ${alunosNaTurma.length}`);
+                console.log(`Quantidade registrada: ${turma.quantidade_alunos}`);
 
                 const alunosLocais = this.alunos.filter(a => a.turma_id === turma.id);
-                console.log(`   🔍 Alunos locais com turma_id: ${alunosLocais.length}`);
+                console.log(`Alunos locais com turma_id: ${alunosLocais.length}`);
 
                 if (alunosNaTurma.length !== turma.quantidade_alunos) {
-                    console.warn(`   ⚠️ DISCREPÂNCIA: API tem ${alunosNaTurma.length}, turma mostra ${turma.quantidade_alunos}`);
+                    console.warn(`DISCREPÂNCIA: API tem ${alunosNaTurma.length}, turma mostra ${turma.quantidade_alunos}`);
 
                     await this.atualizarQuantidadeAlunosTurma(turma.id);
                 }
@@ -2716,9 +2716,9 @@ class AdminTurmas {
                 );
 
                 if (alunosCursoIncorreto.length > 0) {
-                    console.warn(`   🚨 ${alunosCursoIncorreto.length} aluno(s) com curso incompatível:`);
+                    console.warn(`${alunosCursoIncorreto.length} aluno(s) com curso incompatível:`);
                     alunosCursoIncorreto.forEach(aluno => {
-                        console.log(`      - ${aluno.nome}: ${aluno.curso} ≠ ${turma.curso}`);
+                        console.log(`- ${aluno.nome}: ${aluno.curso} ≠ ${turma.curso}`);
                     });
                 }
             }
@@ -2727,29 +2727,29 @@ class AdminTurmas {
             this.showNotification('Debug detalhado concluído - Verifique o console', 'info');
 
         } catch (error) {
-            console.error('❌ Erro no debug:', error);
+            console.error(' Erro no debug:', error);
             this.showNotification('Erro no debug: ' + error.message, 'error');
         }
     }
 
     async diagnosticoCompletoTurmas() {
         try {
-            console.group('🔍 DIAGNÓSTICO COMPLETO DO SISTEMA DE TURMAS');
-            console.log('📚 Turmas no sistema:', this.turmas.length);
+            console.group('DIAGNÓSTICO COMPLETO DO SISTEMA DE TURMAS');
+            console.log(' Turmas no sistema:', this.turmas.length);
             this.turmas.forEach(turma => {
-                console.log(`   🏫 ${turma.nome}: ${turma.quantidade_alunos} alunos, ${turma.ativa ? 'Ativa' : 'Inativa'}`);
+                console.log(`${turma.nome}: ${turma.quantidade_alunos} alunos, ${turma.ativa ? 'Ativa' : 'Inativa'}`);
             });
 
-            console.log('👥 Alunos no sistema:', this.alunos.length);
+            console.log(' Alunos no sistema:', this.alunos.length);
             const alunosComTurma = this.alunos.filter(a => a.turma_id);
-            console.log(`   📊 Alunos com turma: ${alunosComTurma.length}`);
+            console.log(`Alunos com turma: ${alunosComTurma.length}`);
 
             for (const turma of this.turmas) {
                 const alunosNaTurma = this.alunos.filter(a => a.turma_id === turma.id);
-                console.log(`   🔍 ${turma.nome}: ${alunosNaTurma.length} alunos vs ${turma.quantidade_alunos} registrado`);
+                console.log(`${turma.nome}: ${alunosNaTurma.length} alunos vs ${turma.quantidade_alunos} registrado`);
 
                 if (alunosNaTurma.length !== turma.quantidade_alunos) {
-                    console.warn(`   ⚠️ INCONSISTÊNCIA: Diferença de ${Math.abs(alunosNaTurma.length - turma.quantidade_alunos)}`);
+                    console.warn(`INCONSISTÊNCIA: Diferença de ${Math.abs(alunosNaTurma.length - turma.quantidade_alunos)}`);
                 }
             }
 
@@ -2757,13 +2757,13 @@ class AdminTurmas {
             this.showNotification('Diagnóstico completo concluído - Verifique o console', 'info');
 
         } catch (error) {
-            console.error('❌ Erro no diagnóstico completo:', error);
+            console.error(' Erro no diagnóstico completo:', error);
         }
     }
 
     async sincronizacaoCompleta() {
         try {
-            console.log('🔄 Iniciando sincronização completa...');
+            console.log(' Iniciando sincronização completa...');
 
             await Promise.all([
                 this.carregarTurmas(),
@@ -2777,11 +2777,11 @@ class AdminTurmas {
             this.renderizarTurmas();
             this.sincronizarComDashboard();
 
-            console.log('✅ Sincronização completa concluída');
+            console.log(' Sincronização completa concluída');
             this.showNotification('Sistema de turmas sincronizado com sucesso!', 'success');
 
         } catch (error) {
-            console.error('❌ Erro na sincronização completa:', error);
+            console.error(' Erro na sincronização completa:', error);
             this.showNotification('Erro na sincronização: ' + error.message, 'error');
         }
     }
@@ -2791,21 +2791,21 @@ class AdminTurmas {
 const adminTurmas = new AdminTurmas();
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🚀 DOM Carregado - Inicializando AdminTurmas...');
+    console.log(' DOM Carregado - Inicializando AdminTurmas...');
 
     setTimeout(async () => {
         try {
             await adminTurmas.init();
-            console.log('✅ AdminTurmas inicializado com sucesso');
+            console.log(' AdminTurmas inicializado com sucesso');
 
-            // Verificar se os cursos foram carregados
+ // Verificar se os cursos foram carregados
             if (adminTurmas.cursosDisponiveis.length === 0) {
-                console.warn('⚠️ Nenhum curso carregado, tentando recarregar...');
+                console.warn(' Nenhum curso carregado, tentando recarregar...');
                 await adminTurmas.carregarCursosDoBanco();
             }
 
         } catch (error) {
-            console.error('❌ Erro na inicialização do AdminTurmas:', error);
+            console.error(' Erro na inicialização do AdminTurmas:', error);
             adminTurmas.showNotification('Erro ao inicializar sistema de turmas', 'error');
         }
     }, 100);

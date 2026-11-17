@@ -1,7 +1,7 @@
 // RegisterManager - Gerenciador de Cadastro
 class RegisterManager {
     constructor() {
-        console.log('🔧 CONSTRUCTOR: RegisterManager sendo construído...');
+        console.log(' CONSTRUCTOR: RegisterManager sendo construído...');
         this.isInitialized = false;
         this.bindMethods();
     }
@@ -21,46 +21,46 @@ class RegisterManager {
     init() {
         if (this.isInitialized) return;
         
-        console.log('🎯 INIT: Inicializando RegisterManager...');
+        console.log(' INIT: Inicializando RegisterManager...');
         this.setupRegisterForm();
         this.isInitialized = true;
-        console.log('✅ INIT: RegisterManager inicializado com sucesso');
+        console.log(' INIT: RegisterManager inicializado com sucesso');
     }
 
     setupRegisterForm() {
-        console.log('🔧 SETUP: Configurando formulários de cadastro...');
+        console.log(' SETUP: Configurando formulários de cadastro...');
         
-        // Configurar formulário DESKTOP
+ // Configurar formulário DESKTOP
         const registerFormDesktop = document.getElementById('registerFormDesktop');
         const registerBtnDesktop = document.getElementById('registerBtnDesktop');
 
-        // Configurar formulário MOBILE
+ // Configurar formulário MOBILE
         const registerFormMobile = document.getElementById('registerFormMobile');
         const registerBtnMobile = document.getElementById('registerBtnMobile');
 
-        console.log('💻 Elementos Desktop:', { 
+        console.log(' Elementos Desktop:', { 
             registerFormDesktop: !!registerFormDesktop,
             registerBtnDesktop: !!registerBtnDesktop
         });
         
-        console.log('📱 Elementos Mobile:', { 
+        console.log(' Elementos Mobile:', { 
             registerFormMobile: !!registerFormMobile,
             registerBtnMobile: !!registerBtnMobile
         });
 
-        // Configurar DESKTOP
+ // Configurar DESKTOP
         if (registerFormDesktop) {
             registerFormDesktop.addEventListener('submit', (e) => this.handleRegister(e, 'desktop'));
-            console.log('✅ Event listener adicionado ao formulário desktop');
+            console.log(' Event listener adicionado ao formulário desktop');
         }
 
-        // Configurar MOBILE
+ // Configurar MOBILE
         if (registerFormMobile) {
             registerFormMobile.addEventListener('submit', (e) => this.handleRegister(e, 'mobile'));
-            console.log('✅ Event listener adicionado ao formulário mobile');
+            console.log(' Event listener adicionado ao formulário mobile');
         }
 
-        // Validação em tempo real
+ // Validação em tempo real
         this.setupRealTimeValidation('desktop');
         this.setupRealTimeValidation('mobile');
     }
@@ -105,14 +105,14 @@ class RegisterManager {
 
     async handleRegister(event, version = 'desktop') {
         event.preventDefault();
-        console.log(`🎯 HANDLEREGISTER: Processando cadastro (${version})...`);
+        console.log(` HANDLEREGISTER: Processando cadastro (${version})...`);
         
         const inputs = this.getFormInputs(version);
         const registerBtn = version === 'mobile' 
             ? document.getElementById('registerBtnMobile')
             : document.getElementById('registerBtnDesktop');
 
-        // Validar dados
+ // Validar dados
         const validation = this.validateData(inputs);
         if (!validation.isValid) {
             this.showError(validation.message, version);
@@ -123,7 +123,7 @@ class RegisterManager {
         this.hideError(version);
 
         try {
-            console.log('🔄 Fazendo chamada REAL para API de cadastro...');
+            console.log(' Fazendo chamada REAL para API de cadastro...');
             
             const userData = {
                 nome: inputs.fullName.value.trim(),
@@ -133,19 +133,19 @@ class RegisterManager {
                 confirmarSenha: inputs.confirmPassword.value
             };
 
-            // CHAMADA REAL PARA A API
+ // CHAMADA REAL PARA A API
             const result = await api.register(userData);
             
             if (result.success) {
-                console.log('✅ CADASTRO BEM-SUCEDIDO via API!', result);
+                console.log(' CADASTRO BEM-SUCEDIDO via API!', result);
                 
-                // Salvar dados de autenticação
+ // Salvar dados de autenticação
                 localStorage.setItem('authToken', result.token);
                 localStorage.setItem('userData', JSON.stringify(result.user));
                 
                 this.showSuccess(registerBtn);
                 
-                console.log('🔄 Redirecionando para dashboard em 2 segundos...');
+                console.log(' Redirecionando para dashboard em 2 segundos...');
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
                 }, 2000);
@@ -155,9 +155,9 @@ class RegisterManager {
             }
             
         } catch (error) {
-            console.error('❌ ERRO NO CADASTRO:', error);
+            console.error(' ERRO NO CADASTRO:', error);
             
-            // Mensagens de erro específicas
+ // Mensagens de erro específicas
             let errorMessage = 'Erro ao fazer cadastro. Tente novamente.';
             if (error.message.includes('Email já cadastrado')) {
                 errorMessage = 'Este email já está cadastrado.';
@@ -177,7 +177,7 @@ class RegisterManager {
     }
 
     validateData(inputs) {
-        // Verificar se todos os campos estão preenchidos
+ // Verificar se todos os campos estão preenchidos
         for (let [key, input] of Object.entries(inputs)) {
             if (!input || !input.value.trim()) {
                 return { 
@@ -187,7 +187,7 @@ class RegisterManager {
             }
         }
 
-        // Validar email
+ // Validar email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(inputs.email.value.trim())) {
             return { 
@@ -196,7 +196,7 @@ class RegisterManager {
             };
         }
 
-        // Validar senha
+ // Validar senha
         if (inputs.password.value.length < 8) {
             return { 
                 isValid: false, 
@@ -204,7 +204,7 @@ class RegisterManager {
             };
         }
 
-        // Validar confirmação de senha
+ // Validar confirmação de senha
         if (inputs.password.value !== inputs.confirmPassword.value) {
             return { 
                 isValid: false, 
@@ -251,9 +251,9 @@ class RegisterManager {
         if (errorDiv) {
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
-            console.log('❌ Mostrando erro:', message);
+            console.log(' Mostrando erro:', message);
         } else {
-            console.log('❌ Div de erro não encontrada, mostrando alerta');
+            console.log(' Div de erro não encontrada, mostrando alerta');
             alert('Erro: ' + message);
         }
     }
@@ -283,11 +283,11 @@ const registerManager = new RegisterManager();
 // Inicialização do RegisterManager
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('📄 DOM carregado, inicializando RegisterManager...');
+        console.log(' DOM carregado, inicializando RegisterManager...');
         registerManager.init();
     });
 } else {
-    console.log('📄 DOM já carregado, inicializando RegisterManager...');
+    console.log(' DOM já carregado, inicializando RegisterManager...');
     registerManager.init();
 }
 

@@ -8,10 +8,10 @@ class ProfessoresAdmin {
     }
 
     async init() {
-        console.log('👨‍🏫 Inicializando gerenciamento de professores...');
+        console.log('Inicializando gerenciamento de professores...');
 
         if (!this.checkAuth()) {
-            console.error('❌ Usuário não autenticado');
+            console.error(' Usuário não autenticado');
             window.location.href = 'login.html';
             return;
         }
@@ -31,40 +31,40 @@ class ProfessoresAdmin {
         try {
             const user = JSON.parse(userData);
             if (user.tipo !== 'admin') {
-                console.error('❌ Acesso negado: usuário não é admin');
+                console.error(' Acesso negado: usuário não é admin');
                 return false;
             }
             return true;
         } catch (error) {
-            console.error('❌ Erro ao verificar autenticação:', error);
+            console.error(' Erro ao verificar autenticação:', error);
             return false;
         }
     }
 
     async loadProfessores() {
         try {
-            console.log('📚 Carregando professores...');
+            console.log(' Carregando professores...');
 
             const response = await adminAPI.getProfessores();
 
             if (response && Array.isArray(response)) {
                 this.professores = response;
                 this.professoresFiltrados = [...this.professores];
-                console.log(`✅ ${this.professores.length} professores carregados`);
+                console.log(` ${this.professores.length} professores carregados`);
                 this.renderProfessores();
                 this.atualizarContadorFiltro();
             } else {
                 throw new Error('Resposta inválida da API');
             }
         } catch (error) {
-            console.error('❌ Erro ao carregar professores:', error);
+            console.error(' Erro ao carregar professores:', error);
             this.showMessage('Erro ao carregar professores: ' + error.message, 'error');
             this.useFallbackData();
         }
     }
 
     useFallbackData() {
-        console.log('🔄 Usando dados de fallback...');
+        console.log(' Usando dados de fallback...');
         this.professores = [
             { id: 1, nome: 'João Silva', email: 'joao.silva@unipam.edu.br', ativo: true },
             { id: 2, nome: 'Maria Santos', email: 'maria.santos@unipam.edu.br', ativo: true },
@@ -90,9 +90,9 @@ class ProfessoresAdmin {
 
             if (!confirm(confirmMessage)) return;
 
-            console.log(`🔄 ENVIANDO: Alterar status do professor ${id} para ${novoStatus ? 'ativo' : 'inativo'}`);
+            console.log(` ENVIANDO: Alterar status do professor ${id} para ${novoStatus ? 'ativo' : 'inativo'}`);
 
-            // Garantir que estamos enviando boolean (a API converterá para 0/1)
+ // Garantir que estamos enviando boolean (a API converterá para 0/1)
             const ativoValue = novoStatus;
 
             const response = await adminAPI.updateProfessorStatus(id, ativoValue);
@@ -105,13 +105,13 @@ class ProfessoresAdmin {
 
                 this.showMessage(mensagem, 'success');
 
-                // Recarregar a lista de professores
+ // Recarregar a lista de professores
                 await this.loadProfessores();
 
-                // 🔥 ATUALIZAR A LISTA DE USUÁRIOS SE ESTIVER ABERTA
+ // ATUALIZAR A LISTA DE USUÁRIOS SE ESTIVER ABERTA
                 setTimeout(() => {
                     if (typeof adminUsuarios !== 'undefined' && typeof adminUsuarios.carregarUsuarios === 'function') {
-                        console.log('🔄 Atualizando lista de usuários...');
+                        console.log(' Atualizando lista de usuários...');
                         adminUsuarios.carregarUsuarios();
                     }
                 }, 500);
@@ -121,11 +121,11 @@ class ProfessoresAdmin {
             }
 
         } catch (error) {
-            console.error('❌ ERRO ao alterar status:', error);
+            console.error(' ERRO ao alterar status:', error);
 
             let mensagemErro = 'Erro ao alterar status do professor: ' + error.message;
 
-            // Mensagens mais amigáveis para erros comuns
+ // Mensagens mais amigáveis para erros comuns
             if (error.message.includes('NENHUM USUÁRIO ENCONTRADO')) {
                 mensagemErro = 'Erro: Não foi encontrado um usuário correspondente a este professor. Verifique se o email do professor existe na tabela de usuários.';
             } else if (error.message.includes('email')) {
@@ -136,20 +136,20 @@ class ProfessoresAdmin {
         }
     }
 
-    // Método para testar sincronização - use no console do navegador
+ // Método para testar sincronização - use no console do navegador
     async testarSincronizacao(professorId) {
         try {
-            console.log('🧪 TESTANDO SINCRONIZAÇÃO...');
+            console.log(' TESTANDO SINCRONIZAÇÃO...');
 
             const professor = this.professores.find(p => p.id === professorId);
             if (!professor) {
-                console.log('❌ Professor não encontrado');
+                console.log(' Professor não encontrado');
                 return;
             }
 
-            console.log('📋 DADOS DO PROFESSOR:', professor);
+            console.log(' DADOS DO PROFESSOR:', professor);
 
-            // Testar via debug endpoint
+ // Testar via debug endpoint
             const response = await fetch(`/api/debug/sync-professor-usuario/${professorId}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -158,20 +158,20 @@ class ProfessoresAdmin {
 
             if (response.ok) {
                 const debugData = await response.json();
-                console.log('🔍 DEBUG SINCRONIZAÇÃO:', debugData);
+                console.log(' DEBUG SINCRONIZAÇÃO:', debugData);
 
                 if (debugData.sincronizado) {
-                    console.log('✅ PROFESSOR E USUÁRIO ESTÃO SINCRONIZADOS');
+                    console.log(' PROFESSOR E USUÁRIO ESTÃO SINCRONIZADOS');
                 } else {
-                    console.log('❌ PROFESSOR E USUÁRIO NÃO ESTÃO SINCRONIZADOS');
-                    console.log('💡 Problema:', debugData.detalhes);
+                    console.log(' PROFESSOR E USUÁRIO NÃO ESTÃO SINCRONIZADOS');
+                    console.log(' Problema:', debugData.detalhes);
                 }
             } else {
-                console.log('❌ Erro ao buscar dados de debug');
+                console.log(' Erro ao buscar dados de debug');
             }
 
         } catch (error) {
-            console.error('❌ Erro no teste:', error);
+            console.error(' Erro no teste:', error);
         }
     }
 
@@ -183,12 +183,12 @@ class ProfessoresAdmin {
                 return;
             }
 
-            // 🔥 CONFIRMAÇÃO MAIS SEGURA PARA EXCLUSÃO
+ // CONFIRMAÇÃO MAIS SEGURA PARA EXCLUSÃO
             const confirmMessage =
-                `🚨 ATENÇÃO: EXCLUSÃO PERMANENTE\n\n` +
+                ` ATENÇÃO: EXCLUSÃO PERMANENTE\n\n` +
                 `Você está prestes a excluir PERMANENTEMENTE o professor:\n\n` +
-                `👨‍🏫 ${professor.nome}\n` +
-                `📧 ${professor.email}\n\n` +
+                ` ${professor.nome}\n` +
+                ` ${professor.email}\n\n` +
                 `Esta ação irá:\n` +
                 `• Excluir permanentemente o professor\n` +
                 `• Alterar o tipo do usuário correspondente para "aluno"\n` +
@@ -204,19 +204,19 @@ class ProfessoresAdmin {
                 return;
             }
 
-            console.log(`🗑️ Iniciando exclusão do professor ${id}...`);
+            console.log(` Iniciando exclusão do professor ${id}...`);
 
             const response = await adminAPI.deleteProfessor(id);
 
             if (response && response.success) {
                 let mensagem = `Professor "${professor.nome}" excluído permanentemente com sucesso!`;
 
-                // 🔥 INFORMAR SOBRE A ALTERAÇÃO DO USUÁRIO
+ // INFORMAR SOBRE A ALTERAÇÃO DO USUÁRIO
                 if (response.usuario_alterado) {
                     mensagem += `\n\nO usuário correspondente foi alterado para "aluno".`;
                 }
 
-                // Adicionar informações sobre dependências removidas
+ // Adicionar informações sobre dependências removidas
                 if (response.aulas_removidas > 0 || response.favoritos_removidos > 0) {
                     mensagem += `\n\nForam removidos automaticamente:\n`;
                     if (response.aulas_removidas > 0) {
@@ -229,13 +229,13 @@ class ProfessoresAdmin {
 
                 this.showMessage(mensagem, 'success');
 
-                // Recarregar a lista de professores
+ // Recarregar a lista de professores
                 await this.loadProfessores();
 
-                // 🔥 ATUALIZAR A LISTA DE USUÁRIOS SE ESTIVER ABERTA
+ // ATUALIZAR A LISTA DE USUÁRIOS SE ESTIVER ABERTA
                 setTimeout(() => {
                     if (typeof adminUsuarios !== 'undefined' && typeof adminUsuarios.carregarUsuarios === 'function') {
-                        console.log('🔄 Atualizando lista de usuários...');
+                        console.log(' Atualizando lista de usuários...');
                         adminUsuarios.carregarUsuarios();
                     }
                 }, 500);
@@ -245,11 +245,11 @@ class ProfessoresAdmin {
             }
 
         } catch (error) {
-            console.error('❌ Erro ao excluir professor:', error);
+            console.error(' Erro ao excluir professor:', error);
 
             let mensagemErro = 'Erro ao excluir professor: ' + error.message;
 
-            // Mensagens mais específicas para erros comuns
+ // Mensagens mais específicas para erros comuns
             if (error.message.includes('foreign key constraint')) {
                 mensagemErro = 'Não foi possível excluir o professor pois existem registros vinculados a ele. Tente desativá-lo em vez de excluir.';
             } else if (error.message.includes('not found')) {
@@ -263,11 +263,11 @@ class ProfessoresAdmin {
     aplicarFiltroStatus(filtro) {
         this.filtroAtivo = filtro;
 
-        // Atualizar botões ativos
+ // Atualizar botões ativos
         document.querySelectorAll('.btn-filtro').forEach(btn => btn.classList.remove('active'));
         document.getElementById(`filtro${filtro.charAt(0).toUpperCase() + filtro.slice(1)}`).classList.add('active');
 
-        // Aplicar filtro
+ // Aplicar filtro
         switch (filtro) {
             case 'ativos':
                 this.professoresFiltrados = this.professores.filter(p => p.ativo === 1 || p.ativo === true);
@@ -302,14 +302,14 @@ class ProfessoresAdmin {
     renderProfessores() {
         const tbody = document.getElementById('professores-body');
         if (!tbody) {
-            console.error('❌ Elemento professores-body não encontrado');
+            console.error(' Elemento professores-body não encontrado');
             return;
         }
 
         if (this.professoresFiltrados.length === 0) {
             tbody.innerHTML = `
             <tr>
-                <td colspan="5" class="empty-state"> <!-- 🔥 Mudei para colspan="5" -->
+                <td colspan="5" class="empty-state"> <!--  Mudei para colspan="5" -->
                     <i class="fas fa-chalkboard-teacher fa-2x"></i>
                     <p>Nenhum professor encontrado</p>
                     ${this.filtroAtivo !== 'todos' ?
@@ -357,7 +357,7 @@ class ProfessoresAdmin {
                     <button class="btn-action small info" onclick="professoresAdmin.viewDetails(${professor.id})" title="Detalhes">
                         <i class="fas fa-chart-bar"></i>
                     </button>
-                    <!-- 🔥 NOVO BOTÃO DE EXCLUIR -->
+                    <!--  NOVO BOTÃO DE EXCLUIR -->
                     <button class="btn-action small perigo" onclick="professoresAdmin.excluirProfessor(${professor.id})" 
                             title="Excluir Permanentemente" style="background: #dc3545;">
                         <i class="fas fa-trash"></i>
@@ -382,7 +382,7 @@ class ProfessoresAdmin {
 
             form.scrollIntoView({ behavior: 'smooth' });
         } else {
-            console.error('❌ Elementos do formulário não encontrados');
+            console.error(' Elementos do formulário não encontrados');
         }
     }
 
@@ -425,7 +425,7 @@ class ProfessoresAdmin {
             await this.loadProfessores();
 
         } catch (error) {
-            console.error('❌ Erro ao salvar professor:', error);
+            console.error(' Erro ao salvar professor:', error);
 
             if (error.message.includes('UNIQUE') || error.message.includes('email')) {
                 this.showMessage('Este email já está cadastrado no sistema', 'error');
@@ -454,7 +454,7 @@ class ProfessoresAdmin {
             this.showForm();
 
         } catch (error) {
-            console.error('❌ Erro ao editar professor:', error);
+            console.error(' Erro ao editar professor:', error);
             this.showMessage('Erro ao carregar dados do professor', 'error');
         }
     }
@@ -480,7 +480,7 @@ class ProfessoresAdmin {
             await this.loadProfessores();
 
         } catch (error) {
-            console.error('❌ Erro ao alterar status:', error);
+            console.error(' Erro ao alterar status:', error);
             this.showMessage('Erro ao alterar status do professor', 'error');
         }
     }
@@ -504,13 +504,13 @@ class ProfessoresAdmin {
                 this.showProfessorDetails(professor, favoritosData, aulasData);
 
             } catch (error) {
-                console.error('❌ Erro ao carregar detalhes completos:', error);
+                console.error(' Erro ao carregar detalhes completos:', error);
                 this.showProfessorDetails(professor, { count: 0, alunos: [] }, []);
                 this.showMessage('Algumas informações podem estar incompletas', 'warning');
             }
 
         } catch (error) {
-            console.error('❌ Erro ao carregar detalhes:', error);
+            console.error(' Erro ao carregar detalhes:', error);
             this.showMessage('Erro ao carregar detalhes do professor', 'error');
         }
     }
@@ -519,7 +519,7 @@ class ProfessoresAdmin {
         try {
             return await adminAPI.getProfessorFavoritos(id);
         } catch (error) {
-            console.error('❌ Erro ao carregar favoritos, usando fallback:', error);
+            console.error(' Erro ao carregar favoritos, usando fallback:', error);
             return { count: 0, alunos: [] };
         }
     }
@@ -528,7 +528,7 @@ class ProfessoresAdmin {
         try {
             return await adminAPI.getProfessorAulas(id);
         } catch (error) {
-            console.error('❌ Erro ao carregar aulas, usando fallback:', error);
+            console.error(' Erro ao carregar aulas, usando fallback:', error);
             return [];
         }
     }
@@ -666,12 +666,12 @@ class ProfessoresAdmin {
         const form = document.getElementById('professor-form');
         if (form) {
             form.addEventListener('submit', (e) => this.handleFormSubmit(e));
-            console.log('✅ Event listener do formulário configurado');
+            console.log(' Event listener do formulário configurado');
         } else {
-            console.error('❌ Formulário não encontrado');
+            console.error(' Formulário não encontrado');
         }
 
-        // Event listeners para filtros
+ // Event listeners para filtros
         const btnTodos = document.getElementById('filtroTodos');
         const btnAtivos = document.getElementById('filtroAtivos');
         const btnInativos = document.getElementById('filtroInativos');
@@ -686,7 +686,7 @@ class ProfessoresAdmin {
             btnInativos.addEventListener('click', () => this.aplicarFiltroStatus('inativos'));
         }
 
-        console.log('✅ Event listeners dos filtros configurados');
+        console.log(' Event listeners dos filtros configurados');
     }
 
     showMessage(message, type = 'info') {
