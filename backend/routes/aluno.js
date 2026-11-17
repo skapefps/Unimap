@@ -431,11 +431,10 @@ router.get('/:id/aulas', authenticateToken, (req, res) => {
                 s.numero as sala_numero, 
                 s.bloco as sala_bloco,
                 s.andar as sala_andar,
-                d.nome as disciplina_nome
+                a.disciplina as disciplina_nome
             FROM aulas a
             LEFT JOIN professores p ON a.professor_id = p.id
             LEFT JOIN salas s ON a.sala_id = s.id
-            LEFT JOIN disciplinas d ON a.disciplina_id = d.id
             WHERE a.ativa = 1 
             AND LOWER(TRIM(a.curso)) = LOWER(TRIM(?))
             AND LOWER(TRIM(a.turma)) = LOWER(TRIM(?))

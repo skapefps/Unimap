@@ -629,11 +629,10 @@ router.get('/:id/aulas', authenticateToken, async (req, res) => {
         const rows = await promisifyDb.all(
             `SELECT 
                 a.*, 
-                d.nome as disciplina_nome,
+                a.disciplina as disciplina_nome,
                 s.numero as sala_numero, 
                 s.bloco as sala_bloco
              FROM aulas a
-             LEFT JOIN disciplinas d ON a.disciplina_id = d.id
              LEFT JOIN salas s ON a.sala_id = s.id
              WHERE a.professor_id = ? AND a.ativa = 1
              ORDER BY a.dia_semana, a.horario_inicio`,

@@ -94,8 +94,21 @@ app.use(helmet({
             frameSrc: ["'self'", 'https://accounts.google.com'],
             connectSrc: ["'self'", 'https://accounts.google.com', 'https://oauth2.googleapis.com'],
             // O frontend tem estilo inline em várias páginas.
-            styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-            fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+            // cdnjs serve o Font Awesome: sem ele aqui, o CSP bloqueia a
+            // folha de estilo e TODOS os ícones do site somem.
+            styleSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                'https://fonts.googleapis.com',
+                'https://cdnjs.cloudflare.com'
+            ],
+            // O Font Awesome busca os .woff2 no mesmo cdnjs.
+            fontSrc: [
+                "'self'",
+                'https://fonts.gstatic.com',
+                'https://cdnjs.cloudflare.com',
+                'data:'
+            ],
             imgSrc: ["'self'", 'data:', 'https:'],
             objectSrc: ["'none'"],
             frameAncestors: ["'self'"]

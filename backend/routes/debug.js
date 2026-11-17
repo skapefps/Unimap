@@ -170,11 +170,10 @@ router.get('/aulas-professor', authenticateToken, (req, res) => {
             a.*, 
             p.nome as professor_nome,
             p.email as professor_email,
-            d.nome as disciplina_nome,
+            a.disciplina as disciplina_nome,
             s.numero as sala_numero
         FROM aulas a
         LEFT JOIN professores p ON a.professor_id = p.id
-        LEFT JOIN disciplinas d ON a.disciplina_id = d.id
         LEFT JOIN salas s ON a.sala_id = s.id
         WHERE p.email = ?
         ORDER BY a.id DESC

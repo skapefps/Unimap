@@ -132,6 +132,10 @@ body {
     gap: 30px
 }
 
+/* Vale para qualquer link da nav, com ou sem a classe .nav-link.
+   Sem isso, uma pagina que esqueca class="nav-link" cai no padrao do
+   navegador (azul sublinhado) e o cabecalho parece quebrado. */
+.desktop-nav a,
 .nav-link {
     color: #fff;
     text-decoration: none;
@@ -140,6 +144,7 @@ body {
     transition: background 0.3s
 }
 
+.desktop-nav a:hover,
 .nav-link:hover {
     background: rgba(255, 255, 255, 0.1)
 }
@@ -1139,6 +1144,10 @@ main {
     background: #3498db
 }
 
+/* .btn-sair é a classe usada em professores.html, mapa.html, calendario.html
+   e perfil.html; .btn-sair-desktop-texto é a usada no index.html. As duas
+   descrevem o mesmo botão, então compartilham o estilo. */
+.btn-sair,
 .btn-sair-desktop-texto {
     background: #e74c3c;
     color: #fff;
@@ -1155,6 +1164,7 @@ main {
     font-size: 0.9rem
 }
 
+.btn-sair:hover,
 .btn-sair-desktop-texto:hover {
     background: #c0392b;
     transform: translateY(-2px);

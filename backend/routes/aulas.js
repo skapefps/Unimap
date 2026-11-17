@@ -661,13 +661,12 @@ router.get('/usuario/:usuario_id', authenticateToken, async (req, res) => {
             query = `
                 SELECT 
                     a.*, 
-                    d.nome as disciplina_nome,
+                    a.disciplina as disciplina_nome,
                     s.numero as sala_numero, 
                     s.bloco as sala_bloco,
                     s.andar as sala_andar,
                     p.nome as professor_nome
                 FROM aulas a
-                LEFT JOIN disciplinas d ON a.disciplina_id = d.id
                 LEFT JOIN salas s ON a.sala_id = s.id
                 LEFT JOIN professores p ON a.professor_id = p.id
                 WHERE p.email = ? AND a.ativa = 1
@@ -677,11 +676,10 @@ router.get('/usuario/:usuario_id', authenticateToken, async (req, res) => {
         } else {
             query = `
                 SELECT a.*, p.nome as professor_nome, s.numero as sala_numero, s.bloco as sala_bloco,
-                       d.nome as disciplina_nome
+                       a.disciplina as disciplina_nome
                 FROM aulas a
                 LEFT JOIN professores p ON a.professor_id = p.id
                 LEFT JOIN salas s ON a.sala_id = s.id
-                LEFT JOIN disciplinas d ON a.disciplina_id = d.id
                 WHERE a.ativa = 1
                 ORDER BY a.data_aula, a.horario_inicio
             `;
@@ -803,12 +801,11 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
             SELECT 
                 a.*, 
                 p.nome as professor_nome,
-                d.nome as disciplina_nome,
+                a.disciplina as disciplina_nome,
                 s.numero as sala_numero,
                 s.bloco as sala_bloco
             FROM aulas a
             LEFT JOIN professores p ON a.professor_id = p.id
-            LEFT JOIN disciplinas d ON a.disciplina_id = d.id
             LEFT JOIN salas s ON a.sala_id = s.id
             WHERE a.ativa = 1
             ORDER BY a.data_aula, a.horario_inicio

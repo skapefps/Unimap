@@ -159,10 +159,9 @@ router.get('/professor/estatisticas', authenticateToken, (req, res) => {
          LIMIT 5`,
 
         // Disciplinas lecionadas
-        `SELECT DISTINCT d.nome as disciplina
+        `SELECT DISTINCT a.disciplina as disciplina
          FROM aulas a
          JOIN professores p ON a.professor_id = p.id
-         LEFT JOIN disciplinas d ON a.disciplina_id = d.id
          WHERE p.email = ? AND a.ativa = 1`
     ];
 
