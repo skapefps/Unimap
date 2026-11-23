@@ -512,8 +512,30 @@
             const user = authManager.getCurrentUser();
 
             if (!user || user.tipo !== 'professor') {
-                alert('Acesso restrito para professores!');
-                window.location.href = 'login.html';
+                // Sem usuário é sessão ausente: o login é o destino certo.
+                // Com usuário de outro tipo, não é sessão nenhuma — é a
+                // página errada. Mandar para o login fazia um admin logado
+                // parecer deslogado; agora vai para a área dele.
+                if (!user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const destino = user.tipo === 'admin' ? 'admin.html' : 'index.html';
+                console.warn(`Painel restrito a professores; ${user.tipo} enviado para ${destino}`);
+
+                // alert() trava a janela até alguém clicar, o que prende a
+                // página numa tela quebrada. Um aviso na própria tela diz
+                // o mesmo sem bloquear.
+                document.body.insertAdjacentHTML('afterbegin', `
+                    <div role="alert" style="
+                        position:fixed; inset:0 0 auto 0; z-index:9999;
+                        padding:14px 18px; background:#fff3cd; color:#664d03;
+                        border-bottom:1px solid #ffe69c; font:500 15px system-ui;">
+                        Esta área é exclusiva de professores. Levando você de volta…
+                    </div>`);
+
+                setTimeout(() => { window.location.href = destino; }, 1200);
                 return;
             }
 

@@ -25,7 +25,6 @@ Precisa de: pip install playwright && playwright install chromium
 As contas de professor e aluno precisam existir no banco testado; ajuste
 os emails e senhas em CONTAS conforme o ambiente.
 """
-
 import asyncio, sys
 from playwright.async_api import async_playwright
 
