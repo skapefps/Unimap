@@ -56,8 +56,10 @@
     ];
 
     /** Áreas verdes e esportivas. */
-    const CAMPO = { cx: 150, cy: 566, rx: 94, ry: 60 };
-    const VERDE = { x: 822, y: 306, w: 136, h: 322 };
+    /* A pista fica abaixo e a oeste do bloco K; com cy menor, a elipse
+       passava por baixo do prédio e os dois se misturavam. */
+    const CAMPO = { cx: 136, cy: 612, rx: 92, ry: 56 };
+    const VERDE = { x: 822, y: 306, w: 136, h: 322, nome: 'Área verde' };
 
     /** Acessos numerados na placa. */
     const ACESSOS = [
@@ -92,15 +94,25 @@
         const rot = p.rotacao === undefined ? ROTACAO : p.rotacao;
         const alt = p.alt || 16;
 
+        const vocacao = vocacaoDe(dados);
+
         const g = cria('g', {
             class: 'mapa-predio',
             'data-bloco': p.letra,
+            'data-familia': familiaDo(dados),
             tabindex: '0',
             role: 'button',
             'aria-label': dados
-                ? `${dados.nome}, ${dados.total_salas} locais`
+                ? `Bloco ${p.letra}, ${dados.total_salas} locais${vocacao ? '. ' + vocacao : ''}`
                 : `Bloco ${p.letra}, sem locais cadastrados`
         });
+
+        // Tooltip nativo: passar o mouse já diz o que tem ali.
+        if (vocacao) {
+            const titulo = cria('title');
+            titulo.textContent = `Bloco ${p.letra} — ${vocacao}`;
+            g.appendChild(titulo);
+        }
 
         const interno = cria('g', { transform: `rotate(${rot} ${cx} ${cy})` });
 
@@ -169,11 +181,21 @@
         }));
 
         // Área verde a leste
+        const verdeCx = VERDE.x + VERDE.w / 2;
+        const verdeCy = VERDE.y + VERDE.h / 2;
+
         svg.appendChild(cria('rect', {
             x: VERDE.x, y: VERDE.y, width: VERDE.w, height: VERDE.h, rx: 14,
             class: 'mapa-verde',
-            transform: `rotate(${ROTACAO} ${VERDE.x + VERDE.w / 2} ${VERDE.y + VERDE.h / 2})`
+            transform: `rotate(${ROTACAO} ${verdeCx} ${verdeCy})`
         }));
+
+        // Sem rótulo, a mancha verde parecia um prédio sem nome.
+        const verdeTexto = cria('text', {
+            x: verdeCx, y: verdeCy, 'text-anchor': 'middle', class: 'mapa-area-nome'
+        });
+        verdeTexto.textContent = VERDE.nome;
+        svg.appendChild(verdeTexto);
 
         // Pista e campo
         const campoG = cria('g', {
@@ -243,6 +265,62 @@
         'Administrativo': 'fa-briefcase'
     };
 
+    /**
+     * Agrupa os tipos cadastrados em poucas famílias, que viram a cor do
+     * prédio no mapa. Um campus todo da mesma cor não diz nada; colorido
+     * pela vocação, o aluno acha o laboratório sem ler nome nenhum.
+     */
+    const FAMILIA = {
+        'Sala de Aula': 'aula',
+        'Laboratório': 'lab',
+        'Laboratório de Informática': 'lab',
+        'Auditório': 'auditorio',
+        'Clínica': 'clinica',
+        'Convivência': 'convivio',
+        'Administrativo': 'admin',
+        'Sala de Reunião': 'admin'
+    };
+
+    const ROTULO_FAMILIA = {
+        aula: 'Salas de aula',
+        lab: 'Laboratórios',
+        auditorio: 'Auditórios',
+        clinica: 'Clínicas',
+        convivio: 'Convivência',
+        admin: 'Administrativo'
+    };
+
+    /** A família que mais aparece no bloco. */
+    function familiaDo(dados) {
+        if (!dados || !dados.tipos || !dados.tipos.length) return 'outro';
+
+        const soma = new Map();
+        for (const { tipo, qtd } of dados.tipos) {
+            const f = FAMILIA[tipo] || 'outro';
+            soma.set(f, (soma.get(f) || 0) + qtd);
+        }
+        return [...soma.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    }
+
+    /**
+     * Uma linha curta dizendo o que há no bloco, montada a partir dos
+     * locais reais. Vale mais que o nome cadastrado, que em vários blocos
+     * é genérico e não bate com o conteúdo.
+     */
+    function vocacaoDe(dados) {
+        if (!dados) return '';
+        if (dados.destaques && dados.destaques.length) {
+            return dados.destaques.join(' · ');
+        }
+        if (dados.tipos && dados.tipos.length) {
+            return dados.tipos
+                .map((t) => ROTULO_FAMILIA[FAMILIA[t.tipo]] || t.tipo)
+                .filter((v, i, a) => a.indexOf(v) === i)
+                .join(' · ');
+        }
+        return '';
+    }
+
     async function abrirBloco(letra) {
         blocoAberto = letra;
 
@@ -270,9 +348,12 @@
         painel.innerHTML = `
             <div class="mapa-painel-topo">
                 <div>
-                    <span class="mapa-painel-letra">${dados.letra}</span>
+                    <span class="mapa-painel-letra" data-familia="${familiaDo(dados)}">${dados.letra}</span>
                     <h3>${dados.nome}</h3>
                     <p class="mapa-painel-sub">${dados.total_salas} locais · ${dados.andares.length} ${dados.andares.length === 1 ? 'piso' : 'pisos'}</p>
+                    ${dados.destaques && dados.destaques.length
+                        ? `<p class="mapa-painel-destaques">${dados.destaques.join(' · ')}</p>`
+                        : ''}
                 </div>
                 <button type="button" class="mapa-fechar" aria-label="Fechar">
                     <i class="fas fa-xmark" aria-hidden="true"></i>
@@ -361,14 +442,42 @@
         const alvo = document.getElementById('mapaListaBlocos');
         if (!alvo || !dadosMapa) return;
 
-        alvo.innerHTML = dadosMapa.blocos.map((b) => `
-            <button type="button" class="mapa-chip" data-bloco="${b.letra}">
-                <span class="mapa-chip-letra">${b.letra}</span>
-                <span class="mapa-chip-nome">${b.nome}</span>
-                <span class="mapa-chip-qtd">${b.total_salas}</span>
-            </button>`).join('');
+        const desenhados = new Set(PREDIOS.map((p) => p.letra));
 
-        alvo.querySelectorAll('.mapa-chip').forEach((c) => {
+        const cartao = (b) => {
+            const vocacao = vocacaoDe(b);
+            return `
+            <button type="button" class="mapa-cartao" data-bloco="${b.letra}"
+                    data-familia="${familiaDo(b)}">
+                <span class="mapa-cartao-letra">${b.letra}</span>
+                <span class="mapa-cartao-texto">
+                    <span class="mapa-cartao-nome">${vocacao || b.nome}</span>
+                    <span class="mapa-cartao-qtd">${b.total_salas}
+                        ${b.total_salas === 1 ? 'local' : 'locais'}</span>
+                </span>
+            </button>`;
+        };
+
+        // Os blocos que não estão na planta são unidades à parte (clínicas,
+        // centro de convenções, campos experimentais). Sem uma seção
+        // própria, eles ficariam invisíveis no mapa e perdidos na lista.
+        const naPlanta = dadosMapa.blocos.filter((b) => desenhados.has(b.letra));
+        const fora = dadosMapa.blocos.filter((b) => !desenhados.has(b.letra));
+
+        alvo.innerHTML = `
+            <div class="mapa-grupo">
+                <h4>Blocos na planta</h4>
+                <div class="mapa-cartoes">${naPlanta.map(cartao).join('')}</div>
+            </div>
+            ${fora.length ? `
+            <div class="mapa-grupo">
+                <h4>Outras unidades
+                    <span class="mapa-grupo-nota">fora da planta principal</span>
+                </h4>
+                <div class="mapa-cartoes">${fora.map(cartao).join('')}</div>
+            </div>` : ''}`;
+
+        alvo.querySelectorAll('.mapa-cartao').forEach((c) => {
             c.addEventListener('click', () => abrirBloco(c.dataset.bloco));
         });
     }

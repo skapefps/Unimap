@@ -134,6 +134,121 @@
         return m ? Number(m[1]) : 1;
     }
 
+    const ANO = 2026;
+    const DIAS_DA_SEMANA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+    const NOMES_DIA = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+
+    /** Quantos dias tem o mês (1-12) em 2026. */
+    function diasNoMes(mesN) {
+        return new Date(ANO, mesN, 0).getDate();
+    }
+
+    /**
+     * Expande a coluna de data do PDF nos dias que ela cobre.
+     *   "02"        -> [2]
+     *   "02 e 03"   -> [2, 3]
+     *   "16 a 18"   -> [16, 17, 18]
+     *   "02 a 30"   -> [2, 3, ..., 30]
+     * Dias além do fim do mês são descartados, para a grade nunca marcar
+     * um 29 de fevereiro que não existe.
+     */
+    function diasDe(texto, mesN) {
+        const limite = diasNoMes(mesN);
+        const dias = new Set();
+
+        const intervalo = /(\d{1,2})\s*a\s*(\d{1,2})/.exec(texto);
+        if (intervalo) {
+            const ini = Number(intervalo[1]);
+            const fim = Number(intervalo[2]);
+            for (let d = ini; d <= fim; d++) dias.add(d);
+        } else {
+            const numeros = texto.match(/\d{1,2}/g) || [];
+            numeros.forEach((n) => dias.add(Number(n)));
+        }
+
+        return [...dias].filter((d) => d >= 1 && d <= limite).sort((a, b) => a - b);
+    }
+
+    /** Qual tipo "manda" na cor do dia quando há mais de um evento nele. */
+    const PRIORIDADE = ['feriado', 'sabado', 'marco', 'prazo', 'reuniao'];
+
+    /** Mapa dia -> { tipo, textos[] } para um mês. */
+    function marcasDoMes(m) {
+        const marcas = new Map();
+
+        for (const e of m.eventos) {
+            for (const dia of diasDe(e.dia, m.n)) {
+                if (!marcas.has(dia)) marcas.set(dia, { tipos: new Set(), textos: [] });
+                const marca = marcas.get(dia);
+                marca.tipos.add(e.tipo);
+                marca.textos.push(`${ESTILO[e.tipo].rotulo}: ${e.texto}`);
+            }
+        }
+
+        for (const marca of marcas.values()) {
+            marca.tipo = PRIORIDADE.find((t) => marca.tipos.has(t)) || 'prazo';
+        }
+        return marcas;
+    }
+
+    const HOJE = new Date();
+
+    /** Grade do mês, com os dias da semana nas colunas, como no PDF. */
+    function gradeDoMes(m) {
+        const total = diasNoMes(m.n);
+        const comecaEm = new Date(ANO, m.n - 1, 1).getDay(); // 0 = domingo
+        const marcas = marcasDoMes(m);
+
+        const celulas = [];
+        for (let i = 0; i < comecaEm; i++) {
+            celulas.push('<td class="cal-vazia" aria-hidden="true"></td>');
+        }
+
+        for (let dia = 1; dia <= total; dia++) {
+            const diaSemana = new Date(ANO, m.n - 1, dia).getDay();
+            const marca = marcas.get(dia);
+            const classes = ['cal-dia-celula'];
+
+            if (diaSemana === 0) classes.push('cal-domingo');
+            if (marca) classes.push('cal-marcado', `cal-marca-${marca.tipo}`);
+            if (HOJE.getFullYear() === ANO && HOJE.getMonth() === m.n - 1
+                && HOJE.getDate() === dia) {
+                classes.push('cal-hoje');
+            }
+
+            const data = `${String(dia).padStart(2, '0')}/${String(m.n).padStart(2, '0')}`;
+            const descricao = marca
+                ? `${data}, ${NOMES_DIA[diaSemana]} — ${marca.textos.join(' | ')}`
+                : `${data}, ${NOMES_DIA[diaSemana]}`;
+
+            celulas.push(
+                `<td class="${classes.join(' ')}" title="${descricao.replace(/"/g, '&quot;')}">`
+                + `<span>${dia}</span></td>`
+            );
+        }
+
+        while (celulas.length % 7 !== 0) {
+            celulas.push('<td class="cal-vazia" aria-hidden="true"></td>');
+        }
+
+        const linhas = [];
+        for (let i = 0; i < celulas.length; i += 7) {
+            linhas.push(`<tr>${celulas.slice(i, i + 7).join('')}</tr>`);
+        }
+
+        const cabecalho = DIAS_DA_SEMANA
+            .map((d, i) => `<th scope="col" class="${i === 0 ? 'cal-domingo' : ''}"
+                                abbr="${NOMES_DIA[i]}">${d}</th>`)
+            .join('');
+
+        return `
+            <table class="cal-grade">
+                <caption class="sr-only">${m.mes} de ${ANO}</caption>
+                <thead><tr>${cabecalho}</tr></thead>
+                <tbody>${linhas.join('')}</tbody>
+            </table>`;
+    }
+
     function ehFuturo(mesN, dia) {
         const hoje = new Date();
         const data = new Date(2026, mesN - 1, dia, 23, 59);
@@ -185,6 +300,7 @@
                     <h3>${m.mes}</h3>
                     ${m.letivos ? `<span class="cal-letivos">${m.letivos} dias letivos</span>` : ''}
                 </header>
+                ${gradeDoMes(m)}
                 <ul>
                     ${m.eventos.map((e) => {
                         const s = ESTILO[e.tipo];

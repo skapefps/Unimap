@@ -15,10 +15,15 @@ router.param('id', validarId);
  * Dados do mapa do campus: um registro por bloco, com contagem por andar.
  *
  * Alimenta a planta esquemática. Conta números de sala distintos, não
- * linhas: a tabela tem 2.912 linhas para 703 números, porque o mesmo
- * número aparece até 5 vezes com tipo e capacidade diferentes — resíduo
- * de dados de teste. Contar linhas mostraria um campus 4 vezes maior do
- * que ele é.
+ * linhas, porque o mesmo número pode aparecer mais de uma vez com tipo ou
+ * capacidade diferentes; contar linhas mostraria um campus maior do que ele é.
+ *
+ * Além da contagem, devolve por bloco:
+ *   tipos      — os tipos de local mais frequentes, que dão a "vocação" do
+ *                bloco e a cor dele no mapa;
+ *   destaques  — até três locais com nome próprio (Biblioteca Central,
+ *                Restaurante Universitário...), que dizem ao aluno o que
+ *                existe ali muito melhor do que o nome cadastrado do bloco.
  */
 router.get('/mapa', authenticateToken, (req, res) => {
     db.all(
@@ -47,7 +52,9 @@ router.get('/mapa', authenticateToken, (req, res) => {
                         letra: l.bloco,
                         nome: l.nome_bloco || `Bloco ${l.bloco}`,
                         andares: [],
-                        total_salas: 0
+                        total_salas: 0,
+                        tipos: [],
+                        destaques: []
                     });
                 }
                 const bloco = porBloco.get(l.bloco);
@@ -55,11 +62,55 @@ router.get('/mapa', authenticateToken, (req, res) => {
                 bloco.total_salas += l.salas;
             }
 
-            res.json({
-                blocos: [...porBloco.values()],
-                total_blocos: porBloco.size,
-                total_salas: [...porBloco.values()].reduce((s, b) => s + b.total_salas, 0)
-            });
+            // Segunda consulta: tipos e locais com nome próprio.
+            db.all(
+                `SELECT bloco, tipo, numero
+                   FROM salas
+                  WHERE ativa = 1
+                  ORDER BY bloco, numero`,
+                [],
+                (err2, detalhes) => {
+                    // Os detalhes são enfeite: se falharem, o mapa ainda
+                    // funciona com as contagens.
+                    if (!err2) {
+                        const contaTipos = new Map();
+
+                        for (const d of detalhes || []) {
+                            const bloco = porBloco.get(d.bloco);
+                            if (!bloco) continue;
+
+                            if (d.tipo) {
+                                if (!contaTipos.has(d.bloco)) contaTipos.set(d.bloco, new Map());
+                                const mapa = contaTipos.get(d.bloco);
+                                mapa.set(d.tipo, (mapa.get(d.tipo) || 0) + 1);
+                            }
+
+                            // "Biblioteca Central" é um destaque; "204" não.
+                            const temLetra = d.numero && /[A-Za-zÀ-ÿ]{4,}/.test(d.numero);
+                            if (temLetra && bloco.destaques.length < 3) {
+                                bloco.destaques.push(d.numero);
+                            }
+                        }
+
+                        for (const [letra, mapa] of contaTipos) {
+                            porBloco.get(letra).tipos = [...mapa.entries()]
+                                .sort((a, b) => b[1] - a[1])
+                                .slice(0, 3)
+                                .map(([tipo, qtd]) => ({ tipo, qtd }));
+                        }
+                    }
+
+                    responder();
+                }
+            );
+
+            function responder() {
+                res.json({
+                    blocos: [...porBloco.values()],
+                    total_blocos: porBloco.size,
+                    total_salas: [...porBloco.values()].reduce((s, b) => s + b.total_salas, 0)
+                });
+            }
         }
     );
 });
