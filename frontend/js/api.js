@@ -263,6 +263,29 @@ class ApiService {
         return this.request('/salas');
     }
 
+    /**
+     * Mesmo que request(): toda requisição daqui já vai autenticada.
+     *
+     * js/turmas.js chama por este nome. O módulo hoje não é carregado por
+     * nenhuma página, mas sem o alias ele quebraria no instante em que
+     * fosse ligado a uma tela.
+     */
+    async authenticatedRequest(endpoint, options = {}) {
+        return this.request(endpoint, options);
+    }
+
+    /**
+     * Totais do painel: usuários, professores, salas e aulas ativos.
+     *
+     * O dashboard.html chamava este método desde sempre, mas ele nunca
+     * existiu aqui — a tela abria com os quatro contadores parados em "0"
+     * e um TypeError no console. A rota no servidor chama-se
+     * /dashboard/estatisticas, não /stats.
+     */
+    async getDashboardStats() {
+        return this.request('/dashboard/estatisticas');
+    }
+
     async getSalasPorBloco(bloco) {
         return this.request(`/salas/bloco/${bloco}`);
     }

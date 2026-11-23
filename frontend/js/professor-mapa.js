@@ -20,8 +20,18 @@ class ProfessorMapaManager {
         console.log(' Carregando salas do banco...');
         
         try {
- // Tenta carregar da API
-            const response = await fetch('/api/salas');
+ // A rota exige autenticação. Sem o cabeçalho, ela responde 401, e o
+ // interceptor de sessão entendia isso como sessão expirada e deslogava
+ // o professor no meio do carregamento do painel — a tela nunca abria.
+            const base = (typeof Config !== 'undefined' && Config.getBaseURL)
+                ? Config.getBaseURL()
+                : '/api';
+            const response = await fetch(`${base}/salas`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
             if (response.ok) {
                 this.salas = await response.json();
                 console.log(` ${this.salas.length} salas carregadas da API`);

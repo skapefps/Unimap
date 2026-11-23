@@ -94,4 +94,39 @@ describe('CSP x recursos externos do frontend', () => {
         const diretiva = (csp.split(';').find((d) => d.trim().startsWith('font-src')) || '').trim();
         expect(diretiva).toContain('https://cdnjs.cloudflare.com');
     });
+
+    /**
+     * O projeto liga comportamento por atributo (onclick, onchange...) em
+     * mais de cem lugares. O padrão do Helmet é script-src-attr 'none', que
+     * bloqueia todos eles: os botões continuam na tela e não fazem nada,
+     * sem erro no servidor. Enquanto o HTML for assim, a diretiva precisa
+     * permitir atributo inline.
+     */
+    describe('handlers inline do HTML', () => {
+        const contarHandlers = () => {
+            let total = 0;
+            for (const arquivo of arquivosDoFrontend()) {
+                if (!/\.html$/i.test(arquivo)) continue;
+                const texto = fs.readFileSync(arquivo, 'utf8');
+                total += (texto.match(/\son[a-z]+\s*=\s*["']/gi) || []).length;
+            }
+            return total;
+        };
+
+        it('o HTML de fato usa handler inline (o teste tem o que proteger)', () => {
+            expect(contarHandlers()).toBeGreaterThan(0);
+        });
+
+        it('script-src-attr não bloqueia os handlers inline', () => {
+            const diretiva = (csp.split(';')
+                .find((d) => d.trim().startsWith('script-src-attr')) || '').trim();
+
+            // Ou a diretiva permite inline, ou não existe (e aí vale
+            // script-src, que já tem 'unsafe-inline' para este projeto).
+            if (diretiva) {
+                expect(diretiva).toContain("'unsafe-inline'");
+                expect(diretiva).not.toContain("'none'");
+            }
+        });
+    });
 });

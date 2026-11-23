@@ -79,12 +79,18 @@ describe('rotas de aulas x schema real da tabela', () => {
         expect(aula.disciplina_nome).toBe('Banco de Dados II');
     });
 
-    it('GET /api/dashboard/stats responde 200', async () => {
+    it('GET /api/dashboard/estatisticas devolve os quatro totais', async () => {
         const res = await request(app)
-            .get('/api/dashboard/stats')
+            .get('/api/dashboard/estatisticas')
             .set('Authorization', `Bearer ${tokenAdmin}`);
 
-        expect(res.status).toBeLessThan(500);
+        // Antes isto só exigia "menos que 500", então um 404 passava —
+        // e a rota certa chama-se /estatisticas, não /stats.
+        expect(res.status).toBe(200);
+        for (const campo of ['total_usuarios', 'total_professores',
+                             'total_salas', 'total_aulas']) {
+            expect(typeof res.body[campo]).toBe('number');
+        }
     });
 
     it('nenhuma rota faz join por a.disciplina_id', () => {

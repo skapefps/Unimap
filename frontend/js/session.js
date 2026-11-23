@@ -55,6 +55,30 @@
         window.location.href = 'login.html';
     }
 
+    /**
+     * A credencial pode vir no objeto de opções ou num Request já montado,
+     * e os cabeçalhos podem ser um objeto simples, um array de pares ou um
+     * Headers. Cobre as três formas.
+     */
+    function cabecalhoTemAutorizacao(recurso, opcoes) {
+        const procurar = (h) => {
+            if (!h) return false;
+            if (typeof h.get === 'function') return Boolean(h.get('Authorization'));
+            if (Array.isArray(h)) {
+                return h.some(([k]) => String(k).toLowerCase() === 'authorization');
+            }
+            return Object.keys(h).some((k) => k.toLowerCase() === 'authorization');
+        };
+
+        if (opcoes && procurar(opcoes.headers)) return true;
+        if (recurso && typeof recurso === 'object' && procurar(recurso.headers)) return true;
+
+        // credentials: 'include' manda cookie de sessão, que também é credencial.
+        const credenciais = (opcoes && opcoes.credentials)
+            || (recurso && typeof recurso === 'object' && recurso.credentials);
+        return credenciais === 'include';
+    }
+
     const fetchOriginal = window.fetch.bind(window);
 
     window.fetch = async function (recurso, opcoes) {
@@ -68,6 +92,23 @@
  // Não derruba a sessão por um 401 do próprio login: ali o 401
  // significa "senha errada", não "sessão inválida".
             const eRotaDeLogin = /\/api\/auth\/(login|login-professor|google|register|forgot-password|reset-password)/.test(url);
+
+            // Um 401 só significa "sessão caiu" se a chamada tiver levado
+            // credencial. Chamada que esqueceu o cabeçalho Authorization
+            // é defeito de código: derrubar a sessão por causa dela desloga
+            // quem estava perfeitamente logado — foi o que acontecia no
+            // painel do professor, onde uma única chamada sem token
+            // expulsava o usuário antes de a tela abrir.
+            const temToken = Boolean(localStorage.getItem('authToken'));
+            const enviouCredencial = cabecalhoTemAutorizacao(recurso, opcoes);
+
+            if (!eRotaDeLogin && temToken && !enviouCredencial) {
+                console.warn(
+                    'Chamada autenticada sem cabeçalho Authorization:', url,
+                    '— sessão preservada; corrija a chamada.'
+                );
+                return resposta;
+            }
 
             if (!eRotaDeLogin) {
                 let expirada = false;

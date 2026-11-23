@@ -127,25 +127,25 @@ router.get('/todos', authenticateToken, (req, res) => {
         }),
         new Promise((resolve, reject) => {
             // Buscar valores únicos para filtros
-            db.all('SELECT DISTINCT bloco FROM salas WHERE bloco IS NOT NULL AND bloco != "" ORDER BY bloco', (err, rows) => {
+            db.all(`SELECT DISTINCT bloco FROM salas WHERE bloco IS NOT NULL AND bloco <> '' ORDER BY bloco`, (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows.map(r => r.bloco));
             });
         }),
         new Promise((resolve, reject) => {
-            db.all('SELECT DISTINCT andar FROM salas WHERE andar IS NOT NULL AND andar != "" ORDER BY andar', (err, rows) => {
+            db.all('SELECT DISTINCT andar FROM salas WHERE andar IS NOT NULL ORDER BY andar', (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows.map(r => r.andar));
             });
         }),
         new Promise((resolve, reject) => {
-            db.all('SELECT DISTINCT tipo FROM salas WHERE tipo IS NOT NULL AND tipo != "" ORDER BY tipo', (err, rows) => {
+            db.all(`SELECT DISTINCT tipo FROM salas WHERE tipo IS NOT NULL AND tipo <> '' ORDER BY tipo`, (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows.map(r => r.tipo));
             });
         }),
         new Promise((resolve, reject) => {
-            db.all('SELECT DISTINCT campus FROM salas WHERE campus IS NOT NULL AND campus != "" ORDER BY campus', (err, rows) => {
+            db.all(`SELECT DISTINCT campus FROM salas WHERE campus IS NOT NULL AND campus <> '' ORDER BY campus`, (err, rows) => {
                 if (err) reject(err);
                 else resolve(rows.map(r => r.campus));
             });

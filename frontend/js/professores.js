@@ -1073,3 +1073,31 @@ class ProfessoresManager {
 console.log(' DOM carregado - Inicializando ProfessoresManager...');
 const professoresManager = new ProfessoresManager();
 console.log(' ProfessoresManager inicializado com sucesso!');
+/**
+ * Alterna as abas desta página.
+ *
+ * O HTML chama openTab() por onclick, mas a função só existia em
+ * js/app.js, que esta página não carrega: clicar nas abas lançava
+ * "openTab is not defined" e nada acontecia. Fica aqui, no script da
+ * própria tela, em vez de puxar o app.js inteiro — que é o controlador
+ * do index.html e faria muito mais do que trocar de aba.
+ *
+ * Recebe o botão por parâmetro quando disponível; o `event` global usado
+ * no app.js não é confiável e não existe em modo estrito.
+ */
+window.openTab = function openTab(tabId, botao) {
+    document.querySelectorAll('.tab-content').forEach((aba) => {
+        aba.classList.toggle('active', aba.id === tabId);
+    });
+
+    const alvo = botao
+        || (typeof event !== 'undefined' && event ? event.currentTarget || event.target : null);
+
+    document.querySelectorAll('.tab-btn').forEach((btn) => {
+        // Sem o botão clicado, deduz pela aba que o onclick nomeia.
+        const ativo = alvo
+            ? btn === alvo
+            : (btn.getAttribute('onclick') || '').includes(`'${tabId}'`);
+        btn.classList.toggle('active', ativo);
+    });
+};

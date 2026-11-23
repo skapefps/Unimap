@@ -93,6 +93,14 @@ app.use(helmet({
             ],
             frameSrc: ["'self'", 'https://accounts.google.com'],
             connectSrc: ["'self'", 'https://accounts.google.com', 'https://oauth2.googleapis.com'],
+            // O HTML liga comportamento por atributo (onclick, onchange...)
+            // em mais de cem lugares. O padrão do Helmet aqui é 'none', que
+            // bloqueia todos: os botões ficam na tela sem fazer nada, e o
+            // servidor não registra erro nenhum. Enquanto o HTML for assim,
+            // a diretiva precisa permitir atributo inline. Trocar isto por
+            // 'none' exige antes migrar os handlers para addEventListener.
+            scriptSrcAttr: ["'unsafe-inline'"],
+
             // O frontend tem estilo inline em várias páginas.
             // cdnjs serve o Font Awesome: sem ele aqui, o CSP bloqueia a
             // folha de estilo e TODOS os ícones do site somem.

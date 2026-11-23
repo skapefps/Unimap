@@ -89,6 +89,7 @@ const SUBSTITUICOES = [
     // O negative lookbehind evita transformar um ILIKE já existente.
     [/(?<!I)\bLIKE\b/gi, 'ILIKE'],
 
+
     // Agregações e utilitários com nome diferente
     [/\bGROUP_CONCAT\s*\(\s*([^,()]+?)\s*\)/gi, "STRING_AGG($1, ',')"],
     [/\bGROUP_CONCAT\s*\(/gi, 'STRING_AGG('],
@@ -115,7 +116,15 @@ function toPg(sql) {
     let orIgnore = false;
 
     const traduzidos = segmentos.map((seg) => {
-        if (seg.literal) return seg.texto;
+        if (seg.literal) {
+            // O segmentador trata " como delimitador, então "" chega aqui
+            // como um "literal" vazio. No SQLite isso é string vazia; no
+            // Postgres é um identificador de tamanho zero, que é erro de
+            // sintaxe. Identificador vazio nunca é válido, então a troca
+            // por '' é segura — e só acontece para o par exato "".
+            if (seg.texto === '""') return "''";
+            return seg.texto;
+        }
 
         let texto = seg.texto;
 
